@@ -43,6 +43,7 @@ import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
+import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -53,6 +54,7 @@ import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
+import com.tencent.bkrepo.repository.cpack.service.PackageAccessRuleService
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TMetadata
@@ -97,6 +99,7 @@ class PackageServiceImpl(
     private val packageVersionDao: PackageVersionDao,
     private val packageSearchInterpreter: PackageSearchInterpreter,
     private val packageVersionSearchInterpreter: PackageVersionSearchInterpreter,
+    private val packageAccessRuleService: PackageAccessRuleService
 ) : PackageService {
 
     override fun findPackageByKey(projectId: String, repoName: String, packageKey: String): PackageSummary? {
@@ -437,6 +440,9 @@ class PackageServiceImpl(
         // 拦截package下载
         val packageVersion = convert(tPackageVersion)!!
         context.getPackageInterceptors().forEach { it.intercept(projectId, packageVersion) }
+        if (!packageAccessRuleService.checkPackageAccessRule(projectId, repoName, packageKey, versionName)) {
+            throw ArtifactDownloadForbiddenException(projectId)
+        }
         // context 复制时会从request map中获取对应的artifactInfo， 而artifactInfo设置到map中是在接口url解析时
         HttpContextHolder.getRequestOrNull()?.setAttribute(ARTIFACT_INFO_KEY, artifactInfo)
         ArtifactContextHolder.getRepository().download(context)

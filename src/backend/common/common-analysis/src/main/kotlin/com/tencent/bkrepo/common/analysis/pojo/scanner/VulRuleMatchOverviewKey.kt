@@ -13,7 +13,7 @@ enum class VulRuleMatchOverviewKey(val key: String) {
 
     companion object {
         fun overviewKeyOf(pass: Boolean, levelName: String): String {
-            val level = Level.values().first { it.levelName == levelName }
+            val level = Level.valueOf(levelName.toUpperCase())
             return when (level) {
                 Level.CRITICAL -> if (pass) CRITICAL_IGNORE_COUNT.key else CRITICAL_FORBID_COUNT.key
                 Level.HIGH -> if (pass) HIGH_IGNORE_COUNT.key else HIGH_FORBID_COUNT.key

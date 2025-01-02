@@ -22,5 +22,7 @@ interface PackageAccessRuleService {
         pass: Boolean?
     ): Page<PackageAccessRule>
 
-    fun getMatchedRules(projectId: String, type: String, key: String): List<PackageAccessRule>
+    fun getMatchedRules(projectId: String, type: String, fullName: String?): List<PackageAccessRule>
+
+    fun checkPackageAccessRule(projectId: String, repoName: String, packageKey: String, version: String): Boolean
 }

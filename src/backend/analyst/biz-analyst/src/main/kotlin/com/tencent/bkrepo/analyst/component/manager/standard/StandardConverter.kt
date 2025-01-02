@@ -52,6 +52,7 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.StandardScanner
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component("${StandardScanner.TYPE}Converter")
@@ -172,12 +173,19 @@ class StandardConverter(
         scanExecutorResult as StandardScanExecutorResult
         val overview = HashMap<String, Long>()
         val vulRules = vulRuleService.getVulList()
+        val matchResult = mutableListOf<String>()
         scanExecutorResult.output?.result?.securityResults?.forEach { securityResult ->
             vulRules.find { securityResult.cveId == it.vulId }?.let {
+                matchResult.add("${it.vulId}/${if (it.pass) "W" else "B"}")
                 val key = VulRuleMatchOverviewKey.overviewKeyOf(it.pass, securityResult.severity)
                 overview[key] = overview.getOrDefault(key, 0L) + 1
             }
         }
+        logger.info("vulRule match result: $matchResult")
         return overview
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(StandardConverter::class.java)
     }
 }

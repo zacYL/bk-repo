@@ -21,6 +21,6 @@ interface PackageAccessRuleClient {
     fun getMatchedRules(
         @PathVariable projectId: String,
         @RequestParam(required = true) type: String,
-        @RequestParam(required = true) key: String,
+        @RequestParam fullName: String? = null,
     ): Response<List<PackageAccessRule>>
 }

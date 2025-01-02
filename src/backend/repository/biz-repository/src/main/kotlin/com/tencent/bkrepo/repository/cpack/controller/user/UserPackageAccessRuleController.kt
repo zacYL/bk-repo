@@ -16,6 +16,7 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -24,13 +25,13 @@ import org.springframework.web.bind.annotation.RestController
 
 @Api("CPack制品黑白名单规则")
 @RestController
-@Principal(type = PrincipalType.ADMIN)
 @RequestMapping("/api/package/access-rule")
 class UserPackageAccessRuleController(
     private val packageAccessRuleService: PackageAccessRuleService
 ) {
 
     @ApiOperation("创建规则")
+    @Principal(type = PrincipalType.ADMIN)
     @PostMapping("/create")
     fun createRule(
         @RequestBody packageAccessRuleRequest: PackageAccessRuleRequest
@@ -40,6 +41,7 @@ class UserPackageAccessRuleController(
     }
 
     @ApiOperation("移除规则")
+    @Principal(type = PrincipalType.ADMIN)
     @DeleteMapping("/delete")
     fun deleteRule(
         @RequestParam(required = true) projectId: String,
@@ -62,6 +64,7 @@ class UserPackageAccessRuleController(
     }
 
     @ApiOperation("规则分页")
+    @Principal(type = PrincipalType.ADMIN)
     @GetMapping("/page")
     fun listRulePage(
         @RequestParam(required = true) projectId: String,
@@ -74,6 +77,20 @@ class UserPackageAccessRuleController(
     ): Response<Page<PackageAccessRule>> {
         return ResponseBuilder.success(
             packageAccessRuleService.listRulePage(projectId, pageNumber, pageSize, packageType, key, version, pass)
+        )
+    }
+
+    @ApiOperation("检查是否被制品规则拦截")
+    @Principal(type = PrincipalType.GENERAL)
+    @GetMapping("/check/{projectId}/{repoName}")
+    fun checkPackageAccessRule(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam(required = true) packageKey: String,
+        @RequestParam(required = true) version: String
+    ): Response<Boolean> {
+        return ResponseBuilder.success(
+            packageAccessRuleService.checkPackageAccessRule(projectId, repoName, packageKey, version)
         )
     }
 }

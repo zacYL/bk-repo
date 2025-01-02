@@ -11,7 +11,11 @@ import org.springframework.web.bind.annotation.RestController
 class PackageAccessRuleController(
     private val packageAccessRuleService: PackageAccessRuleService
 ) : PackageAccessRuleClient {
-    override fun getMatchedRules(projectId: String, type: String, key: String): Response<List<PackageAccessRule>> {
-        return ResponseBuilder.success(packageAccessRuleService.getMatchedRules(projectId, type, key))
+    override fun getMatchedRules(
+        projectId: String,
+        type: String,
+        fullName: String?
+    ): Response<List<PackageAccessRule>> {
+        return ResponseBuilder.success(packageAccessRuleService.getMatchedRules(projectId, type, fullName))
     }
 }

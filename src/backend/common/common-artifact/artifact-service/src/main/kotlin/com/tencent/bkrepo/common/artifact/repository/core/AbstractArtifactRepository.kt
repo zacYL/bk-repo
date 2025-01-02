@@ -27,6 +27,8 @@
 
 package com.tencent.bkrepo.common.artifact.repository.core
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
@@ -55,8 +57,8 @@ import com.tencent.bkrepo.common.artifact.repository.redirect.DownloadRedirectMa
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriterContext
+import com.tencent.bkrepo.common.artifact.util.PackageAccessRuleUtils.matchRule
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.artifact.util.version.SemVersionParser
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
@@ -73,13 +75,14 @@ import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.api.WhitelistSwitchClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageAccessRule
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
-import com.tencent.bkrepo.repository.pojo.packages.VersionRuleType
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
+import java.util.concurrent.TimeUnit
 
 /**
  * 构件仓库抽象类
@@ -136,6 +139,16 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
 
     @Autowired
     lateinit var packageAccessRuleClient: PackageAccessRuleClient
+
+    private val packageAccessRuleCache = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .refreshAfterWrite(30L, TimeUnit.SECONDS)
+        .expireAfterWrite(60L, TimeUnit.SECONDS)
+        .build(
+            CacheLoader.from<Pair<String, String>, List<PackageAccessRule>> {
+                packageAccessRuleClient.getMatchedRules(it.first, it.second).data
+            }
+        )
 
     override fun upload(context: ArtifactUploadContext) {
         try {
@@ -434,48 +447,17 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
 
     protected fun checkPackageAccessRule(projectId: String, type: PackageType, fullName: String, version: String?) {
         if (version.isNullOrBlank()) return
-        val (passRules, forbidRules) = packageAccessRuleClient.getMatchedRules(projectId, type.name, fullName).data!!
+        val (passRules, forbidRules) = packageAccessRuleCache.get(Pair(projectId, type.name))
+            .filter {
+                if (fullName.contains(":")) it.key == fullName || it.key == fullName.substringBefore(":") + ":*"
+                else it.key == fullName
+            }
             .partition { it.pass }
         passRules.forEach { if (matchRule(type, version, it.version, it.versionRuleType)) return }
         forbidRules.forEach {
             if (matchRule(type, version, it.version, it.versionRuleType)) {
                 throw ArtifactDownloadForbiddenException(projectId)
             }
-        }
-    }
-
-    private fun matchRule(
-        packageType: PackageType,
-        version: String,
-        ruleVersion: String?,
-        ruleType: VersionRuleType?
-    ): Boolean {
-        if (ruleVersion.isNullOrBlank() || ruleType == null) return true
-        if (packageType == PackageType.DOCKER || packageType == PackageType.OCI) {
-            return matchNonSemVerRule(version, ruleVersion, ruleType)
-        }
-        return try {
-            val packageSemVersion = SemVersionParser.parse(version.removePrefix("v"))
-            val ruleSemVersion = SemVersionParser.parse(ruleVersion.removePrefix("v"))
-            when (ruleType) {
-                VersionRuleType.EQ -> packageSemVersion == ruleSemVersion
-                VersionRuleType.NE -> packageSemVersion != ruleSemVersion
-                VersionRuleType.GT -> packageSemVersion > ruleSemVersion
-                VersionRuleType.GTE -> packageSemVersion >= ruleSemVersion
-                VersionRuleType.LE -> packageSemVersion < ruleSemVersion
-                VersionRuleType.LTE -> packageSemVersion <= ruleSemVersion
-            }
-        } catch (e: IllegalArgumentException) {
-            logger.error("failed to parse version [$version] or [$ruleVersion]", e)
-            matchNonSemVerRule(version, ruleVersion, ruleType)
-        }
-    }
-
-    private fun matchNonSemVerRule(version: String, ruleVersion: String, ruleType: VersionRuleType): Boolean {
-        return when (ruleType) {
-            VersionRuleType.EQ -> version == ruleVersion
-            VersionRuleType.NE -> version != ruleVersion
-            else -> false
         }
     }
 

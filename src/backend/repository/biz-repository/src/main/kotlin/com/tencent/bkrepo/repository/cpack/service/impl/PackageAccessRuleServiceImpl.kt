@@ -1,10 +1,12 @@
 package com.tencent.bkrepo.repository.cpack.service.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.artifact.util.PackageAccessRuleUtils.matchRule
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
-import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.cpack.service.PackageAccessRuleService
 import com.tencent.bkrepo.repository.dao.PackageAccessRuleDao
@@ -48,7 +50,8 @@ class PackageAccessRuleServiceImpl(
             try {
                 packageAccessRuleDao.save(tPackageAccessRule)
             } catch (e: DuplicateKeyException) {
-                logger.warn("duplicate package access rule [type: $packageType, key: $key," +
+                logger.warn(
+                    "duplicate package access rule [type: $packageType, key: $key," +
                     " version: $version, versionRule: $versionRuleType]"
                 )
                 throw ErrorCodeException(RepositoryMessageCode.ACCESS_RULE_EXISTS)
@@ -95,22 +98,42 @@ class PackageAccessRuleServiceImpl(
         return Pages.ofResponse(pageRequest, count, records)
     }
 
-    override fun getMatchedRules(projectId: String, type: String, key: String): List<PackageAccessRule> {
+    override fun getMatchedRules(projectId: String, type: String, fullName: String?): List<PackageAccessRule> {
+        val criteriaList = mutableListOf(
+            Criteria().orOperator(
+                where(TPackageAccessRule::expireDate).isEqualTo(null),
+                where(TPackageAccessRule::expireDate).gt(LocalDateTime.now())
+            )
+        )
+        if (!fullName.isNullOrBlank()) {
+            val fullNameCriteria = if (!fullName.contains(":")) {
+                where(TPackageAccessRule::key).isEqualTo(fullName)
+            } else {
+                Criteria().orOperator(
+                    where(TPackageAccessRule::key).isEqualTo(fullName),
+                    where(TPackageAccessRule::key).isEqualTo(fullName.substringBefore(":") + ":*")
+                )
+            }
+            criteriaList.add(fullNameCriteria)
+        }
         val criteria = where(TPackageAccessRule::projectId).isEqualTo(projectId)
             .and(TPackageAccessRule::packageType).isEqualTo(type)
-            .andOperator(
-                Criteria().orOperator(
-                    where(TPackageAccessRule::expireDate).isEqualTo(null),
-                    where(TPackageAccessRule::expireDate).gt(LocalDateTime.now())
-                ),
-                if (!key.contains(":")) where(TPackageAccessRule::key).isEqualTo(key) else {
-                    Criteria().orOperator(
-                        where(TPackageAccessRule::key).isEqualTo(key),
-                        where(TPackageAccessRule::key).isEqualTo(key.substringBefore(":") + ":*")
-                    )
-                }
-            )
+            .andOperator(*(criteriaList.toTypedArray()))
         return packageAccessRuleDao.find(Query(criteria)).map { convert(it) }
+    }
+
+    override fun checkPackageAccessRule(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): Boolean {
+        val type = PackageKeys.resolveType(packageKey) ?: throw ParameterInvalidException("packageKey")
+        val (passRules, forbidRules) =
+            getMatchedRules(projectId, type.name, PackageKeys.resolveName(packageKey)).partition { it.pass }
+        passRules.forEach { if (matchRule(type, version, it.version, it.versionRuleType)) return true }
+        forbidRules.forEach { if (matchRule(type, version, it.version, it.versionRuleType)) return false }
+        return true
     }
 
     private fun convert(tPackageAccessRule: TPackageAccessRule): PackageAccessRule {

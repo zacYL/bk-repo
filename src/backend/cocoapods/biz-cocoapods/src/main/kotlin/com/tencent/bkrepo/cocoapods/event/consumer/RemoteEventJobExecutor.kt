@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.cocoapods.event.consumer
 
 import com.google.gson.Gson
+import com.tencent.bkrepo.cocoapods.artifact.CocoapodsProperties
 import com.tencent.bkrepo.cocoapods.constant.COCOAPODS_REPLICA_RESOLVE
 import com.tencent.bkrepo.cocoapods.constant.LOCK_PREFIX
 import com.tencent.bkrepo.cocoapods.pool.EventHandlerThreadPoolExecutor
@@ -61,6 +62,7 @@ class RemoteEventJobExecutor(
     private val lockOperation: LockOperation,
     private val cocoapodsSpecsService: CocoapodsSpecsService,
     private val repositoryClient: RepositoryClient,
+    private val cocoapodsProperties: CocoapodsProperties
 ) {
     private val threadPoolExecutor: ThreadPoolExecutor = EventHandlerThreadPoolExecutor.instance
     private val gson = Gson()
@@ -129,6 +131,13 @@ class RemoteEventJobExecutor(
 
     private fun replicaHandle(event: ArtifactEvent) {
         with(event) {
+            val domain = event.data["domain"] as? String
+                ?: throw IllegalArgumentException("domain not found in event data")
+            logger.info("replica from ${cocoapodsProperties.domain} to $domain")
+            if(cocoapodsProperties.domain.contains(domain)){
+                logger.info("same cluster replication event,do nothing...")
+                return
+            }
             val httpClient = HttpClientBuilderFactory
                 .create()
                 .addInterceptor(BasicAuthInterceptor(data["username"] as String, data["password"] as String))
@@ -136,8 +145,6 @@ class RemoteEventJobExecutor(
                 .connectTimeout(CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
                 .build()
 //        cocoapodsReplicaService.resolveIndexFile(event)
-            val domain = event.data["domain"] as? String
-                ?: throw IllegalArgumentException("domain not found in event data")
 
             // 将 ArtifactEvent 对象转换为 JSON 字符串
             val eventJson = gson.toJson(event)

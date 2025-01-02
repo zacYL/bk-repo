@@ -64,7 +64,7 @@ class IvyArtifactInfo(
 
     fun artifactsToSummaryPath(fullPaths: List<String>): List<String> {
         return fullPaths.flatMap { fullPath ->
-            HashType.values().map { fullPath + "/" + it.ext }
+            HashType.values().map { fullPath + "." + it.ext }
         }
     }
 

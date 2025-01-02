@@ -36,6 +36,8 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.ivy.enum.HashType
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.InputStream
 import javax.xml.parsers.DocumentBuilderFactory
@@ -45,8 +47,9 @@ class IvyArtifactInfo(
     repoName: String,
     artifactUri: String
 ) : ArtifactInfo(projectId, repoName, artifactUri) {
-
     companion object {
+        private val logger: Logger = LoggerFactory.getLogger(IvyArtifactInfo::class.java)
+
         const val IVY_MAPPING_URI = "/{projectId}/{repoName}/**"
         const val ARTIFACT_PATTERN_KEY = "artifact_pattern"
         const val IVY_PATTERN_KEY = "ivy_pattern"
@@ -61,13 +64,19 @@ class IvyArtifactInfo(
     }
 
     fun isIvyXml(inputStream: InputStream): Boolean {
-        val dbFactory = DocumentBuilderFactory.newInstance()
-        val dBuilder = dbFactory.newDocumentBuilder()
-        val doc = dBuilder.parse(inputStream)
-        doc.documentElement.normalize()
+        try {
+            val dbFactory = DocumentBuilderFactory.newInstance()
+            val dBuilder = dbFactory.newDocumentBuilder()
+            val doc = dBuilder.parse(inputStream)
+            doc.documentElement.normalize()
 
-        val rootElement = doc.documentElement
-        return "ivy-module" == rootElement.nodeName
+            val rootElement = doc.documentElement
+            return "ivy-module" == rootElement.nodeName
+        } catch (e: Exception) {
+            logger.warn("parse ivy xml failed, file is not ivy.xml")
+            return false
+        }
+
     }
 
     fun getRepoArtifactPattern(repositoryDetail: RepositoryDetail): String {

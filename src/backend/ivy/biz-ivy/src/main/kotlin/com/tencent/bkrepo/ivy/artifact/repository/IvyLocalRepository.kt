@@ -31,8 +31,14 @@
 
 package com.tencent.bkrepo.ivy.artifact.repository
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.stream.Range
+import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.ivy.artifact.IvyArtifactInfo
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_ATTRIBUTES
@@ -52,6 +58,7 @@ import com.tencent.bkrepo.ivy.util.IvyUtil
 import com.tencent.bkrepo.repository.api.MetadataClient
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import org.apache.ivy.core.module.descriptor.Artifact
@@ -66,11 +73,34 @@ class IvyLocalRepository(
     private val metadataClient: MetadataClient,
 ) : LocalRepository() {
 
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        (context.artifactInfo as IvyArtifactInfo).let {
+            val fullPath = it.getArtifactFullPath()
+            val node = nodeClient.getNodeDetail(
+                projectId = it.projectId,
+                repoName = it.repoName,
+                fullPath = fullPath
+            ).data
+            if (node != null) {
+                logger.warn("node [$fullPath] already exists, delete it")
+                nodeClient.deleteNode(
+                    NodeDeleteRequest(
+                        projectId = it.projectId,
+                        repoName = it.repoName,
+                        fullPath = fullPath,
+                        operator = context.userId
+                    )
+                )
+            }
+        }
+        super.onUploadBefore(context)
+    }
+
     override fun onUpload(context: ArtifactUploadContext) {
         (context.artifactInfo as IvyArtifactInfo).let {
             if (it.isSummaryFile()) {
                 // 摘要文件处理 .md5 .sh1
-                val fullPath = it.getArtifactFullPath()
+                val fullPath = it.extractArtifactFilePathFromSummary()
                 nodeClient.getNodeDetail(
                     projectId = it.projectId,
                     repoName = it.repoName,
@@ -209,6 +239,35 @@ class IvyLocalRepository(
             )
         }
         return metaDataModels
+    }
+
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        (context.artifactInfo as IvyArtifactInfo).let {
+            if (it.isSummaryFile()) {
+                val fullPath = it.extractArtifactFilePathFromSummary()
+                val nodeDetail = nodeClient.getNodeDetail(context.projectId, context.repoName, fullPath).data
+                    ?: return super.onDownload(context)
+                val metadata = metadataClient.listMetadata(
+                    projectId = context.projectId,
+                    repoName = context.repoName,
+                    fullPath = fullPath
+                ).data
+                val summaryValue =
+                    metadata?.get(it.getExt())?.toString()?.toByteArray() ?: return super.onDownload(context)
+                val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+                logger.info("获取[${fullPath}]元数据摘要文件")
+                return ArtifactResource(
+                    summaryValue.inputStream().artifactStream(Range.full(summaryValue.size.toLong())),
+                    it.getResponseName(),
+                    srcRepo,
+                    nodeDetail,
+                    ArtifactChannel.LOCAL,
+                    context.useDisposition
+                )
+            } else {
+                return super.onDownload(context)
+            }
+        }
     }
 
 

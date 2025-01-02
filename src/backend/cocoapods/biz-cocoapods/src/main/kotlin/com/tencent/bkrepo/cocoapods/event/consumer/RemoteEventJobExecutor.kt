@@ -51,6 +51,7 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.io.IOException
 import java.util.concurrent.Future
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -60,10 +61,8 @@ class RemoteEventJobExecutor(
     private val lockOperation: LockOperation,
     private val cocoapodsSpecsService: CocoapodsSpecsService,
     private val repositoryClient: RepositoryClient,
-    private val cocoapodsReplicaService: CocoapodsReplicaService
 ) {
     private val threadPoolExecutor: ThreadPoolExecutor = EventHandlerThreadPoolExecutor.instance
-    private val client = OkHttpClient()
     private val gson = Gson()
 
     fun execute(event: ArtifactEvent) {
@@ -149,7 +148,15 @@ class RemoteEventJobExecutor(
                 .url(domain + "/cocoapods" + COCOAPODS_REPLICA_RESOLVE)
                 .post(requestBody)
                 .build()
-            httpClient.newCall(request).execute()
+            try {
+                httpClient.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        logger.info("response:${response.body()!!.string()}")
+                    }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
         }
     }
 

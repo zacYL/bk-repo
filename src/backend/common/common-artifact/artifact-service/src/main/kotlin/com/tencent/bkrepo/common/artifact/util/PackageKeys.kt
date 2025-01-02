@@ -49,9 +49,9 @@ object PackageKeys {
     fun ofIvy(org: String, module: String, branch: String): String {
         return StringBuilder(PackageType.IVY.schema).append(SEPARATOR).append(org)
             .append(StringPool.COLON)
-            .append(module)
-            .append(StringPool.COLON)
             .append(branch)
+            .append(StringPool.COLON)
+            .append(module)
             .toString()
     }
 

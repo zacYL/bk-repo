@@ -51,12 +51,21 @@ class IvyArtifactInfo(
         private val logger: Logger = LoggerFactory.getLogger(IvyArtifactInfo::class.java)
 
         const val IVY_MAPPING_URI = "/{projectId}/{repoName}/**"
+        const val IVY_EXT_DETAIL = "/version/detail/{projectId}/{repoName}"
+        const val IVY_EXT_PACKAGE_DELETE = "/package/delete/{projectId}/{repoName}"
+        const val IVY_EXT_VERSION_DELETE = "/version/delete/{projectId}/{repoName}"
         const val ARTIFACT_PATTERN_KEY = "artifact_pattern"
         const val IVY_PATTERN_KEY = "ivy_pattern"
     }
 
     fun isSummaryFile(): Boolean {
         return HashType.values().any() { getArtifactFullPath().endsWith(".${it.ext}") }
+    }
+
+    fun artifactsToSummaryPath(fullPaths: List<String>): List<String> {
+        return fullPaths.flatMap { fullPath ->
+            HashType.values().map { fullPath + "/" + it.ext }
+        }
     }
 
     fun getExt(): String {

@@ -38,6 +38,7 @@ const val METADATA_KEY_PUBLISH_ARTIFACT = "publishArtifact"
 const val METADATA_KEY_MASTER_ARTIFACT = "masterArtifact"
 const val METADATA_KEY_MASTER_ARTIFACT_FULL_PATH = "masterArtifactFullPath"
 const val METADATA_KEY_IVY_FULL_PATH = "ivyFullPath"
+const val METADATA_KEY_All_ARTIFACT_FULL_PATH = "allArtifactFullPath"
 
 
 

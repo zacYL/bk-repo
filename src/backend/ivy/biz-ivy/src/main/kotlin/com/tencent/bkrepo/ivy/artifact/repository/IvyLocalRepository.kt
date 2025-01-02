@@ -42,6 +42,7 @@ import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.ivy.artifact.IvyArtifactInfo
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_ATTRIBUTES
+import com.tencent.bkrepo.ivy.constants.METADATA_KEY_All_ARTIFACT_FULL_PATH
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_BRANCH
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_EXTRA_ATTRIBUTES
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_IVY_FULL_PATH
@@ -132,17 +133,18 @@ class IvyLocalRepository(
                         artifactPattern
                     )
                 // 如果主文件为空，使用ivy的fullpath
-                val artifactFullPath = masterArtifact.second ?: context.artifactInfo.getArtifactFullPath()
+                val masterArtifactFullPath = masterArtifact.second ?: context.artifactInfo.getArtifactFullPath()
                 val metadataModels = getMetadataModel(
                     descriptor,
                     context.artifactInfo.getArtifactFullPath(),
                     masterArtifact.first,
-                    artifactFullPath
+                    masterArtifactFullPath,
+                    artifactsFullPath
                 )
                 createIvyVersion(
                     context,
                     descriptor,
-                    artifactFullPath,
+                    masterArtifactFullPath,
                     metadataModels
                 )
 
@@ -207,6 +209,7 @@ class IvyLocalRepository(
         ivyFullPath: String,
         masterArtifact: Artifact?,
         masterArtifactFullPath: String,
+        artifactsFullPath: List<String>,
     ): MutableList<MetadataModel> {
         val metaDataModels = mutableListOf(
             MetadataModel(key = METADATA_KEY_ATTRIBUTES, value = descriptor.moduleRevisionId.attributes, system = true),
@@ -232,6 +235,7 @@ class IvyLocalRepository(
             MetadataModel(key = METADATA_KEY_PUBLISH_ARTIFACT, value = descriptor.allArtifacts, system = true),
             MetadataModel(key = METADATA_KEY_MASTER_ARTIFACT_FULL_PATH, value = masterArtifactFullPath, system = true),
             MetadataModel(key = METADATA_KEY_IVY_FULL_PATH, value = ivyFullPath, system = true),
+            MetadataModel(key = METADATA_KEY_All_ARTIFACT_FULL_PATH, value = artifactsFullPath, system = true),
         )
         masterArtifact?.let {
             metaDataModels.add(

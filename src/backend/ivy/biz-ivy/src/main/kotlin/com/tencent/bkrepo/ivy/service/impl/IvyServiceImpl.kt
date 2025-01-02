@@ -45,8 +45,7 @@ import org.springframework.stereotype.Service
 import java.util.regex.PatternSyntaxException
 
 @Service
-class IvyServiceImpl(
-) : ArtifactService(), IvyService {
+class IvyServiceImpl: ArtifactService(), IvyService {
 
 
     @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
@@ -76,7 +75,6 @@ class IvyServiceImpl(
             ArtifactContextHolder.getRepository().download(context)
         }
     }
-
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(IvyServiceImpl::class.java)

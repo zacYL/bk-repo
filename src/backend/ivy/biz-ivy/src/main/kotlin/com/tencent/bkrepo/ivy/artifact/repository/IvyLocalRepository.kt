@@ -212,34 +212,81 @@ class IvyLocalRepository(
         artifactsFullPath: List<String>,
     ): MutableList<MetadataModel> {
         val metaDataModels = mutableListOf(
-            MetadataModel(key = METADATA_KEY_ATTRIBUTES, value = descriptor.moduleRevisionId.attributes, system = true),
             MetadataModel(
                 key = METADATA_KEY_ORGANISATION,
                 value = descriptor.moduleRevisionId.organisation,
-                system = true
+                system = true,
+                display = true
             ),
-            MetadataModel(key = METADATA_KEY_NAME, value = descriptor.moduleRevisionId.name, system = true),
-            MetadataModel(key = METADATA_KEY_BRANCH, value = descriptor.moduleRevisionId.branch, system = true),
-            MetadataModel(key = METADATA_KEY_REVISION, value = descriptor.moduleRevisionId.revision, system = true),
-            MetadataModel(key = METADATA_KEY_ATTRIBUTES, value = descriptor.moduleRevisionId.attributes, system = true),
+            MetadataModel(
+                key = METADATA_KEY_NAME,
+                value = descriptor.moduleRevisionId.name,
+                system = true,
+                display = true
+            ),
+            MetadataModel(
+                key = METADATA_KEY_BRANCH,
+                value = descriptor.moduleRevisionId.branch,
+                system = true,
+                display = true
+            ),
+            MetadataModel(
+                key = METADATA_KEY_REVISION,
+                value = descriptor.moduleRevisionId.revision,
+                system = true,
+                display = true
+            ),
+            MetadataModel(
+                key = METADATA_KEY_ATTRIBUTES,
+                value = descriptor.moduleRevisionId.attributes,
+                system = true,
+                display = true
+            ),
             MetadataModel(
                 key = METADATA_KEY_EXTRA_ATTRIBUTES,
                 value = descriptor.moduleRevisionId.extraAttributes,
-                system = true
+                system = true,
+                display = true
             ),
             MetadataModel(
                 key = METADATA_KEY_QUALIFIED_EXTRA_ATTRIBUTES,
                 value = descriptor.moduleRevisionId.qualifiedExtraAttributes,
-                system = true
+                system = true,
+                display = false
             ),
-            MetadataModel(key = METADATA_KEY_PUBLISH_ARTIFACT, value = descriptor.allArtifacts, system = true),
-            MetadataModel(key = METADATA_KEY_MASTER_ARTIFACT_FULL_PATH, value = masterArtifactFullPath, system = true),
-            MetadataModel(key = METADATA_KEY_IVY_FULL_PATH, value = ivyFullPath, system = true),
-            MetadataModel(key = METADATA_KEY_All_ARTIFACT_FULL_PATH, value = artifactsFullPath, system = true),
+            MetadataModel(
+                key = METADATA_KEY_PUBLISH_ARTIFACT,
+                value = descriptor.allArtifacts,
+                system = true,
+                display = false
+            ),
+            MetadataModel(
+                key = METADATA_KEY_MASTER_ARTIFACT_FULL_PATH,
+                value = masterArtifactFullPath,
+                system = true,
+                display = true
+            ),
+            MetadataModel(
+                key = METADATA_KEY_IVY_FULL_PATH,
+                value = ivyFullPath,
+                system = true,
+                display = false
+            ),
+            MetadataModel(
+                key = METADATA_KEY_All_ARTIFACT_FULL_PATH,
+                value = artifactsFullPath,
+                system = true,
+                display = true
+            ),
         )
         masterArtifact?.let {
             metaDataModels.add(
-                MetadataModel(key = METADATA_KEY_MASTER_ARTIFACT, value = masterArtifact, system = true),
+                MetadataModel(
+                    key = METADATA_KEY_MASTER_ARTIFACT,
+                    value = masterArtifact,
+                    system = true,
+                    display = false
+                ),
             )
         }
         return metaDataModels

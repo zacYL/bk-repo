@@ -36,7 +36,7 @@ class PathPatternInterceptor(rules: Map<String, Any>)
         return PathPatternNotMatchException(artifact)
     }
 
-    override fun onForbidden(projectId: String, artifact: String) {
+    override fun onForbidden(projectId: String, artifact: String, rule: Pair<List<String>, List<String>>) {
         val log = OperateLog(
             createdDate = LocalDateTime.now(),
             type = EventType.NODE_DOWNLOADED,
@@ -45,7 +45,11 @@ class PathPatternInterceptor(rules: Map<String, Any>)
             resourceKey = artifact,
             userId = SecurityUtils.getUserId(),
             clientAddress = HttpContextHolder.getClientAddress(),
-            description = mapOf(DESCRIPTION_KEY_FAIL_REASON to PATH_PATTERN_NOT_MATCHED),
+            description = mapOf(
+                DESCRIPTION_KEY_FAIL_REASON to PATH_PATTERN_NOT_MATCHED,
+                INCLUDE_PATH_PATTERNS to rule.first,
+                EXCLUDE_PATH_PATTERNS to rule.second
+            ),
             result = false
         )
         SpringContextUtils.getBean(OperateLogService::class.java).saveAsync(log)

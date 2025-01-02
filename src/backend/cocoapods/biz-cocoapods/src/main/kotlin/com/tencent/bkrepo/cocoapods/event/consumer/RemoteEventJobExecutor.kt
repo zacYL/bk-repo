@@ -144,8 +144,9 @@ class RemoteEventJobExecutor(
 
             val mediaType = MediaType.parse("application/json")
             val requestBody = RequestBody.create(mediaType, eventJson)
+            val path = COCOAPODS_REPLICA_RESOLVE.replace("{projectId}", projectId).replace("{repoName}", repoName)
             val request = Request.Builder()
-                .url(domain + "/cocoapods" + COCOAPODS_REPLICA_RESOLVE+"/${projectId}/${repoName}")
+                .url(domain + "/cocoapods" + path)
                 .post(requestBody)
                 .build()
             try {

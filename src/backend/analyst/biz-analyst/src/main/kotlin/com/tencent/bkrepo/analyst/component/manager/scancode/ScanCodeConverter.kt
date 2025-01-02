@@ -115,4 +115,8 @@ class ScanCodeConverter(
         }
         return overview
     }
+
+    override fun convertVulRuleMatchOverview(scanExecutorResult: ScanExecutorResult): Map<String, Any?> {
+        TODO("Not yet implemented")
+    }
 }

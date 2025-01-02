@@ -62,10 +62,9 @@ class TrivyConverter : ScannerConverter {
                 description = it.data.description,
                 officialSolution = "",
                 reference = it.data.references,
-                path = "",
-                isCveWhite = cveWhite?.contains(it.data.vulnerabilityId) ?: false
+                path = ""
             )
-        }.toList().sortedByDescending { it.isCveWhite }
+        }.toList()
         return Pages.ofResponse(pageRequest, result.totalRecords, reports)
     }
 
@@ -89,5 +88,9 @@ class TrivyConverter : ScannerConverter {
             overview[overviewKey] = overview.getOrDefault(overviewKey, 0L) + 1L
         }
         return overview
+    }
+
+    override fun convertVulRuleMatchOverview(scanExecutorResult: ScanExecutorResult): Map<String, Any?> {
+        TODO("Not yet implemented")
     }
 }

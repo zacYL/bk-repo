@@ -5,16 +5,15 @@ import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.LocalDateTime
 
-@Document("cve_whitelist")
+@Document("vul_rule")
 @CompoundIndexes(
-    CompoundIndex(name = "cveId_index", def = "{'cveId': 1}", unique = true, background = true)
+    CompoundIndex(name = "vulId_index", def = "{'vulId': 1}", unique = true, background = true)
 )
-data class TCveWhitelist(
+data class TVulRule(
     val id: String? = null,
-    val cveId: String,
+    val vulId: String,
+    val pass: Boolean,
     val description: String?,
     var createdBy: String,
-    var createdDate: LocalDateTime,
-    var lastModifiedBy: String,
-    var lastModifiedDate: LocalDateTime
+    var createdDate: LocalDateTime
 )

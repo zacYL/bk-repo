@@ -61,10 +61,9 @@ class DependencyCheckConverter : ScannerConverter {
                 description = it.description,
                 officialSolution = it.officialSolution?.ifEmpty { it.defenseSolution },
                 reference = it.references,
-                path = it.path,
-                isCveWhite = cveWhite?.contains(it.cveId) ?: false
+                path = it.path
             )
-        }.toList().sortedByDescending { it.isCveWhite }
+        }.toList()
         return Pages.ofResponse(pageRequest, result.totalRecords, reports)
     }
 
@@ -87,5 +86,9 @@ class DependencyCheckConverter : ScannerConverter {
         }
 
         return overview
+    }
+
+    override fun convertVulRuleMatchOverview(scanExecutorResult: ScanExecutorResult): Map<String, Any?> {
+        TODO("Not yet implemented")
     }
 }

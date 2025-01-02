@@ -32,6 +32,7 @@ import com.tencent.bkrepo.analyst.pojo.ScanTaskStatus
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.notify.pojo.enums.PlatformSmallBell
 import com.tencent.bkrepo.common.notify.service.PlatformNotify
+import com.tencent.bkrepo.common.service.condition.ConditionalOnDevops
 import java.time.format.DateTimeFormatter
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Component
 
 
 @Component
+@ConditionalOnDevops
 class ScanTaskNotifyEventListener(
     private val devopsConf: DevopsConf,
     private val platformNotify: PlatformNotify

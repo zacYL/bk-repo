@@ -212,7 +212,7 @@ open class OperateLogServiceImpl(
             addAll(packageEvent)
             addAll(projectEvent)
             addAll(metadataEvent)
-            addAll(cveWhiteEvent)
+            addAll(vulRuleEvent)
             add(EventType.REPOSITORY_CLEAN)
         }
     }
@@ -322,6 +322,7 @@ open class OperateLogServiceImpl(
             "ADMIN" -> adminEvent
             "REPO" -> repositoryEvent
             "METADATA" -> metadataEvent
+            "VUL_RULE" -> vulRuleEvent
             else -> throw ParameterInvalidException("resource type $resourceType not support")
         }
     }
@@ -441,8 +442,9 @@ open class OperateLogServiceImpl(
         private val adminEvent = listOf(EventType.ADMIN_ADD, EventType.ADMIN_DELETE)
         private val projectEvent = listOf(EventType.PROJECT_CREATED)
         private val metadataEvent = listOf(EventType.METADATA_SAVED, EventType.METADATA_DELETED)
-        private val cveWhiteEvent = listOf(
-            EventType.CVE_WHITE_ADD, EventType.CVE_WHITE_ADD_BATCH, EventType.CVE_WHITE_DELETE
+        private val vulRuleEvent = listOf(
+            EventType.VUL_RULE_ADD, EventType.VUL_RULE_ADD_BATCH,
+            EventType.VUL_RULE_REMOVE, EventType.VUL_RULE_REMOVE_BATCH
         )
         private val antPathMatcher = AntPathMatcher()
     }

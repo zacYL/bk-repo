@@ -35,7 +35,6 @@ import com.tencent.bkrepo.analyst.pojo.request.PlanCountRequest
 import com.tencent.bkrepo.analyst.pojo.request.SubtaskInfoRequest
 import com.tencent.bkrepo.analyst.utils.Converter
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus
-import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
 import org.springframework.data.domain.Sort
@@ -210,8 +209,7 @@ class PlanArtifactLatestSubScanTaskDao(
         overview: Map<String, Any?>? = null,
         modifiedBy: String? = null,
         now: LocalDateTime = LocalDateTime.now(),
-        qualityPass: Boolean? = null,
-        cveWhite: List<String>? = null
+        qualityPass: Boolean? = null
     ): UpdateResult {
         val criteria = Criteria
             .where(TPlanArtifactLatestSubScanTask::latestSubScanTaskId.name).isEqualTo(latestSubScanTaskId)
@@ -221,7 +219,6 @@ class PlanArtifactLatestSubScanTaskDao(
             .set(TPlanArtifactLatestSubScanTask::status.name, subtaskScanStatus)
         modifiedBy?.let { update.set(TPlanArtifactLatestSubScanTask::lastModifiedBy.name, it) }
         qualityPass?.let { update.set(TPlanArtifactLatestSubScanTask::qualityRedLine.name, it) }
-        cveWhite?.let { update.set(TPlanArtifactLatestSubScanTask::cveWhite.name, it) }
 
         // 更新为正在扫描的状态时更新
         if (subtaskScanStatus == SubScanTaskStatus.EXECUTING.name) {

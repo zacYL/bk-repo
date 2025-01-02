@@ -161,9 +161,10 @@ enum class EventType(val msgKey: String) {
     // repository clean
     REPOSITORY_CLEAN("artifact.event.repo-cleanup"),
 
-    CVE_WHITE_ADD("artifact.event.cve-whitelist-item-add"),
-    CVE_WHITE_ADD_BATCH("artifact.event.cve-whitelist-items-add"),
-    CVE_WHITE_DELETE("artifact.event.cve-whitelist-item-remove"),
+    VUL_RULE_ADD("artifact.event.vul-rule-item-add"),
+    VUL_RULE_ADD_BATCH("artifact.event.vul-rule-items-add"),
+    VUL_RULE_REMOVE("artifact.event.vul-rule-item-remove"),
+    VUL_RULE_REMOVE_BATCH("artifact.event.vul-rule-items-remove"),
 
     // 第三方同步
     REPLICATION_THIRD_PARTY("artifact.event.replication-third-party"),

@@ -28,6 +28,8 @@
 package com.tencent.bkrepo.analyst.statemachine.subtask.action
 
 import com.tencent.bkrepo.analyst.component.CacheableRepositoryClient
+import com.tencent.bkrepo.analyst.component.manager.ScanExecutorResultManager
+import com.tencent.bkrepo.analyst.component.manager.ScannerConverter
 import com.tencent.bkrepo.analyst.dao.ArchiveSubScanTaskDao
 import com.tencent.bkrepo.analyst.dao.PlanArtifactLatestSubScanTaskDao
 import com.tencent.bkrepo.analyst.dao.ScanPlanDao
@@ -35,15 +37,21 @@ import com.tencent.bkrepo.analyst.dao.ScanTaskDao
 import com.tencent.bkrepo.analyst.event.SubtaskStatusChangedEvent
 import com.tencent.bkrepo.analyst.metrics.ScannerMetrics
 import com.tencent.bkrepo.analyst.model.TArchiveSubScanTask
+import com.tencent.bkrepo.analyst.pojo.request.ArtifactVulnerabilityRequest
+import com.tencent.bkrepo.analyst.pojo.response.ArtifactVulnerabilityInfo
+import com.tencent.bkrepo.analyst.service.VulRuleService
 import com.tencent.bkrepo.analyst.service.ScanQualityService
 import com.tencent.bkrepo.analyst.statemachine.Action
 import com.tencent.bkrepo.analyst.statemachine.subtask.SubtaskEvent
 import com.tencent.bkrepo.analyst.statemachine.subtask.context.CreateSubtaskContext
 import com.tencent.bkrepo.analyst.utils.Converter
 import com.tencent.bkrepo.analyst.utils.SubtaskConverter
+import com.tencent.bkrepo.common.analysis.pojo.scanner.VulRuleMatchOverviewKey
+import com.tencent.bkrepo.common.analysis.pojo.scanner.Scanner
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.statemachine.Event
 import com.tencent.bkrepo.statemachine.TransitResult
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.transaction.annotation.Transactional
@@ -59,7 +67,10 @@ class ReuseResultAction(
     private val scanTaskDao: ScanTaskDao,
     private val scanPlanDao: ScanPlanDao,
     private val planArtifactLatestSubScanTaskDao: PlanArtifactLatestSubScanTaskDao,
-    private val publisher: ApplicationEventPublisher
+    private val publisher: ApplicationEventPublisher,
+    private val resultManagers: Map<String, ScanExecutorResultManager>,
+    private val scannerConverters: Map<String, ScannerConverter>,
+    private val vulRuleService: VulRuleService
 ) : SubtaskAction {
     @Autowired
     private lateinit var self: ReuseResultAction
@@ -101,7 +112,11 @@ class ReuseResultAction(
             val repoInfo = cacheableRepositoryClient.get(projectId, repoName)
             // 质量检查结果
             val qualityPass = if (!qualityRule.isNullOrEmpty() && overview != null) {
-                scanQualityService.checkScanQualityRedLine(qualityRule, overview, context.scanner)
+                val vulRuleMatchOverview = queryVulRuleMatchOverview(
+                    scanTask.scannerType, repoInfo.storageCredentialsKey, sha256, context.scanner
+                )
+                logger.info("vulRuleMatchOverview of [$projectId/$repoName/$fullPath]: $vulRuleMatchOverview")
+                scanQualityService.checkScanQualityRedLine(qualityRule, overview, vulRuleMatchOverview, context.scanner)
             } else {
                 null
             }
@@ -156,5 +171,42 @@ class ReuseResultAction(
 
     override fun support(from: String, to: String, event: String): Boolean {
         return from == SubScanTaskStatus.NEVER_SCANNED.name && event == SubtaskEvent.SUCCESS.name
+    }
+
+    private fun queryVulRuleMatchOverview(
+        scannerType: String,
+        credentialsKey: String?,
+        sha256: String,
+        scanner: Scanner
+    ): Map<String, Number> {
+        val resultList = mutableListOf<ArtifactVulnerabilityInfo>()
+        var pageNumber = 1
+        val pageSize = 1000
+        val scannerConverter = scannerConverters[ScannerConverter.name(scannerType)]!!
+        val resultManager = resultManagers[scannerType]!!
+        do {
+            val request = ArtifactVulnerabilityRequest(
+                pageNumber = ++pageNumber,
+                pageSize = pageSize,
+            )
+            val arguments = scannerConverter.convertToLoadArguments(request)
+            val page = resultManager.load(credentialsKey, sha256, scanner, arguments)
+                ?.let { result ->
+                    scannerConverter.convertCveResult(result, null).records.also { resultList.addAll(it) }
+                }
+        } while (page != null && page.size == pageSize)
+        val overview = HashMap<String, Long>()
+        val vulRules = vulRuleService.getVulList()
+        resultList.forEach { vulInfo ->
+            vulRules.find { vulInfo.vulId == it.vulId }?.let {
+                val key = VulRuleMatchOverviewKey.overviewKeyOf(it.pass, vulInfo.severity)
+                overview[key] = overview.getOrDefault(key, 0L) + 1
+            }
+        }
+        return overview
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(ReuseResultAction::class.java)
     }
 }

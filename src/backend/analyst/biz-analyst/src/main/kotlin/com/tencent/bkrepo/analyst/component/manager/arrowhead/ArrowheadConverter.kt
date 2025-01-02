@@ -103,10 +103,9 @@ class ArrowheadConverter(private val licenseService: SpdxLicenseService) : Scann
                 description = it.description,
                 officialSolution = it.officialSolution.ifEmpty { it.defenseSolution },
                 reference = it.references,
-                path = it.path,
-                isCveWhite = cveWhite?.contains(it.cveId) ?: false
+                path = it.path
             )
-        }.toList().sortedByDescending { it.isCveWhite }
+        }.toList()
         return Pages.ofResponse(pageRequest, result.totalRecords, reports)
     }
 
@@ -128,6 +127,10 @@ class ArrowheadConverter(private val licenseService: SpdxLicenseService) : Scann
         }
         addLicenseOverview(overview, scanExecutorResult.applicationItems)
         return overview
+    }
+
+    override fun convertVulRuleMatchOverview(scanExecutorResult: ScanExecutorResult): Map<String, Any?> {
+        TODO("Not yet implemented")
     }
 
     private fun addLicenseOverview(

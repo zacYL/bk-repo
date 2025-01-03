@@ -100,67 +100,80 @@ class IvyLocalRepository(
     override fun onUpload(context: ArtifactUploadContext) {
         (context.artifactInfo as IvyArtifactInfo).let {
             if (it.isSummaryFile()) {
-                // 摘要文件处理 .md5 .sh1
-                val fullPath = it.extractArtifactFilePathFromSummary()
-                nodeClient.getNodeDetail(
-                    projectId = it.projectId,
-                    repoName = it.repoName,
-                    fullPath = fullPath
-                ).data ?: throw IvyRequestForbiddenException(
-                    IvyMessageCode.IVY_ARTIFACT_NOT_FOUND, fullPath, it.getRepoIdentify()
+                // 摘要文件处理 .md5 .sha1
+                handleSummaryFile(context, it)
+            } else if (it.isIvyXml(context.getArtifactFile().getInputStream())) {
+                // ivy文件处理
+                handleIvyFileAndSaveVersion(context, it)
+            }
+            super.onUpload(context)
+        }
+    }
+
+    private fun handleSummaryFile(context: ArtifactUploadContext, ivyArtifactInfo: IvyArtifactInfo) {
+        ivyArtifactInfo.let {
+            val fullPath = it.extractArtifactFilePathFromSummary()
+            nodeClient.getNodeDetail(
+                projectId = it.projectId,
+                repoName = it.repoName,
+                fullPath = fullPath
+            ).data ?: throw IvyRequestForbiddenException(
+                IvyMessageCode.IVY_ARTIFACT_NOT_FOUND, fullPath, it.getRepoIdentify()
+            )
+            // 客户端是先上车制品，再上传摘要文件，所以可以更新节点元数据
+            metadataClient.saveMetadata(
+                MetadataSaveRequest(
+                    projectId = context.projectId,
+                    repoName = context.repoName,
+                    fullPath = fullPath,
+                    nodeMetadata = listOf(
+                        MetadataModel(
+                            key = it.getExt(),
+                            value = IvyUtil.extractDigest(context.getArtifactFile().getInputStream()),
+                            system = true,
+                            display = true
+                        )
+                    )
                 )
+            )
+        }
+    }
+
+    private fun handleIvyFileAndSaveVersion(context: ArtifactUploadContext, ivyArtifactInfo: IvyArtifactInfo) {
+        ivyArtifactInfo.let {
+            val artifactPattern = it.getRepoArtifactPattern(context.repositoryDetail)
+            // 解析ivy.xml获取发布的制品（可能多个），并获取发布制品中的主文件
+            val (descriptor, artifactsFullPath, masterArtifact) =
+                IvyUtil.ivyParsePublishArtifacts(
+                    it.getFile(context.getArtifactFile()),
+                    artifactPattern
+                )
+            // 如果主文件为空，使用ivy的fullpath
+            val masterArtifactFullPath = masterArtifact.second ?: context.artifactInfo.getArtifactFullPath()
+            val metadataModels = getMetadataModel(
+                descriptor,
+                context.artifactInfo.getArtifactFullPath(),
+                masterArtifact.first,
+                masterArtifactFullPath,
+                artifactsFullPath
+            )
+            createIvyVersion(
+                context,
+                descriptor,
+                masterArtifactFullPath,
+                metadataModels
+            )
+
+            artifactsFullPath.forEach { fullPath ->
                 metadataClient.saveMetadata(
                     MetadataSaveRequest(
                         projectId = context.projectId,
                         repoName = context.repoName,
                         fullPath = fullPath,
-                        nodeMetadata = listOf(
-                            MetadataModel(
-                                key = it.getExt(),
-                                value = IvyUtil.extractDigest(context.getArtifactFile().getInputStream()),
-                                system = true,
-                                display = true
-                            )
-                        )
+                        nodeMetadata = metadataModels
                     )
                 )
-            } else if (it.isIvyXml(context.getArtifactFile().getInputStream())) {
-                // ivy文件处理
-                val artifactPattern = it.getRepoArtifactPattern(context.repositoryDetail)
-                val (descriptor, artifactsFullPath, masterArtifact) =
-                    IvyUtil.ivyParsePublishArtifacts(
-                        it.getFile(context.getArtifactFile()),
-                        artifactPattern
-                    )
-                // 如果主文件为空，使用ivy的fullpath
-                val masterArtifactFullPath = masterArtifact.second ?: context.artifactInfo.getArtifactFullPath()
-                val metadataModels = getMetadataModel(
-                    descriptor,
-                    context.artifactInfo.getArtifactFullPath(),
-                    masterArtifact.first,
-                    masterArtifactFullPath,
-                    artifactsFullPath
-                )
-                createIvyVersion(
-                    context,
-                    descriptor,
-                    masterArtifactFullPath,
-                    metadataModels
-                )
-
-                artifactsFullPath.forEach { fullPath ->
-                    metadataClient.saveMetadata(
-                        MetadataSaveRequest(
-                            projectId = context.projectId,
-                            repoName = context.repoName,
-                            fullPath = fullPath,
-                            nodeMetadata = metadataModels
-                        )
-                    )
-                }
-
             }
-            super.onUpload(context)
         }
     }
 

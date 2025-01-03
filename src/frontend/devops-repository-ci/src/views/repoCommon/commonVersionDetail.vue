@@ -1,7 +1,7 @@
 <template>
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" @tab-change="tabChange" v-bkloading="{ isLoading }">
         <template #setting>
-            <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker' && repoType !== 'conan'"
+            <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker' && repoType !== 'conan' && noInLockList"
                 outline class="mr10" @click="$emit('download')">{{$t('download')}}</bk-button>
             <operation-list class="mr20"
                 :list="operationBtns">
@@ -48,6 +48,16 @@
                                     :forbid-type="metadataMap.forbidType"
                                     :forbid-description="forbidDescription">
                                 </forbid-tag>
+                                <!-- 黑名单icon -->
+                                <Icon
+                                    v-if="!noInLockList"
+                                    v-bk-tooltips="{
+                                        content: $t('alreadyJoinBlackList')
+                                    }"
+                                    class="ml10"
+                                    size="16" :style="{
+                                        color: '#FFB549'
+                                    }" name="blackWhiteList" />
                             </template>
                         </span>
                     </div>
@@ -222,6 +232,10 @@
         },
         mixins: [repoGuideMixin],
         props: {
+            noInLockList: {
+                type: Boolean,
+                default: true
+            },
             showUpdateOperation: {
                 type: Boolean,
                 default: true,

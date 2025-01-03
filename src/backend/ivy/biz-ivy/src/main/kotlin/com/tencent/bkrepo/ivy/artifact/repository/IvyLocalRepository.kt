@@ -142,29 +142,36 @@ class IvyLocalRepository(
     private fun handleIvyFileAndSaveVersion(context: ArtifactUploadContext, ivyArtifactInfo: IvyArtifactInfo) {
         ivyArtifactInfo.let {
             val artifactPattern = it.getRepoArtifactPattern(context.repositoryDetail)
+            val ivyPattern = it.getRepoIvyPattern(context.repositoryDetail)
             // 解析ivy.xml获取发布的制品（可能多个），并获取发布制品中的主文件
-            val (descriptor, artifactsFullPath, masterArtifact) =
+            val parseIvyInfo=
                 IvyUtil.ivyParsePublishArtifacts(
                     it.getFile(context.getArtifactFile()),
-                    artifactPattern
+                    artifactPattern,
+                    ivyPattern
                 )
+
+
             // 如果主文件为空，使用ivy的fullpath
-            val masterArtifactFullPath = masterArtifact.second ?: context.artifactInfo.getArtifactFullPath()
+            val masterArtifactFullPath = parseIvyInfo.masterArtifactFullPath ?: context.artifactInfo.getArtifactFullPath()
             val metadataModels = getMetadataModel(
-                descriptor,
+                parseIvyInfo.model,
                 context.artifactInfo.getArtifactFullPath(),
-                masterArtifact.first,
+                parseIvyInfo.masterArtifact,
                 masterArtifactFullPath,
-                artifactsFullPath
-            )
-            createIvyVersion(
-                context,
-                descriptor,
-                masterArtifactFullPath,
-                metadataModels
+                parseIvyInfo.artifactsFullPath
             )
 
-            artifactsFullPath.forEach { fullPath ->
+            // 格式与仓库配置的pattern不一致，不允许上传
+            if (!parseIvyInfo.isLegalIvyFile(context.artifactInfo.getArtifactFullPath())){
+                throw IvyRequestForbiddenException(
+                    IvyMessageCode.IVY_ARTIFACT_FORMAT_ERROR,
+                    context.artifactInfo.getArtifactFullPath(),
+                    context.artifactInfo.getRepoIdentify()
+                )
+            }
+
+            parseIvyInfo.artifactsFullPath.forEach { fullPath ->
                 metadataClient.saveMetadata(
                     MetadataSaveRequest(
                         projectId = context.projectId,
@@ -174,6 +181,12 @@ class IvyLocalRepository(
                     )
                 )
             }
+            createIvyVersion(
+                context,
+                parseIvyInfo.model,
+                masterArtifactFullPath,
+                metadataModels
+            )
         }
     }
 

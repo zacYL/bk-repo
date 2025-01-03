@@ -3,9 +3,9 @@ package com.tencent.bkrepo.ivy.util
 import com.google.common.io.ByteStreams
 import com.google.common.io.CharStreams
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.ivy.pojo.ParseIvyInfo
 import org.apache.ivy.core.IvyPatternHelper
 import org.apache.ivy.core.module.descriptor.Artifact
-import org.apache.ivy.core.module.descriptor.ModuleDescriptor
 import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.apache.ivy.core.settings.IvySettings
 import org.apache.ivy.plugins.parser.xml.XmlModuleDescriptorParser
@@ -31,11 +31,11 @@ object IvyUtil {
         }
     }
 
-    // 返回说明：Triple<ivy配置对应，所有发布制品fullpath，Pair<主制品文件，主制品fullpath>>
     fun ivyParsePublishArtifacts(
         ivyXmlFile: File,
-        artifactPattern: String
-    ): Triple<ModuleDescriptor, List<String>, Pair<Artifact?, String?>> {
+        artifactPattern: String,
+        ivyPattern: String,
+    ): ParseIvyInfo {
 
         // 设置 Ivy 配置
         val ivySettings = IvySettings()
@@ -52,6 +52,11 @@ object IvyUtil {
             descriptor.revision,
             descriptor.resolvedModuleRevisionId.extraAttributes,
             false
+        )
+
+        // 合法ivy文件全路径
+        val legalIvyFullPath = PathUtils.normalizeFullPath(
+            IvyPatternHelper.substitute(ivyPattern, mrId, "ivy", "xml", "xml")
         )
 
         // 获取主文件
@@ -79,10 +84,12 @@ object IvyUtil {
                 )
             )
         }
-        return Triple(
+        return ParseIvyInfo(
             descriptor,
+            legalIvyFullPath,
             artifactsFullPath,
-            (masterArtifact to masterArtifactFullPath)
+            masterArtifactFullPath,
+            masterArtifact ,
         )
     }
 

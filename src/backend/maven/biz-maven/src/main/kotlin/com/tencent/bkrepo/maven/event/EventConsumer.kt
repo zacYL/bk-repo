@@ -6,6 +6,7 @@ import com.tencent.bkrepo.common.artifact.event.repo.RepositoryCleanEvent
 import com.tencent.bkrepo.maven.service.MavenDeleteService
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.function.Consumer
 
@@ -14,6 +15,7 @@ class EventConsumer (
     private val service: MavenDeleteService
 ) : Consumer<ArtifactEvent> {
     override fun accept(event: ArtifactEvent) {
+        logger.info("receive event: $event")
         require(event.type == EventType.REPOSITORY_CLEAN) { return }
         val packageType = event.data[RepositoryCleanEvent::packageType.name]
         if (packageType != PackageType.MAVEN.name && packageType != PackageType.GRADLE.name) {
@@ -32,4 +34,11 @@ class EventConsumer (
             }
         }
     }
+
+    companion object {
+
+        private val logger = LoggerFactory.getLogger(EventConsumer::class.java)
+
+    }
+
 }

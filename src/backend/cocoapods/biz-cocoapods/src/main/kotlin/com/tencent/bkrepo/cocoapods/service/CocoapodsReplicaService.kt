@@ -112,8 +112,10 @@ class CocoapodsReplicaService(
                 false,
                 sha256 = artifactFile.getFileSha256(),
                 md5 = artifactFile.getFileMd5(),
-                overwrite = true
+                overwrite = true,
+                size = artifactFile.getSize()
             )
+            logger.info("nodeCreateRequest: $nodeCreateRequest")
             val nodeDetail =
                 storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, storageCredentials)
             logger.info("the new nodeDetail is: $nodeDetail")

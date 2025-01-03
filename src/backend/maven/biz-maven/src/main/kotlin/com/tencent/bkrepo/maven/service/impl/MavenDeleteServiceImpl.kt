@@ -3,7 +3,6 @@ package com.tencent.bkrepo.maven.service.impl
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
 import com.tencent.bkrepo.maven.enum.HashType
@@ -71,7 +70,7 @@ class MavenDeleteServiceImpl(
         artifactPath: String,
         mavenGavc: MavenGAVC
     ) {
-        val repositoryDetail = repositoryClient.getRepoDetail(projectId, repoName, RepositoryType.MAVEN.name).data
+        val repositoryDetail = repositoryClient.getRepoDetail(projectId, repoName).data
             ?: throw RepoNotFoundException("repo not found: { projectId=$projectId, repoName=$repoName }")
 
         val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data ?: return

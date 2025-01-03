@@ -40,13 +40,14 @@
                             <span class="text-overflow" style="max-width:150px;" :title="$version.name">{{ $version.name }}</span>
                             <operation-list
                                 class="version-operation"
+                                @iconClick="iconClick($event, $version)"
                                 :list="[
                                     ...(!$version.metadata.forbidStatus ? [
                                         (showPromotion && !$version.metadata.lockStatus) && {
                                             label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
-                                        !['conan', 'docker'].includes(repoType) && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }
+                                        !['conan', 'docker'].includes(repoType) && versionNoInLockList && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }
                                     ] : []),
                                     forbidOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
                                     lockOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
@@ -59,6 +60,7 @@
             <div class="common-version-detail flex-1">
                 <version-detail
                     ref="versionDetail"
+                    :no-in-lock-list="noInLockList"
                     :show-update-operation="updateOperationPermission"
                     :show-delete-operation="deleteOperationPermission"
                     :show-lock-operation="lockOperationPermission"
@@ -129,7 +131,9 @@
                     current: 1,
                     limit: 20,
                     limitList: [10, 20, 40]
-                }
+                },
+                noInLockList: true,
+                versionNoInLockList: true
             }
         },
         computed: {
@@ -203,6 +207,9 @@
             this.getPackageInfoHandler()
             this.handlerPaginationChange()
             this.refreshSupportPackageTypeList()
+            this.$nextTick(() => {
+                this.getIsLock()
+            })
         },
         methods: {
             ...mapActions([
@@ -213,8 +220,16 @@
                 'forbidPackageMetadata',
                 'lockPackageMetadata',
                 'refreshSupportPackageTypeList',
-                'getCurrentRepositoryDataPermission'
+                'getCurrentRepositoryDataPermission',
+                'blackWhiteListCheck'
             ]),
+            iconClick (ref, row) {
+                this.getIsLock(row.name).then(() => {
+                    this.$nextTick(() => {
+                        ref && ref.showHandler()
+                    })
+                })
+            },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
                 this.pagination.limit = limit
@@ -228,6 +243,28 @@
                         }
                     })
                 }
+            },
+            /**
+             * @description: 是否在黑名单里面
+             * @return {*}
+             */
+            getIsLock (version) {
+                return this.blackWhiteListCheck({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: version || this.version
+                    }
+                }).then(res => {
+                    if (version) {
+                        this.versionNoInLockList = res
+                    } else {
+                        this.noInLockList = res
+                    }
+                }).catch(() => {
+                    
+                })
             },
             getVersionListHandler (load) {
                 if (this.isLoading) return
@@ -300,6 +337,9 @@
                         ...this.$route.query,
                         version
                     }
+                })
+                this.$nextTick(() => {
+                    this.getIsLock()
                 })
             },
             refresh (version) {

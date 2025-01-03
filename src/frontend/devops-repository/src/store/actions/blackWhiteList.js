@@ -1,7 +1,7 @@
 /*
  * @Date: 2024-11-29 21:39:00
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-03 19:04:53
+ * @LastEditTime: 2025-01-03 17:00:03
  * @FilePath: /artifact/src/frontend/devops-repository/src/store/actions/blackWhiteList.js
  */
 import Vue from 'vue'
@@ -19,6 +19,23 @@ export default {
         return Vue.prototype.$ajax.post(
             `${Prefix}/package/access-rule/create`,
             body
+        )
+    },
+
+    /**
+     * @description: 校验是否在黑白名单里面
+     * @param {*} _
+     * @param {*} projectId
+     * @param {*} repoName
+     * @param {*} body
+     * @return {*}
+     */
+    blackWhiteListCheck (_, { projectId, repoName, body }) {
+        return Vue.prototype.$ajax.get(
+            `${Prefix}/package/access-rule/check/ ${projectId}/${repoName}/`,
+            {
+                params: body
+            }
         )
     },
     /**

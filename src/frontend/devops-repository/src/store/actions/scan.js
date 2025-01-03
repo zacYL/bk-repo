@@ -120,6 +120,22 @@ export default {
         }
         return Vue.prototype.$ajax.get(url)
     },
+    // 删除黑白漏洞名单
+    deleteVul (_, { body }) {
+        return Vue.prototype.$ajax.delete(
+            '/analyst/api/vul/rule/delete',
+            {
+                data: body
+            }
+        )
+    },
+    // 添加黑白漏洞名单
+    addVul (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            '/analyst/api/vul/rule/create',
+            body
+        )
+    },
     // 制品扫描报告漏洞列表
     getLeakList (_, { projectId, recordId, viewType, vulId, severity, current = 1, limit = 20 }) {
         let url = `${prefix}/artifact/leak/${projectId}/${recordId}`

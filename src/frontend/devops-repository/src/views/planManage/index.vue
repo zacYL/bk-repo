@@ -70,15 +70,6 @@
                     </span>
                 </template>
             </bk-table-column>
-            <!-- <bk-table-column label="下次执行时间" prop="NEXT_EXECUTION_TIME" width="150" :render-header="renderHeader">
-                <template #default="{ row }">{{formatDate(row.nextExecutionTime)}}</template>
-            </bk-table-column>
-            <bk-table-column :label="$t('creator')" width="90" show-overflow-tooltip>
-                <template #default="{ row }">{{userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy}}</template>
-            </bk-table-column>
-            <bk-table-column :label="$t('createdDate')" prop="CREATED_TIME" width="150" :render-header="renderHeader">
-                <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
-            </bk-table-column> -->
             <bk-table-column v-if="enablePlanPermission" :render-header="renderHeader" :label="$t('enablePlan')" width="100">
                 <template #default="{ row }">
                     <bk-switcher class="m5" v-model="row.enabled" size="small" theme="primary" @change="changeEnabledHandler(row)"></bk-switcher>

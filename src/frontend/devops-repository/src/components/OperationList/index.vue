@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-12-05 15:00:22
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-06 16:06:59
+ * @LastEditTime: 2025-01-03 14:49:40
  * @FilePath: /artifact/src/frontend/devops-repository/src/components/OperationList/index.vue
 -->
 <template>
@@ -21,7 +21,7 @@
             <li v-for="li in filterList" :key="li.label"
                 class="operation-item"
                 :class="{ 'disabled': li.disabled }"
-                @click.stop="() => !li.disabled && li.clickEvent()">
+                @click.stop="() => !li.disabled && li.clickEvent(handlerEvent)">
                 {{ li.label }}
             </li>
         </ul></template>
@@ -37,6 +37,13 @@
             }
         },
         computed: {
+            handlerEvent () {
+                return {
+                    close: () => {
+                        this.$refs.operationPopover.hideHandler()
+                    }
+                }
+            },
             operationPopover () {
                 return this.$refs.operationPopover
             },

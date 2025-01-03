@@ -55,7 +55,22 @@
                     </template>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('vulnerability') + ' ID'" prop="vulId" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('vulnerability') + ' ID'" prop="vulId" show-overflow-tooltip>
+                <template #default="{ row }">
+                    <div class="flex-align-center">
+                        <p class="text-overflow mr5" v-bk-overflow-tips style="flex: 1;min-width: 0;min-height: 0;">{{ row.vulId }}</p>
+                        <!-- 黑白名单icon -->
+                        <Icon v-if="row.pass !== null"
+                            v-bk-tooltips="{
+                                content: row.pass ? $t('alreadyJoinWhiteList') : $t('alreadyJoinBlackList')
+                            }"
+                            size="16" :style="{
+                                flexShrink: 0,
+                                color: row.pass ? '#14AB5B' : '#FFB549'
+                            }" name="blackWhiteList" />
+                    </div>
+                </template>
+            </bk-table-column>
             <bk-table-column :label="$t('vulnerabilityLevel')">
                 <template #default="{ row }">
                     <div class="status-sign" :class="row.severity" :data-name="$t(`leakLevelEnum.${row.severity}`)"></div>
@@ -63,6 +78,31 @@
             </bk-table-column>
             <bk-table-column :label="$t('dependPackage')" prop="pkgName" show-overflow-tooltip></bk-table-column>
             <bk-table-column :label="$t('installedVersion')" prop="installedVersion" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('operation')" width="100" v-if="userInfo.admin">
+                <template #default="{ row }">
+                    <operation-list
+                        :list="[
+                            (row.pass === null) && {
+                                label: $t('joinBlackList'),
+                                clickEvent: (handle) => joinBlackWhiteList(row, false).finally(() => {
+                                    handle.close()
+                                })
+                            },
+                            (row.pass === null) && {
+                                label: $t('joinWhiteList'),
+                                clickEvent: (handle) => joinBlackWhiteList(row, true).finally(() => {
+                                    handle.close()
+                                })
+                            },
+                            row.pass !== null && {
+                                label: $t('delete'),
+                                clickEvent: (handle) => removeBlackWhiteList(row).finally(() => {
+                                    handle.close()
+                                })
+                            }
+                        ]"></operation-list>
+                </template>
+            </bk-table-column>
         </bk-table>
         <bk-pagination
             class="p10"
@@ -79,11 +119,15 @@
     </div>
 </template>
 <script>
-    import { mapActions } from 'vuex'
+    import { mapActions, mapState } from 'vuex'
     import { leakLevelEnum } from '@repository/store/publicEnum'
+    import OperationList from '@repository/components/OperationList'
     import { customizeExportScanFile } from '@repository/utils/exportScanFile'
     export default {
         name: 'leak',
+        components: {
+            OperationList
+        },
         props: {
             subtaskOverview: Object,
             projectId: String,
@@ -106,6 +150,9 @@
                 }
             }
         },
+        computed: {
+            ...mapState(['userInfo'])
+        },
         watch: {
             subtaskOverview () {
                 this.handlerPaginationChange()
@@ -117,7 +164,49 @@
             }
         },
         methods: {
-            ...mapActions(['getLeakList']),
+            ...mapActions(['getLeakList', 'deleteVul', 'addVul']),
+            joinBlackWhiteList (row, pass) {
+                return this.addVul({
+                    body: {
+                        vulRules: [{
+                            vulId: row.vulId,
+                            pass,
+                            description: row.description
+                        }]
+                    }
+                }).then((res) => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: !pass ? this.$t('alreadyJoinBlackList') : this.$t('alreadyJoinWhiteList')
+                    })
+                    this.pagination.current = 1
+                    this.handlerPaginationChange()
+                }).catch((err) => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: err.message || (this.$t('add') + this.$t('space') + this.$t('fail'))
+                    })
+                })
+            },
+            removeBlackWhiteList (row) {
+                return this.deleteVul({
+                    body: {
+                        vulIdList: [row.vulId]
+                    }
+                }).then((res) => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('removeSuccess')
+                    })
+                    this.pagination.current = 1
+                    this.handlerPaginationChange()
+                }).catch(() => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('removeFail')
+                    })
+                })
+            },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit

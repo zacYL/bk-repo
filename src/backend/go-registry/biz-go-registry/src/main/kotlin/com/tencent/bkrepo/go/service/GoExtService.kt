@@ -32,14 +32,18 @@ import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_TYPE
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_OCTET_STREAM
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.util.StreamUtils.readText
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.CONTENT_DISPOSITION_TEMPLATE
 import com.tencent.bkrepo.common.artifact.constant.MD5
 import com.tencent.bkrepo.common.artifact.constant.SHA256
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
+import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
+import com.tencent.bkrepo.common.artifact.pojo.PackageVersionInfo
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
-import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
+import com.tencent.bkrepo.common.artifact.repository.core.ArtifactExtService
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.go.constant.CLIENT_ARCHIVE_PATH
@@ -48,12 +52,8 @@ import com.tencent.bkrepo.go.constant.GO_MOD_KEY
 import com.tencent.bkrepo.go.constant.GoProperties
 import com.tencent.bkrepo.go.constant.README_KEY
 import com.tencent.bkrepo.go.pojo.artifact.GoArtifactInfo
-import com.tencent.bkrepo.go.pojo.response.BasicInfo
-import com.tencent.bkrepo.go.pojo.response.PackageVersionInfo
+import com.tencent.bkrepo.go.pojo.response.GoPackageVersionInfo
 import com.tencent.bkrepo.go.util.GoUtils
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.format.DateTimeFormatter
@@ -62,21 +62,13 @@ import java.util.zip.ZipInputStream
 @Service
 class GoExtService(
     private val goProperties: GoProperties,
-    private val repositoryClient: RepositoryClient,
-    private val packageClient: PackageClient,
-    private val nodeClient: NodeClient,
     private val storageManager: StorageManager
-) : ArtifactService() {
+) : ArtifactExtService() {
 
     fun getRegistryDomain() = goProperties.domain
 
-    fun delete(artifactInfo: GoArtifactInfo) {
-        repository.remove(ArtifactRemoveContext())
-        logger.info("user[${SecurityUtils.getPrincipal()}] delete module[${artifactInfo.getModuleId()}] successfully")
-    }
-
-    fun getVersionDetail(artifactInfo: GoArtifactInfo): PackageVersionInfo {
-        with(artifactInfo) {
+    override fun getVersionDetail(userId: String, artifactInfo: ArtifactInfo): GoPackageVersionInfo {
+        with(artifactInfo as GoArtifactInfo) {
             val version = getArtifactVersion()!!
             val packageVersion = packageClient.findVersionByName(projectId, repoName, getPackageKey(), version).data
                 ?: throw VersionNotFoundException(version)
@@ -106,9 +98,25 @@ class GoExtService(
                 val readmeNode = nodeClient.getNodeDetail(projectId, repoName, readmeFullPath).data
                 storageManager.loadArtifactInputStream(readmeNode, credentials)?.use { it.readText() }
             }
-            return PackageVersionInfo(basic, packageVersion.packageMetadata, mod, readme)
+            return GoPackageVersionInfo(basic, packageVersion.packageMetadata, mod, readme)
         }
     }
+
+    override fun deletePackage(userId: String, artifactInfo: ArtifactInfo) = delete(artifactInfo as GoArtifactInfo)
+
+    override fun deleteVersion(userId: String, artifactInfo: ArtifactInfo) = delete(artifactInfo as GoArtifactInfo)
+
+    override fun buildVersionDeleteArtifactInfo(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): GoArtifactInfo = GoArtifactInfo(
+        projectId = projectId,
+        repoName = repoName,
+        modulePath = PackageKeys.resolveName(packageKey),
+        version = version
+    )
 
     @Suppress("NestedBlockDepth")
     fun downloadClient(os: String, arch: String) {
@@ -132,6 +140,11 @@ class GoExtService(
     }
 
     fun listClient() = GoUtils.listClientFile()
+
+    private fun delete(artifactInfo: GoArtifactInfo) {
+        repository.remove(ArtifactRemoveContext())
+        logger.info("user[${SecurityUtils.getPrincipal()}] delete module[${artifactInfo.getModuleId()}] successfully")
+    }
 
     companion object {
         private val logger = LoggerFactory.getLogger(GoExtService::class.java)

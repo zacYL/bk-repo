@@ -27,48 +27,20 @@
 
 package com.tencent.bkrepo.go.pojo.response
 
+import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
+import com.tencent.bkrepo.common.artifact.pojo.PackageVersionInfo
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("go版本详情页返回包装模型")
-data class PackageVersionInfo(
+data class GoPackageVersionInfo(
     @ApiModelProperty("基础信息")
-    val basic: BasicInfo,
+    override val basic: BasicInfo,
     @ApiModelProperty("元数据信息")
     val metadata: List<MetadataModel>,
     @ApiModelProperty("模块定义信息")
     val mod: String?,
     @ApiModelProperty("描述信息")
     val readme: String?
-)
-
-@ApiModel("基础信息")
-data class BasicInfo(
-    @ApiModelProperty("版本名称")
-    val version: String,
-    @ApiModelProperty("完整路径")
-    val fullPath: String,
-    @ApiModelProperty("文件大小，单位byte")
-    val size: Long,
-    @ApiModelProperty("文件sha256")
-    val sha256: String,
-    @ApiModelProperty("文件md5")
-    val md5: String,
-    @ApiModelProperty("晋级状态标签")
-    val stageTag: List<String>,
-    @ApiModelProperty("所属项目id")
-    val projectId: String,
-    @ApiModelProperty("所属仓库名称")
-    val repoName: String,
-    @ApiModelProperty("下载次数")
-    val downloadCount: Long,
-    @ApiModelProperty("创建者")
-    val createdBy: String,
-    @ApiModelProperty("创建时间")
-    val createdDate: String,
-    @ApiModelProperty("修改者")
-    val lastModifiedBy: String,
-    @ApiModelProperty("修改时间")
-    val lastModifiedDate: String
-)
+) : PackageVersionInfo

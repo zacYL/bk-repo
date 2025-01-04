@@ -29,31 +29,41 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.npm.service
+package com.tencent.bkrepo.maven.pojo
 
-import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
-import com.tencent.bkrepo.npm.pojo.NpmDomainInfo
-import com.tencent.bkrepo.npm.pojo.user.PackageVersionInfo
+import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
 
-interface NpmWebService {
-
-    /**
-     * 查询版本信息
-     */
-    fun detailVersion(artifactInfo: NpmArtifactInfo, packageKey: String, version: String): PackageVersionInfo
-
-    /**
-     * 删除包
-     */
-    fun deletePackage(artifactInfo: NpmArtifactInfo)
-
-    /**
-     * 删除包版本
-     */
-    fun deleteVersion(artifactInfo: NpmArtifactInfo)
-
-    /**
-     * 获取npm域名信息
-     */
-    fun getRegistryDomain(): NpmDomainInfo
-}
+class MavenBasicInfo(
+    val groupId: String,
+    val artifactId: String,
+    version: String,
+    val classifier: String?,
+    val type: String?,
+    size: Long,
+    fullPath: String,
+    createdBy: String,
+    createdDate: String,
+    lastModifiedBy: String,
+    lastModifiedDate: String,
+    downloadCount: Long,
+    sha256: String,
+    md5: String,
+    projectId: String,
+    repoName: String,
+    stageTag: List<String>,
+    val description: String?
+) : BasicInfo(
+    version = version,
+    fullPath = fullPath,
+    size = size,
+    sha256 = sha256,
+    md5 = md5,
+    stageTag = stageTag,
+    projectId = projectId,
+    repoName = repoName,
+    downloadCount = downloadCount,
+    createdBy = createdBy,
+    createdDate = createdDate,
+    lastModifiedBy = lastModifiedBy,
+    lastModifiedDate = lastModifiedDate
+)

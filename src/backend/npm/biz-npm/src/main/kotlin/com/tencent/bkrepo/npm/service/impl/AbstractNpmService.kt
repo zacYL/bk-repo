@@ -33,10 +33,8 @@ package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.StreamUtils.readText
-import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
@@ -51,7 +49,6 @@ import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
 import com.tencent.bkrepo.npm.constants.PACKAGE_JSON
-import com.tencent.bkrepo.npm.constants.PACKAGE_METADATA
 import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmRepoNotFoundException
@@ -234,19 +231,6 @@ open class AbstractNpmService : ArtifactService() {
 		val fullPath = String.format(NPM_PKG_METADATA_FULL_PATH, name)
 		context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
 		repository.upload(context)
-	}
-
-	protected fun loadPackageMetadata(context: ArtifactContext): NpmPackageMetaData? {
-		with(context) {
-			return getAttribute<NpmPackageMetaData>(PACKAGE_METADATA) ?: run {
-				val npmArtifactInfo = artifactInfo as NpmArtifactInfo
-				val fullPath = NpmUtils.getPackageMetadataPath(npmArtifactInfo.packageName)
-				val pkgMetadataNode = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
-				storageManager.loadArtifactInputStream(pkgMetadataNode, storageCredentials)?.use {
-					it.readJsonString<NpmPackageMetaData>()
-				}?.also { putAttribute(PACKAGE_METADATA, it) }
-			}
-		}
 	}
 
 	protected fun queryVersionMetadata(

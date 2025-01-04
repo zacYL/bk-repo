@@ -59,7 +59,7 @@ import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
-import com.tencent.bkrepo.maven.pojo.Basic
+import com.tencent.bkrepo.maven.pojo.MavenBasicInfo
 import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
 import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.service.MavenExtService
@@ -190,7 +190,7 @@ class MavenRemoteRepository(
                 ?: jarNode.createdDate
             val lastModifiedDate = packageVersion?.lastModifiedDate?.format(DateTimeFormatter.ISO_DATE_TIME)
                 ?: jarNode.lastModifiedDate
-            val mavenArtifactBasic = Basic(
+            val mavenArtifactMavenBasicInfo = MavenBasicInfo(
                 groupId,
                 artifactId,
                 version,
@@ -200,12 +200,14 @@ class MavenRemoteRepository(
                 jarNode.createdBy, createdDate,
                 jarNode.lastModifiedBy, lastModifiedDate,
                 count,
-                jarNode.sha256,
-                jarNode.md5,
-                stageTag,
+                jarNode.sha256!!,
+                jarNode.md5!!,
+                projectId,
+                repoName,
+                stageTag ?: emptyList(),
                 null
             )
-            return MavenArtifactVersionData(mavenArtifactBasic, packageVersion?.packageMetadata)
+            return MavenArtifactVersionData(mavenArtifactMavenBasicInfo, packageVersion?.packageMetadata)
         }
     }
 

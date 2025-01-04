@@ -32,13 +32,14 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.common.storage.pojo.FileInfo
+import com.tencent.bkrepo.oci.model.ManifestList
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
 import com.tencent.bkrepo.oci.pojo.node.NodeProperty
 import com.tencent.bkrepo.oci.pojo.response.OciImageResult
 import com.tencent.bkrepo.oci.pojo.response.OciTagResult
-import com.tencent.bkrepo.oci.pojo.user.PackageVersionInfo
+import com.tencent.bkrepo.oci.pojo.user.OciPackageVersionInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import javax.servlet.http.HttpServletRequest
 
@@ -52,7 +53,7 @@ interface OciOperationService {
         artifactInfo: OciArtifactInfo,
         packageKey: String,
         version: String
-    ): PackageVersionInfo
+    ): OciPackageVersionInfo
 
     /**
      * 删除包
@@ -184,4 +185,10 @@ interface OciOperationService {
         pName: String,
         userId: String = SecurityUtils.getUserId()
     )
+
+    fun loadManifestList(
+        sha256: String,
+        size: Long,
+        storageCredentials: StorageCredentials?
+    ): ManifestList?
 }

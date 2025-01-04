@@ -38,7 +38,7 @@ import com.tencent.bkrepo.oci.constant.DIGEST_LIST
 import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
-import com.tencent.bkrepo.oci.pojo.user.BasicInfo
+import com.tencent.bkrepo.oci.pojo.user.OciBasicInfo
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
@@ -213,9 +213,9 @@ object ObjectBuildUtils {
         )
     }
 
-    fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion, os: List<String>): BasicInfo {
+    fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion, platform: List<String>): OciBasicInfo {
         with(nodeDetail) {
-            return BasicInfo(
+            return OciBasicInfo(
                 version = packageVersion.name,
                 fullPath = fullPath,
                 size = packageVersion.size,
@@ -229,7 +229,7 @@ object ObjectBuildUtils {
                 createdDate = packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                 lastModifiedBy = packageVersion.lastModifiedBy,
                 lastModifiedDate = packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
-                os = os
+                platform = platform,
             )
         }
     }

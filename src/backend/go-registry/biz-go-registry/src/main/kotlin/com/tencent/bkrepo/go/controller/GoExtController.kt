@@ -31,18 +31,22 @@ import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.go.pojo.artifact.GoArtifactInfo
-import com.tencent.bkrepo.go.pojo.response.PackageVersionInfo
+import com.tencent.bkrepo.go.pojo.response.GoPackageVersionInfo
 import com.tencent.bkrepo.go.service.GoExtService
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestAttribute
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -65,11 +69,12 @@ class GoExtController(
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     @DeleteMapping("/package/delete/{projectId}/{repoName}")
     fun deletePackage(
+        @RequestAttribute userId: String,
         artifactInfo: GoArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String
     ): Response<Void> {
-        goExtService.delete(artifactInfo)
+        goExtService.deletePackage(userId, artifactInfo)
         return ResponseBuilder.success()
     }
 
@@ -77,13 +82,14 @@ class GoExtController(
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     @DeleteMapping("/version/delete/{projectId}/{repoName}")
     fun deleteVersion(
+        @RequestAttribute userId: String,
         artifactInfo: GoArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String,
         @ApiParam(value = "版本号", required = true)
         @RequestParam version: String
     ): Response<Void> {
-        goExtService.delete(artifactInfo)
+        goExtService.deleteVersion(userId, artifactInfo)
         return ResponseBuilder.success()
     }
 
@@ -91,13 +97,32 @@ class GoExtController(
     @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     @GetMapping("/version/detail/{projectId}/{repoName}")
     fun getVersionDetail(
+        @RequestAttribute userId: String,
         artifactInfo: GoArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String,
         @ApiParam(value = "版本号", required = true)
         @RequestParam version: String
-    ): Response<PackageVersionInfo> {
-        return ResponseBuilder.success(goExtService.getVersionDetail(artifactInfo))
+    ): Response<GoPackageVersionInfo> {
+        return ResponseBuilder.success(goExtService.getVersionDetail(userId, artifactInfo))
+    }
+
+    @ApiOperation("移动包版本")
+    @PostMapping("/version/move")
+    fun moveVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        goExtService.moveCopyVersion(request, true)
+        return ResponseBuilder.success()
+    }
+
+    @ApiOperation("复制包版本")
+    @PostMapping("/version/copy")
+    fun copyVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        goExtService.moveCopyVersion(request, false)
+        return ResponseBuilder.success()
     }
 
     @ApiOperation("下载客户端")

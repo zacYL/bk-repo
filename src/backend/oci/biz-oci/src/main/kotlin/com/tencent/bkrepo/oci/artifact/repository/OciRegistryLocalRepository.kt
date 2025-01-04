@@ -33,6 +33,7 @@ package com.tencent.bkrepo.oci.artifact.repository
 
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
@@ -55,9 +56,11 @@ import com.tencent.bkrepo.oci.constant.EMPTY_FILE_SHA256
 import com.tencent.bkrepo.oci.constant.FORCE
 import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.LAST_TAG
+import com.tencent.bkrepo.oci.constant.MANIFEST
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.N
 import com.tencent.bkrepo.oci.constant.OCI_IMAGE_MANIFEST_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.OCI_MANIFEST_LIST
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_VERSION
 import com.tencent.bkrepo.oci.constant.OciMessageCode
@@ -348,6 +351,24 @@ class OciRegistryLocalRepository(
             packageVersion = version,
             userId = context.userId
         )
+    }
+
+    override fun getArtifactFullPaths(
+        projectId: String,
+        repoName: String,
+        key: String,
+        version: String,
+        manifestPath: String?,
+        artifactPath: String?
+    ): List<String> {
+        require(manifestPath != null)
+        if (manifestPath.substringAfterLast("/") == OCI_MANIFEST_LIST) return listOf(manifestPath)
+        val name = PackageKeys.resolveName(key)
+        return if (manifestPath == OciLocationUtils.buildManifestPath(name, version)) {
+            listOf(manifestPath, OciLocationUtils.buildBlobsFolderPath(name) + version)
+        } else if (manifestPath == "/$name/$version/$MANIFEST") {
+            listOf("/$name/$version")
+        } else throw ParameterInvalidException("manifestPath of [$projectId/$repoName/$name/$version]")
     }
 
     /**

@@ -100,7 +100,7 @@ import com.tencent.bkrepo.oci.pojo.response.OciImage
 import com.tencent.bkrepo.oci.pojo.response.OciImageResult
 import com.tencent.bkrepo.oci.pojo.response.OciTag
 import com.tencent.bkrepo.oci.pojo.response.OciTagResult
-import com.tencent.bkrepo.oci.pojo.user.PackageVersionInfo
+import com.tencent.bkrepo.oci.pojo.user.OciPackageVersionInfo
 import com.tencent.bkrepo.oci.service.OciOperationService
 import com.tencent.bkrepo.oci.util.ObjectBuildUtils
 import com.tencent.bkrepo.oci.util.OciLocationUtils
@@ -286,7 +286,7 @@ class OciOperationServiceImpl(
         artifactInfo: OciArtifactInfo,
         packageKey: String,
         version: String
-    ): PackageVersionInfo {
+    ): OciPackageVersionInfo {
         with(artifactInfo) {
             logger.info("Try to get detail of the [$packageKey/$version] in repo ${artifactInfo.getRepoIdentify()}")
             val repoDetail = getRepositoryInfo(artifactInfo)
@@ -308,7 +308,7 @@ class OciOperationServiceImpl(
             val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data!!
             val pair = getManifestInfo(nodeDetail, repoDetail, name)
             val basicInfo = ObjectBuildUtils.buildBasicInfo(nodeDetail, packageVersion, pair.first)
-            return PackageVersionInfo(basicInfo, packageVersion.packageMetadata, pair.second)
+            return OciPackageVersionInfo(basicInfo, packageVersion.packageMetadata, pair.second)
         }
     }
 
@@ -555,7 +555,7 @@ class OciOperationServiceImpl(
         }
     }
 
-    private fun loadManifestList(
+    fun loadManifestList(
         sha256: String,
         size: Long,
         storageCredentials: StorageCredentials?

@@ -110,7 +110,7 @@ class GoPackageService(
     fun remove(artifactInfo: GoArtifactInfo, userId: String) {
         with(artifactInfo) {
             val version = getArtifactVersion()
-            if (version.isNullOrBlank()) {
+            if (version == null) {
                 packageClient.deletePackage(projectId, repoName, getPackageKey(), HttpContextHolder.getClientAddress())
             } else {
                 packageClient.deleteVersion(

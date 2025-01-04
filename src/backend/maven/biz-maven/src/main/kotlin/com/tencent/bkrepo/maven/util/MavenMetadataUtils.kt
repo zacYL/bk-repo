@@ -47,4 +47,18 @@ object MavenMetadataUtils {
             }
         }
     }
+
+    fun initMetadataByGav(groupId: String, artifactId: String, version: String): Metadata {
+        return Metadata().apply {
+            this.groupId = groupId
+            this.artifactId = artifactId
+            this.version = version
+            this.versioning = Versioning().apply {
+                this.latest = version
+                this.release = version
+                this.versions = listOf(version)
+                this.lastUpdated = LocalDateTime.now(ZoneId.of("UTC")).format(formatter)
+            }
+        }
+    }
 }

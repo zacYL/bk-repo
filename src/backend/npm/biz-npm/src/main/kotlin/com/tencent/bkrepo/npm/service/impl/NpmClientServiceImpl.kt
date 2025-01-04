@@ -80,6 +80,7 @@ import com.tencent.bkrepo.npm.pojo.enums.NpmOperationAction
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
 import com.tencent.bkrepo.npm.pojo.metadata.disttags.DistTags
 import com.tencent.bkrepo.npm.service.NpmClientService
+import com.tencent.bkrepo.npm.service.NpmOperationService
 import com.tencent.bkrepo.npm.utils.BeanUtils
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.npm.utils.TimeUtil
@@ -103,7 +104,8 @@ import kotlin.system.measureTimeMillis
 class NpmClientServiceImpl(
     private val npmDependentHandler: NpmDependentHandler,
     private val metadataClient: MetadataClient,
-    private val npmPackageHandler: NpmPackageHandler
+    private val npmPackageHandler: NpmPackageHandler,
+    private val npmOperationService: NpmOperationService,
 ) : NpmClientService, AbstractNpmService() {
 
     @Transactional(rollbackFor = [Throwable::class])
@@ -271,7 +273,7 @@ class NpmClientServiceImpl(
             val context = ArtifactRemoveContext(artifact = artifactInfo)
             npmPackageHandler.deletePackage(context.userId, packageName, this)
             repository.remove(context)
-            val pkgMetadata = loadPackageMetadata(context)
+            val pkgMetadata = npmOperationService.loadPackageMetadata(context)
             if (pkgMetadata != null) {
                 npmDependentHandler.updatePackageDependents(
                     context.userId, this, pkgMetadata, NpmOperationAction.UNPUBLISH

@@ -29,23 +29,51 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.maven.pojo
+package com.tencent.bkrepo.oci.pojo.user
 
-data class Basic(
-    val groupId: String,
-    val artifactId: String,
-    val version: String,
-    val classifier: String?,
-    val type: String?,
-    val size: Long,
-    val fullPath: String,
-    val createdBy: String,
-    val createdDate: String,
-    val lastModifiedBy: String,
-    val lastModifiedDate: String,
-    val downloadCount: Long,
-    val sha256: String?,
-    val md5: String?,
-    val stageTag: List<String>?,
-    val description: String?
+import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
+import com.tencent.bkrepo.common.artifact.pojo.PackageVersionInfo
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiModelProperty
+
+@Api("oci版本详情页返回包装模型")
+data class OciPackageVersionInfo(
+    @ApiModelProperty("基础信息")
+    override val basic: OciBasicInfo,
+    @ApiModelProperty("元数据信息")
+    val metadata: List<MetadataModel>,
+    @ApiModelProperty("history")
+    val history: List<Any>,
+) : PackageVersionInfo
+
+class OciBasicInfo(
+    version: String,
+    fullPath: String,
+    size: Long,
+    sha256: String,
+    md5: String,
+    stageTag: List<String>,
+    projectId: String,
+    repoName: String,
+    downloadCount: Long,
+    createdBy: String,
+    createdDate: String,
+    lastModifiedBy: String,
+    lastModifiedDate: String,
+    val platform: List<String>
+) : BasicInfo(
+    version = version,
+    fullPath = fullPath,
+    size = size,
+    sha256 = sha256,
+    md5 = md5,
+    stageTag = stageTag,
+    projectId = projectId,
+    repoName = repoName,
+    downloadCount = downloadCount,
+    createdBy = createdBy,
+    createdDate = createdDate,
+    lastModifiedBy = lastModifiedBy,
+    lastModifiedDate = lastModifiedDate
 )

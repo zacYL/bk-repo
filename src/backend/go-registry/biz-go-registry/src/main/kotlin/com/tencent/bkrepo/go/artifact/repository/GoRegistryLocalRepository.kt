@@ -196,6 +196,18 @@ class GoRegistryLocalRepository(
         return goPackageService.buildDownloadRecord(context.artifactInfo as GoModuleInfo, context.userId)
     }
 
+    override fun getArtifactFullPaths(
+        projectId: String,
+        repoName: String,
+        key: String,
+        version: String,
+        manifestPath: String?,
+        artifactPath: String?
+    ): List<String> {
+        require(artifactPath != null)
+        return listOf(artifactPath.substringBeforeLast('/'))
+    }
+
     // TODO: 上传校验
     private fun validate(artifactInfo: GoModuleInfo, artifactFile: ArtifactFile) {
         return

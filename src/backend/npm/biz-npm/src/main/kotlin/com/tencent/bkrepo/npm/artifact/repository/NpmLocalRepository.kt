@@ -29,7 +29,10 @@ package com.tencent.bkrepo.npm.artifact.repository
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.constant.TEMP_INDEX_PATH
+import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
@@ -49,10 +52,16 @@ import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
+import com.tencent.bkrepo.common.artifact.util.version.SemVersion
+import com.tencent.bkrepo.common.artifact.util.version.SemVersionParser
 import com.tencent.bkrepo.common.query.enums.OperationType
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.ATTRIBUTE_OCTET_STREAM_SHA1
+import com.tencent.bkrepo.npm.constants.CREATED
+import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.METADATA
+import com.tencent.bkrepo.npm.constants.MODIFIED
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_METADATA_ROOT
 import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
@@ -114,7 +123,6 @@ class NpmLocalRepository(
         super.onDownloadBefore(context)
         downloadIntercept(context, null)
     }
-
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
         return NodeCreateRequest(
@@ -254,6 +262,117 @@ class NpmLocalRepository(
                 "npm package migrate result"
             )
         }
+    }
+
+    override fun getArtifactFullPaths(
+        projectId: String,
+        repoName: String,
+        key: String,
+        version: String,
+        manifestPath: String?,
+        artifactPath: String?
+    ): List<String> {
+        require(artifactPath != null)
+        val list = mutableListOf(artifactPath)
+        val name = PackageKeys.resolveName(key)
+        val versionMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(name, version)
+        if (nodeClient.checkExist(projectId, repoName, versionMetadataFullPath).data == true) {
+            list.add(versionMetadataFullPath)
+        }
+        return list
+    }
+
+    override fun getCommonIndexFullPaths(
+        projectId: String,
+        repoName: String,
+        key: String,
+        version: String
+    ): List<String> {
+        return listOf(NpmUtils.getPackageMetadataPath(PackageKeys.resolveName(key)))
+    }
+
+    /**
+     * TODO: 需要处理并发写入
+     * TODO: 仅使用package-version.json更新索引，不分发package.json文件
+     */
+    override fun updateIndex(projectId: String, repoName: String, key: String, version: String, indexes: List<String>) {
+        logger.info("update index for $projectId/$repoName/$key/$version")
+        val name = PackageKeys.resolveName(key)
+        val pkgMetadataFullPath = NpmUtils.getPackageMetadataPath(name)
+        val credential = repositoryClient.getRepoDetail(projectId, repoName).data!!.storageCredentials
+        // 获取复制到目标仓库的临时package索引
+        val tmpPkgMetadataFullPath = "$TEMP_INDEX_PATH$pkgMetadataFullPath"
+        val tmpPkgMetaDataNode = nodeClient.getNodeDetail(projectId, repoName, tmpPkgMetadataFullPath).data
+            ?: throw NodeNotFoundException("$projectId/$repoName/$tmpPkgMetadataFullPath")
+        val tmpMetadata = storageManager.loadArtifactInputStream(tmpPkgMetaDataNode, credential).use {
+            JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
+        }
+        // 获取目标仓库已有的package索引
+        val packageExist = packageClient.findPackageByKey(projectId, repoName, key).data != null
+        val originalMetadata = if (packageExist) {
+            val originMetadataNode = nodeClient.getNodeDetail(projectId, repoName, pkgMetadataFullPath).data
+                ?: throw NodeNotFoundException("$projectId/$repoName/$pkgMetadataFullPath")
+            storageManager.loadArtifactInputStream(originMetadataNode, credential).use {
+                JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
+            }
+        } else null
+        // 构建新的package索引
+        val artifactFile = buildNewMetadataFile(projectId, repoName, name, version, originalMetadata, tmpMetadata)
+        val nodeCreateRequest = NodeCreateRequest(
+            projectId = projectId,
+            repoName = repoName,
+            fullPath = pkgMetadataFullPath,
+            folder = false,
+            size = artifactFile.getSize(),
+            sha256 = artifactFile.getFileSha256(),
+            md5 = artifactFile.getFileMd5(),
+            overwrite = true,
+            operator = SecurityUtils.getPrincipal()
+        )
+        storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, credential)
+        logger.info("success to update index for [$projectId/$repoName/$name/$version]")
+        super.updateIndex(projectId, repoName, key, version, indexes)
+    }
+
+    @Suppress("LongParameterList")
+    private fun buildNewMetadataFile(
+        projectId: String,
+        repoName: String,
+        name: String,
+        version: String,
+        originalMetadata: NpmPackageMetaData?,
+        tmpMetadata: NpmPackageMetaData
+    ): ArtifactFile {
+        val time = TimeUtil.getGMTTime()
+        val newMetadata = if (originalMetadata == null) {
+            tmpMetadata.versions.map = mutableMapOf(version to tmpMetadata.versions.map[version]!!)
+            tmpMetadata.time = NpmPackageMetaData.Time().apply {
+                add(CREATED, time)
+                add(MODIFIED, time)
+                add(version, time)
+            }
+            tmpMetadata.distTags = NpmPackageMetaData.DistTags().apply { set(LATEST, version) }
+            tmpMetadata
+        } else {
+            originalMetadata.versions.map[version] = tmpMetadata.versions.map[version]!!
+            originalMetadata.time.apply {
+                add(MODIFIED, time)
+                add(version, time)
+            }
+            val latest = originalMetadata.distTags.getMap()[LATEST]
+            if (latest == null || latest != version && SemVersionParser.parse(latest) < SemVersion.parse(version)) {
+                originalMetadata.distTags.set(LATEST, version)
+            }
+            originalMetadata
+        }
+        val oldTarball = newMetadata.versions.map[version]!!.dist?.tarball!!
+        newMetadata.versions.map[version]!!.dist?.tarball =
+            NpmUtils.buildPackageTgzTarball(
+                oldTarball, npmProperties.domain, npmProperties.tarball.prefix, name,
+                NpmArtifactInfo(projectId, repoName, name, version)
+            )
+        val credential = repositoryClient.getRepoDetail(projectId, repoName).data!!.storageCredentials
+        return newMetadata.toJsonString().byteInputStream().let { ArtifactFileFactory.build(it, credential) }
     }
 
     private fun doMigrate(context: ArtifactMigrateContext, packageName: String): PackageMigrateDetail {

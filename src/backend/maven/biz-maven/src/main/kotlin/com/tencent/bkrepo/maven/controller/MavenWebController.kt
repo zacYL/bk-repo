@@ -40,6 +40,7 @@ import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
+import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
 import com.tencent.bkrepo.maven.pojo.MavenDependency
 import com.tencent.bkrepo.maven.pojo.MavenPlugin
 import com.tencent.bkrepo.maven.pojo.MavenVersionDependentsRelation
@@ -52,6 +53,7 @@ import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -68,11 +70,12 @@ class MavenWebController(
     @ApiOperation("maven jar 包删除接口")
     @DeleteMapping(MavenArtifactInfo.MAVEN_EXT_PACKAGE_DELETE)
     fun deletePackage(
+        @RequestAttribute userId: String,
         @ArtifactPathVariable mavenArtifactInfo: MavenDeleteArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String
     ): Response<Void> {
-        mavenService.delete(mavenArtifactInfo, packageKey, null)
+        mavenService.deletePackage(userId, mavenArtifactInfo)
         return ResponseBuilder.success()
     }
 
@@ -80,13 +83,14 @@ class MavenWebController(
     @DeleteMapping(MavenArtifactInfo.MAVEN_EXT_VERSION_DELETE)
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     fun deleteVersion(
+        @RequestAttribute userId: String,
         @ArtifactPathVariable mavenArtifactInfo: MavenDeleteArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String,
         @ApiParam(value = "版本号", required = true)
         @RequestParam version: String
     ): Response<Void> {
-        mavenService.delete(mavenArtifactInfo, packageKey, version)
+        mavenService.deleteVersion(userId, mavenArtifactInfo)
         return ResponseBuilder.success()
     }
 
@@ -94,13 +98,14 @@ class MavenWebController(
     @GetMapping(MavenArtifactInfo.MAVEN_EXT_DETAIL)
     @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun artifactDetail(
+        @RequestAttribute userId: String,
         @ArtifactPathVariable mavenArtifactInfo: MavenArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String,
         @ApiParam(value = "版本号", required = true)
         @RequestParam version: String
-    ): Response<Any?> {
-        return ResponseBuilder.success(mavenService.artifactDetail(mavenArtifactInfo, packageKey, version))
+    ): Response<MavenArtifactVersionData> {
+        return ResponseBuilder.success(mavenService.getVersionDetail(userId, mavenArtifactInfo))
     }
 
     @ApiOperation("maven gavc 搜索接口")

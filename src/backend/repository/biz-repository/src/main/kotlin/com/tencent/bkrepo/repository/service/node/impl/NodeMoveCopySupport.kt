@@ -60,9 +60,9 @@ import com.tencent.bkrepo.repository.util.MetadataUtils.buildExpiredDeletedNodeM
 import com.tencent.bkrepo.repository.util.NodeEventFactory
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import org.slf4j.LoggerFactory
-import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
 import java.time.LocalDateTime
 
 /**
@@ -179,7 +179,9 @@ open class NodeMoveCopySupport(
             // 文件 -> 文件 & 允许覆盖: 删除old
             if (existNode?.folder == false && overwrite) {
                 quotaService.checkRepoQuota(existNode.projectId, existNode.repoName, node.size - existNode.size)
-                val query = Query(Criteria.where(ID).isEqualTo(existNode.id!!))
+                val query = Query(
+                    where(TNode::projectId).isEqualTo(existNode.projectId).and(ID).isEqualTo(existNode.id!!)
+                )
                 val update = NodeQueryHelper.nodeDeleteUpdate(operator).push(
                     TNode::metadata.name, buildExpiredDeletedNodeMetadata()
                 )

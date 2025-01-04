@@ -32,6 +32,7 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.oci.constant.OCI_PACKAGE_NAME
 import com.tencent.bkrepo.oci.constant.OCI_PROJECT_ID
@@ -51,9 +52,10 @@ import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.response.OciImageResult
 import com.tencent.bkrepo.oci.pojo.response.OciTagResult
-import com.tencent.bkrepo.oci.pojo.user.PackageVersionInfo
+import com.tencent.bkrepo.oci.pojo.user.OciPackageVersionInfo
 import com.tencent.bkrepo.oci.service.OciBlobService
 import com.tencent.bkrepo.oci.service.OciOperationService
+import com.tencent.bkrepo.oci.service.impl.OciExtService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -77,7 +79,8 @@ import javax.servlet.http.HttpServletRequest
 @RequestMapping("/ext")
 class UserOciController(
     private val ociBlobService: OciBlobService,
-    private val operationService: OciOperationService
+    private val operationService: OciOperationService,
+    private val ociExtService: OciExtService
 ) {
 
     @ApiOperation("查询包的版本详情")
@@ -91,9 +94,9 @@ class UserOciController(
         @RequestParam packageKey: String,
         @ApiParam(value = "包版本", required = true)
         @RequestParam version: String
-    ): Response<PackageVersionInfo> {
+    ): Response<OciPackageVersionInfo> {
         return ResponseBuilder.success(
-            operationService.detailVersion(userId, artifactInfo, packageKey, version)
+            ociExtService.getVersionDetail(userId, artifactInfo)
         )
     }
 
@@ -106,7 +109,7 @@ class UserOciController(
         @ApiParam(value = "包唯一key", required = true)
         @RequestParam packageKey: String
     ): Response<Void> {
-        operationService.deletePackage(userId, artifactInfo)
+        ociExtService.deletePackage(userId, artifactInfo)
         return ResponseBuilder.success()
     }
 
@@ -121,7 +124,7 @@ class UserOciController(
         @ApiParam(value = "包版本", required = true)
         @RequestParam version: String
     ): Response<Void> {
-        operationService.deleteVersion(userId, artifactInfo)
+        ociExtService.deleteVersion(userId, artifactInfo)
         return ResponseBuilder.success()
     }
 

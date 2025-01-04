@@ -190,3 +190,5 @@ const val METADATA_KEY_PACKAGE_VERSION = "packageVersion"
 
 const val SHA256 = "sha256"
 const val MD5 = "md5"
+
+const val TEMP_INDEX_PATH = "/.tempIndex"

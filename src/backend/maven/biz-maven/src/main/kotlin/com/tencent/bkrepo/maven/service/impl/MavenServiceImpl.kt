@@ -31,6 +31,7 @@ import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
@@ -40,7 +41,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
-import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
+import com.tencent.bkrepo.common.artifact.repository.core.ArtifactExtService
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.view.ViewModelService
 import com.tencent.bkrepo.common.security.permission.Permission
@@ -52,6 +53,7 @@ import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactFormatException
 import com.tencent.bkrepo.maven.exception.MavenBadRequestException
+import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
 import com.tencent.bkrepo.maven.pojo.MavenMetadataSearchPojo
 import com.tencent.bkrepo.maven.pojo.MavenVersion
 import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
@@ -72,8 +74,6 @@ import com.tencent.bkrepo.maven.util.MavenModelUtils.toSnapshotMetadataUri
 import com.tencent.bkrepo.maven.util.MavenModelUtils.toSnapshotPomUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.list.HeaderItem
 import com.tencent.bkrepo.repository.pojo.list.RowItem
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -99,13 +99,11 @@ import java.util.regex.PatternSyntaxException
 
 @Service
 class MavenServiceImpl(
-    private val nodeClient: NodeClient,
     private val viewModelService: ViewModelService,
-    private val repositoryClient: RepositoryClient,
     private val storageManager: StorageManager,
     private val storageService: StorageService,
     private val mavenMetadataService: MavenMetadataService
-) : ArtifactService(), MavenService {
+) : ArtifactExtService(), MavenService {
 
     @Value("\${spring.application.name}")
     private var applicationName: String = "maven"
@@ -183,7 +181,13 @@ class MavenServiceImpl(
     }
 
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
-    override fun delete(mavenArtifactInfo: MavenDeleteArtifactInfo, packageKey: String, version: String?) {
+    override fun deletePackage(userId: String, artifactInfo: ArtifactInfo) {
+        val context = ArtifactRemoveContext()
+        ArtifactContextHolder.getRepository().remove(context)
+    }
+
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
+    override fun deleteVersion(userId: String, artifactInfo: ArtifactInfo) {
         val context = ArtifactRemoveContext()
         ArtifactContextHolder.getRepository().remove(context)
     }
@@ -195,9 +199,9 @@ class MavenServiceImpl(
     }
 
     @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
-    override fun artifactDetail(mavenArtifactInfo: MavenArtifactInfo, packageKey: String, version: String?): Any? {
+    override fun getVersionDetail(userId: String, artifactInfo: ArtifactInfo): MavenArtifactVersionData {
         val context = ArtifactQueryContext()
-        return ArtifactContextHolder.getRepository().query(context)
+        return ArtifactContextHolder.getRepository().query(context) as MavenArtifactVersionData
     }
 
     override fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest) {
@@ -248,6 +252,13 @@ class MavenServiceImpl(
             Files.deleteIfExists(file)
         }
     }
+
+    override fun buildVersionDeleteArtifactInfo(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ) = MavenDeleteArtifactInfo(projectId, repoName, packageKey, version)
 
     /**
      * 根据请求信息获取 artifact 的详细信息。

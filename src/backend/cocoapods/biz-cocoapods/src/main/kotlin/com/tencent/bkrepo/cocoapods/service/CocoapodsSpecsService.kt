@@ -50,7 +50,6 @@ import com.tencent.bkrepo.common.artifact.repository.remote.buildOkHttpClient
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.lock.service.LockOperation
 import com.tencent.bkrepo.common.security.util.SecurityUtils
-import com.tencent.bkrepo.common.storage.core.StorageProperties
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -69,7 +68,6 @@ class CocoapodsSpecsService(
     private val nodeClient: NodeClient,
     private val repositoryClient: RepositoryClient,
     private val storageManager: StorageManager,
-    private val storageProperties: StorageProperties,
     private val cocoapodsProperties: CocoapodsProperties,
     private val lockOperation: LockOperation,
     private val cocoapodsRemotePackageDao: CocoapodsRemotePackageDao,
@@ -116,8 +114,8 @@ class CocoapodsSpecsService(
             val repoDetail = repositoryClient.getRepoDetail(projectId, repoInfo.name).data
                 ?: throw RepoNotFoundException(repoInfo.name)
 
-            val specArtifact = ArtifactFileFactory.build(outputStream.toByteArray().inputStream(), repoDetail.storageCredentials
-                ?: storageProperties.defaultStorageCredentials())
+            val specArtifact =
+                ArtifactFileFactory.build(outputStream.toByteArray().inputStream(), repoDetail.storageCredentials)
             val nodeCreateRequest = NodeCreateRequest(
                 projectId = projectId,
                 repoName = repoInfo.name,

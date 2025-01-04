@@ -32,12 +32,15 @@
 package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.core.ArtifactExtService
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
@@ -48,12 +51,12 @@ import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.pojo.NpmDomainInfo
-import com.tencent.bkrepo.npm.pojo.user.BasicInfo
 import com.tencent.bkrepo.npm.pojo.user.DependenciesInfo
-import com.tencent.bkrepo.npm.pojo.user.PackageVersionInfo
+import com.tencent.bkrepo.npm.pojo.user.NpmPackageVersionInfo
 import com.tencent.bkrepo.npm.pojo.user.VersionDependenciesInfo
+import com.tencent.bkrepo.npm.properties.NpmProperties
 import com.tencent.bkrepo.npm.service.NpmClientService
-import com.tencent.bkrepo.npm.service.NpmWebService
+import com.tencent.bkrepo.npm.service.NpmOperationService
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.repository.api.PackageDependentsClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -66,7 +69,10 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.format.DateTimeFormatter
 
 @Service
-class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
+class NpmWebService(
+    private val npmOperationService: NpmOperationService,
+    private val npmProperties: NpmProperties
+) : ArtifactExtService() {
 
     @Autowired
     private lateinit var packageDependentsClient: PackageDependentsClient
@@ -75,25 +81,27 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
     private lateinit var npmClientService: NpmClientService
 
     @Transactional(rollbackFor = [Throwable::class])
-    override fun detailVersion(artifactInfo: NpmArtifactInfo, packageKey: String, version: String): PackageVersionInfo {
-        with(artifactInfo) {
-            val name = PackageKeys.resolveNpm(packageKey)
-            val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data ?: run {
-                logger.warn("packageKey [$packageKey] don't found.")
-                throw VersionNotFoundException(name)
-            }
+    override fun getVersionDetail(userId: String, artifactInfo: ArtifactInfo): NpmPackageVersionInfo {
+        with(artifactInfo as NpmArtifactInfo) {
+            require(!version.isNullOrBlank()) { "version must not be blank" }
+            val packageKey = PackageKeys.ofNpm(artifactInfo.packageName)
+            val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version!!).data
+                ?: run {
+                    logger.warn("packageKey [$packageKey] don't found.")
+                    throw VersionNotFoundException(packageName)
+                }
             val fullPath = packageVersion.contentPath!!
             val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, fullPath).data ?: run {
                 logger.warn("node [$fullPath] don't found.")
                 throw NpmArtifactNotFoundException("node [$fullPath] don't found.")
             }
             val versionMetadata = try {
-                npmClientService.packageVersionInfo(artifactInfo, name, version)
+                npmClientService.packageVersionInfo(artifactInfo, packageName, version!!)
             } catch (e: NpmArtifactNotFoundException) {
-                loadPackageMetadata(ArtifactContext())?.versions?.map?.get(version)
-                    ?: throw NpmArtifactNotFoundException("version metadata of [$name/$version] not found")
+                npmOperationService.loadPackageMetadata(ArtifactContext())?.versions?.map?.get(version)
+                    ?: throw NpmArtifactNotFoundException("version metadata of [$packageName/$version] not found")
             }
-            return PackageVersionInfo(
+            return NpmPackageVersionInfo(
                 basic = buildBasicInfo(nodeDetail, packageVersion),
                 metadata = packageVersion.packageMetadata,
                 dependencyInfo = queryVersionDependenciesInfo(artifactInfo, packageKey, versionMetadata),
@@ -117,22 +125,23 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
     }
 
     @Transactional(rollbackFor = [Throwable::class])
-    override fun deletePackage(artifactInfo: NpmArtifactInfo) = npmClientService.deletePackage(artifactInfo)
+    override fun deletePackage(userId: String, artifactInfo: ArtifactInfo) =
+        npmClientService.deletePackage(artifactInfo as NpmArtifactInfo)
 
     @Transactional(rollbackFor = [Throwable::class])
-    override fun deleteVersion(artifactInfo: NpmArtifactInfo) {
-        with(artifactInfo) {
+    override fun deleteVersion(userId: String, artifactInfo: ArtifactInfo) {
+        with(artifactInfo as NpmArtifactInfo) {
             val packageKey = PackageKeys.ofNpm(packageName)
             val packageInfo = packageClient.findPackageByKey(projectId, repoName, packageKey).data
                 ?: throw PackageNotFoundException(packageKey)
             // 如果删除最后一个版本直接删除整个包
             if (packageInfo.versions == 1L) {
-                deletePackage(NpmArtifactInfo(projectId, repoName, packageName, null))
+                deletePackage(userId, NpmArtifactInfo(projectId, repoName, packageName, null))
             } else {
                 npmClientService.deleteVersion(artifactInfo)
                 val repoCategory = ArtifactContextHolder.getRepoDetail()?.category
                 if (repoCategory == RepositoryCategory.COMPOSITE || repoCategory == RepositoryCategory.LOCAL) {
-                    val packageMetadata = loadPackageMetadata(ArtifactContext())
+                    val packageMetadata = npmOperationService.loadPackageMetadata(ArtifactContext())
                         ?: throw NpmArtifactNotFoundException(
                             "failed to load metadata of [$this] after deleting version"
                         )
@@ -142,7 +151,21 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
         }
     }
 
-    override fun getRegistryDomain(): NpmDomainInfo {
+    override fun buildVersionDeleteArtifactInfo(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): ArtifactInfo {
+        return NpmArtifactInfo(
+            projectId = projectId,
+            repoName = repoName,
+            packageName = PackageKeys.resolveName(packageKey),
+            version = version
+        )
+    }
+
+    fun getRegistryDomain(): NpmDomainInfo {
         return NpmDomainInfo(UrlFormatter.formatHost(npmProperties.domain))
     }
 
@@ -232,7 +255,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
 
     companion object {
 
-        val logger: Logger = LoggerFactory.getLogger(NpmWebServiceImpl::class.java)
+        private val logger: Logger = LoggerFactory.getLogger(NpmWebService::class.java)
 
         fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion): BasicInfo {
             with(nodeDetail) {

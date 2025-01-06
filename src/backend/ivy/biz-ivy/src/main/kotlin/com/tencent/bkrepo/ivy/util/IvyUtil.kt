@@ -56,7 +56,7 @@ object IvyUtil {
 
         // 合法ivy文件全路径
         val legalIvyFullPath = PathUtils.normalizeFullPath(
-            IvyPatternHelper.substitute(ivyPattern, mrId, "ivy", "xml", "xml")
+            IvyPatternHelper.substitute(ivyPattern, mrId, "ivy", "ivy", "xml")
         )
 
         // 获取主文件

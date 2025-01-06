@@ -15,6 +15,17 @@ export default {
             return state.userInfo
         })
     },
+    getAdminInfo ({ state, commit }) {
+        if (state.adminInfo) return Promise.resolve(state.adminInfo)
+        return Vue.prototype.$ajax.get(
+            window.DEVOPS_SITE_URL + 'ms/auth/api/user/global/admin/user/is_admin'
+        ).then(res => {
+            res && commit('SET_ADMIN_INFO', {
+                ...res
+            })
+            return state.adminInfo
+        })
+    },
     // 用户是否指定项目下管理员
     checkPM ({ commit }, { projectId }) {
         return Vue.prototype.$ajax.get(

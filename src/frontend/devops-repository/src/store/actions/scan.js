@@ -293,7 +293,7 @@ export default {
     },
     // 获取系统支持的所有包名后缀列表
     refreshSupportPackageTypeList ({ commit }) {
-        Vue.prototype.$ajax.get('/analyst/api/scanners/support/package').then(packageTypeList => {
+        return Vue.prototype.$ajax.get('/analyst/api/scanners/support/package').then(packageTypeList => {
             commit('SET_SCANNER_SUPPORT_PACKAGE_TYPE_LIST', packageTypeList)
         }).catch(e => {
             console.log('get support package type failed')

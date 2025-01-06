@@ -43,6 +43,7 @@ const storeObject = {
                 name: '/'
             }
         },
+        adminInfo: '',
         userInfo: {
             username: '',
             name: '',
@@ -125,6 +126,9 @@ const storeObject = {
                     name: '/'
                 }
             }
+        },
+        SET_ADMIN_INFO (state, data) {
+            state.adminInfo = data
         },
         SET_USER_INFO (state, data) {
             state.userInfo = {

@@ -46,13 +46,19 @@ object PackageKeys {
     /**
      * 生成gav格式key
      */
-    fun ofIvy(org: String, module: String, branch: String): String {
-        return StringBuilder(PackageType.IVY.schema).append(SEPARATOR).append(org)
-            .append(StringPool.COLON)
-            .append(branch)
-            .append(StringPool.COLON)
-            .append(module)
-            .toString()
+    fun ofIvy(org: String, module: String, branch: String?): String {
+        val append = StringBuilder(PackageType.IVY.schema).append(SEPARATOR).append(org)
+        return if (!branch.isNullOrEmpty()) {
+            append.append(StringPool.COLON)
+                .append(branch)
+                .append(StringPool.COLON)
+                .append(module)
+                .toString()
+        } else {
+            append.append(StringPool.COLON)
+                .append(module)
+                .toString()
+        }
     }
 
     /**

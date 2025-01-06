@@ -229,7 +229,7 @@ class IvyLocalRepository(
                             PackageKeys.ofIvy(
                                 descriptor.moduleRevisionId.organisation,
                                 descriptor.moduleRevisionId.name,
-                                descriptor.moduleRevisionId.branch
+                                descriptor.moduleRevisionId?.branch
                             )
                         }] in repo ${context.artifactInfo.getRepoIdentify()}"
             )
@@ -241,7 +241,7 @@ class IvyLocalRepository(
             PackageKeys.ofIvy(
                 descriptor.moduleRevisionId.organisation,
                 descriptor.moduleRevisionId.name,
-                descriptor.moduleRevisionId.branch
+                descriptor.moduleRevisionId?.branch
             ),
             descriptor.moduleRevisionId.revision
         )
@@ -297,7 +297,7 @@ class IvyLocalRepository(
                 key = METADATA_KEY_QUALIFIED_EXTRA_ATTRIBUTES,
                 value = descriptor.moduleRevisionId.qualifiedExtraAttributes,
                 system = true,
-                display = false
+                display = true
             ),
             MetadataModel(
                 key = METADATA_KEY_PUBLISH_ARTIFACT,

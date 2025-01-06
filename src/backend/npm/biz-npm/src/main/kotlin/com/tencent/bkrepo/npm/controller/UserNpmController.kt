@@ -41,21 +41,28 @@ import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.USER_API_PREFIX
 import com.tencent.bkrepo.npm.pojo.NpmDomainInfo
 import com.tencent.bkrepo.npm.pojo.user.PackageVersionInfo
+import com.tencent.bkrepo.npm.service.NpmClientService
 import com.tencent.bkrepo.npm.service.NpmWebService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 
 @Api("npm 用户接口")
 @RequestMapping(USER_API_PREFIX)
 @RestController
 class UserNpmController(
-    private val npmWebService: NpmWebService
+    private val npmWebService: NpmWebService,
+    private val npmClientService: NpmClientService
 ) {
 
     @Permission(ResourceType.REPO, PermissionAction.READ)
@@ -102,4 +109,22 @@ class UserNpmController(
     fun getRegistryDomain(): Response<NpmDomainInfo> {
         return ResponseBuilder.success(npmWebService.getRegistryDomain())
     }
+
+    @PostMapping("/upload/{projectId}/{repoName}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun upload(
+
+        @PathVariable
+        projectId: String,
+
+        @PathVariable
+        repoName: String,
+
+        @RequestPart(value = "file")
+        file: MultipartFile
+
+    ): Response<Boolean> {
+        npmClientService.upload(projectId, repoName, file)
+        return ResponseBuilder.success()
+    }
+
 }

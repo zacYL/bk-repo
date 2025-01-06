@@ -37,6 +37,7 @@ import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
 import com.tencent.bkrepo.npm.pojo.NpmSuccessResponse
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
 import com.tencent.bkrepo.npm.pojo.metadata.disttags.DistTags
+import org.springframework.web.multipart.MultipartFile
 
 interface NpmClientService {
     /**
@@ -93,4 +94,7 @@ interface NpmClientService {
      * delete package
      */
     fun deletePackage(artifactInfo: NpmArtifactInfo)
+
+    fun upload(projectId: String, repoName: String, file: MultipartFile)
+
 }

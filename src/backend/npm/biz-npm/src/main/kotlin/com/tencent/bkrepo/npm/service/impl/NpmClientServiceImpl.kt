@@ -32,8 +32,12 @@
 package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.api.util.DecompressUtils
 import com.tencent.bkrepo.common.api.util.JsonUtils.objectMapper
+import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
@@ -44,6 +48,8 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchConte
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.artifact.util.version.SemVersionParser.parse
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.ATTRIBUTE_OCTET_STREAM_SHA1
@@ -52,6 +58,7 @@ import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.MODIFIED
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PACKAGE_TGZ_FILE
+import com.tencent.bkrepo.npm.constants.PACKAGE_JSON
 import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
 import com.tencent.bkrepo.npm.constants.SIZE
@@ -63,6 +70,7 @@ import com.tencent.bkrepo.npm.exception.NpmTagNotExistException
 import com.tencent.bkrepo.npm.handler.NpmDependentHandler
 import com.tencent.bkrepo.npm.handler.NpmPackageHandler
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
+import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData.Attachments
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.model.properties.PackageProperties
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
@@ -85,6 +93,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import java.io.IOException
 import java.io.InputStream
 import kotlin.system.measureTimeMillis
@@ -340,12 +349,14 @@ class NpmClientServiceImpl(
             handlerAttachmentsUpload(userId, artifactInfo, npmPackageMetaData)
             handlerPackageFileUpload(userId, artifactInfo, npmPackageMetaData, size)
             handlerVersionFileUpload(userId, artifactInfo, npmPackageMetaData, size)
-            npmDependentHandler.updatePackageDependents(
-                userId,
-                artifactInfo,
-                npmPackageMetaData,
-                NpmOperationAction.PUBLISH
-            )
+            if (npmPackageMetaData.distTags.getMap().containsKey(LATEST)) {
+                npmDependentHandler.updatePackageDependents(
+                    userId,
+                    artifactInfo,
+                    npmPackageMetaData,
+                    NpmOperationAction.PUBLISH
+                )
+            }
             val versionMetadata = npmPackageMetaData.versions.map.values.iterator().next()
             npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size)
         } catch (exception: IOException) {
@@ -537,6 +548,60 @@ class NpmClientServiceImpl(
             (repoDetail.configuration as VirtualConfiguration).deploymentRepo.takeUnless { it.isNullOrBlank() }
                 ?: throw MethodNotAllowedException()
         } else null
+    }
+
+    override fun upload(projectId: String, repoName: String, file: MultipartFile) {
+        val bytes = file.bytes
+        val packageVersion = DecompressUtils.tryArchiverWithCompressor<NpmVersionMetadata, ByteArray>(
+            bytes.inputStream(),
+            callbackPre = { it.name.endsWith(PACKAGE_JSON) },
+            callback = { stream, _ -> stream.readBytes() },
+            handleResult = { _, packageJson, _ -> packageJson?.readPackageJson(bytes) },
+            callbackPost = { _, _ -> false }
+        ) ?: throw NpmBadRequestException("Invalid npm package")
+        with(packageVersion) {
+            val artifactInfo = NpmArtifactInfo(projectId, repoName, name!!, version)
+            HttpContextHolder.getRequest().setAttribute(ARTIFACT_INFO_KEY, artifactInfo)
+            handlerPackagePublish(SecurityUtils.getUserId(), artifactInfo, toNpmPackageMetaData(artifactInfo, bytes))
+        }
+    }
+
+    private fun ByteArray.readPackageJson(tgz: ByteArray): NpmVersionMetadata? {
+        return inputStream().readJsonString<NpmVersionMetadata?>()?.apply {
+            this.dist = NpmVersionMetadata.Dist().apply {
+                set(SIZE, tgz.size)
+                this.shasum = tgz.inputStream().sha1()
+            }
+        }
+    }
+
+    private fun NpmVersionMetadata.toNpmPackageMetaData(artifactInfo: NpmArtifactInfo, tgz: ByteArray) = with(this) {
+        return@with NpmPackageMetaData().apply {
+            this.name = this@with.name
+            this.description = this@with.description
+            this.versions.map = mutableMapOf(version!! to this@with)
+            val attachment = NpmPackageMetaData.Attachment().apply {
+                this.contentType = ""//不为空就行
+                val encode = Base64.encodeBase64(tgz)
+                this.data = org.apache.commons.codec.binary.StringUtils.newStringUsAscii(encode)
+                this.length = encode.size
+            }
+            this.attachments = Attachments().apply { add("$name-$version.tgz", attachment) }
+            // 获取最新版本包
+            val latest = packageClient
+                .findLatestBySemVer(
+                    artifactInfo.projectId,
+                    artifactInfo.repoName,
+                    PackageKeys.ofNpm(artifactInfo.packageName)
+                )
+                .data?.name
+
+            // 检查获取的最新版本是否为空或当前版本比最新版本更高
+            // 如果是，则将当前版本设置为最新版本
+            if (latest.isNullOrBlank() || parse(version!!) > parse(latest)) {
+                this.distTags.set(LATEST, version!!)
+            }
+        }
     }
 
     companion object {

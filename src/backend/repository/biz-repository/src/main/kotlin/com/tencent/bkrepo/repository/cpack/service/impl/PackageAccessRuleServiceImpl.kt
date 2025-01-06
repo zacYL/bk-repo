@@ -124,7 +124,6 @@ class PackageAccessRuleServiceImpl(
 
     override fun checkPackageAccessRule(
         projectId: String,
-        repoName: String,
         packageKey: String,
         version: String
     ): Boolean {

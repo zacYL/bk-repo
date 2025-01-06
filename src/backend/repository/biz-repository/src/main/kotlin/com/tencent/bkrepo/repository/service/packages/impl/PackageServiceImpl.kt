@@ -438,7 +438,7 @@ class PackageServiceImpl(
         // 拦截package下载
         val packageVersion = convert(tPackageVersion)!!
         context.getPackageInterceptors().forEach { it.intercept(projectId, packageVersion) }
-        if (!packageAccessRuleService.checkPackageAccessRule(projectId, repoName, packageKey, versionName)) {
+        if (!packageAccessRuleService.checkPackageAccessRule(projectId, packageKey, versionName)) {
             throw ArtifactDownloadForbiddenException(projectId)
         }
         // context 复制时会从request map中获取对应的artifactInfo， 而artifactInfo设置到map中是在接口url解析时

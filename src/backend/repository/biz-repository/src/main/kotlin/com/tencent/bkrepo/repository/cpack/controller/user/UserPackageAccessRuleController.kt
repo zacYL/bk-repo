@@ -82,15 +82,14 @@ class UserPackageAccessRuleController(
 
     @ApiOperation("检查是否被制品规则拦截")
     @Principal(type = PrincipalType.GENERAL)
-    @GetMapping("/check/{projectId}/{repoName}")
+    @GetMapping("/check/{projectId}")
     fun checkPackageAccessRule(
         @PathVariable projectId: String,
-        @PathVariable repoName: String,
         @RequestParam(required = true) packageKey: String,
         @RequestParam(required = true) version: String
     ): Response<Boolean> {
         return ResponseBuilder.success(
-            packageAccessRuleService.checkPackageAccessRule(projectId, repoName, packageKey, version)
+            packageAccessRuleService.checkPackageAccessRule(projectId, packageKey, version)
         )
     }
 }

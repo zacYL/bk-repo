@@ -29,6 +29,7 @@ package com.tencent.bkrepo.maven.service
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
 import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
@@ -72,6 +73,8 @@ interface MavenService {
 //    fun fileDeploy(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): MavenWebDeployResponse?
 //    fun fileDeployCancel(mavenArtifactInfo: MavenArtifactInfo): Boolean
     fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest)
+
+    fun moveCopyVersion(request: PackageVersionMoveCopyRequest, move: Boolean)
 
     fun extractGavFromPom(file: MultipartFile): MavenWebDeployResponse
 

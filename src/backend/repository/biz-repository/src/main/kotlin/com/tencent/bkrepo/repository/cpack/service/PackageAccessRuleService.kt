@@ -24,5 +24,5 @@ interface PackageAccessRuleService {
 
     fun getMatchedRules(projectId: String, type: String, fullName: String?): List<PackageAccessRule>
 
-    fun checkPackageAccessRule(projectId: String, repoName: String, packageKey: String, version: String): Boolean
+    fun checkPackageAccessRule(projectId: String, packageKey: String, version: String): Boolean
 }

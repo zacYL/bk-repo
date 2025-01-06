@@ -125,6 +125,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.apache.commons.lang3.StringUtils
 import org.apache.maven.artifact.repository.metadata.Metadata
 import org.apache.maven.artifact.repository.metadata.Snapshot
@@ -171,7 +172,7 @@ class MavenLocalRepository(
         return request.copy(
             repoName = deploymentRepo ?: request.repoName,
             overwrite = true,
-            nodeMetadata = createNodeMetaData(context)
+            nodeMetadata = createNodeMetaData(context.getArtifactFile())
         )
     }
 
@@ -186,16 +187,16 @@ class MavenLocalRepository(
         return request.copy(
             fullPath = combineUrl,
             overwrite = true,
-            nodeMetadata = createNodeMetaData(context)
+            nodeMetadata = createNodeMetaData(context.getArtifactFile())
         )
     }
 
-    private fun createNodeMetaData(context: ArtifactUploadContext): List<MetadataModel> {
-        with(context) {
-            val md5 = getArtifactMd5()
-            val sha1 = getArtifactSha1()
-            val sha256 = getArtifactSha256()
-            val sha512 = getArtifactFile().getInputStream().use {
+    private fun createNodeMetaData(artifactFile: ArtifactFile): List<MetadataModel> {
+        with(artifactFile) {
+            val md5 = getFileMd5()
+            val sha1 = getFileSha1()
+            val sha256 = getFileSha256()
+            val sha512 = artifactFile.getInputStream().use {
                 val bytes = it.readBytes()
                 DigestUtils.sha512(bytes, 0, bytes.size)
             }
@@ -602,7 +603,7 @@ class MavenLocalRepository(
                 }
                 val snapshotTimestamp = metadata.versioning?.snapshot?.timestamp?.replace(".", "")
                 val snapshotBuildNumber = metadata.versioning?.snapshot?.buildNumber
-                updateMetadata(path, artifactFile, snapshotTimestamp, snapshotBuildNumber)
+                updateMetadata(context.repositoryDetail, path, artifactFile, snapshotTimestamp, snapshotBuildNumber)
                 verifyPath(context, path)
             } finally {
                 artifactFile.delete()
@@ -1035,21 +1036,30 @@ class MavenLocalRepository(
     }
 
     fun updateMetadata(
+        repositoryDetail: RepositoryDetail,
         fullPath: String,
         metadataArtifact: ArtifactFile,
         snapshotTimestamp: String? = null,
         snapshotBuildNumber: Int? = null
     ) {
-        val uploadContext = ArtifactUploadContext(metadataArtifact)
-        val metadataNode = buildNodeCreateRequest(uploadContext).run {
-            val metadata = nodeMetadata?.toMutableList() ?: mutableListOf()
-            if (fullPath.isSnapshotMetadataUri()) {
-                snapshotTimestamp?.let { metadata.add(MetadataModel(key = SNAPSHOT_TIMESTAMP, value = it)) }
-                snapshotBuildNumber?.let { metadata.add(MetadataModel(key = SNAPSHOT_BUILD_NUMBER, value = it)) }
-            }
-            copy(fullPath = fullPath, nodeMetadata = metadata)
+        val metadataList = createNodeMetaData(metadataArtifact).toMutableList()
+        if (fullPath.isSnapshotMetadataUri()) {
+            snapshotTimestamp?.let { metadataList.add(MetadataModel(key = SNAPSHOT_TIMESTAMP, value = it)) }
+            snapshotBuildNumber?.let { metadataList.add(MetadataModel(key = SNAPSHOT_BUILD_NUMBER, value = it)) }
         }
-        storageManager.storeArtifactFile(metadataNode, metadataArtifact, uploadContext.storageCredentials)
+        val nodeCreateRequest = NodeCreateRequest(
+            projectId = repositoryDetail.projectId,
+            repoName = repositoryDetail.name,
+            folder = false,
+            fullPath = fullPath,
+            size = metadataArtifact.getSize(),
+            sha256 = metadataArtifact.getFileSha256(),
+            md5 = metadataArtifact.getFileMd5(),
+            operator = SecurityUtils.getUserId(),
+            overwrite = true,
+            nodeMetadata = metadataList
+        )
+        storageManager.storeArtifactFile(nodeCreateRequest, metadataArtifact, repositoryDetail.storageCredentials)
         metadataArtifact.delete()
         logger.info("Success to save $fullPath, size: ${metadataArtifact.getSize()}")
     }
@@ -1142,7 +1152,12 @@ class MavenLocalRepository(
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
             if (node != null) {
                 if (node.fullPath.checksumType() == null) {
-                    deleteArtifactCheckSums(context, node)
+                    deleteArtifactCheckSums(
+                        projectId = projectId,
+                        repoName = repoName,
+                        userId = userId,
+                        node = node
+                    )
                 }
                 // 需要删除对应的metadata表记录
                 mavenMetadataService.delete(context.artifactInfo, node)
@@ -1166,22 +1181,22 @@ class MavenLocalRepository(
      * 删除构件的checksum文件
      */
     private fun deleteArtifactCheckSums(
-        context: ArtifactContext,
+        projectId: String,
+        repoName: String,
+        userId: String,
         node: NodeDetail,
         typeArray: Array<HashType> = HashType.values()
     ) {
-        with(node) {
-            for (hashType in typeArray) {
-                val fullPath = "${node.fullPath}.${hashType.ext}"
-                nodeClient.getNodeDetail(projectId, repoName, fullPath).data?.let {
-                    val request = NodeDeleteRequest(
-                        projectId = projectId,
-                        repoName = repoName,
-                        fullPath = fullPath,
-                        operator = context.userId
-                    )
-                    nodeClient.deleteNode(request)
-                }
+        for (hashType in typeArray) {
+            val fullPath = "${node.fullPath}.${hashType.ext}"
+            nodeClient.getNodeDetail(projectId, repoName, fullPath).data?.let {
+                val request = NodeDeleteRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    fullPath = fullPath,
+                    operator = userId
+                )
+                nodeClient.deleteNode(request)
             }
         }
     }
@@ -1207,20 +1222,27 @@ class MavenLocalRepository(
                 mavenMetadata.versioning.versions.remove(version)
                 if (mavenMetadata.versioning.versions.size == 0) {
                     nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, node.fullPath, userId))
+                    deleteArtifactCheckSums(
+                        projectId = projectId,
+                        repoName = repoName,
+                        userId = userId,
+                        node = node
+                    )
                     return
                 }
                 mavenMetadata.reRender()
-                storeMetadataXml(mavenMetadata, node.path, storageCredentials)
+                storeMetadataXml(context.repositoryDetail, mavenMetadata, node.path)
             }
         }
     }
 
     private fun storeMetadataXml(
+        repoDetail: RepositoryDetail,
         mavenMetadata: Metadata,
-        nodePath: String,
-        storageCredentials: StorageCredentials?
+        nodePath: String
     ) {
         val path = nodePath.ensureSuffix(SLASH)
+        val storageCredentials = repoDetail.storageCredentials
         ByteArrayOutputStream().use { metadata ->
             MetadataXpp3Writer().write(metadata, mavenMetadata)
             val artifactFile = ArtifactFileFactory.build(metadata.toByteArray().inputStream(), storageCredentials)
@@ -1232,11 +1254,11 @@ class MavenLocalRepository(
             val metadataArtifactSha1 = ByteArrayInputStream(resultXmlSha1.toByteArray()).use {
                 ArtifactFileFactory.build(it, storageCredentials)
             }
-            updateMetadata("$path$MAVEN_METADATA_FILE_NAME", artifactFile)
+            updateMetadata(repoDetail, "$path$MAVEN_METADATA_FILE_NAME", artifactFile)
             artifactFile.delete()
-            updateMetadata("$path$MAVEN_METADATA_FILE_NAME.${HashType.MD5.ext}", metadataArtifactMd5)
+            updateMetadata(repoDetail, "$path$MAVEN_METADATA_FILE_NAME.${HashType.MD5.ext}", metadataArtifactMd5)
             metadataArtifactMd5.delete()
-            updateMetadata("$path$MAVEN_METADATA_FILE_NAME.${HashType.SHA1.ext}", metadataArtifactSha1)
+            updateMetadata(repoDetail, "$path$MAVEN_METADATA_FILE_NAME.${HashType.SHA1.ext}", metadataArtifactSha1)
             metadataArtifactSha1.delete()
         }
     }
@@ -1330,7 +1352,8 @@ class MavenLocalRepository(
 
     // TODO("依赖分析数据更新")
     override fun updateIndex(projectId: String, repoName: String, key: String, version: String) {
-        val storageCredentials = repositoryClient.getRepoDetail(projectId, repoName).data!!.storageCredentials
+        val repoDetail = repositoryClient.getRepoDetail(projectId, repoName).data!!
+        val storageCredentials = repoDetail.storageCredentials
         if (packageClient.findPackageByKey(projectId, repoName, key).data != null) {
             val metadataFullPath = MavenUtil.extractPath(key) + "/$MAVEN_METADATA_FILE_NAME"
             val node = nodeClient.getNodeDetail(projectId, repoName, metadataFullPath).data ?:
@@ -1341,12 +1364,12 @@ class MavenLocalRepository(
                     mavenMetadata.versioning.versions.add(version)
                 }
                 mavenMetadata.reRender()
-                storeMetadataXml(mavenMetadata, node.path, storageCredentials)
+                storeMetadataXml(repoDetail, mavenMetadata, node.path)
             }
         } else {
-            val (groupId, artifactId) = MavenUtil.extractGrounpIdAndArtifactId(key)
+            val (artifactId, groupId) = MavenUtil.extractGrounpIdAndArtifactId(key)
             val metadata = MavenMetadataUtils.initMetadataByGav(groupId, artifactId, version)
-            storeMetadataXml(metadata, MavenUtil.extractPath(key), storageCredentials)
+            storeMetadataXml(repoDetail, metadata, MavenUtil.extractPath(key))
         }
     }
 

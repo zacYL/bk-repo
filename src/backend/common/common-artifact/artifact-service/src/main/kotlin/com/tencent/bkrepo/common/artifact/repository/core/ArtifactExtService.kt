@@ -21,6 +21,8 @@ import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.constant.CoverStrategy
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
@@ -72,6 +74,7 @@ abstract class ArtifactExtService : ArtifactService() {
                 srcProjectId, srcRepoName, dstProjectId, dstRepoName, packageKey, version,
                 srcVersion.manifestPath, srcVersion.contentPath
             )
+            updateIndex(dstProjectId, dstRepoName, packageKey, version)
             val srcPackage = packageClient.findPackageByKey(srcProjectId, srcRepoName, packageKey).data!!
             packageClient.createVersion(
                 PackageVersionCreateRequest(
@@ -133,20 +136,22 @@ abstract class ArtifactExtService : ArtifactService() {
     }
 
     @Suppress("LongParameterList")
-    private fun getArtifactFullPaths(
+    private fun getArtifactNodes(
         projectId: String,
         repoName: String,
         packageKey: String,
         version: String,
         manifestPath: String?,
         artifactPath: String?
-    ): List<String> {
+    ): List<NodeDetail> {
         return (ArtifactContextHolder.getRepository(RepositoryCategory.LOCAL) as LocalRepository)
             .getArtifactFullPaths(projectId, repoName, packageKey, version, manifestPath, artifactPath)
             .also {
                 logger.info("artifactFullPaths of [$projectId/$repoName/$packageKey/$version]: [$it]")
                 require(it.isNotEmpty())
-                checkNodeExist(projectId, repoName, it)
+            }.map {
+                nodeClient.getNodeDetail(projectId, repoName, it).data
+                    ?: throw NodeNotFoundException("$projectId/$repoName/$it")
             }
     }
 
@@ -162,21 +167,30 @@ abstract class ArtifactExtService : ArtifactService() {
         artifactPath: String?
     ) {
         val operator = SecurityUtils.getPrincipal()
-        getArtifactFullPaths(srcProjectId, srcRepoName, packageKey, version, manifestPath, artifactPath).forEach {
+        getArtifactNodes(srcProjectId, srcRepoName, packageKey, version, manifestPath, artifactPath).forEach {
+            // 目录/文件 -> 已存在的目录: 作为已存在目录的子目录/文件
+            val dstNode = nodeClient.getNodeDetail(dstProjectId, dstRepoName, it.fullPath).data
+            if (dstNode?.folder == true) nodeClient.deleteNode(
+                NodeDeleteRequest(
+                    projectId = dstProjectId,
+                    repoName = dstRepoName,
+                    fullPath = it.fullPath,
+                    operator = operator
+                )
+            )
             nodeClient.copyNode(
                 NodeMoveCopyRequest(
                     srcProjectId = srcProjectId,
                     srcRepoName = srcRepoName,
-                    srcFullPath = it,
+                    srcFullPath = it.fullPath,
                     destProjectId = dstProjectId,
                     destRepoName = dstRepoName,
-                    destFullPath = it,
+                    destFullPath = it.fullPath,
                     overwrite = true,
                     operator = operator
                 )
             )
         }
-        updateIndex(dstProjectId, dstRepoName, packageKey, version)
     }
 
     private fun preCheck(

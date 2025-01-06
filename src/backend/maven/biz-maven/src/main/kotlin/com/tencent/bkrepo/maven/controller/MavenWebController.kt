@@ -36,6 +36,7 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
+import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
@@ -53,7 +54,9 @@ import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestAttribute
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -184,6 +187,24 @@ class MavenWebController(
             pageNumber ?: PAGE_NUMBER,
             pageSize ?: PAGE_SIZE
         )
+    }
+
+    @ApiOperation("移动包版本")
+    @PostMapping("/version/move")
+    fun moveVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        mavenService.moveCopyVersion(request, true)
+        return ResponseBuilder.success()
+    }
+
+    @ApiOperation("复制包版本")
+    @PostMapping("/version/copy")
+    fun copyVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        mavenService.moveCopyVersion(request, false)
+        return ResponseBuilder.success()
     }
 
     companion object {

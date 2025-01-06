@@ -49,6 +49,7 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
+import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactFormatException
@@ -74,6 +75,7 @@ import com.tencent.bkrepo.maven.util.MavenModelUtils.toSnapshotMetadataUri
 import com.tencent.bkrepo.maven.util.MavenModelUtils.toSnapshotPomUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
+import com.tencent.bkrepo.maven.util.MavenUtil
 import com.tencent.bkrepo.repository.pojo.list.HeaderItem
 import com.tencent.bkrepo.repository.pojo.list.RowItem
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -258,7 +260,13 @@ class MavenServiceImpl(
         repoName: String,
         packageKey: String,
         version: String
-    ) = MavenDeleteArtifactInfo(projectId, repoName, packageKey, version)
+    ) = MavenDeleteArtifactInfo(
+        projectId = projectId,
+        repoName = repoName,
+        artifactUri = MavenUtil.extractPath(packageKey) + "/$MAVEN_METADATA_FILE_NAME",
+        packageName = packageKey,
+        version = version
+    )
 
     /**
      * 根据请求信息获取 artifact 的详细信息。

@@ -8,6 +8,7 @@ import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyReq
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactExtService
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.oci.constant.MANIFEST
 import com.tencent.bkrepo.oci.constant.OCI_MANIFEST_LIST
 import com.tencent.bkrepo.oci.constant.PACKAGE_KEY
 import com.tencent.bkrepo.oci.constant.VERSION
@@ -15,6 +16,7 @@ import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo
 import com.tencent.bkrepo.oci.pojo.user.OciPackageVersionInfo
 import com.tencent.bkrepo.oci.service.OciOperationService
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -57,9 +59,16 @@ class OciExtService(
                 ?: throw VersionNotFoundException("$packageKey/$version")
             val manifestPath = srcVersion.manifestPath!!
             if (manifestPath.substringAfterLast("/") == OCI_MANIFEST_LIST) {
-                val versionList = resolveDigestList(srcProjectId, srcRepoName, manifestPath)
-                versionList?.forEach { moveCopyVersion(request.copy(version = it), move) }
-                    ?: throw RuntimeException("manifest list [$srcProjectId/$srcRepoName/$manifestPath] resolve error!")
+                val packagePath = manifestPath.removeSuffix("$version/$OCI_MANIFEST_LIST")
+                val versionList = resolveDigestList(srcProjectId, srcRepoName, manifestPath)?.mapNotNull { digest ->
+                    operationService.getNodeByDigest(srcProjectId, srcRepoName, digest, packagePath)?.fullPath?.let {
+                        if (it.endsWith("/$MANIFEST")) it.removeSuffix("/$MANIFEST").substringAfterLast("/")
+                        else null
+                    }
+                } ?: throw RuntimeException("manifest list [$srcProjectId/$srcRepoName/$manifestPath] resolve error!")
+                logger.info("version list of [$srcProjectId/$srcRepoName/$packageKey/$version]: $versionList")
+                // 这些版本可能同时被其它manifest list引用，因此不移除
+                versionList.forEach { moveCopyVersion(request.copy(version = it), false) }
             }
             super.moveCopyVersion(request, move)
         }
@@ -72,5 +81,9 @@ class OciExtService(
             ?: throw RepoNotFoundException("$projectId/$repoName")
         return operationService.loadManifestList(node.sha256!!, node.size, srcRepo.storageCredentials)
                 ?.manifests?.map { it.digest }
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(OciExtService::class.java)
     }
 }

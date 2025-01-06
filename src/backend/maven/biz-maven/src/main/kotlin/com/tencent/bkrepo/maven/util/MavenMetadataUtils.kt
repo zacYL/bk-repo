@@ -52,7 +52,6 @@ object MavenMetadataUtils {
         return Metadata().apply {
             this.groupId = groupId
             this.artifactId = artifactId
-            this.version = version
             this.versioning = Versioning().apply {
                 this.latest = version
                 this.release = version

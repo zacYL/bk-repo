@@ -23,12 +23,10 @@
                         </bk-form-item>
                         <template v-if="repoType === 'ivy'">
                             <bk-form-item :label="$t('ivyFilePattern')" :required="true" property="ivy_pattern" error-display-type="normal">
-                                <bk-input class="w480" v-model.trim="repoBaseInfo.ivy_pattern">
-                                </bk-input>
+                                <span>{{ repoBaseInfo.ivy_pattern }}</span>
                             </bk-form-item>
                             <bk-form-item :label="$t('artifactFilePattern')" :required="true" property="artifact_pattern" error-display-type="normal">
-                                <bk-input class="w480" v-model.trim="repoBaseInfo.artifact_pattern">
-                                </bk-input>
+                                <span>{{ repoBaseInfo.artifact_pattern }}</span>
                             </bk-form-item>
                         </template>
                         <bk-form-item :label="$t('storeTypes')">

@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.common.artifact.repository.local
 
-import com.tencent.bkrepo.common.artifact.constant.TEMP_INDEX_PATH
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -41,12 +40,9 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.manager.PermissionManager
-import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 
 /**
@@ -123,7 +119,7 @@ abstract class LocalRepository : AbstractArtifactRepository() {
     }
 
     /**
-     * 包版本独占文件路径集合
+     * 包版本文件路径集合
      */
     @Suppress("LongParameterList")
     open fun getArtifactFullPaths(
@@ -137,28 +133,5 @@ abstract class LocalRepository : AbstractArtifactRepository() {
         return artifactPath?.let { listOf(it) } ?: emptyList()
     }
 
-    /**
-     * 包版本所需的共享索引文件路径集合
-     */
-    open fun getCommonIndexFullPaths(projectId: String, repoName: String, key: String, version: String): List<String> {
-        return emptyList()
-    }
-
-    open fun updateIndex(projectId: String, repoName: String, key: String, version: String, indexes: List<String>) {
-        if (indexes.isNotEmpty()) {
-            logger.info("prepare to remove temp index files $indexes")
-            nodeClient.deleteNodes(
-                NodesDeleteRequest(
-                    projectId = projectId,
-                    repoName = repoName,
-                    fullPaths = indexes.map { "$TEMP_INDEX_PATH$it" },
-                    operator = SYSTEM_USER
-                )
-            )
-        }
-    }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(LocalRepository::class.java)
-    }
+    open fun updateIndex(projectId: String, repoName: String, key: String, version: String) = Unit
 }

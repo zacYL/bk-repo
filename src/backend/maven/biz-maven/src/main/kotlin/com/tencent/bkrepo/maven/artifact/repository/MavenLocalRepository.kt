@@ -1328,7 +1328,8 @@ class MavenLocalRepository(
         return listOf(artifactPath.substringBeforeLast('/'))
     }
 
-    override fun updateIndex(projectId: String, repoName: String, key: String, version: String, indexes: List<String>) {
+    // TODO("依赖分析数据更新")
+    override fun updateIndex(projectId: String, repoName: String, key: String, version: String) {
         val storageCredentials = repositoryClient.getRepoDetail(projectId, repoName).data!!.storageCredentials
         if (packageClient.findPackageByKey(projectId, repoName, key).data != null) {
             val metadataFullPath = MavenUtil.extractPath(key) + "/$MAVEN_METADATA_FILE_NAME"
@@ -1347,7 +1348,6 @@ class MavenLocalRepository(
             val metadata = MavenMetadataUtils.initMetadataByGav(groupId, artifactId, version)
             storeMetadataXml(metadata, MavenUtil.extractPath(key), storageCredentials)
         }
-        TODO("依赖分析数据更新")
     }
 
     companion object {

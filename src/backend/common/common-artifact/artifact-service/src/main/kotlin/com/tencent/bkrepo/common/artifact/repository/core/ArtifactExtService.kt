@@ -5,7 +5,6 @@ import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
-import com.tencent.bkrepo.common.artifact.constant.TEMP_INDEX_PATH
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionConflictException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
@@ -115,11 +114,10 @@ abstract class ArtifactExtService : ArtifactService() {
         projectId: String,
         repoName: String,
         packageKey: String,
-        version: String,
-        indexes: List<String>
+        version: String
     ) {
         (ArtifactContextHolder.getRepository(RepositoryCategory.LOCAL) as LocalRepository)
-            .updateIndex(projectId, repoName, packageKey, version, indexes)
+            .updateIndex(projectId, repoName, packageKey, version)
     }
 
     /**
@@ -152,22 +150,6 @@ abstract class ArtifactExtService : ArtifactService() {
             }
     }
 
-    private fun getCommonIndexFullPaths(
-        projectId: String,
-        repoName: String,
-        packageKey: String,
-        version: String
-    ): List<String> {
-        return (ArtifactContextHolder.getRepository(RepositoryCategory.LOCAL) as LocalRepository)
-            .getCommonIndexFullPaths(projectId, repoName, packageKey, version)
-            .also {
-                if (it.isNotEmpty()) {
-                    logger.info("commonIndexFullPaths of p$projectId/$repoName/$packageKey/$version]: [$it]")
-                    checkNodeExist(projectId, repoName, it)
-                }
-            }
-    }
-
     @Suppress("LongParameterList")
     private fun copyNodes(
         srcProjectId: String,
@@ -194,22 +176,7 @@ abstract class ArtifactExtService : ArtifactService() {
                 )
             )
         }
-        val indexFullPaths = getCommonIndexFullPaths(srcProjectId, srcRepoName, packageKey, version)
-        indexFullPaths.forEach {
-            nodeClient.copyNode(
-                NodeMoveCopyRequest(
-                    srcProjectId = srcProjectId,
-                    srcRepoName = srcRepoName,
-                    srcFullPath = it,
-                    destProjectId = dstProjectId,
-                    destRepoName = dstRepoName,
-                    destFullPath = "$TEMP_INDEX_PATH/$it",
-                    overwrite = true,
-                    operator = operator
-                )
-            )
-        }
-        updateIndex(dstProjectId, dstRepoName, packageKey, version, indexFullPaths)
+        updateIndex(dstProjectId, dstRepoName, packageKey, version)
     }
 
     private fun preCheck(

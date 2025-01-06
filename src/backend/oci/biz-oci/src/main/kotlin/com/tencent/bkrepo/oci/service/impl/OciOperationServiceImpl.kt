@@ -555,7 +555,7 @@ class OciOperationServiceImpl(
         }
     }
 
-    fun loadManifestList(
+    override fun loadManifestList(
         sha256: String,
         size: Long,
         storageCredentials: StorageCredentials?

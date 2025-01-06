@@ -31,7 +31,6 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.constant.TEMP_INDEX_PATH
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
@@ -273,39 +272,29 @@ class NpmLocalRepository(
         artifactPath: String?
     ): List<String> {
         require(artifactPath != null)
-        val list = mutableListOf(artifactPath)
         val name = PackageKeys.resolveName(key)
         val versionMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(name, version)
-        if (nodeClient.checkExist(projectId, repoName, versionMetadataFullPath).data == true) {
-            list.add(versionMetadataFullPath)
+        if (nodeClient.checkExist(projectId, repoName, versionMetadataFullPath).data != true) {
+            throw NodeNotFoundException("$projectId/$repoName/$versionMetadataFullPath")
         }
-        return list
-    }
-
-    override fun getCommonIndexFullPaths(
-        projectId: String,
-        repoName: String,
-        key: String,
-        version: String
-    ): List<String> {
-        return listOf(NpmUtils.getPackageMetadataPath(PackageKeys.resolveName(key)))
+        return listOf(artifactPath, versionMetadataFullPath)
     }
 
     /**
      * TODO: 需要处理并发写入
-     * TODO: 仅使用package-version.json更新索引，不分发package.json文件
      */
-    override fun updateIndex(projectId: String, repoName: String, key: String, version: String, indexes: List<String>) {
+    override fun updateIndex(projectId: String, repoName: String, key: String, version: String) {
         logger.info("update index for $projectId/$repoName/$key/$version")
         val name = PackageKeys.resolveName(key)
         val pkgMetadataFullPath = NpmUtils.getPackageMetadataPath(name)
         val credential = repositoryClient.getRepoDetail(projectId, repoName).data!!.storageCredentials
-        // 获取复制到目标仓库的临时package索引
-        val tmpPkgMetadataFullPath = "$TEMP_INDEX_PATH$pkgMetadataFullPath"
-        val tmpPkgMetaDataNode = nodeClient.getNodeDetail(projectId, repoName, tmpPkgMetadataFullPath).data
-            ?: throw NodeNotFoundException("$projectId/$repoName/$tmpPkgMetadataFullPath")
-        val tmpMetadata = storageManager.loadArtifactInputStream(tmpPkgMetaDataNode, credential).use {
-            JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
+
+        // 获取版本索引
+        val verMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(name, version)
+        val verMetadataNode = nodeClient.getNodeDetail(projectId, repoName, verMetadataFullPath).data
+            ?: throw NodeNotFoundException("$projectId/$repoName/$verMetadataFullPath")
+        val versionMetadata = storageManager.loadArtifactInputStream(verMetadataNode, credential).use {
+            JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
         }
         // 获取目标仓库已有的package索引
         val packageExist = packageClient.findPackageByKey(projectId, repoName, key).data != null
@@ -317,7 +306,7 @@ class NpmLocalRepository(
             }
         } else null
         // 构建新的package索引
-        val artifactFile = buildNewMetadataFile(projectId, repoName, name, version, originalMetadata, tmpMetadata)
+        val artifactFile = buildNewMetadataFile(projectId, repoName, versionMetadata, originalMetadata)
         val nodeCreateRequest = NodeCreateRequest(
             projectId = projectId,
             repoName = repoName,
@@ -331,33 +320,35 @@ class NpmLocalRepository(
         )
         storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, credential)
         logger.info("success to update index for [$projectId/$repoName/$name/$version]")
-        super.updateIndex(projectId, repoName, key, version, indexes)
+        super.updateIndex(projectId, repoName, key, version)
     }
 
-    @Suppress("LongParameterList")
     private fun buildNewMetadataFile(
         projectId: String,
         repoName: String,
-        name: String,
-        version: String,
-        originalMetadata: NpmPackageMetaData?,
-        tmpMetadata: NpmPackageMetaData
+        versionMetadata: NpmVersionMetadata,
+        originalMetadata: NpmPackageMetaData?
     ): ArtifactFile {
-        val time = TimeUtil.getGMTTime()
-        val newMetadata = if (originalMetadata == null) {
-            tmpMetadata.versions.map = mutableMapOf(version to tmpMetadata.versions.map[version]!!)
-            tmpMetadata.time = NpmPackageMetaData.Time().apply {
-                add(CREATED, time)
-                add(MODIFIED, time)
-                add(version, time)
+        val name = versionMetadata.name!!
+        val version = versionMetadata.version!!
+        val current = TimeUtil.getGMTTime()
+        val packageMetadata = if (originalMetadata == null) {
+            NpmPackageMetaData().apply {
+                this.id = name
+                this.name = name
+                this.distTags = NpmPackageMetaData.DistTags().apply { set(LATEST, version) }
+                this.versions.map = mutableMapOf(version to versionMetadata)
+                this.time = NpmPackageMetaData.Time().apply {
+                    add(CREATED, current)
+                    add(MODIFIED, current)
+                    add(version, current)
+                }
             }
-            tmpMetadata.distTags = NpmPackageMetaData.DistTags().apply { set(LATEST, version) }
-            tmpMetadata
         } else {
-            originalMetadata.versions.map[version] = tmpMetadata.versions.map[version]!!
+            originalMetadata.versions.map[version] = versionMetadata
             originalMetadata.time.apply {
-                add(MODIFIED, time)
-                add(version, time)
+                add(MODIFIED, current)
+                add(version, current)
             }
             val latest = originalMetadata.distTags.getMap()[LATEST]
             if (latest == null || latest != version && SemVersionParser.parse(latest) < SemVersion.parse(version)) {
@@ -365,14 +356,14 @@ class NpmLocalRepository(
             }
             originalMetadata
         }
-        val oldTarball = newMetadata.versions.map[version]!!.dist?.tarball!!
-        newMetadata.versions.map[version]!!.dist?.tarball =
+        val oldTarball = versionMetadata.dist?.tarball!!
+        packageMetadata.versions.map[version]!!.dist?.tarball =
             NpmUtils.buildPackageTgzTarball(
                 oldTarball, npmProperties.domain, npmProperties.tarball.prefix, name,
                 NpmArtifactInfo(projectId, repoName, name, version)
             )
         val credential = repositoryClient.getRepoDetail(projectId, repoName).data!!.storageCredentials
-        return newMetadata.toJsonString().byteInputStream().let { ArtifactFileFactory.build(it, credential) }
+        return packageMetadata.toJsonString().byteInputStream().let { ArtifactFileFactory.build(it, credential) }
     }
 
     private fun doMigrate(context: ArtifactMigrateContext, packageName: String): PackageMigrateDetail {

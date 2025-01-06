@@ -89,7 +89,7 @@ object IvyUtil {
             legalIvyFullPath,
             artifactsFullPath,
             masterArtifactFullPath,
-            masterArtifact ,
+            masterArtifact,
         )
     }
 
@@ -107,6 +107,10 @@ object IvyUtil {
         // 3、runtime没有找到，找default
         val default = artifacts.find { it.configurations.contains("default") }
         if (default != null) return default
+
+        // 3、default没有找到，找type=jar
+        val jar = artifacts.find { it.type == "jar" }
+        if (jar != null) return jar
 
         // 都未找到，则返回第一个
         return artifacts.firstOrNull()

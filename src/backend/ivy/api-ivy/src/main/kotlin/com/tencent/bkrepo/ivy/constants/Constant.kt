@@ -28,10 +28,10 @@
 package com.tencent.bkrepo.ivy.constants
 
 const val METADATA_KEY_ATTRIBUTES = "attributes"
-const val METADATA_KEY_ORGANISATION = "organisation"
+const val METADATA_KEY_ORGANISATION = "org"
 const val METADATA_KEY_NAME = "name"
 const val METADATA_KEY_BRANCH = "branch"
-const val METADATA_KEY_REVISION = "revision"
+const val METADATA_KEY_REVISION = "rev"
 const val METADATA_KEY_EXTRA_ATTRIBUTES = "extraAttributes"
 const val METADATA_KEY_QUALIFIED_EXTRA_ATTRIBUTES = "qualifiedExtraAttributes"
 const val METADATA_KEY_PUBLISH_ARTIFACT = "publishArtifact"

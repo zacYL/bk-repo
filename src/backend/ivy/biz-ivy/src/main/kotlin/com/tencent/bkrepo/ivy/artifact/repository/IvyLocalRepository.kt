@@ -270,12 +270,6 @@ class IvyLocalRepository(
                 display = true
             ),
             MetadataModel(
-                key = METADATA_KEY_BRANCH,
-                value = descriptor.moduleRevisionId.branch,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
                 key = METADATA_KEY_REVISION,
                 value = descriptor.moduleRevisionId.revision,
                 system = true,
@@ -350,6 +344,16 @@ class IvyLocalRepository(
                     system = true,
                     display = false
                 ),
+            )
+        }
+        descriptor.moduleRevisionId?.branch?.let {
+            metaDataModels.add(
+                MetadataModel(
+                    key = METADATA_KEY_BRANCH,
+                    value = it,
+                    system = true,
+                    display = true
+                )
             )
         }
         return metaDataModels

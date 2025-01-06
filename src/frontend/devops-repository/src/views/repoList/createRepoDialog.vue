@@ -35,6 +35,16 @@
                 </bk-input>
                 <div v-if="repoBaseInfo.type === 'docker'" class="form-tip">{{ $t('dockerRepoTip')}}</div>
             </bk-form-item>
+            <template v-if="repoBaseInfo.type === 'ivy'">
+                <bk-form-item :label="$t('ivyFilePattern')" :required="true" property="ivy_pattern" error-display-type="normal">
+                    <bk-input class="w480" v-model.trim="repoBaseInfo.ivy_pattern">
+                    </bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('artifactFilePattern')" :required="true" property="artifact_pattern" error-display-type="normal">
+                    <bk-input class="w480" v-model.trim="repoBaseInfo.artifact_pattern">
+                    </bk-input>
+                </bk-form-item>
+            </template>
             <template v-if="storeType === 'remote'">
                 <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
@@ -318,7 +328,9 @@
             includesPath: [],
             ignoresPath: [],
             downloadUrl: '', // specs下载地址
-            remoteType: 'GIT_HUB'
+            remoteType: 'GIT_HUB',
+            ivy_pattern: '[organisation]/[module]/[revision]/ivy-[revision].xml', // ivy 文件模式
+            artifact_pattern: '[organisation]/[module]/[revision]/[type]s/[artifact]-[revision].[ext]' // 制品 文件模式
         }
     }
 
@@ -565,7 +577,17 @@
                                 }
                             ]
                         }
-                        : {}
+                        : {},
+                    ivy_pattern: {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('ivyFilePattern'),
+                        trigger: 'blur'
+                    },
+                    artifact_pattern: {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('artifactFilePattern'),
+                        trigger: 'blur'
+                    }
                 }
             },
             available: {
@@ -819,7 +841,14 @@
                                         type: this.repoBaseInfo.remoteType
                                     }
                                     : {}
-                        
+                            ),
+                            ...(
+                                (this.repoBaseInfo.type === 'ivy')
+                                    ? {
+                                        ivy_pattern: this.repoBaseInfo.ivy_pattern,
+                                        artifact_pattern: this.repoBaseInfo.artifact_pattern
+                                    }
+                                    : {}
                             )
                         }
                     }

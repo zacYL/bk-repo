@@ -7,6 +7,17 @@
                     <span class="ml10">{{replaceRepoName(detailInfo.repoName || detailInfo.name)}}</span>
                 </div>
             </bk-form-item>
+            <template v-if="repoType === 'ivy'">
+                <bk-form-item :label="$t('ivyFilePattern')"
+                    :required="true" property="ivy_pattern" error-display-type="normal">
+                    <bk-input class="w480" disabled v-model.trim="detailInfo.ivy_pattern">
+                    </bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('artifactFilePattern')" :required="true" property="artifact_pattern" error-display-type="normal">
+                    <bk-input class="w480" disabled v-model.trim="detailInfo.artifact_pattern">
+                    </bk-input>
+                </bk-form-item>
+            </template>
             <bk-form-item :label="$t('storeTypes')">
                 <div class="flex-align-center">
                     <icon size="20" :name="(detailInfo.category && detailInfo.category.toLowerCase() || 'local') + '-store'" />

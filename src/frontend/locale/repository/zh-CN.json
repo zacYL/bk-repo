@@ -1150,6 +1150,8 @@
     "ignorePath": "忽略路径",
     "cantPassSamePath": "不允许传入相同的路径",
     "cantSaveEmptyString": "不允许保存空字符串",
+    "ivyFilePattern":"ivy文件模式",
+    "artifactFilePattern": "制品文件模式",
     "includesPathDesc1": "支持ant路径匹配规则",
     "includesPathDesc2": "包含路径：仅允许拉取符合路径规则的制品",
     "includesPathDesc3": "忽略路径：禁止拉取符合路径规则的制品",

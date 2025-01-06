@@ -1149,6 +1149,8 @@
     "ignorePath": "Ignore Path",
     "cantPassSamePath": "Not allowed to pass in the same path",
     "cantSaveEmptyString": "Not allowed to save empty strings",
+    "ivyFilePattern": " ivy file pattern",
+    "artifactFilePattern": "artifact file pattern",
     "IncludesPathDesc1": "Supports ant path matching rules",
     "IncludesPathDesc2": "Include path: Only allow pulling products that comply with path rules",
     "IncludesPathDesc3": "Ignoring path: Prohibiting pulling products that comply with path rules",

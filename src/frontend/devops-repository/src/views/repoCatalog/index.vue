@@ -309,7 +309,9 @@
                             isFlag: true
                         },
                         remoteType: 'GIT_HUB',
-                        downloadUrl: ''
+                        downloadUrl: '',
+                        ivy_pattern: '[organisation]/[module]/[revision]/ivy-[revision].xml', // ivy 文件模式
+                        artifact_pattern: '[organisation]/[module]/[revision]/[type]s/[artifact]-[revision].[ext]' // 制品 文件模式
                     }
                     if (res.type === 'MAVEN' || res.type === 'NPM') {
                         switch (res.coverStrategy) {
@@ -375,6 +377,10 @@
                     ) {
                         this.baseDetailInfo.downloadUrl = res.configuration.settings.downloadUrl // specs下载地址
                         this.baseDetailInfo.remoteType = res.configuration.settings.type // 远程仓库类型
+                    }
+                    if (res.type === 'IVY') {
+                        this.baseDetailInfo.ivy_pattern = res.configuration.settings.ivy_pattern
+                        this.baseDetailInfo.artifact_pattern = res.configuration.settings.artifact_pattern
                     }
                 }).finally(() => {
                     if (!this.searchNode && !this.searchNode.id) {

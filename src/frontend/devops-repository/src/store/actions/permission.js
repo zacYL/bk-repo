@@ -18,7 +18,7 @@ export default {
     getAdminInfo ({ state, commit }) {
         if (state.adminInfo) return Promise.resolve(state.adminInfo)
         return Vue.prototype.$ajax.get(
-            window.DEVOPS_SITE_URL + 'ms/auth/api/user/global/admin/user/is_admin'
+            window.DEVOPS_SITE_URL + '/ms/auth/api/user/global/admin/user/is_admin'
         ).then(res => {
             res && commit('SET_ADMIN_INFO', {
                 ...res

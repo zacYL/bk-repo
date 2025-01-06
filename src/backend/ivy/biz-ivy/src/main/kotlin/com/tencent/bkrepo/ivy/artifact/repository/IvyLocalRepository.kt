@@ -167,7 +167,12 @@ class IvyLocalRepository(
             )
 
             // 格式与仓库配置的pattern不一致，不允许上传
-            if (!parseIvyInfo.isLegalIvyFile(context.artifactInfo.getArtifactFullPath())) {
+            if (!parseIvyInfo.isLegalIvyFile(
+                    context.projectId,
+                    context.repoName,
+                    context.artifactInfo.getArtifactFullPath()
+                )
+            ) {
                 throw IvyRequestForbiddenException(
                     IvyMessageCode.IVY_ARTIFACT_FORMAT_ERROR,
                     context.artifactInfo.getArtifactFullPath(),

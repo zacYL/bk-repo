@@ -39,6 +39,8 @@ const val METADATA_KEY_MASTER_ARTIFACT = "masterArtifact"
 const val METADATA_KEY_MASTER_ARTIFACT_FULL_PATH = "masterArtifactFullPath"
 const val METADATA_KEY_IVY_FULL_PATH = "ivyFullPath"
 const val METADATA_KEY_All_ARTIFACT_FULL_PATH = "allArtifactFullPath"
+const val METADATA_KEY_PACKAGE_KEY = "packageKey"
+const val METADATA_KEY_PACKAGE_VERSION = "packageVersion"
 
 
 

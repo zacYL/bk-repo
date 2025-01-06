@@ -50,6 +50,8 @@ import com.tencent.bkrepo.ivy.constants.METADATA_KEY_MASTER_ARTIFACT
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_MASTER_ARTIFACT_FULL_PATH
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_NAME
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_ORGANISATION
+import com.tencent.bkrepo.ivy.constants.METADATA_KEY_PACKAGE_KEY
+import com.tencent.bkrepo.ivy.constants.METADATA_KEY_PACKAGE_VERSION
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_PUBLISH_ARTIFACT
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_QUALIFIED_EXTRA_ATTRIBUTES
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_REVISION
@@ -57,6 +59,7 @@ import com.tencent.bkrepo.ivy.enum.IvyMessageCode
 import com.tencent.bkrepo.ivy.exception.IvyRequestForbiddenException
 import com.tencent.bkrepo.ivy.util.IvyUtil
 import com.tencent.bkrepo.repository.api.MetadataClient
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
@@ -144,7 +147,7 @@ class IvyLocalRepository(
             val artifactPattern = it.getRepoArtifactPattern(context.repositoryDetail)
             val ivyPattern = it.getRepoIvyPattern(context.repositoryDetail)
             // 解析ivy.xml获取发布的制品（可能多个），并获取发布制品中的主文件
-            val parseIvyInfo=
+            val parseIvyInfo =
                 IvyUtil.ivyParsePublishArtifacts(
                     it.getFile(context.getArtifactFile()),
                     artifactPattern,
@@ -153,7 +156,8 @@ class IvyLocalRepository(
 
 
             // 如果主文件为空，使用ivy的fullpath
-            val masterArtifactFullPath = parseIvyInfo.masterArtifactFullPath ?: context.artifactInfo.getArtifactFullPath()
+            val masterArtifactFullPath =
+                parseIvyInfo.masterArtifactFullPath ?: context.artifactInfo.getArtifactFullPath()
             val metadataModels = getMetadataModel(
                 parseIvyInfo.model,
                 context.artifactInfo.getArtifactFullPath(),
@@ -163,7 +167,7 @@ class IvyLocalRepository(
             )
 
             // 格式与仓库配置的pattern不一致，不允许上传
-            if (!parseIvyInfo.isLegalIvyFile(context.artifactInfo.getArtifactFullPath())){
+            if (!parseIvyInfo.isLegalIvyFile(context.artifactInfo.getArtifactFullPath())) {
                 throw IvyRequestForbiddenException(
                     IvyMessageCode.IVY_ARTIFACT_FORMAT_ERROR,
                     context.artifactInfo.getArtifactFullPath(),
@@ -197,18 +201,15 @@ class IvyLocalRepository(
         metaDataModels: List<MetadataModel>
     ) {
         try {
+            val (packageKey, version) = getPackageKeyAndVersion(descriptor)
             packageClient.createVersion(
                 PackageVersionCreateRequest(
                     context.projectId,
                     context.repoName,
                     packageName = descriptor.moduleRevisionId.organisation,
-                    packageKey = PackageKeys.ofIvy(
-                        descriptor.moduleRevisionId.organisation,
-                        descriptor.moduleRevisionId.name,
-                        descriptor.moduleRevisionId.branch
-                    ),
+                    packageKey = packageKey,
                     packageType = PackageType.IVY,
-                    versionName = descriptor.moduleRevisionId.revision,
+                    versionName = version,
                     size = context.getArtifactFile().getSize(),
                     artifactPath = artifactFullPath,
                     overwrite = true,
@@ -230,6 +231,17 @@ class IvyLocalRepository(
         }
     }
 
+    private fun getPackageKeyAndVersion(descriptor: ModuleDescriptor): Pair<String, String> {
+        return Pair(
+            PackageKeys.ofIvy(
+                descriptor.moduleRevisionId.organisation,
+                descriptor.moduleRevisionId.name,
+                descriptor.moduleRevisionId.branch
+            ),
+            descriptor.moduleRevisionId.revision
+        )
+    }
+
     private fun getMetadataModel(
         descriptor: ModuleDescriptor,
         ivyFullPath: String,
@@ -237,6 +249,8 @@ class IvyLocalRepository(
         masterArtifactFullPath: String,
         artifactsFullPath: List<String>,
     ): MutableList<MetadataModel> {
+        val (packageKey, version) = getPackageKeyAndVersion(descriptor)
+
         val metaDataModels = mutableListOf(
             MetadataModel(
                 key = METADATA_KEY_ORGANISATION,
@@ -304,6 +318,24 @@ class IvyLocalRepository(
                 system = true,
                 display = true
             ),
+            MetadataModel(
+                key = METADATA_KEY_All_ARTIFACT_FULL_PATH,
+                value = artifactsFullPath,
+                system = true,
+                display = true
+            ),
+            MetadataModel(
+                key = METADATA_KEY_PACKAGE_KEY,
+                value = packageKey,
+                system = true,
+                display = true
+            ),
+            MetadataModel(
+                key = METADATA_KEY_PACKAGE_VERSION,
+                value = version,
+                system = true,
+                display = true
+            ),
         )
         masterArtifact?.let {
             metaDataModels.add(
@@ -347,6 +379,36 @@ class IvyLocalRepository(
         }
     }
 
+
+    // ivy 客户端下载统计
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource
+    ): PackageDownloadRecord? {
+        with(context) {
+            val fullPath = artifactInfo.getArtifactFullPath()
+            val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data ?: return null
+            val masterArtifactFullPath =
+                node.nodeMetadata.firstOrNull() { it.key == METADATA_KEY_MASTER_ARTIFACT_FULL_PATH }?.value as? String
+            if (fullPath == masterArtifactFullPath) {
+                val packageKey = node.nodeMetadata.firstOrNull() {
+                    it.key == METADATA_KEY_PACKAGE_KEY
+                } ?: return null
+                val version = node.nodeMetadata.firstOrNull() {
+                    it.key == METADATA_KEY_PACKAGE_VERSION
+                } ?: return null
+                return PackageDownloadRecord(
+                    projectId,
+                    repoName,
+                    packageKey.value.toString(),
+                    version.value.toString(),
+                    userId
+                )
+            } else {
+                return null
+            }
+        }
+    }
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(IvyLocalRepository::class.java)

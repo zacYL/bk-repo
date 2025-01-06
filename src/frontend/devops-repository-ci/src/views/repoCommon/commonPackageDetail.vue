@@ -206,9 +206,10 @@
             this.versionInput = this.$route.query.searchFlag ? this.version : ''
             this.getPackageInfoHandler()
             this.handlerPaginationChange()
-            this.refreshSupportPackageTypeList()
-            this.$nextTick(() => {
-                this.getIsLock()
+            this.refreshSupportPackageTypeList().then(() => {
+                this.$nextTick(() => {
+                    this.getIsLock()
+                })
             })
         },
         methods: {
@@ -251,7 +252,6 @@
             getIsLock (version) {
                 return this.blackWhiteListCheck({
                     projectId: this.projectId,
-                    repoName: this.repoName,
                     body: {
                         packageKey: this.packageKey,
                         version: version || this.version

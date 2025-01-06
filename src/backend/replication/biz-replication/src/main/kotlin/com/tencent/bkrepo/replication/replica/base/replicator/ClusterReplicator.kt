@@ -104,7 +104,7 @@ class ClusterReplicator(
                 name = remoteProjectId,
                 displayName = displayName,
                 description = localProject.description,
-                operator = localProject.createdBy
+                operator = SYSTEM_USER
             )
             artifactReplicaClient!!.replicaProjectCreateRequest(request)
         }
@@ -133,7 +133,7 @@ class ClusterReplicator(
                 public = localRepo.public,
                 description = localRepo.description,
                 configuration = configuration,
-                operator = localRepo.createdBy
+                operator = SYSTEM_USER
             )
             val remoteRepo = artifactReplicaClient!!.replicaRepoCreateRequest(request).data!!
             if (remoteRepo.type != remoteRepoType) {

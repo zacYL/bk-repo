@@ -78,7 +78,7 @@
             </bk-table-column>
             <bk-table-column :label="$t('dependPackage')" prop="pkgName" show-overflow-tooltip></bk-table-column>
             <bk-table-column :label="$t('installedVersion')" prop="installedVersion" show-overflow-tooltip></bk-table-column>
-            <bk-table-column :label="$t('operation')" width="100" v-if="userInfo.admin">
+            <bk-table-column :label="$t('operation')" width="100" v-if="adminInfo.systemAdmin">
                 <template #default="{ row }">
                     <operation-list
                         :list="[
@@ -151,7 +151,7 @@
             }
         },
         computed: {
-            ...mapState(['userInfo'])
+            ...mapState(['userInfo', 'adminInfo'])
         },
         watch: {
             subtaskOverview () {

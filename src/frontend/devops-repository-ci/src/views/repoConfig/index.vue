@@ -21,6 +21,14 @@
                                 <span class="ml10">{{replaceRepoName(repoBaseInfo.name || repoName)}}</span>
                             </div>
                         </bk-form-item>
+                        <template v-if="repoType === 'ivy'">
+                            <bk-form-item :label="$t('ivyFilePattern')" :required="true" property="ivy_pattern" error-display-type="normal">
+                                <span>{{ repoBaseInfo.ivy_pattern }}</span>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('artifactFilePattern')" :required="true" property="artifact_pattern" error-display-type="normal">
+                                <span>{{ repoBaseInfo.artifact_pattern }}</span>
+                            </bk-form-item>
+                        </template>
                         <bk-form-item :label="$t('storeTypes')">
                             <div class="flex-align-center">
                                 <icon size="20" :name="(repoBaseInfo.category && repoBaseInfo.category.toLowerCase() || 'local') + '-store'" />
@@ -350,7 +358,9 @@
                     includesPath: [],
                     ignoresPath: [],
                     downloadUrl: '', // specs下载地址
-                    remoteType: 'GIT_HUB'
+                    remoteType: 'GIT_HUB',
+                    ivy_pattern: '[organisation]/[module]/[revision]/ivy-[revision].xml', // ivy 文件模式
+                    artifact_pattern: '[organisation]/[module]/[revision]/[type]s/[artifact]-[revision].[ext]' // 制品 文件模式
                 },
                 // 是否展示tab标签页，因为代理设置和清理设置需要根据详情页接口返回的数据判断是否显示，解决异步导致的tab顺序错误的问题
                 showTabPanel: false,
@@ -603,7 +613,17 @@
                                 }
                             ]
                         }
-                        : {}
+                        : {},
+                    ivy_pattern: {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('ivyFilePattern'),
+                        trigger: 'blur'
+                    },
+                    artifact_pattern: {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('artifactFilePattern'),
+                        trigger: 'blur'
+                    }
                 }
             }
             // 虚拟仓库中选择上传的目标仓库的下拉列表数据
@@ -830,6 +850,11 @@
                         this.tempRepoBaseInfo.downloadUrl = this.repoBaseInfo.downloadUrl = res.configuration.settings.downloadUrl // specs下载地址
                         this.tempRepoBaseInfo.remoteType = this.repoBaseInfo.remoteType = res.configuration.settings.type // 远程仓库类型
                     }
+                    // 如果仓库类型是IVY，则需要展示ivy_pattern和artifact_pattern
+                    if (res.type === 'IVY') {
+                        this.repoBaseInfo.ivy_pattern = res.configuration.settings.ivy_pattern
+                        this.repoBaseInfo.artifact_pattern = res.configuration.settings.artifact_pattern
+                    }
                     if (res.type === 'DOCKER' && (res.category === 'LOCAL' || res.category === 'REMOTE') && res.configuration.settings.defaultNamespace === 'library') {
                         this.repoBaseInfo.enabledLibraryNamespace = true
                     }
@@ -933,7 +958,14 @@
                                         type: this.repoBaseInfo.remoteType
                                     }
                                     : {}
-                        
+                            ),
+                            ...(
+                                (this.repoType === 'ivy')
+                                    ? {
+                                        ivy_pattern: this.repoBaseInfo.ivy_pattern,
+                                        artifact_pattern: this.repoBaseInfo.artifact_pattern
+                                    }
+                                    : {}
                             )
                         }
                     }

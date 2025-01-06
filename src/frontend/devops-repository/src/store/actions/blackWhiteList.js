@@ -1,7 +1,7 @@
 /*
  * @Date: 2024-11-29 21:39:00
  * @LastEditors: xiaoshan
- * @LastEditTime: 2025-01-03 17:00:03
+ * @LastEditTime: 2025-01-06 17:57:31
  * @FilePath: /artifact/src/frontend/devops-repository/src/store/actions/blackWhiteList.js
  */
 import Vue from 'vue'
@@ -30,9 +30,9 @@ export default {
      * @param {*} body
      * @return {*}
      */
-    blackWhiteListCheck (_, { projectId, repoName, body }) {
+    blackWhiteListCheck (_, { projectId, body }) {
         return Vue.prototype.$ajax.get(
-            `${Prefix}/package/access-rule/check/ ${projectId}/${repoName}/`,
+            `${Prefix}/package/access-rule/check/${projectId}/`,
             {
                 params: body
             }

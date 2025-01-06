@@ -1,4 +1,5 @@
 import { mapState, mapActions } from 'vuex'
+import { findTargetObj } from '../../utils/index.js'
 export default {
     computed: {
         ...mapState(['userInfo', 'domain', 'dependAccessTokenValue', 'dependInputValue1', 'dependInputValue2', 'dependInputValue3']),
@@ -594,6 +595,89 @@ export default {
                             codeList: [
                                 `conan upload ${this.specialPackageName} -r ${this.repoName}`
                             ]
+                        }
+                    ]
+                }
+            ]
+        },
+        ivyGuide () {
+            return [
+                {
+                    title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('ivyCreditGuideSubTitle1'),
+                            codeList: [
+                                '<ivysettings>',
+                                `   <credentials host="${location.host}" realm="Authentication Required" 
+    username="${this.userName || 'userId'}" passwd="${this.accessToken || 'PERSONAL_ACCESS_TOKEN'}"/>`,
+                                '</ivysettings>'
+                            ]
+                        }
+                    ]
+                },
+                {
+                    optionType: 'push',
+                    main: [
+                        {
+                            title: this.$t('push'),
+                            subTitle: this.$t('ivyCreditGuideSubTitle2'),
+                            codeList: [
+                                '<ivysettings>',
+                                '   <resolvers>',
+                                `       <url name="${this.repoName}">`,
+                                `           <ivy pattern="${location.origin}/ivy/${this.projectId}/${this.repoName}/${this.repoInfo?.configuration?.settings?.ivy_pattern || ''}" />`,
+                                `           <artifact pattern="${location.origin}/ivy/${this.projectId}/${this.repoName}/${this.repoInfo?.configuration?.settings?.artifact_pattern || ''}" />`,
+                                '       </url>',
+                                '       <chain name="chain">',
+                                `           <resolver ref="${this.repoName}"/>`,
+                                '       </chain>',
+                                '   </resolvers>',
+                                '</ivysettings>'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('ivyCreditGuideSubTitle3'),
+                            codeList: [
+                                `<ivy:publish resolver="${this.repoName}">`
+                            ]
+                        },
+                        {
+                            title: this.$t('push'),
+                            codeList: [
+                                'ant publish'
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        ivyInstall () {
+            /**
+             * @description: 生成QualifiedExtraAttributes文案，默认是个map，但里面可能为空
+             * @return {*}
+             */
+            const getQualifiedExtraAttributesText = () => {
+                const obj = findTargetObj(this.metadataDataList, 'qualifiedExtraAttributes', 'key')?.value || {}
+                return Object.keys(obj).map(key => `${key}="${obj[key]}"`).join(' ')
+            }
+            
+            const getDependencyCode = () => {
+                const org = findTargetObj(this.metadataDataList, 'org', 'key')?.value || ''
+                const name = findTargetObj(this.metadataDataList, 'name', 'key')?.value || ''
+                const rev = findTargetObj(this.metadataDataList, 'rev', 'key')?.value || ''
+                const branch = findTargetObj(this.metadataDataList, 'branch', 'key')?.value || ''
+            
+                return `<dependency org="${org}" name="${name}" rev="${rev}" ${branch ? `branch="${branch}" ` : ''}${getQualifiedExtraAttributesText()} />`
+            }
+            
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: 'Apache Ivy',
+                            codeList: [getDependencyCode()].filter(Boolean)
                         }
                     ]
                 }

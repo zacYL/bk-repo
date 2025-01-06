@@ -1,4 +1,8 @@
 import createLocale from '@locale'
+
+export const findTargetObj = (targetList, value, key = 'id') => {
+    return targetList.find(item => item[key] === value)
+}
 /**
  *  转换文件大小
  */

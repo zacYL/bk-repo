@@ -41,7 +41,7 @@
 <script>
     import repoGuide from '@repository/views/repoCommon/repoGuide'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
-    import { mapMutations } from 'vuex'
+    import { mapMutations, mapActions } from 'vuex'
 
     export default {
         name: 'useGuide',
@@ -62,7 +62,8 @@
                     loading: false
                 },
                 activeTab: 'setCredentials',
-                activeDependType: ''
+                activeDependType: '',
+                repoInfo: {}
             }
         },
         computed: {
@@ -76,13 +77,16 @@
                 if (this.repoType === 'go' && this.storeType === 'remote' && this.removeProtocolFromUrl(this.repoUrl, true) === 'http') {
                     basicOption = basicOption.filter(item => item.name !== 'setCredentials')
                 }
+                // ivy仓库不支持pull操作
+                if (this.repoType === 'ivy') {
+                    basicOption = basicOption.filter(item => item.name !== 'pull')
+                }
                 if (!this.noShowOption) {
                     basicOption.push({ name: 'push', label: this.$t('push') })
                 }
                 if (this.repoType === 'nuget' && this.storeType !== 'virtual' && !this.whetherSoftware) {
                     basicOption.push({ name: 'delete', label: this.$t('deleteArtifact') })
                 }
-                console.log(basicOption)
                 return basicOption
             },
             // 构建工具的下拉选择项，目前只有maven及npm仓库才支持
@@ -110,6 +114,9 @@
                             if (this.guideOption.find(item => item.name !== 'setCredentials')) {
                                 this.activeTab = this.guideOption[0].name
                             }
+                            if (this.repoType === 'ivy') {
+                                this.getRepoDetail()
+                            }
                         })
                     }
                 },
@@ -119,6 +126,16 @@
         },
         methods: {
             ...mapMutations(['SET_DEPEND_ACCESS_TOKEN_VALUE']),
+            ...mapActions(['getRepoInfo']),
+            getRepoDetail () {
+                this.getRepoInfo({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    repoType: this.repoType
+                }).then(res => {
+                    this.repoInfo = res
+                })
+            },
             setData (data) {
                 this.useGuideData = {
                     ...this.useGuideData,

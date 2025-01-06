@@ -101,7 +101,7 @@
             </template>
         </bk-sideslider>
 
-        <!-- maven包制上传侧边栏 -->
+        <!-- 'MAVEN', 'DOCKER', 'NPM' 包制上传侧边栏 -->
         <repoUploader
             v-if="['MAVEN', 'DOCKER', 'NPM'].includes(currentType) && repoUploader.isVisible"
             v-model="repoUploader.isVisible"
@@ -110,7 +110,6 @@
             :repo-type="currentType"
             @update="onUpdateUploader"
             @cancel="onCancelUploader" />
-        <!-- maven包制上传侧边栏 /-->
         
         <!-- 使用指引 -->
         <useGuide ref="useGuideRef"></useGuide>

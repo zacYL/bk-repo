@@ -1042,6 +1042,7 @@
     "reverseDependence":"Reverse dependence",
     "plugin":"Plugin",
     "selectMavenArtifact":"Please select a Maven artifact package",
+    "selectNpmArtifact":"Please select a Npm artifact package",
     "selectDockerImage":"Please select a Docker image package",
     "uploadDockerErrorMsgTip": "docker image package upload failed, please re-upload",
     "progress": "Progress bar",

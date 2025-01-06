@@ -1043,6 +1043,7 @@
     "reverseDependence":"反向依赖",
     "plugin":"插件",
     "selectMavenArtifact":"请选择Maven制品包",
+    "selectNpmArtifact":"请选择Npm制品包",
     "selectDockerImage":"请选择Docker镜像包",
     "uploadDockerErrorMsgTip": "docker镜像包上传失败, 请重新上传",
     "progress": "进度条",

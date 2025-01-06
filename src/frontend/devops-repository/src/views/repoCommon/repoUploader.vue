@@ -10,6 +10,7 @@
             <div v-if="customSettings.uploadFlag">
                 <div class="content-info">
                     <p v-if="repoType === 'MAVEN'">{{ $t('selectMavenArtifact') }}</p>
+                    <p v-if="repoType === 'NPM'">{{ $t('selectMavenArtifact') }}</p>
                     <p v-if="repoType === 'DOCKER'">{{ $t('selectDockerImage') }}</p>
                 </div>
                 <bk-upload
@@ -25,6 +26,23 @@
                     ext-cls="content-upload"
                     url="#"
                 />
+                <template v-if="repoType === 'NPM'">
+                    <bk-form
+                        class="mt10"
+                        ref="formRef"
+                        :label-width="200"
+                        :model="npmFormData"
+                        form-type="vertical"
+                    >
+                        <bk-form-item :label="$t('currentFile')" v-if="npmFormData.currentFile" required>
+                            <bk-input disabled v-model="npmFormData.currentFile" />
+                        </bk-form-item>
+                    </bk-form>
+                    <div class="g-flex mt10">
+                        {{ $t('progress') }}:
+                        <bk-progress :stroke-width="8" :percent="uploadPercent" />
+                    </div>
+                </template>
                 <template v-if="repoType === 'DOCKER'">
                     <bk-form
                         class="mt10"
@@ -241,6 +259,10 @@
                     file: '',
                     currentFile: ''
                 },
+                npmFormData: {
+                    file: '',
+                    currentFile: ''
+                },
                 checkFail: false, // 用于上传校验，如果失败的话，提供pom文件上传按钮
                 currentFileName: '', // 当前上传的文件名
                 errorMsg: '', // 上传接口后台返回的错误信息
@@ -280,6 +302,7 @@
             onRequestUpload (uploadFile) {
                 if (this.repoType === 'MAVEN') this.handleMavenUpload(uploadFile, 'mavenUpload')
                 if (this.repoType === 'DOCKER') this.handleDockerUpload(uploadFile)
+                if (this.repoType === 'NPM') this.handleNpmUpload(uploadFile)
             },
 
             reupload () {
@@ -287,6 +310,11 @@
                 this.$nextTick(() => {
                     this.$refs.pomUpload.$refs.uploadel.click()
                 })
+            },
+
+            handleNpmUpload (uploadFile) {
+                this.npmFormData.file = uploadFile
+                this.npmFormData.currentFile = uploadFile.fileObj.name
             },
 
             handleDockerUpload (uploadFile) {
@@ -357,82 +385,125 @@
                 this.$emit('cancel', false)
             },
             submitData () {
-                this.$refs.formRef.validate().then(() => {
-                    const cb = () => {
+                const submitFn = () => {
+                    this.uploadPercent = 0
+                    this.errorMsg = ''
+                    const submit = () => {
                         return new Promise((resolve, reject) => {
-                            // 提交数据
-                            if (this.repoType === 'MAVEN') {
-                                const params = {
+                            let params
+                            const formData = new FormData()
+                            const headers = {
+                                'Content-Type': 'multipart/form-data; boundary=----',
+                                'X-BKREPO-EXPIRES': 0
+                            }
+                            this.uploadXhr = new XMLHttpRequest()
+                            const defaultUploaderPromise = (
+                                uploadType, formData
+                            ) => {
+                                return this.uploadArtifactory({
+                                    xhr: this.uploadXhr,
+                                    body: formData,
+                                    headers,
+                                    uploadType,
                                     projectId: this.projectId,
                                     repoName: this.repoName,
-                                    body: { ...this.mavenFormData }
-                                }
-                                resolve(
-                                    this.submitMavenArtifactory(params).then(res => {
-                                        this.$emit('update', false)
-                                    }).catch(error => {
-                                        this.$bkMessage({
-                                            theme: 'error',
-                                            message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`
-                                        })
-                                    })
-                                )
+                                    progressHandler: ($event) => {
+                                        const num = $event.loaded / $event.total
+                                        formData.file.onProgress({ percent: num })
+                                        this.uploadPercent = num
+                                    }
+                                })
                             }
-                            if (this.repoType === 'DOCKER') {
-                                if (!this.dockerFormData.file) {
-                                    reject(this.$t('uploadDockerErrorMsgTip'))
-                                } else {
-                                    this.uploadPercent = 0
-                                    this.errorMsg = ''
-                                    const formData = new FormData()
+
+                            switch (this.repoType) {
+                                case 'MAVEN':
+                                    params = {
+                                        projectId: this.projectId,
+                                        repoName: this.repoName,
+                                        body: { ...this.mavenFormData }
+                                    }
+                                    this.submitMavenArtifactory(params)
+                                        .then(res => {
+                                            this.$emit('update', false)
+                                            resolve()
+                                        })
+                                        .catch(error => {
+                                            this.$bkMessage({
+                                                theme: 'error',
+                                                message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                                            })
+                                            reject(error)
+                                        })
+                                    break
+                                case 'DOCKER':
+                                    if (!this.dockerFormData.file) {
+                                        reject(this.$t('uploadDockerErrorMsgTip'))
+                                        break
+                                    }
                                     formData.append('file', this.dockerFormData.file.fileList[0].origin)
                                     formData.append('version', this.dockerFormData.version)
                                     formData.append('packageName', this.dockerFormData.packageName)
-                                    const headers = {
-                                        'Content-Type': 'multipart/form-data; boundary=----',
-                                        'X-BKREPO-EXPIRES': 0
-                                    }
-                                    this.uploadXhr = new XMLHttpRequest()
-                                
-                                    resolve(
-                                        this.uploadArtifactory({
-                                            xhr: this.uploadXhr,
-                                            body: formData,
-                                            headers,
-                                            uploadType: 'dockerUpload',
-                                            projectId: this.projectId,
-                                            repoName: this.repoName,
-                                            progressHandler: ($event) => {
-                                                const num = $event.loaded / $event.total
-                                                this.dockerFormData.file.onProgress({ percent: num })
-                                                this.uploadPercent = num
-                                            }
-                                        }).then(res => {
+                                    defaultUploaderPromise('dockerUpload', this.dockerFormData)
+                                        .then(res => {
                                             this.$bkMessage({
                                                 theme: 'success',
                                                 message: this.$t('uploadSuccess')
                                             })
                                             this.$emit('update', false)
-                                        }).catch(error => {
+                                            resolve()
+                                        })
+                                        .catch(error => {
                                             this.errorMsg = error.message || error.error || error
                                             reject(this.errorMsg)
                                         })
+                                    break
+                                case 'NPM':
+                                    if (!this.npmFormData.file) {
+                                        reject(this.$t('selectNpmArtifact'))
+                                        break
+                                    }
+                                    formData.append('file', this.npmFormData.file.fileList[0].origin)
+                                    defaultUploaderPromise('npmUpload', this.npmFormData)
+                                        .then(res => {
+                                            this.$bkMessage({
+                                                theme: 'success',
+                                                message: this.$t('uploadSuccess')
+                                            })
+                                            this.$emit('update', false)
+                                            resolve()
+                                        })
+                                        .catch(error => {
+                                            this.errorMsg = error.message || error.error || error
+                                            reject(this.errorMsg)
+                                        })
+                                    break
 
-                                    )
-                                }
+                                default:
+                                    reject(this.$t('uploadFailed'))
                             }
                         })
                     }
+
                     this.customSettings.saveBtnDisable = true
-                    cb().catch(err => {
-                        this.$bkMessage({
-                            theme: 'error',
-                            message: err
+                    submit()
+                        .catch(err => {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: err
+                            })
                         })
-                    }).finally(() => {
-                        this.customSettings.saveBtnDisable = false
+                        .finally(() => {
+                            this.customSettings.saveBtnDisable = false
+                        })
+                }
+                // 如果表单存在，先校验
+                if (this.$refs.formRef) {
+                    this.$refs.formRef.validate().then(() => {
+                        submitFn()
                     })
-                })
+                } else {
+                    submitFn()
+                }
             }
         }
     }

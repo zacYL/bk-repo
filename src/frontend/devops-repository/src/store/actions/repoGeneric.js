@@ -203,6 +203,8 @@ export default {
                 requestUrl = 'web/maven/pom_gav'
             } else if (uploadType === 'dockerUpload') {
                 requestUrl = 'web/docker/ext/upload'
+            } else if (uploadType === 'npmUpload') {
+                requestUrl = 'web/npm/ext/upload'
             } else {
                 requestUrl = 'web/generic'
             }
@@ -211,6 +213,8 @@ export default {
                 xhr.open('POST', `/${requestUrl}`, true)
             } else if (uploadType === 'dockerUpload') {
                 xhr.open('PUT', `/${requestUrl}/${projectId}/${repoName}`, true)
+            } else if (uploadType === 'npmUpload') {
+                xhr.open('POST', `/${requestUrl}/${projectId}/${repoName}`, true)
             } else {
                 xhr.open('PUT', `/${requestUrl}/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`, true)
             }

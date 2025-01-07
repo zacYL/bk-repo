@@ -18,4 +18,8 @@ class PackageAccessRuleController(
     ): Response<List<PackageAccessRule>> {
         return ResponseBuilder.success(packageAccessRuleService.getMatchedRules(projectId, type, fullName))
     }
+
+    override fun checkPackageAccessRule(projectId: String, packageKey: String, version: String): Response<Boolean> {
+        return ResponseBuilder.success(packageAccessRuleService.checkPackageAccessRule(projectId, packageKey, version))
+    }
 }

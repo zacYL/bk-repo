@@ -1,13 +1,18 @@
 package com.tencent.bkrepo.common.artifact.repository.core
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionConflictException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.PackageVersionInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
@@ -18,12 +23,14 @@ import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.PackageAccessRuleClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.slf4j.LoggerFactory
@@ -42,6 +49,9 @@ abstract class ArtifactExtService : ArtifactService() {
 
     @Autowired
     lateinit var permissionManager: PermissionManager
+
+    @Autowired
+    lateinit var packageAccessRuleClient: PackageAccessRuleClient
 
     /**
      * 查询版本信息
@@ -67,9 +77,9 @@ abstract class ArtifactExtService : ArtifactService() {
             permissionManager.checkRepoPermission(PermissionAction.WRITE, dstProjectId, dstRepoName)
             val srcRepo = repositoryClient.getRepoDetail(srcProjectId, srcRepoName).data!!
             val dstRepo = repositoryClient.getRepoDetail(dstProjectId, dstRepoName).data!!
-            preCheck(srcRepo, dstRepo, packageKey, version, overwrite)
             val srcVersion = packageClient.findVersionByName(srcProjectId, srcRepoName, packageKey, version).data
                 ?: throw VersionNotFoundException("$packageKey/$version")
+            preCheck(srcRepo, dstRepo, srcVersion, packageKey, version, overwrite, move)
             copyNodes(
                 srcProjectId, srcRepoName, dstProjectId, dstRepoName, packageKey, version,
                 srcVersion.manifestPath, srcVersion.contentPath
@@ -193,34 +203,46 @@ abstract class ArtifactExtService : ArtifactService() {
         }
     }
 
+    @Suppress("LongParameterList")
     private fun preCheck(
         srcRepo: RepositoryDetail,
         dstRepo: RepositoryDetail,
+        srcVersion: PackageVersion,
         packageKey: String,
         version: String,
-        overwrite: Boolean
+        overwrite: Boolean,
+        move: Boolean
     ) {
+        // 禁止移动/复制到同一仓库
         Preconditions.checkArgument(
             !(srcRepo.projectId == dstRepo.projectId && srcRepo.name == dstRepo.name),
             "dstProjectId/dstRepoName"
         )
+        // 限制本地仓库类型
         Preconditions.checkArgument(
             srcRepo.type == dstRepo.type &&
                     srcRepo.category == RepositoryCategory.LOCAL &&
                     dstRepo.category == RepositoryCategory.LOCAL,
             "srcRepo/dstRepo"
         )
-        if (
-            packageClient.findVersionByName(dstRepo.projectId, dstRepo.name, packageKey, version).data != null &&
-            (!overwrite || dstRepo.coverStrategy == CoverStrategy.UNCOVER)
-        ) throw VersionConflictException(PackageKeys.resolveName(packageKey), version)
+        // 检查源制品锁定/禁用状态
+        checkSrcVersion(srcRepo.projectId, srcVersion, packageKey, move)
+        // 检查目标仓库覆盖策略/被覆盖制品锁定状态
+        packageClient.findVersionByName(dstRepo.projectId, dstRepo.name, packageKey, version).data?.let { versionInfo ->
+            val conflict = !overwrite || dstRepo.coverStrategy == CoverStrategy.UNCOVER ||
+                    versionInfo.packageMetadata.any { it.key == LOCK_STATUS && it.value == true }
+            if (conflict) throw VersionConflictException(PackageKeys.resolveName(packageKey), version)
+        }
     }
 
-    private fun checkNodeExist(projectId: String, repoName: String, fullPaths: List<String>) {
-        val existedList = nodeClient.listExistFullPath(projectId, repoName, fullPaths).data ?: emptyList()
-        if (existedList.size != fullPaths.size) {
-            throw NodeNotFoundException((fullPaths - existedList.toSet()).first())
-        }
+    private fun checkSrcVersion(projectId: String, version: PackageVersion, packageKey: String, move: Boolean) {
+        if (
+            version.packageMetadata.any { it.key == FORBID_STATUS && it.value == true } ||
+                packageAccessRuleClient.checkPackageAccessRule(projectId, packageKey, version.name).data != true
+        ) throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_FORBIDDEN, "$packageKey/$version", HttpStatus.FORBIDDEN)
+
+        if (move && version.packageMetadata.any { it.key == LOCK_STATUS && it.value == true })
+            throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, "$packageKey/$version")
     }
 
     companion object {

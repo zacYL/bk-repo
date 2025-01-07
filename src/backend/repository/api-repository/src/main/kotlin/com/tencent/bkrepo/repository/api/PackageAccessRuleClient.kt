@@ -20,7 +20,15 @@ interface PackageAccessRuleClient {
     @GetMapping
     fun getMatchedRules(
         @PathVariable projectId: String,
-        @RequestParam(required = true) type: String,
+        @RequestParam type: String,
         @RequestParam fullName: String? = null,
     ): Response<List<PackageAccessRule>>
+
+    @ApiOperation("校验是否通过制品规则")
+    @GetMapping("/check")
+    fun checkPackageAccessRule(
+        @PathVariable projectId: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String
+    ): Response<Boolean>
 }

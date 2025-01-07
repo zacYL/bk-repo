@@ -39,19 +39,14 @@ import com.tencent.bkrepo.common.artifact.repository.core.AbstractArtifactReposi
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
-import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * 本地仓库抽象逻辑
  */
 abstract class LocalRepository : AbstractArtifactRepository() {
-
-    @Autowired
-    lateinit var permissionManager: PermissionManager
 
     override fun onUpload(context: ArtifactUploadContext) {
         with(context) {

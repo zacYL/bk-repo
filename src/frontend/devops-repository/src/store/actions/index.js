@@ -66,8 +66,8 @@ export default {
         )
     },
     // 获取有复制移动权限的generic仓库列表
-    getGenericList (_, { projectId }) {
-        return Vue.prototype.$ajax.get(`${prefix}/repo/list/${projectId}?type=GENERIC`)
+    getGenericList (_, { projectId, type = 'GENERIC' }) {
+        return Vue.prototype.$ajax.get(`${prefix}/repo/list/${projectId}?type=${type}`)
     },
     // 查询仓库列表
     getRepoListAll ({ commit }, { projectId, type, searchFlag = false }) {

@@ -174,6 +174,20 @@ export default {
             }
         )
     },
+    // 移动
+    moveVersion (_, { repoType, body }) {
+        return Vue.prototype.$ajax.post(
+            `${repoType}/ext/version/move`,
+            body
+        )
+    },
+    // 复制
+    copyVersion (_, { repoType, body }) {
+        return Vue.prototype.$ajax.post(
+            `${repoType}/ext/version/copy`,
+            body
+        )
+    },
     // 查询包版本详情
     getVersionDetail (_, { projectId, repoType, repoName, packageKey, version }) {
         return Vue.prototype.$ajax.get(

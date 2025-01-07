@@ -51,6 +51,8 @@
                                     ] : []),
                                     forbidOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
                                     lockOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
+                                    canMoveOrCopy && !$version.metadata.forbidStatus && !$version.metadata.lockStatus && { clickEvent: () => moveOrCopy($version), label: $t('move') },
+                                    canMoveOrCopy && !$version.metadata.forbidStatus && { clickEvent: () => moveOrCopy($version, 'copy'), label: $t('copy') },
                                     (deleteOperationPermission && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: $t('delete'), clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
@@ -76,6 +78,7 @@
         </div>
         <common-form-dialog ref="commonFormDialog" @refresh="refresh"></common-form-dialog>
         <operationLimitConfirmDialog ref="operationLimitConfirmDialog" @confirm="changeLimitStatusHandler"></operationLimitConfirmDialog>
+        <repoListDialog ref="repoListDialog" @confirm="confirmMoveOrCopy" />
     </div>
 </template>
 <script>
@@ -83,8 +86,9 @@
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import operationLimitConfirmDialog from '@repository/components/operationLimitConfirmDialog'
     import VersionDetail from './commonVersionDetail'
+    import repoListDialog from './components/repoLIstDialog.vue'
     import commonFormDialog from '@repository/views/repoCommon/commonFormDialog'
-    import { mapState, mapGetters, mapActions } from 'vuex'
+    import { mapState, mapGetters, mapActions, mapMutations } from 'vuex'
     export default {
         name: 'commonPackageDetail',
         components: {
@@ -92,7 +96,8 @@
             InfiniteScroll,
             VersionDetail,
             commonFormDialog,
-            operationLimitConfirmDialog
+            operationLimitConfirmDialog,
+            repoListDialog
         },
         data () {
             return {
@@ -197,6 +202,10 @@
             // 禁用制品操作权限
             forbidOperationPermission () {
                 return this.currentRepoDataPermission.includes('forbid')
+            },
+            // 是否可以移动/复制
+            canMoveOrCopy () {
+                return ['maven', 'docker', 'npm', 'go'].includes(this.repoType)
             }
         },
         created () {
@@ -213,6 +222,7 @@
             })
         },
         methods: {
+            ...mapMutations(['INIT_TREE', 'INIT_OPERATE_TREE', 'UPDATE_TREE', 'UPDATE_OPERATE_TREE']),
             ...mapActions([
                 'getPackageInfo',
                 'getVersionList',
@@ -222,7 +232,10 @@
                 'lockPackageMetadata',
                 'refreshSupportPackageTypeList',
                 'getCurrentRepositoryDataPermission',
-                'blackWhiteListCheck'
+                'blackWhiteListCheck',
+                'getGenericList',
+                'moveVersion',
+                'copyVersion'
             ]),
             iconClick (ref, row) {
                 this.getIsLock(row.name).then(() => {
@@ -441,6 +454,90 @@
                             })
                         })
                     }
+                })
+            },
+            // 移动或复制
+            confirmMoveOrCopy (type, selectData) {
+                const body = {
+                    srcRepoName: this.repoName,
+                    dstRepoName: selectData.name,
+                    dstProjectId: this.projectId,
+                    version: selectData.version,
+                    srcProjectId: this.projectId,
+                    packageKey: this.packageKey,
+                    overwrite: true
+                }
+                const apiMehods = {
+                    move: this.moveVersion,
+                    copy: this.copyVersion
+                }[type]
+                this.$refs.repoListDialog.loading()
+                this.getVersionList({
+                    projectId: this.projectId,
+                    repoName: body.dstRepoName,
+                    version: selectData.version,
+                    packageKey: this.packageKey
+                }).then((res) => {
+                    if (res.records.length) {
+                        this.$confirm({
+                            message: this.$t('confirmOverwrite'),
+                            type: 'warning',
+                            confirmFn: () => {
+                                this.$refs.repoListDialog.loading()
+                                apiMehods({ repoType: this.repoType, body }).then(res => {
+                                    this.$refs.repoListDialog.close()
+                                    this.$bkMessage({
+                                        theme: 'success',
+                                        message: this.$t(type) + this.$t('space') + this.$t('success')
+                                    })
+                                    if (type === 'move') {
+                                        this.getVersionListHandler()
+                                    }
+                                }).finally(() => {
+                                    this.$refs.repoListDialog.loading(false)
+                                })
+                            }
+                        })
+                        return
+                    }
+                    this.$refs.repoListDialog.loading()
+                    apiMehods({ repoType: this.repoType, body }).then(res => {
+                        this.$refs.repoListDialog.close()
+                        this.$bkMessage({
+                            theme: 'success',
+                            message: this.$t(type) + this.$t('space') + this.$t('success')
+                        })
+                        if (type === 'move') {
+                            this.getVersionListHandler()
+                        }
+                    }).finally(() => {
+                        this.$refs.repoListDialog.loading(false)
+                    })
+                }).catch(() => {
+                    this.$refs.repoListDialog.loading(false)
+                })
+            },
+            // 移动/复制
+            moveOrCopy (row, type = 'move') {
+                this.initGenericOperateTree().then((res) => {
+                    this.$nextTick(() => {
+                        this.$refs.repoListDialog.open({
+                            row,
+                            srcRepoName: this.repoName,
+                            operationType: type,
+                            dialogTitle: `${this.$t(type)} (${row.name})`,
+                            dataList: res
+                        })
+                    })
+                })
+            },
+            // 初始化操作树(复制、移动)
+            initGenericOperateTree () {
+                //
+                return this.getGenericList({ projectId: this.projectId, type: this.repoType }).then((res) => {
+                    return res
+                }).catch((error) => {
+                    console.log(error)
                 })
             }
         }

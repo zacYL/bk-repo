@@ -1182,5 +1182,6 @@
     "goTips5": "Execute in the directory containing the go.mod file:",
     "goTips6": "Specify the directory to push (default is the current directory)",
     "goTips7": "Whether to overwrite existing modules (default is not to overwrite)",
-    "confirmOverwrite": "The target repository already contains the same package version. Overwrite it?"
+    "confirmOverwrite": "The target repository already contains the same package version. Overwrite it?",
+    "noRepositoryData": "No permissioned repository found"
 }

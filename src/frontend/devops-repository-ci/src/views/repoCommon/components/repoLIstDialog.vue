@@ -6,7 +6,7 @@
             width="600"
             height-num="563"
             @cancel="close">
-            <template v-if="showNoDataInfo">
+            <template>
                 <bk-input
                     class="w250"
                     v-model.trim="importantSearch"
@@ -14,14 +14,14 @@
                     clearable
                     right-icon="bk-icon icon-search">
                 </bk-input>
-                <div class="content">
+                <div class="content" v-if="computedDataList.length">
                     <div class="flex-align-center flex-1 content-item" :class="selectData.name === item.name ? 'active' : ''" v-for="item in computedDataList" :key="item.id" @click="selectData = item">
                         <Icon size="16" :name="item.type.toLowerCase()" />
                         <span class="ml10 flex-1 text-overflow" :title="item.name">{{ item.name }}</span>
                     </div>
                 </div>
+                <span v-else class="flex-center mt40"> {{$t('noRepositoryData')}}</span>
             </template>
-            <span v-else class="flex-center mt50"> {{$t('noGenericDataUploadInfo', { option: $t( ['move', 'copy'].includes(operationType) ? operationType : 'moveOrCopy') })}}</span>
             <template #footer>
                 <bk-button @click="close">{{ $t('cancel') }}</bk-button>
                 <bk-button class="ml10" :loading="isLoading" theme="primary" :disabled="!selectData.name" @click="submit">{{ $t('confirm') }}</bk-button>

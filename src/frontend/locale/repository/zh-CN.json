@@ -1183,5 +1183,6 @@
     "goTips5": "在包含go.mod文件的模块目录下执行：",
     "goTips6": "指定需要推送的模块目录（默认为当前目录）",
     "goTips7": "是否覆盖已有的模块（默认不覆盖）",
-    "confirmOverwrite": "目标仓库已存在相同包版本，是否覆盖"
+    "confirmOverwrite": "目标仓库已存在相同包版本，是否覆盖",
+    "noRepositoryData": "未找到有权限的目标仓库"
 }

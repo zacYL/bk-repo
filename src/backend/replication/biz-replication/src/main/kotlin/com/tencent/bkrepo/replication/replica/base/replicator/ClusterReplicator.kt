@@ -199,7 +199,7 @@ class ClusterReplicator(
                 packageMetadata = packageMetadata,
                 extension = packageVersion.extension,
                 overwrite = true,
-                createdBy = packageVersion.createdBy,
+                createdBy = SYSTEM_USER,
                 operator = SYSTEM_USER
             )
             artifactReplicaClient!!.replicaPackageVersionCreatedRequest(request)

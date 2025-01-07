@@ -478,6 +478,7 @@
                     version: selectData.version,
                     packageKey: this.packageKey
                 }).then((res) => {
+                    this.$refs.repoListDialog.loading(false)
                     if (res.records.length) {
                         this.$confirm({
                             message: this.$t('confirmOverwrite'),

@@ -59,6 +59,7 @@ import com.tencent.bkrepo.ivy.enum.IvyMessageCode
 import com.tencent.bkrepo.ivy.exception.IvyRequestForbiddenException
 import com.tencent.bkrepo.ivy.util.IvyUtil
 import com.tencent.bkrepo.repository.api.MetadataClient
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
@@ -77,27 +78,42 @@ class IvyLocalRepository(
     private val metadataClient: MetadataClient,
 ) : LocalRepository() {
 
-    override fun onUploadBefore(context: ArtifactUploadContext) {
+    override fun coverStrategy(context: ArtifactUploadContext) {
         (context.artifactInfo as IvyArtifactInfo).let {
-            val fullPath = it.getArtifactFullPath()
-            val node = nodeClient.getNodeDetail(
-                projectId = it.projectId,
-                repoName = it.repoName,
-                fullPath = fullPath
-            ).data
-            if (node != null) {
-                logger.warn("node [$fullPath] already exists, delete it")
-                nodeClient.deleteNode(
-                    NodeDeleteRequest(
+            val repoInfo = repositoryClient.getRepoInfo(projectId = it.projectId, repoName = it.repoName).data
+                ?: throw IvyRequestForbiddenException(
+                    IvyMessageCode.IVY_REQUEST_FORBIDDEN,
+                    it.getArtifactFullPath(),
+                    it.repoName
+                )
+            when (repoInfo.coverStrategy) {
+                CoverStrategy.COVER, null -> {
+                    //
+                    val fullPath = it.getArtifactFullPath()
+                    val node = nodeClient.getNodeDetail(
                         projectId = it.projectId,
                         repoName = it.repoName,
-                        fullPath = fullPath,
-                        operator = context.userId
+                        fullPath = fullPath
+                    ).data
+                    if (node != null) {
+                        logger.warn("node [$fullPath] already exists, delete it")
+                        nodeClient.deleteNode(
+                            NodeDeleteRequest(
+                                projectId = it.projectId,
+                                repoName = it.repoName,
+                                fullPath = fullPath,
+                                operator = context.userId
+                            )
+                        )
+                    }
+                }
+                else-> {
+                    throw IvyRequestForbiddenException(
+                        IvyMessageCode.IVY_ARTIFACT_COVER_FORBIDDEN,
                     )
-                )
+                }
             }
         }
-        super.onUploadBefore(context)
     }
 
     override fun onUpload(context: ArtifactUploadContext) {

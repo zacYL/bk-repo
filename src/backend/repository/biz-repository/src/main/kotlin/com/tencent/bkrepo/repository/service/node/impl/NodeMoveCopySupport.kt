@@ -102,7 +102,7 @@ open class NodeMoveCopySupport(
             if (srcNode.folder) {
                 moveCopyFolder(this)
             } else {
-                if (srcNode.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true) {
+                if (move && srcNode.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true) {
                     throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, srcNode.fullPath)
                 }
                 moveCopyFile(this)
@@ -314,7 +314,7 @@ open class NodeMoveCopySupport(
                 fullPath = srcNode.fullPath
             )
             val nodeList = nodeDao.find(Query(nodeTreeCriteria))
-            if (nodeList.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
+            if (move && nodeList.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
                 val errorCode = if (nodeList.size == 1) {
                     ArtifactMessageCode.NODE_LOCK
                 } else {

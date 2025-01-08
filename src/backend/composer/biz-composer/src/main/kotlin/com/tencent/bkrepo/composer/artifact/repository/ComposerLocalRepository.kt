@@ -293,7 +293,7 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
                 artifactPath = context.artifactInfo.getArtifactFullPath(),
                 overwrite = true,
                 createdBy = context.userId,
-                packageMetadata =  metadata.map { MetadataModel(key = it.key, value = it.value) }
+                packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value, system = true) }
             ),
             HttpContextHolder.getClientAddress()
         )

@@ -10,6 +10,7 @@ import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
+import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionConflictException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
@@ -75,11 +76,13 @@ abstract class ArtifactExtService : ArtifactService() {
         with(request) {
             permissionManager.checkRepoPermission(PermissionAction.READ, srcProjectId, srcRepoName)
             permissionManager.checkRepoPermission(PermissionAction.WRITE, dstProjectId, dstRepoName)
-            val srcRepo = repositoryClient.getRepoDetail(srcProjectId, srcRepoName).data!!
-            val dstRepo = repositoryClient.getRepoDetail(dstProjectId, dstRepoName).data!!
-            val srcVersion = packageClient.findVersionByName(srcProjectId, srcRepoName, packageKey, version).data
-                ?: throw VersionNotFoundException("$packageKey/$version")
-            preCheck(srcRepo, dstRepo, srcVersion, packageKey, version, overwrite, move)
+            val (srcRepo, dstRepo) = getAndCheckRepository(srcProjectId, srcRepoName, dstProjectId, dstRepoName)
+
+            // 检查源制品锁定/禁用状态
+            val srcVersion = getAndCheckSrcVersion(srcProjectId, srcRepoName, packageKey, version, move)
+            // 检查目标仓库覆盖策略/被覆盖制品锁定状态
+            checkDst(dstRepo, packageKey, version, overwrite)
+
             copyNodes(
                 srcProjectId, srcRepoName, dstProjectId, dstRepoName, packageKey, version,
                 srcVersion.manifestPath, srcVersion.contentPath
@@ -203,21 +206,20 @@ abstract class ArtifactExtService : ArtifactService() {
         }
     }
 
-    @Suppress("LongParameterList")
-    private fun preCheck(
-        srcRepo: RepositoryDetail,
-        dstRepo: RepositoryDetail,
-        srcVersion: PackageVersion,
-        packageKey: String,
-        version: String,
-        overwrite: Boolean,
-        move: Boolean
-    ) {
+    protected fun getAndCheckRepository(
+        srcProjectId: String,
+        srcRepoName: String,
+        dstProjectId: String,
+        dstRepoName: String
+    ): Pair<RepositoryDetail, RepositoryDetail> {
         // 禁止移动/复制到同一仓库
         Preconditions.checkArgument(
-            !(srcRepo.projectId == dstRepo.projectId && srcRepo.name == dstRepo.name),
-            "dstProjectId/dstRepoName"
+            !(srcProjectId == dstProjectId && srcRepoName == dstRepoName), "dstProjectId/dstRepoName"
         )
+        val srcRepo = repositoryClient.getRepoDetail(srcProjectId, srcRepoName).data
+            ?: throw RepoNotFoundException("$srcProjectId/$srcRepoName")
+        val dstRepo = repositoryClient.getRepoDetail(dstProjectId, dstRepoName).data
+            ?: throw RepoNotFoundException("$dstProjectId/$dstRepoName")
         // 限制本地仓库类型
         Preconditions.checkArgument(
             srcRepo.type == dstRepo.type &&
@@ -225,9 +227,28 @@ abstract class ArtifactExtService : ArtifactService() {
                     dstRepo.category == RepositoryCategory.LOCAL,
             "srcRepo/dstRepo"
         )
-        // 检查源制品锁定/禁用状态
-        checkSrcVersion(srcRepo.projectId, srcVersion, packageKey, move)
-        // 检查目标仓库覆盖策略/被覆盖制品锁定状态
+        return Pair(srcRepo, dstRepo)
+    }
+
+    protected open fun getAndCheckSrcVersion(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String,
+        move: Boolean
+    ): PackageVersion {
+        val srcVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+            ?: throw VersionNotFoundException("$packageKey/$version")
+        checkSrcVersion(projectId, srcVersion, packageKey, move)
+        return srcVersion
+    }
+
+    protected fun checkDst(
+        dstRepo: RepositoryDetail,
+        packageKey: String,
+        version: String,
+        overwrite: Boolean
+    ) {
         packageClient.findVersionByName(dstRepo.projectId, dstRepo.name, packageKey, version).data?.let { versionInfo ->
             val conflict = !overwrite || dstRepo.coverStrategy == CoverStrategy.UNCOVER ||
                     versionInfo.packageMetadata.any { it.key == LOCK_STATUS && it.value == true }
@@ -235,13 +256,19 @@ abstract class ArtifactExtService : ArtifactService() {
         }
     }
 
-    private fun checkSrcVersion(projectId: String, version: PackageVersion, packageKey: String, move: Boolean) {
+    private fun checkSrcVersion(
+        projectId: String,
+        srcVersion: PackageVersion,
+        packageKey: String,
+        move: Boolean
+    ) {
+        val version = srcVersion.name
         if (
-            version.packageMetadata.any { it.key == FORBID_STATUS && it.value == true } ||
-                packageAccessRuleClient.checkPackageAccessRule(projectId, packageKey, version.name).data != true
+            srcVersion.packageMetadata.any { it.key == FORBID_STATUS && it.value == true } ||
+            packageAccessRuleClient.checkPackageAccessRule(projectId, packageKey, version).data != true
         ) throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_FORBIDDEN, "$packageKey/$version", HttpStatus.FORBIDDEN)
 
-        if (move && version.packageMetadata.any { it.key == LOCK_STATUS && it.value == true })
+        if (move && srcVersion.packageMetadata.any { it.key == LOCK_STATUS && it.value == true })
             throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, "$packageKey/$version")
     }
 

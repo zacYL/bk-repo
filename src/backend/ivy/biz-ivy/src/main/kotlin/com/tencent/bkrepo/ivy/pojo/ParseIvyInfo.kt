@@ -18,7 +18,7 @@ data class ParseIvyInfo(
     @ApiModelProperty("主文件制品信息")
     val masterArtifact: Artifact?,
 ) {
-    fun isLegalIvyFile(projectId: String, repoName: String, requestFullPath: String): Boolean {
+    fun isLegalPathIvyFile(projectId: String, repoName: String, requestFullPath: String): Boolean {
         val requestPath = requestFullPath.substringAfter("/$projectId/$repoName")
         return requestPath == legalIvyFullPath
     }

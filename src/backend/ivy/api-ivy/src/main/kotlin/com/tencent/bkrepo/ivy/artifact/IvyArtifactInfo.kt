@@ -56,6 +56,7 @@ class IvyArtifactInfo(
         const val IVY_EXT_VERSION_DELETE = "/version/delete/{projectId}/{repoName}"
         const val ARTIFACT_PATTERN_KEY = "artifact_pattern"
         const val IVY_PATTERN_KEY = "ivy_pattern"
+        const val SUPPORT_ANY_PATTERN_KEY = "is_support_any_pattern"
     }
 
     fun isSummaryFile(): Boolean {
@@ -86,6 +87,10 @@ class IvyArtifactInfo(
             return false
         }
 
+    }
+
+    fun isSupportAnyPattern(repositoryDetail: RepositoryDetail): Boolean {
+        return repositoryDetail.configuration.getBooleanSetting(SUPPORT_ANY_PATTERN_KEY) ?: false
     }
 
     fun getRepoArtifactPattern(repositoryDetail: RepositoryDetail): String {

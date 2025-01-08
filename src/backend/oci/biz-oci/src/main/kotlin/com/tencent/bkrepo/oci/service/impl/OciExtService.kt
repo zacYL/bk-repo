@@ -3,7 +3,6 @@ package com.tencent.bkrepo.oci.service.impl
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
-import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactExtService
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
@@ -55,8 +54,9 @@ class OciExtService(
 
     override fun moveCopyVersion(request: PackageVersionMoveCopyRequest, move: Boolean) {
         with(request) {
-            val srcVersion = packageClient.findVersionByName(srcProjectId, srcRepoName, packageKey, version).data
-                ?: throw VersionNotFoundException("$packageKey/$version")
+            val (_, dstRepo) = getAndCheckRepository(srcProjectId, srcRepoName, dstProjectId, dstRepoName)
+            val srcVersion = getAndCheckSrcVersion(srcProjectId, srcRepoName, packageKey, version, move)
+            checkDst(dstRepo, packageKey, version, overwrite)
             val manifestPath = srcVersion.manifestPath!!
             if (manifestPath.substringAfterLast("/") == OCI_MANIFEST_LIST) {
                 val packagePath = manifestPath.removeSuffix("$version/$OCI_MANIFEST_LIST")
@@ -67,8 +67,13 @@ class OciExtService(
                     }
                 } ?: throw RuntimeException("manifest list [$srcProjectId/$srcRepoName/$manifestPath] resolve error!")
                 logger.info("version list of [$srcProjectId/$srcRepoName/$packageKey/$version]: $versionList")
+                // 预先检查所有单架构镜像
+                versionList.forEach {
+                    getAndCheckSrcVersion(srcProjectId, srcRepoName, packageKey, it, false)
+                    checkDst(dstRepo, packageKey, it, overwrite)
+                }
                 // 这些版本可能同时被其它manifest list引用，因此不移除
-                versionList.forEach { moveCopyVersion(request.copy(version = it), false) }
+                versionList.forEach { super.moveCopyVersion(request.copy(version = it), false) }
             }
             super.moveCopyVersion(request, move)
         }

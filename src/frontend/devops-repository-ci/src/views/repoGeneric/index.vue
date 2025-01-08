@@ -969,12 +969,12 @@
                     if (!(row.folder && this.isGenericRemote) & this.readOperationPermission) {
                         actions.push({ clickEvent: () => this.handlerDownload(row), label: this.$t('download') })
                     }
-                    if (this.repoName !== 'pipeline' && !row.metadata.lockStatus) {
-                        if (this.updateOperationPermission && !this.isRemote) {
+                    if (this.repoName !== 'pipeline') {
+                        if (this.updateOperationPermission && !this.isRemote && !row.metadata.lockStatus) {
                             actions.push({ clickEvent: () => this.renameRes(row), label: this.$t('rename') })
                         }
                         if (!this.whetherSoftware && !this.isRemote && this.readOperationPermission) {
-                            actions.push({ clickEvent: () => this.moveRes(row), label: this.$t('move') })
+                            !row.metadata.lockStatus && actions.push({ clickEvent: () => this.moveRes(row), label: this.$t('move') })
                             actions.push({ clickEvent: () => this.copyRes(row), label: this.$t('copy') })
                         }
                     }

@@ -1356,8 +1356,14 @@ class MavenLocalRepository(
         val storageCredentials = repoDetail.storageCredentials
         if (packageClient.findPackageByKey(projectId, repoName, key).data != null) {
             val metadataFullPath = MavenUtil.extractPath(key) + "/$MAVEN_METADATA_FILE_NAME"
-            val node = nodeClient.getNodeDetail(projectId, repoName, metadataFullPath).data ?:
-                throw NodeNotFoundException("$projectId/$repoName/$metadataFullPath")
+            // 目标maven制品的maven-metadata.xml文件可能不存在
+            val node = nodeClient.getNodeDetail(projectId, repoName, metadataFullPath).data
+                ?: run {
+                    logger.error(
+                        "Failed to update index for [$projectId/$repoName/$key] because of missing metadata file"
+                    )
+                    return
+                }
             storageService.load(node.sha256!!, Range.full(node.size), storageCredentials).use { artifactInputStream ->
                 val mavenMetadata = MetadataXpp3Reader().read(artifactInputStream)
                 if (!mavenMetadata.versioning.versions.contains(version)) {

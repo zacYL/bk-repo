@@ -116,12 +116,24 @@
                 'uploadArtifactory',
                 'submitMavenArtifactory'
             ]),
-            selectFiles (data = {}) {
+            initData () {
                 this.rootData = {
-                    ...this.rootData,
-                    ...data
+                    projectId: '',
+                    repoName: '',
+                    folder: false,
+                    fullPath: ''
                 }
-                this.$refs.selectedFilesDialog.selectFiles()
+            },
+            selectFiles (data = {}) {
+                this.initData()
+                
+                this.$nextTick(() => {
+                    this.rootData = {
+                        ...this.rootData,
+                        ...data
+                    }
+                    this.$refs.selectedFilesDialog.selectFiles()
+                })
             },
             addFilesToFileList ({ overwrite, selectedFiles }) {
                 if (this.rootData.uploadType) {

@@ -570,9 +570,12 @@ class NpmClientServiceImpl(
 
     private fun ByteArray.readPackageJson(tgz: ByteArray): NpmVersionMetadata? {
         return inputStream().readJsonString<NpmVersionMetadata?>()?.apply {
+            val name = name ?: return null
+            val version = version ?: return null
             this.dist = NpmVersionMetadata.Dist().apply {
                 set(SIZE, tgz.size)
                 this.shasum = tgz.inputStream().sha1()
+                this.tarball = NpmUtils.getTarballFullPath(name, version, repeatedScope = NpmUtils.isScopeName(name))
             }
         }
     }
@@ -581,14 +584,14 @@ class NpmClientServiceImpl(
         return@with NpmPackageMetaData().apply {
             this.name = this@with.name
             this.description = this@with.description
-            this.versions.map = mutableMapOf(version!! to this@with)
+            this.versions.map = mutableMapOf(this@with.version!! to this@with)
             val attachment = NpmPackageMetaData.Attachment().apply {
                 this.contentType = ""//不为空就行
                 val encode = Base64.encodeBase64(tgz)
                 this.data = org.apache.commons.codec.binary.StringUtils.newStringUsAscii(encode)
                 this.length = encode.size
             }
-            this.attachments = Attachments().apply { add("$name-$version.tgz", attachment) }
+            this.attachments = Attachments().apply { add("$name-${this@with.version}.tgz", attachment) }
             // 获取最新版本包
             val latest = packageClient
                 .findLatestBySemVer(
@@ -600,8 +603,8 @@ class NpmClientServiceImpl(
 
             // 检查获取的最新版本是否为空或当前版本比最新版本更高
             // 如果是，则将当前版本设置为最新版本
-            if (latest.isNullOrBlank() || parse(version!!) > parse(latest)) {
-                this.distTags.set(LATEST, version!!)
+            if (latest.isNullOrBlank() || parse(this@with.version!!) > parse(latest)) {
+                this.distTags.set(LATEST, this@with.version!!)
             }
         }
     }

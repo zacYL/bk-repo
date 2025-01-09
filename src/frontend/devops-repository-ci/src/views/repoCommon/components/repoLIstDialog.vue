@@ -76,7 +76,8 @@
 </script>
 <style lang="scss" scoped>
 .content{
-    max-height: 560px;
+    max-height: 300px;
+    overflow: auto;
     margin-top: 20px;
     .content-item{
         line-height: 40px;

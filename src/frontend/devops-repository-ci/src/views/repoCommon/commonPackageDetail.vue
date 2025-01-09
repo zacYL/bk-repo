@@ -51,8 +51,8 @@
                                     ] : []),
                                     forbidOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
                                     lockOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
-                                    canMoveOrCopy && !$version.metadata.forbidStatus && !$version.metadata.lockStatus && { clickEvent: () => moveOrCopy($version), label: $t('move') },
-                                    canMoveOrCopy && !$version.metadata.forbidStatus && { clickEvent: () => moveOrCopy($version, 'copy'), label: $t('copy') },
+                                    canMoveOrCopy && !$version.metadata.forbidStatus && !$version.metadata.lockStatus && { clickEvent: () => moveOrCopy(), label: $t('move') },
+                                    canMoveOrCopy && !$version.metadata.forbidStatus && { clickEvent: () => moveOrCopy('copy'), label: $t('copy') },
                                     (deleteOperationPermission && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: $t('delete'), clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
@@ -67,6 +67,9 @@
                     :show-delete-operation="deleteOperationPermission"
                     :show-lock-operation="lockOperationPermission"
                     :show-forbid-operation="forbidOperationPermission"
+                    :can-move-or-copy="canMoveOrCopy"
+                    @move="moveOrCopy"
+                    @copy="moveOrCopy('copy')"
                     @tag="changeStageTagHandler()"
                     @scan="scanPackageHandler()"
                     @forbid="showLimitDialog('forbid')"
@@ -519,7 +522,8 @@
                 })
             },
             // 移动/复制
-            moveOrCopy (row, type = 'move') {
+            moveOrCopy (type = 'move') {
+                const row = this.currentVersion
                 this.initGenericOperateTree().then((res) => {
                     this.$nextTick(() => {
                         this.$refs.repoListDialog.open({

@@ -14,7 +14,7 @@
                     <i class="ml5 devops-icon" :class="showDropdown ? 'icon-angle-up' : 'icon-angle-down'"></i>
                     <div v-show="showDropdown" class="dropdown-list" @click.stop="() => {}">
                         <bk-radio-group :value="repoType" class="repo-type-radio-group" @change="changeType">
-                            <bk-radio-button v-for="repo in repoList" :key="repo.value" :value="repo.value">
+                            <bk-radio-button v-for="repo in repoList.filter(item => item.value !== 'sbt')" :key="repo.value" :value="repo.value">
                                 <div class="flex-align-center repo-type-radio" :class="{ 'checked': repo.value === repoType }">
                                     <Icon size="22" :name="repo.value" />
                                     <span class="ml10">{{repo.label}}</span>

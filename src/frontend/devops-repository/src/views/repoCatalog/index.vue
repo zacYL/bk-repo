@@ -156,7 +156,7 @@
                 fileNameSearch: '', // 搜索的文件名称
                 searchFlag: false, // 是否是搜索事件
                 searchNode: '', // 搜索后点击的节点
-                depotList: repoEnum.filter(item => item.value !== 'generic'),
+                depotList: repoEnum.filter(item => item.value !== 'generic' && item.value !== 'sbt'),
                 checkRepoType: '',
                 active: 'basic', // 当前选中的标签页
                 currentNodeType: 'depot', // 当前选中的节点类型

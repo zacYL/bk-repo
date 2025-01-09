@@ -14,7 +14,8 @@ export const repoEnum = [
     { label: 'Go', value: 'go' },
     { label: 'Cocoapods', value: 'cocoapods' },
     { label: 'Gradle', value: 'gradle' },
-    { label: 'Ivy', value: 'ivy' }
+    { label: 'Ivy', value: 'ivy' },
+    { label: 'Sbt', value: 'sbt' }
 ]
 // 虚拟仓库支持创建的仓库
 export const repoSupportEnum = [

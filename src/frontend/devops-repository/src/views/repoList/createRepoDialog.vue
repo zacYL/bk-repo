@@ -35,7 +35,20 @@
                 </bk-input>
                 <div v-if="repoBaseInfo.type === 'docker'" class="form-tip">{{ $t('dockerRepoTip')}}</div>
             </bk-form-item>
-            <template v-if="repoBaseInfo.type === 'ivy'">
+            <template v-if="repoBaseInfo.type === 'sbt'">
+                <bk-form-item :label="$t('storeTypes')" :required="true">
+                    <bk-radio-group v-model="repoBaseInfo.sbtStoreType">
+                        <bk-radio :value="'maven'" class="mr20">
+                            Maven
+                        </bk-radio>
+                        <bk-radio :value="'ivy'">
+                            Ivy
+                        </bk-radio>
+                    </bk-radio-group>
+                </bk-form-item>
+            </template>
+            <!-- sbt 支持 选择ivy仓库时支持 ivy相关配置 -->
+            <template v-if="('ivy' === repoBaseInfo.type) || (repoBaseInfo.sbtStoreType === 'ivy' && repoBaseInfo.type === 'sbt')">
                 <bk-form-item :label="$t('ivyFilePattern')" :required="true" property="ivy_pattern" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.ivy_pattern">
                     </bk-input>
@@ -229,7 +242,7 @@
                 </bk-form-item>
             </template>
 
-            <bk-form-item :label="$t('versionStrategy')" v-if="!(storeType === 'remote') && !(storeType === 'virtual') && (repoBaseInfo.type === 'maven' || repoBaseInfo.type === 'npm')">
+            <bk-form-item :label="$t('versionStrategy')" v-if="!(storeType === 'remote') && !(storeType === 'virtual') && (repoBaseInfo.type === 'maven' || repoBaseInfo.type === 'npm' || (repoBaseInfo.type === 'sbt' && repoBaseInfo.sbtStoreType === 'maven'))">
                 <div class="flex-align-center">
                     <bk-switcher
                         v-model="repoBaseInfo.override.switcher"
@@ -330,7 +343,8 @@
             downloadUrl: '', // specs下载地址
             remoteType: 'GIT_HUB',
             ivy_pattern: '[organisation]/[module]/[revision]/ivy-[revision].xml', // ivy 文件模式
-            artifact_pattern: '[organisation]/[module]/[revision]/[type]s/[artifact]-[revision].[ext]' // 制品 文件模式
+            artifact_pattern: '[organisation]/[module]/[revision]/[type]s/[artifact]-[revision].[ext]', // 制品 文件模式
+            sbtStoreType: 'maven'
         }
     }
 
@@ -396,7 +410,7 @@
                         <p>${this.$t('includesPathDesc2')}</p>
                         <p>${this.$t('includesPathDesc3')}</p>
                         <p>${this.$t('includesPathDesc4')}</p>
-                        ${this.repoBaseInfo.type === 'maven'
+                        ${(this.repoBaseInfo.type === 'maven' || (this.repoBaseInfo.type === 'sbt' && this.repoBaseInfo.sbtStoreType === 'maven'))
                         ? `<p>${this.$t('includesPathDesc5')}</p>
                            <p>${this.$t('includesPathDesc6')}</p>`
                     : ''}`
@@ -791,21 +805,19 @@
                 if (this.repoBaseInfo.type === 'generic') {
                     ['mobile', 'web'].forEach(type => {
                         const { enable, filename, metadata } = this.repoBaseInfo[type]
-                        enable && interceptors.push({
-                            type: type.toUpperCase(),
-                            rules: { filename, metadata }
-                        })
+                        if (enable) {
+                            interceptors.push({
+                                type: type.toUpperCase(),
+                                rules: { filename, metadata }
+                            })
+                        }
                     })
                 }
                 const patternsObj = {
                     type: 'PATH_PATTERN',
                     rules: {
-                        includePathPatterns: this.repoBaseInfo.includesPath.map(item => {
-                            return item.value
-                        }),
-                        excludePathPatterns: this.repoBaseInfo.ignoresPath.map(item => {
-                            return item.value
-                        })
+                        includePathPatterns: this.repoBaseInfo.includesPath.map(item => item.value),
+                        excludePathPatterns: this.repoBaseInfo.ignoresPath.map(item => item.value)
                     }
                 }
                 if (patternsObj.rules.includePathPatterns.length || patternsObj.rules.excludePathPatterns.length) {
@@ -814,7 +826,7 @@
                 this.loading = true
                 const body = {
                     projectId: this.projectId,
-                    type: this.repoBaseInfo.type.toUpperCase(),
+                    type: (this.repoBaseInfo.type === 'sbt' ? this.repoBaseInfo.sbtStoreType : this.repoBaseInfo.type).toUpperCase(),
                     name: this.repoBaseInfo.name,
                     public: this.repoBaseInfo.public,
                     description: this.repoBaseInfo.description,
@@ -824,6 +836,12 @@
                         settings: {
                             system: this.repoBaseInfo.system,
                             interceptors: interceptors.length ? interceptors : undefined,
+                            // sbt settings 需要新增标识
+                            ...(this.repoBaseInfo.type === 'sbt'
+                                ? {
+                                    display_repo_type: 'sbt'
+                                }
+                                : {}),
                             ...(
                                 this.repoBaseInfo.type === 'rpm'
                                     ? {
@@ -834,8 +852,7 @@
                                     : {}
                             ),
                             ...(
-                                (this.repoBaseInfo.type === 'cocoapods'
-                                    && this.storeType === 'remote')
+                                (this.repoBaseInfo.type === 'cocoapods' && this.storeType === 'remote')
                                     ? {
                                         downloadUrl: this.repoBaseInfo.downloadUrl,
                                         type: this.repoBaseInfo.remoteType
@@ -843,7 +860,7 @@
                                     : {}
                             ),
                             ...(
-                                (this.repoBaseInfo.type === 'ivy')
+                                ((this.repoBaseInfo.type === 'ivy') || (this.repoBaseInfo.type === 'sbt' && this.repoBaseInfo.sbtStoreType === 'ivy'))
                                     ? {
                                         ivy_pattern: this.repoBaseInfo.ivy_pattern,
                                         artifact_pattern: this.repoBaseInfo.artifact_pattern
@@ -862,8 +879,10 @@
                     body.configuration.network = {
                         proxy: null
                     }
-                    if (checkValueIsNullOrEmpty(this.repoBaseInfo.credentials.username)
-                        && checkValueIsNullOrEmpty(this.repoBaseInfo.credentials.password)) {
+                    if (
+                        checkValueIsNullOrEmpty(this.repoBaseInfo.credentials.username)
+                        && checkValueIsNullOrEmpty(this.repoBaseInfo.credentials.password)
+                    ) {
                         body.configuration.credentials = {
                             username: null,
                             password: null
@@ -875,8 +894,10 @@
                         body.configuration.network = {
                             proxy: this.repoBaseInfo.network.proxy
                         }
-                        if (checkValueIsNullOrEmpty(this.repoBaseInfo.network.proxy?.username)
-                            && checkValueIsNullOrEmpty(this.repoBaseInfo.network.proxy?.password)) {
+                        if (
+                            checkValueIsNullOrEmpty(this.repoBaseInfo.network.proxy?.username)
+                            && checkValueIsNullOrEmpty(this.repoBaseInfo.network.proxy?.password)
+                        ) {
                             body.configuration.network.proxy.username = null
                             body.configuration.network.proxy.password = null
                         }
@@ -888,7 +909,7 @@
                         }
                     }
                 }
-                
+
                 // 虚拟仓库需要添加存储库相关配置
                 if (this.storeType === 'virtual') {
                     body.configuration.repositoryList = this.repoBaseInfo.virtualStoreList.map(item => {
@@ -898,7 +919,6 @@
                             projectId: item.projectId
                         }
                     })
-                    // body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo || ''
                 }
                 if (this.repoBaseInfo.enabledLibraryNamespace) {
                     body.configuration.settings.defaultNamespace = 'library'

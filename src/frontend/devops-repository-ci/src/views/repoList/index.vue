@@ -80,7 +80,7 @@
             </template>
             <bk-table-column :label="$t('repoName')" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <template v-if="row.configuration.settings.display_repo_type === 'sbt'">
+                    <template v-if="$isSbt(row)">
                         <Icon class="mr5 table-svg" size="16" name="sbt" />
                     </template>
                     <template v-else>
@@ -93,6 +93,7 @@
                     </span>
                     <span v-if="row.configuration.settings.system" class="mr5 repo-tag" :data-name="$t('system')"></span>
                     <span v-if="row.public" class="mr5 repo-tag WARNING" :data-name="$t('public')"></span>
+                    <Icon v-if="$isSbt(row)" class="mt3  table-svg" size="12" :name="row.repoType" />
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('storeTypes')" width="180">
@@ -276,9 +277,9 @@
                         ...this.$route.query,
                         ropeTypeValue: type,
                         publicType: row.public,
-                        isSbt: row.configuration.settings?.display_repo_type === 'sbt',
                         c: this.pagination.current,
-                        l: this.pagination.limit
+                        l: this.pagination.limit,
+                        ...row.configuration.settings?.display_repo_type === 'sbt' ? { isSbt: true } : {}
                     }
                 })
             },

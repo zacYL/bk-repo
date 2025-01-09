@@ -3,8 +3,9 @@
         <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="150" v-if="nodeType === 'depot'">
             <bk-form-item :label="$t('repoName')">
                 <div class="flex-align-center">
-                    <icon size="20" :name="detailInfo.repoType || repoType" />
+                    <icon size="20" :name="$isSbt(detailInfo) ? 'sbt' : (detailInfo.repoType || repoType)" />
                     <span class="ml10">{{replaceRepoName(detailInfo.repoName || detailInfo.name)}}</span>
+                    <icon class="ml10" v-if="$isSbt(detailInfo)" size="12" :name="(detailInfo.repoType || repoType)" />
                 </div>
             </bk-form-item>
             <template v-if="repoType === 'ivy'">

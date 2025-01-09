@@ -1,6 +1,6 @@
 <template>
     <div class="package-card-container flex-align-center">
-        <Icon class="mr20 card-icon" size="70" :name="cardData.type ? cardData.type.toLowerCase() : getIconName(cardData.name)" />
+        <Icon class="mr20 card-icon" size="70" :name="cardData.type ? (isSbt ? 'sbt' : cardData.type.toLowerCase()) : getIconName(cardData.name)" />
         <div class="mr20 package-card-main flex-column">
             <div class="flex-align-center">
                 <span class="card-name text-overflow" :title="cardData.name">{{ cardData.name }}</span>
@@ -17,6 +17,7 @@
                     :forbid-type="(cardData.metadata || {}).forbidType"
                     :forbid-description="cardData.type ? '' : forbidDescription">
                 </forbid-tag>
+                <Icon v-if="isSbt" class="ml10" size="12" :name="cardData.type.toLowerCase()" />
             </div>
             <span class="package-card-description text-overflow" :title="cardData.description">{{ cardData.description }}</span>
             <div class="package-card-data" :style="dynamicStyle">
@@ -73,6 +74,10 @@
         name: 'packageCard',
         components: { OperationList, ScanTag, forbidTag },
         props: {
+            isSbt: {
+                type: Boolean,
+                default: false
+            },
             cardData: {
                 type: Object,
                 default: {}

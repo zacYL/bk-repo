@@ -7,6 +7,7 @@
                     {{ repoName }}
                 </div>
             </div>
+            <Icon v-if="isSbt" class="ml10" size="12" :name="repoType" />
             <div class="flex-end-center flex-1">
                 <bk-button @click="handlerPaginationChange">
                     {{ $t('refresh') }}
@@ -74,6 +75,7 @@
                             class="mb10"
                             v-for="pkg in packageList"
                             :key="pkg.repoName + pkg.key"
+                            :is-sbt="isSbt"
                             :card-data="pkg"
                             :readonly="!deleteOperationPermission"
                             @click.native="showCommonPackageDetail(pkg)"

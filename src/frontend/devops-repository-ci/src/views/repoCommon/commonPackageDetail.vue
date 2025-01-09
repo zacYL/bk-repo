@@ -1,12 +1,13 @@
 <template>
     <div class="common-package-detail">
         <header class="mb10 pl20 pr20 common-package-header flex-align-center">
-            <Icon class="package-img" size="30" :name="repoType" />
+            <Icon class="package-img" size="30" :name="isSbt ? 'sbt' : repoType" />
             <div class="ml10 common-package-title">
                 <div class="repo-title text-overflow" :title="pkg.name">
                     {{ pkg.name }}
                 </div>
             </div>
+            <Icon v-if="isSbt" class="ml10" size="12" :name="repoType" />
             <bk-button class="common-package-header-refresh" @click="refresh((currentVersion || {}).name)">
                 {{ $t('refresh') }}
             </bk-button>
@@ -149,6 +150,9 @@
             ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId || ''
+            },
+            isSbt () {
+                return this.$route.query.isSbt
             },
             repoType () {
                 return this.$route.params.repoType || ''

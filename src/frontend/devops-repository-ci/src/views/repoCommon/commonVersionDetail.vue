@@ -255,6 +255,11 @@
                 type: Boolean,
                 default: true,
                 describe: '是否显示禁用制品相关操作'
+            },
+            canMoveOrCopy: {
+                type: Boolean,
+                default: false,
+                describe: '是否显示移动或复制相关操作'
             }
         },
         data () {
@@ -337,6 +342,8 @@
                         : []),
                     this.showForbidOperation && !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('relieve') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
                     this.showLockOperation && !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? this.$t('relieve') + this.$t('space') + this.$t('lock') : this.$t('lock') },
+                    this.canMoveOrCopy && !metadataMap.forbidStatus && !metadataMap.lockStatus && { clickEvent: () => this.$emit('move'), label: this.$t('move') },
+                    this.canMoveOrCopy && !metadataMap.forbidStatus && { clickEvent: () => this.$emit('copy'), label: this.$t('copy') },
                     (this.showDeleteOperation && !this.whetherSoftware && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             },

@@ -398,7 +398,7 @@
                             }
                             this.uploadXhr = new XMLHttpRequest()
                             const defaultUploaderPromise = (
-                                uploadType, formData
+                                uploadType, formData, file
                             ) => {
                                 return this.uploadArtifactory({
                                     xhr: this.uploadXhr,
@@ -409,7 +409,7 @@
                                     repoName: this.repoName,
                                     progressHandler: ($event) => {
                                         const num = $event.loaded / $event.total
-                                        formData.file.onProgress({ percent: num })
+                                        file.onProgress({ percent: num })
                                         this.uploadPercent = num
                                     }
                                 })
@@ -443,7 +443,7 @@
                                     formData.append('file', this.dockerFormData.file.fileList[0].origin)
                                     formData.append('version', this.dockerFormData.version)
                                     formData.append('packageName', this.dockerFormData.packageName)
-                                    defaultUploaderPromise('dockerUpload', this.dockerFormData)
+                                    defaultUploaderPromise('dockerUpload', formData, this.dockerFormData.file)
                                         .then(res => {
                                             this.$bkMessage({
                                                 theme: 'success',
@@ -463,7 +463,7 @@
                                         break
                                     }
                                     formData.append('file', this.npmFormData.file.fileList[0].origin)
-                                    defaultUploaderPromise('npmUpload', this.npmFormData)
+                                    defaultUploaderPromise('npmUpload', formData, this.npmFormData.file)
                                         .then(res => {
                                             this.$bkMessage({
                                                 theme: 'success',

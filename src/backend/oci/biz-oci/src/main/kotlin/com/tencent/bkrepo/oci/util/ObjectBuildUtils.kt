@@ -136,7 +136,9 @@ object ObjectBuildUtils {
         userId: String,
         metadata: Map<String, Any>? = null
     ): PackageMetadataSaveRequest {
-        val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = true) }
+        val metadataModels = metadata?.map {
+            MetadataModel(key = it.key, value = it.value, system = it.key != SOURCE_TYPE)
+        }
         return PackageMetadataSaveRequest(
             projectId = projectId,
             repoName = repoName,

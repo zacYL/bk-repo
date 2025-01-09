@@ -107,11 +107,11 @@ class PackageAccessRuleServiceImpl(
         )
         if (!fullName.isNullOrBlank()) {
             val fullNameCriteria = if (!fullName.contains(":")) {
-                where(TPackageAccessRule::key).isEqualTo(fullName)
+                where(TPackageAccessRule::key).regex(fullName, "i")
             } else {
                 Criteria().orOperator(
-                    where(TPackageAccessRule::key).isEqualTo(fullName),
-                    where(TPackageAccessRule::key).isEqualTo(fullName.substringBefore(":") + ":*")
+                    where(TPackageAccessRule::key).regex(fullName, "i"),
+                    where(TPackageAccessRule::key).regex(fullName.substringBefore(":") + ":*", "i")
                 )
             }
             criteriaList.add(fullNameCriteria)

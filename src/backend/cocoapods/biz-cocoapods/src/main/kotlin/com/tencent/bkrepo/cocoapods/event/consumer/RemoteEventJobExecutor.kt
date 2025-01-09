@@ -134,10 +134,6 @@ class RemoteEventJobExecutor(
             val domain = event.data["domain"] as? String
                 ?: throw IllegalArgumentException("domain not found in event data")
             logger.info("replica from ${cocoapodsProperties.domain} to $domain")
-            if(cocoapodsProperties.domain.contains(domain)){
-                logger.info("same cluster replication event,do nothing...")
-                return
-            }
             val httpClient = HttpClientBuilderFactory
                 .create()
                 .addInterceptor(BasicAuthInterceptor(data["username"] as String, data["password"] as String))

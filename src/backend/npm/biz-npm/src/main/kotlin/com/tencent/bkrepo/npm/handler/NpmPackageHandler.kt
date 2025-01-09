@@ -171,7 +171,7 @@ class NpmPackageHandler {
                     artifactPath = contentPath,
                     stageTag = null,
                     packageMetadata = metadata.mapNotNull { (key, value) ->
-                        value?.let { MetadataModel(key = key, value = it) }
+                        value?.let { MetadataModel(key = key, value = it, system = true) }
                     },
                     overwrite = true,
                     createdBy = userId

@@ -225,12 +225,23 @@
             },
             // 批量导出弹窗
             handleClickBatchUpload () {
+                let uploadType = ''
+                switch (this.currentType) {
+                    case 'MAVEN':
+                        uploadType = 'mavenUpload'
+                        break
+                    case 'NPM':
+                        uploadType = 'npmUpload'
+                        break
+                    default:
+                        break
+                }
                 this.$globalUploadFiles({
                     projectId: this.projectId,
                     repoName: this.repoName,
                     folder: false,
                     fullPath: '',
-                    uploadType: 'mavenUpload'
+                    uploadType
                 })
             },
             onUpdateUploader (flag) {

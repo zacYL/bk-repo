@@ -46,6 +46,24 @@ object PackageKeys {
     /**
      * 生成gav格式key
      */
+    fun ofIvy(org: String, module: String, branch: String?): String {
+        val append = StringBuilder(PackageType.IVY.schema).append(SEPARATOR).append(org)
+        return if (!branch.isNullOrEmpty()) {
+            append.append(StringPool.COLON)
+                .append(branch)
+                .append(StringPool.COLON)
+                .append(module)
+                .toString()
+        } else {
+            append.append(StringPool.COLON)
+                .append(module)
+                .toString()
+        }
+    }
+
+    /**
+     * 生成gav格式key
+     */
     fun ofGav(groupId: String, artifactId: String): String {
         return StringBuilder(PackageType.MAVEN.schema).append(SEPARATOR).append(groupId)
             .append(StringPool.COLON)

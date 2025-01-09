@@ -59,7 +59,6 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriterContext
 import com.tencent.bkrepo.common.artifact.util.PackageAccessRuleUtils.matchRule
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
@@ -450,8 +449,11 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         if (version.isNullOrBlank()) return
         val (passRules, forbidRules) = packageAccessRuleCache.get(Pair(projectId, type.name))
             .filter {
-                if (fullName.contains(":")) it.key == fullName || it.key == fullName.substringBefore(":") + ":*"
-                else it.key == fullName
+                // filter Rule
+                if (fullName.contains(":")) {
+                    it.key.equals(fullName, ignoreCase = true) ||
+                            it.key.equals(fullName.substringBefore(":") + ":*", ignoreCase = true)
+                } else it.key.equals(fullName, ignoreCase = true)
             }
             .partition { it.pass }
         passRules.forEach { if (matchRule(type, version, it.version, it.versionRuleType)) return }

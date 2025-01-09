@@ -26,7 +26,7 @@
                 <bk-table-column :label="$t('fileName')" min-width="300">
                     <template #default="{ row }">
                         <bk-popover placement="top">
-                            <div class="file-name-info">{{row.file.name}}</div>
+                            <div class="file-name-info">{{row.name || row.file.name}}</div>
                             <template #content>
                                 <div>{{$t('project') + ': ' + (projectList.find(p => p.id === row.projectId)).name }}</div>
                                 <div>{{$t('repository') + ': ' + replaceRepoName(row.repoName) }}</div>
@@ -127,7 +127,7 @@
                 if (this.rootData.uploadType) {
                     if (selectedFiles.length) {
                         selectedFiles.forEach(file => {
-                            this.mavenUploadHandle(file)
+                            this.uploadHandle(file)
                         })
                         this.show = true
                     } else {
@@ -143,29 +143,66 @@
                     this.show = true
                 }
             },
-            /**
-             * @description: maven 上报处理函数
-             * @param {*} formData
-             * @return {*}
-             */
-            mavenUploadHandle (formData) {
+            uploadHandle (file) {
                 return new Promise((resolve, reject) => {
-                    const index = this.fileList.findIndex(item => item.file.name === formData.name)
-                    const data = {
-                        xhr: new XMLHttpRequest(),
-                        projectId: this.rootData.projectId,
-                        repoName: this.rootData.repoName,
-                        file: formData,
-                        status: 'INIT'
+                    // 处理重新替换逻辑
+                    const index = this.fileList.findIndex(item => {
+                        // 有可能不是文件对象，而是表单包裹的文件对象
+                        let realFile = file
+                        let name = item.file.name
+                        if (file.get && typeof file.get === 'function') {
+                            realFile = file.get('file')
+                            name = item.name
+                        }
+                        return name === realFile.name
+                    })
+                    let data, params, eventPromise
+                    if (this.rootData.uploadType === 'mavenUpload') {
+                        data = {
+                            xhr: new XMLHttpRequest(),
+                            projectId: this.rootData.projectId,
+                            repoName: this.rootData.repoName,
+                            file,
+                            status: 'INIT'
+                        }
+                        params = {
+                            projectId: this.rootData.projectId,
+                            repoName: this.rootData.repoName,
+                            body: { ...file._tempParams }
+                        }
+                        eventPromise = this.submitMavenArtifactory(params)
+                    } else if (this.rootData.uploadType === 'npmUpload') {
+                        const formData = new FormData()
+                        let targetFile = file
+                        // file 可能是表单
+                        if (file.get && typeof file.get === 'function') {
+                            targetFile = file.get('file')
+                        }
+                        formData.append('file', targetFile)
+                        data = {
+                            xhr: new XMLHttpRequest(),
+                            projectId: this.rootData.projectId,
+                            repoName: this.rootData.repoName,
+                            file: formData,
+                            name: targetFile.name,
+                            status: 'INIT'
+                        }
+                    
+                        const headers = {
+                            'Content-Type': 'multipart/form-data; boundary=----',
+                            'X-BKREPO-EXPIRES': 0
+                        }
+                        eventPromise = this.uploadArtifactory({
+                            xhr: data.xhr,
+                            body: data.file,
+                            headers,
+                            uploadType: 'npmUpload',
+                            projectId: data.projectId,
+                            repoName: data.repoName
+                        })
                     }
                     data.status = 'UPLOADING'
-                
-                    const params = {
-                        projectId: this.rootData.projectId,
-                        repoName: this.rootData.repoName,
-                        body: { ...formData._tempParams }
-                    }
-                    this.submitMavenArtifactory(params).then(res => {
+                    eventPromise.then(res => {
                         data.status = 'SUCCESS'
                         resolve()
                     }).catch(error => {
@@ -260,7 +297,7 @@
             },
             reUpload (row) {
                 if (this.rootData.uploadType) {
-                    this.mavenUploadHandle(row.file).then(() => {
+                    this.uploadHandle(row.file).then(() => {
                         this.$bkMessage({
                             theme: 'success',
                             message: this.$t('uploadSuccess')

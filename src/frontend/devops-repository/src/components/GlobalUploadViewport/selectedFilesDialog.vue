@@ -35,7 +35,7 @@
                     <template #default="{ row }">
                         <div class="flex-align-center">
                             <!-- maven 上传内容异常时，会出现提示 -->
-                            <template v-if="rootData.uploadType === 'mavenUpload' && ((!row._tempParams) || (row._tempParams && checkCoordinateEmpty(row._tempParams)))">
+                            <template v-if="(rootData.uploadType === 'mavenUpload' && ((!row._tempParams) || (row._tempParams && checkCoordinateEmpty(row._tempParams))))">
                                 <Icon class="mr5" name="info" size="12" style="color: #ea3736;" v-bk-tooltips="row?._errorMsg || $t('gavErrTips')" />
                             </template>
                             {{ row.name }}
@@ -64,10 +64,10 @@
                                 class="ml5"
                                 v-bk-tooltips="{
                                     content: `<div>
-                            <p>Group ID：${row?._tempParams?.groupId || ''}</p>
-                            <p>Artifact ID: ${row?._tempParams?.artifactId || ''}</p>
-                            <p>Version: ${row?._tempParams?.version || ''}</p>
-                          </div>`,
+                                                <p>Group ID：${row?._tempParams?.groupId || ''}</p>
+                                                <p>Artifact ID: ${row?._tempParams?.artifactId || ''}</p>
+                                                <p>Version: ${row?._tempParams?.version || ''}</p>
+                                            </div>`,
                                     width: 300,
                                     placements: ['top']
                                 }">
@@ -183,7 +183,7 @@
                         (tmlSelectedFiles.push(file))
                     }
                 })
-                if (this.rootData.uploadType) {
+                if (this.rootData.uploadType && this.rootData.uploadType === 'mavenUpload') {
                     // 生成上传任务Promise数组
                     const uploaderPromises = tmlSelectedFiles.map(file => {
                         return this.handleUpload(file, this.rootData.uploadType)
@@ -264,12 +264,10 @@
             },
             confirm () {
                 let submitFiles = []
-                if (this.rootData.uploadType) {
-                    if (this.rootData.uploadType === 'mavenUpload') {
-                        submitFiles = this.selectedFiles.filter(file => {
-                            return !this.checkCoordinateEmpty(file._tempParams || {})
-                        })
-                    }
+                if (this.rootData?.uploadType === 'mavenUpload') {
+                    submitFiles = this.selectedFiles.filter(file => {
+                        return !this.checkCoordinateEmpty(file._tempParams || {})
+                    })
                 } else {
                     submitFiles = this.selectedFiles
                 }

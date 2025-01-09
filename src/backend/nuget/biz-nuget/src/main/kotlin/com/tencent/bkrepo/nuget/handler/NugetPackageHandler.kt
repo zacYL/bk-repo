@@ -75,7 +75,7 @@ class NugetPackageHandler {
                 versionName = version,
                 size = size,
                 artifactPath = artifactInfo.getArtifactFullPath(),
-                packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) },
+                packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value, system = true) },
                 extension = versionExtension,
                 overwrite = true,
                 createdBy = userId

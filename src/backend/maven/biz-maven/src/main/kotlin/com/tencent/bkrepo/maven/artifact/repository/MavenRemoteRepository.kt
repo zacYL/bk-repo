@@ -354,7 +354,7 @@ class MavenRemoteRepository(
                     artifactPath = fullPath,
                     overwrite = true,
                     createdBy = context.userId,
-                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) }
+                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value, system = true) }
                 )
             )
         } catch (ignore: DuplicateKeyException) {

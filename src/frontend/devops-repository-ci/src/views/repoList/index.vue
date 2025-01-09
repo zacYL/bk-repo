@@ -80,7 +80,13 @@
             </template>
             <bk-table-column :label="$t('repoName')" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <Icon class="mr5 table-svg" size="16" :name="row.repoType" />
+                    <template v-if="row.configuration.settings.display_repo_type === 'sbt'">
+                        <Icon class="mr5 table-svg" size="16" name="sbt" />
+                    </template>
+                    <template v-else>
+                        <Icon class="mr5 table-svg" size="16" :name="row.repoType" />
+                    </template>
+                    
                     <span class="hover-btn" @click="toPackageList(row)">{{replaceRepoName(row.name)}}</span>
                     <span v-if="['custom', 'pipeline', 'docker-local','report'].includes(row.name)"
                         class="mr5 repo-tag SUCCESS" :data-name="$t('builtIn')">
@@ -270,6 +276,7 @@
                         ...this.$route.query,
                         ropeTypeValue: type,
                         publicType: row.public,
+                        isSbt: row.configuration.settings?.display_repo_type === 'sbt',
                         c: this.pagination.current,
                         l: this.pagination.limit
                     }

@@ -8,7 +8,7 @@
         @cancel="cancel">
         <template #header>
             <div class="guide-dialog-header flex-align-center">
-                <icon class="mr5" :name="repoType" size="32"></icon>
+                <icon class="mr5" :name="isSbt ? 'sbt' : repoType" size="32"></icon>
                 <span>{{ repoName + $t('space') + title }}</span>
             </div>
         </template>

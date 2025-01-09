@@ -9,6 +9,9 @@ export default {
         repoType () {
             return this.$route.params.repoType || ''
         },
+        isSbt () {
+            return this.$route.query.isSbt
+        },
         repoName () {
             return this.$route.query.repoName || ''
         },

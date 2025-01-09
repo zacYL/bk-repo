@@ -20,7 +20,7 @@
                     :limit="1"
                     :multiple="false"
                     v-bind="{
-                        ...repoType === 'MAVEN' ? { accept: '.pom,.jar' } : {}
+                        ...repoType === 'MAVEN' ? { accept: '.pom,.jar,war' } : {}
                     }"
                     :custom-request="onRequestUpload"
                     ext-cls="content-upload"

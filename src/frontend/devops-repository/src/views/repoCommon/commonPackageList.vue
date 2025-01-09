@@ -1,7 +1,7 @@
 <template>
     <div class="common-package-container" v-bkloading="{ isLoading }">
         <header class="mb10 pl20 pr20 common-package-header flex-align-center">
-            <Icon class="package-img" size="30" :name="repoType" />
+            <Icon class="package-img" size="30" :name="isSbt ? 'sbt' : repoType" />
             <div class="ml10 common-package-title">
                 <div class="mb5 repo-title text-overflow" :title="repoName">
                     {{ repoName }}

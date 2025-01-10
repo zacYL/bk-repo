@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.ivy.artifact.repository
 
+import com.tencent.bkrepo.common.artifact.constant.DISPLAY_REPO_TYPE_KEY
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
@@ -57,6 +58,7 @@ import com.tencent.bkrepo.ivy.constants.METADATA_KEY_QUALIFIED_EXTRA_ATTRIBUTES
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_REVISION
 import com.tencent.bkrepo.ivy.enum.IvyMessageCode
 import com.tencent.bkrepo.ivy.exception.IvyRequestForbiddenException
+import com.tencent.bkrepo.ivy.pojo.ParseIvyInfo
 import com.tencent.bkrepo.ivy.util.IvyUtil
 import com.tencent.bkrepo.repository.api.MetadataClient
 import com.tencent.bkrepo.repository.constant.CoverStrategy
@@ -66,7 +68,6 @@ import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
-import org.apache.ivy.core.module.descriptor.Artifact
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -176,11 +177,11 @@ class IvyLocalRepository(
             val masterArtifactFullPath =
                 parseIvyInfo.masterArtifactFullPath ?: context.artifactInfo.getArtifactFullPath()
             val metadataModels = getMetadataModel(
-                parseIvyInfo.model,
+                context,
+                ivyArtifactInfo,
                 context.artifactInfo.getArtifactFullPath(),
-                parseIvyInfo.masterArtifact,
                 masterArtifactFullPath,
-                parseIvyInfo.artifactsFullPath
+                parseIvyInfo
             )
 
             val isLegalPathIvyFile = parseIvyInfo.isLegalPathIvyFile(
@@ -266,115 +267,123 @@ class IvyLocalRepository(
     }
 
     private fun getMetadataModel(
-        descriptor: ModuleDescriptor,
+        context: ArtifactUploadContext,
+        ivyArtifactInfo: IvyArtifactInfo,
         ivyFullPath: String,
-        masterArtifact: Artifact?,
         masterArtifactFullPath: String,
-        artifactsFullPath: List<String>,
+        parseIvyInfo: ParseIvyInfo,
     ): MutableList<MetadataModel> {
-        val (packageKey, version) = getPackageKeyAndVersion(descriptor)
+        with(parseIvyInfo) {
+            val (packageKey, version) = getPackageKeyAndVersion(model)
 
-        val metaDataModels = mutableListOf(
-            MetadataModel(
-                key = METADATA_KEY_ORGANISATION,
-                value = descriptor.moduleRevisionId.organisation,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_NAME,
-                value = descriptor.moduleRevisionId.name,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_REVISION,
-                value = descriptor.moduleRevisionId.revision,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_ATTRIBUTES,
-                value = descriptor.moduleRevisionId.attributes,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_EXTRA_ATTRIBUTES,
-                value = descriptor.moduleRevisionId.extraAttributes,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_QUALIFIED_EXTRA_ATTRIBUTES,
-                value = descriptor.moduleRevisionId.qualifiedExtraAttributes,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_PUBLISH_ARTIFACT,
-                value = descriptor.allArtifacts,
-                system = true,
-                display = false
-            ),
-            MetadataModel(
-                key = METADATA_KEY_MASTER_ARTIFACT_FULL_PATH,
-                value = masterArtifactFullPath,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_IVY_FULL_PATH,
-                value = ivyFullPath,
-                system = true,
-                display = false
-            ),
-            MetadataModel(
-                key = METADATA_KEY_All_ARTIFACT_FULL_PATH,
-                value = artifactsFullPath,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_All_ARTIFACT_FULL_PATH,
-                value = artifactsFullPath,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_PACKAGE_KEY,
-                value = packageKey,
-                system = true,
-                display = true
-            ),
-            MetadataModel(
-                key = METADATA_KEY_PACKAGE_VERSION,
-                value = version,
-                system = true,
-                display = true
-            ),
-        )
-        masterArtifact?.let {
-            metaDataModels.add(
+            val metaDataModels = mutableListOf(
                 MetadataModel(
-                    key = METADATA_KEY_MASTER_ARTIFACT,
-                    value = masterArtifact,
+                    key = METADATA_KEY_ORGANISATION,
+                    value = model.moduleRevisionId.organisation,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_NAME,
+                    value = model.moduleRevisionId.name,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_REVISION,
+                    value = model.moduleRevisionId.revision,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_ATTRIBUTES,
+                    value = model.moduleRevisionId.attributes,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_EXTRA_ATTRIBUTES,
+                    value = model.moduleRevisionId.extraAttributes,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_QUALIFIED_EXTRA_ATTRIBUTES,
+                    value = model.moduleRevisionId.qualifiedExtraAttributes,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_PUBLISH_ARTIFACT,
+                    value = model.allArtifacts,
                     system = true,
                     display = false
                 ),
-            )
-        }
-        descriptor.moduleRevisionId?.branch?.let {
-            metaDataModels.add(
                 MetadataModel(
-                    key = METADATA_KEY_BRANCH,
-                    value = it,
+                    key = METADATA_KEY_MASTER_ARTIFACT_FULL_PATH,
+                    value = masterArtifactFullPath,
                     system = true,
                     display = true
-                )
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_IVY_FULL_PATH,
+                    value = ivyFullPath,
+                    system = true,
+                    display = false
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_All_ARTIFACT_FULL_PATH,
+                    value = artifactsFullPath,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_All_ARTIFACT_FULL_PATH,
+                    value = artifactsFullPath,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_PACKAGE_KEY,
+                    value = packageKey,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = METADATA_KEY_PACKAGE_VERSION,
+                    value = version,
+                    system = true,
+                    display = true
+                ),
+                MetadataModel(
+                    key = DISPLAY_REPO_TYPE_KEY,
+                    value = ivyArtifactInfo.getDisplayRepoType(context.repositoryDetail),
+                    system = true,
+                    display = true
+                ),
             )
+            masterArtifact?.let {
+                metaDataModels.add(
+                    MetadataModel(
+                        key = METADATA_KEY_MASTER_ARTIFACT,
+                        value = masterArtifact,
+                        system = true,
+                        display = false
+                    ),
+                )
+            }
+            model.moduleRevisionId?.branch?.let { branch ->
+                metaDataModels.add(
+                    MetadataModel(
+                        key = METADATA_KEY_BRANCH,
+                        value = branch,
+                        system = true,
+                        display = true
+                    )
+                )
+            }
+            return metaDataModels
         }
-        return metaDataModels
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {

@@ -52,6 +52,11 @@ const val ARTIFACT_CONFIGURER = "artifact-configurer"
 const val NODE_DETAIL_KEY = "node-detail"
 
 /**
+ * 显示仓库类型，存放在元数据，如用于mavne、ivy仓库在前端显示sbt类型
+ */
+const val DISPLAY_REPO_TYPE_KEY = "display_repo_type"
+
+/**
  * 项目id字段
  */
 const val PROJECT_ID = "projectId"

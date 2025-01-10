@@ -106,16 +106,17 @@ class ConanRemoteRepository : RemoteRepository() {
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
-        val conanArtifactInfo = context.artifactInfo as ConanArtifactInfo
-        val exist = with(conanArtifactInfo) {
+        with(context.artifactInfo as ConanArtifactInfo) {
+            packageClient.findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version).data
+                ?.apply { packageDownloadIntercept(context, this) }
             context.getFullPathInterceptors().forEach { it.intercept(projectId, getArtifactFullPath()) }
-            nodeClient.checkExist(projectId, repoName, getArtifactFullPath()).data
+            val exist = nodeClient.checkExist(projectId, repoName, getArtifactFullPath()).data
+            val artifactResource = super.onDownload(context)
+            if (true != exist && artifactResource != null) {
+                SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, this))
+            }
+            return artifactResource
         }
-        val artifactResource = super.onDownload(context)
-        if (true != exist && artifactResource != null) {
-            SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, conanArtifactInfo))
-        }
-        return artifactResource
     }
 
     override fun buildDownloadRecord(
@@ -123,14 +124,6 @@ class ConanRemoteRepository : RemoteRepository() {
         artifactResource: ArtifactResource,
     ): PackageDownloadRecord? {
         return buildDownloadRecordRequest(context)
-    }
-
-    override fun onDownloadBefore(context: ArtifactDownloadContext) {
-        super.onDownloadBefore(context)
-        with(context.artifactInfo as ConanArtifactInfo) {
-            packageClient.findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version).data
-                ?.apply { packageDownloadIntercept(context, this) }
-        }
     }
 
     fun createRemoteSearchUrl(context: ArtifactContext, path: String): String {

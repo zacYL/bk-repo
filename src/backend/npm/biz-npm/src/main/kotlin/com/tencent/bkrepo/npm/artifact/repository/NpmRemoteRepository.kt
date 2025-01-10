@@ -106,9 +106,9 @@ class NpmRemoteRepository(
         return npmOperationService.packageVersion(context)
     }
 
-    override fun onDownloadBefore(context: ArtifactDownloadContext) {
-        super.onDownloadBefore(context)
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         downloadIntercept(context, null)
+        return super.onDownload(context)
     }
 
     override fun onDownloadSuccess(

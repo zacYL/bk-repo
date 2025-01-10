@@ -52,7 +52,7 @@
                                 <Icon
                                     v-if="!noInLockList"
                                     v-bk-tooltips="{
-                                        content: $t('alreadyJoinBlackList')
+                                        content: $t('alreadyJoinRepoBlackList')
                                     }"
                                     class="ml10"
                                     size="16" :style="{

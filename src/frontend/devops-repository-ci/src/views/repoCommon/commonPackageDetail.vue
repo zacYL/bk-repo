@@ -221,12 +221,12 @@
             // 制品搜索且选择了指定的版本详情时需要默认触发版本的搜索
             this.versionInput = this.$route.query.searchFlag ? this.version : ''
             this.getPackageInfoHandler()
-            this.handlerPaginationChange()
-            this.refreshSupportPackageTypeList().then(() => {
-                this.$nextTick(() => {
+            this.handlerPaginationChange().then(() => {
+                setTimeout(() => {
                     this.getIsLock()
-                })
+                }, 1000)
             })
+            this.refreshSupportPackageTypeList()
         },
         methods: {
             ...mapMutations(['INIT_TREE', 'INIT_OPERATE_TREE', 'UPDATE_TREE', 'UPDATE_OPERATE_TREE']),
@@ -254,7 +254,7 @@
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.getVersionListHandler(load)
+                const promise = this.getVersionListHandler(load)
                 if (!load) {
                     this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
                     this.$router.replace({
@@ -264,6 +264,7 @@
                         }
                     })
                 }
+                return promise
             },
             /**
              * @description: 是否在黑名单里面
@@ -363,7 +364,11 @@
                 })
             },
             refresh (version) {
-                this.getVersionListHandler()
+                this.getVersionListHandler().then(() => {
+                    setTimeout(() => {
+                        this.getIsLock(version)
+                    }, 1000)
+                })
                 if (this.version === version) {
                     this.$refs.versionDetail && this.$refs.versionDetail.getDetail()
                 }

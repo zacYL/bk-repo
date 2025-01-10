@@ -60,11 +60,11 @@ class IvyWebController(
     @ApiOperation("ivy jar 包删除接口")
     @DeleteMapping(IvyArtifactInfo.IVY_EXT_PACKAGE_DELETE)
     fun deletePackage(
-        @ArtifactPathVariable mavenArtifactInfo: IvyArtifactInfo,
+        @ArtifactPathVariable ivyArtifactInfo: IvyArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String
     ): Response<Void> {
-        ivyWebService.deletePackage(mavenArtifactInfo, packageKey)
+        ivyWebService.deletePackage(ivyArtifactInfo, packageKey)
         return ResponseBuilder.success()
     }
 
@@ -72,13 +72,13 @@ class IvyWebController(
     @DeleteMapping(IvyArtifactInfo.IVY_EXT_VERSION_DELETE)
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     fun deleteVersion(
-        @ArtifactPathVariable mavenArtifactInfo: IvyArtifactInfo,
+        @ArtifactPathVariable ivyArtifactInfo: IvyArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String,
         @ApiParam(value = "版本号", required = true)
         @RequestParam version: String
     ): Response<Void> {
-        ivyWebService.deleteVersion(mavenArtifactInfo, packageKey, version)
+        ivyWebService.deleteVersion(ivyArtifactInfo, packageKey, version)
         return ResponseBuilder.success()
     }
 

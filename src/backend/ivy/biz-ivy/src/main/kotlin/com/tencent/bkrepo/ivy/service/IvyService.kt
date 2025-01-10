@@ -33,7 +33,7 @@ import com.tencent.bkrepo.ivy.artifact.IvyArtifactInfo
 interface IvyService {
 
     /**
-     * 上传maven构件
+     * 上传ivy构件
      */
     fun deploy(
         ivyArtifactInfo: IvyArtifactInfo,

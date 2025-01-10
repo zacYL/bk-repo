@@ -686,6 +686,98 @@ export default {
                 }
             ]
         },
+        sbtGuide () {
+            return [
+                {
+                    title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('sbtCreditGuideSubTitle1'),
+                            codeList: [
+                                `credentials += Credentials("Authentication Required", "${window.location.host}", "${this.userName || 'userId'}", "${this.accessToken || 'PERSONAL_ACCESS_TOKEN'}")`
+                            ]
+                        }
+                    ]
+                },
+                {
+                    optionType: 'push',
+                    main: [
+                        {
+                            title: this.$t('push'),
+                            subTitle: this.$t('sbtCreditGuideSubTitle1')
+                        },
+                        this.repoType === 'ivy'
+                            ? {
+                                subTitle: this.$t('sbtCreditGuideSubTitle3'),
+                                codeList: [
+                                    `val ivyPattern = "${window.location.origin}/ivy/${this.projectId}/${this.repoName}/${this.repoInfo?.configuration?.settings?.ivy_pattern || ''}`,
+                                    `val artifactPattern = "${window.location.origin}/ivy/${this.projectId}/${this.repoName}/${this.repoInfo?.configuration?.settings?.artifact_pattern || ''}"`,
+                                    'val customPatterns = Patterns(',
+                                    '   ivyPatterns = Vector(ivyPattern),',
+                                    '   artifactPatterns = Vector(artifactPattern),',
+                                    '   isMavenCompatible = false,',
+                                    '   descriptorOptional = false,',
+                                    '   skipConsistencyCheck = false',
+                                    ')',
+                                    'publishMavenStyle := false',
+                                    'publishTo := Some(Resolver.url(',
+                                    `   "${this.repoName}",`,
+                                    `   url("${window.location.origin}/ivy/${this.projectId}/${this.repoName}/")`,
+                                    ')).withAllowInsecureProtocol(true).withPatterns(customPatterns)'
+                                ]
+                            }
+                            : '',
+                        this.repoType === 'maven'
+                            ? {
+                                subTitle: this.$t('sbtCreditGuideSubTitle2'),
+                                codeList: [
+                                    'publishMavenStyle := true',
+                                    'publishTo := {',
+                                    `   Some(("${this.repoName}" at "${window.location.origin}/maven/${this.projectId}/${this.repoName}/").withAllowInsecureProtocol(true))`,
+                                    '}'
+                                ]
+                            }
+                            : '',
+                        {
+                            title: this.$t('push'),
+                            codeList: [
+                                'sbt publish'
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        sbtInstall () {
+            let org; let name; let rev; let branch
+            let extraText = ''
+            if (this.repoType === 'ivy') {
+                org = findTargetObj(this.metadataDataList, 'org', 'key')?.value || ''
+                name = findTargetObj(this.metadataDataList, 'name', 'key')?.value || ''
+                rev = findTargetObj(this.metadataDataList, 'rev', 'key')?.value || ''
+                branch = findTargetObj(this.metadataDataList, 'branch', 'key')?.value || ''
+                const extraTextArr = []
+                if (branch) {
+                    extraTextArr.push(`"branch" -> "${branch}"`)
+                }
+                const obj = findTargetObj(this.metadataDataList, 'extraAttributes', 'key')?.value || {}
+                Object.keys(obj).forEach(key => extraTextArr.push(`"${key}" ->"${obj[key]}"`))
+                extraText = extraTextArr.join(',')
+            }
+            return [
+                {
+                    main: [
+                        {
+                            codeList: [
+                                this.repoType === 'ivy' ? `libraryDependencies += "${org}" % "${name}" % "${rev}" extra(${extraText})` : '',
+                                this.repoType === 'maven' ? `libraryDependencies += "${this.detail.basic.groupId}" % "${this.detail.basic.artifactId}" % "${this.versionLabel}"` : ''
+                            ].filter(Boolean)
+                        }
+                    ]
+                }
+            ]
+        },
         mavenGuide () {
             return [
                 {
@@ -1909,12 +2001,6 @@ export default {
                     ]
                 }]
         },
-        articleGuide () {
-            return this[`${this.$route.params.repoType}Guide`]
-        },
-        articleInstall () {
-            return this[`${this.$route.params.repoType}Install`]
-        },
         cocoapodsGuide () {
             return [
                 {
@@ -2016,6 +2102,12 @@ export default {
                     ]
                 }
             ]
+        },
+        articleGuide () {
+            return this[`${this.isSbt ? 'sbt' : this.repoType}Guide`]
+        },
+        articleInstall () {
+            return this[`${this.isSbt ? 'sbt' : this.repoType}Install`]
         }
     },
     data () {

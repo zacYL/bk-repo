@@ -4,6 +4,7 @@
     "specsDownloadUrl": "Specs下载地址",
     "remoteRepoType": "远程仓库类型",
     "other": "其他",
+    "no": "无",
     "batchUpload": "批量上传",
     "coordinate": "坐标",
     "updateIndex": "更新索引",

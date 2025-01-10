@@ -43,19 +43,30 @@
                                 class="version-operation"
                                 @iconClick="iconClick($event, $version)"
                                 :list="[
-                                    ...(!$version.metadata.forbidStatus ? [
-                                        (showPromotion && !$version.metadata.lockStatus) && {
-                                            label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
-                                            disabled: ($version.stageTag || '').includes('@release')
-                                        },
-                                        !['conan', 'docker'].includes(repoType) && versionNoInLockList && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }
-                                    ] : []),
+                                    
+                                    ...(
+                                        // 禁用或者黑名单时，不支持下载
+                                        (!$version.metadata.forbidStatus || versionNoInLockList)
+                                            ? [
+                                                (showPromotion && !$version.metadata.lockStatus) && {
+                                                    label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
+                                                    disabled: ($version.stageTag || '').includes('@release')
+                                                },
+                                                !['conan', 'docker'].includes(repoType) && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }
+                                            ]
+                                            :
+                                                []),
+
                                     forbidOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
                                     lockOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
-                                    canMoveOrCopy && !$version.metadata.forbidStatus && !$version.metadata.lockStatus && { clickEvent: () => moveOrCopy(), label: $t('move') },
-                                    canMoveOrCopy && !$version.metadata.forbidStatus && { clickEvent: () => moveOrCopy('copy'), label: $t('copy') },
-                                    (deleteOperationPermission && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: $t('delete'), clickEvent: () => deleteVersionHandler($version) }
-                                ]"></operation-list>
+
+                                    // 本地的才支持移动和复制
+                                    (storeType === 'local') && canMoveOrCopy && !$version.metadata.forbidStatus && !$version.metadata.lockStatus && { clickEvent: () => moveOrCopy(), label: $t('move') },
+                                    (storeType === 'local') && canMoveOrCopy && !$version.metadata.forbidStatus && { clickEvent: () => moveOrCopy('copy'), label: $t('copy') },
+
+                                    (deleteOperationPermission && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: $t('delete'), clickEvent: () => deleteVersionHandler($version) }]
+                                    
+                                "></operation-list>
                         </div>
                     </infinite-scroll>
                 </div>
@@ -224,7 +235,7 @@
             this.handlerPaginationChange().then(() => {
                 setTimeout(() => {
                     this.getIsLock()
-                }, 1000)
+                }, 500)
             })
             this.refreshSupportPackageTypeList()
         },
@@ -288,9 +299,9 @@
                 })
             },
             getVersionListHandler (load) {
-                if (this.isLoading) return
+                if (this.isLoading) return Promise.reject(new Error('loading'))
                 this.isLoading = !load
-                this.getVersionList({
+                return this.getVersionList({
                     projectId: this.projectId,
                     repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey,
@@ -352,6 +363,7 @@
                     this.infoLoading = false
                 })
             },
+            // pass
             changeVersion ({ name: version }) {
                 this.$router.replace({
                     query: {
@@ -366,8 +378,8 @@
             refresh (version) {
                 this.getVersionListHandler().then(() => {
                     setTimeout(() => {
-                        this.getIsLock(version)
-                    }, 1000)
+                        this.getIsLock()
+                    }, 500)
                 })
                 if (this.version === version) {
                     this.$refs.versionDetail && this.$refs.versionDetail.getDetail()

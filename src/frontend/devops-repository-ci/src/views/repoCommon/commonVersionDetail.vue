@@ -3,7 +3,9 @@
         <template #setting>
             <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker' && repoType !== 'conan' && noInLockList"
                 outline class="mr10" @click="$emit('download')">{{$t('download')}}</bk-button>
-            <operation-list class="mr20"
+            <operation-list
+                v-if="storeType !== 'virtual'"
+                class="mr20"
                 :list="operationBtns">
                 <bk-button icon="ellipsis"></bk-button>
             </operation-list>
@@ -342,10 +344,12 @@
                         : []),
                     this.showForbidOperation && !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('relieve') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
                     this.showLockOperation && !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? this.$t('relieve') + this.$t('space') + this.$t('lock') : this.$t('lock') },
-                    this.canMoveOrCopy && !metadataMap.forbidStatus && !metadataMap.lockStatus && { clickEvent: () => this.$emit('move'), label: this.$t('move') },
-                    this.canMoveOrCopy && !metadataMap.forbidStatus && { clickEvent: () => this.$emit('copy'), label: this.$t('copy') },
+
+                    (this.storeType === 'local') && this.canMoveOrCopy && !metadataMap.forbidStatus && !metadataMap.lockStatus && { clickEvent: () => this.$emit('move'), label: this.$t('move') },
+                    (this.storeType === 'local') && this.canMoveOrCopy && !metadataMap.forbidStatus && { clickEvent: () => this.$emit('copy'), label: this.$t('copy') },
+
                     (this.showDeleteOperation && !this.whetherSoftware && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
-                ]
+                ].filter(Boolean)
             },
             metadataDataList () {
                 // JavaScript中，true 被视为 1，false 被视为 0

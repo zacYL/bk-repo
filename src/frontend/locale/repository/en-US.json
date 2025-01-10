@@ -4,6 +4,7 @@
     "specsDownloadUrl": "Specs download URL",
     "remoteRepoType": "Remote Repository Type",
     "other": "Other",
+    "no": "No",
     "batchUpload": "Batch upload",
     "coordinate": "coordinate",
     "updateIndex": "Update Index",

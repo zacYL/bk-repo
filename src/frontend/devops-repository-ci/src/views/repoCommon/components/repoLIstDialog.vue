@@ -1,3 +1,9 @@
+<!--
+ * @Date: 2025-01-09 15:22:35
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2025-01-13 17:50:03
+ * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoCommon/components/repoLIstDialog.vue
+-->
 <template>
     <div>
         <canway-dialog
@@ -47,7 +53,7 @@
         },
         computed: {
             computedDataList () {
-                return this.dataList.filter(item => item.name.includes(this.importantSearch) && item.name !== this.srcRepoName)
+                return this.dataList.filter(item => item.name.includes(this.importantSearch) && item.name !== this.srcRepoName && item.category === 'LOCAL')
             }
         },
         methods: {

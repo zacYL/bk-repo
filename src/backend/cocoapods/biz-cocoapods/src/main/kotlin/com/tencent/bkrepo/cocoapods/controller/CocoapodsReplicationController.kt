@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-//@Principal(type = PrincipalType.ADMIN)
+@Principal(type = PrincipalType.ADMIN)
 @RestController
 class CocoapodsReplicationController (
     private val cocoapodsReplicaService: CocoapodsReplicaService
@@ -28,6 +28,6 @@ class CocoapodsReplicationController (
         cocoapodsReplicaService.resolveIndexFile(event)
     }
     companion object {
-        private val logger = LoggerFactory.getLogger(RemoteEventJobExecutor::class.java)
+        private val logger = LoggerFactory.getLogger(CocoapodsReplicationController::class.java)
     }
 }

@@ -57,8 +57,7 @@ class PackageAccessRuleServiceImpl(
                 throw ErrorCodeException(RepositoryMessageCode.ACCESS_RULE_EXISTS)
             }
             logger.info(
-                "create new package access rule [type: $packageType, key: $key," +
-                        " version: $version, versionRule: $versionRuleType] success"
+                "create new package access rule [$request] success"
             )
         }
     }
@@ -75,8 +74,8 @@ class PackageAccessRuleServiceImpl(
                 ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, request)
             packageAccessRuleDao.removeById(tPackageAccessRule.id!!)
             logger.info(
-                "remove package access rule [type: $packageType, key: $key," +
-                        " version: $version, versionRule: $versionRuleType] success"
+                "user [${SecurityUtils.getUserId()}] remove package access rule [projectId: $projectId," +
+                " type: $packageType, key: $key, version: $version, versionRule: $versionRuleType, pass: $pass] success"
             )
         }
     }

@@ -219,7 +219,7 @@
                         resolve()
                     }).catch(error => {
                         data.status = 'FAILED'
-                        data.errMsg = `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                        data.errMsg = `${error.message || error.error || this.$t('uploadMavenErrorMsgTip')}`
                         reject(error)
                     }).finally(() => {
                         if (index !== -1) {

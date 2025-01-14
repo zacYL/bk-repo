@@ -53,6 +53,6 @@ class PypiPackageArtifactInfoResolver : ArtifactInfoResolver {
         val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
         val name = attributes[NAME].toString().trim()
         val version = attributes[VERSION].toString().trim()
-        return PypiPackageArtifactInfo(projectId, repoName, name, version)
+        return PypiPackageArtifactInfo(projectId, repoName, artifactUri, name, version)
     }
 }

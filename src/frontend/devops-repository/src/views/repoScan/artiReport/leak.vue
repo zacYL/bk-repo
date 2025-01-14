@@ -95,7 +95,7 @@
                                 })
                             },
                             row.pass !== null && {
-                                label: $t('delete'),
+                                label: $t('offList'),
                                 clickEvent: (handle) => removeBlackWhiteList(row).finally(() => {
                                     handle.close()
                                 })

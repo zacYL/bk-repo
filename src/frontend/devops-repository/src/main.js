@@ -1,3 +1,9 @@
+/*
+ * @Date: 2024-11-01 22:08:22
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2025-01-09 17:35:35
+ * @FilePath: /artifact/src/frontend/devops-repository/src/main.js
+ */
 import Vue from 'vue'
 import App from '@/App'
 import createRouter from '@/router'
@@ -19,6 +25,9 @@ Vue.component('EmptyData', EmptyData)
 
 Vue.prototype.$setLocale = setLocale
 Vue.prototype.$bkMessage = throttleMessage(Vue.prototype.$bkMessage, 3500)
+Vue.prototype.$isSbt = (data) => {
+    return data?.configuration?.settings?.display_repo_type === 'sbt'
+}
 Vue.prototype.currentLanguage = cookies.get('blueking_language') || 'zh-cn'
 
 document.title = i18n.t('CPackWebTitle')

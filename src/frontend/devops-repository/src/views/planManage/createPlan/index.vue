@@ -25,7 +25,7 @@
                                 type="datetime"
                                 :disabled="disabled"
                                 :options="{
-                                    disabledDate: (date) => date < new Date()
+                                    disabledDate: (date) => checkDateIsValid(date)
                                 }">
                             </bk-date-picker>
                         </div>
@@ -386,6 +386,10 @@
                 'getPlanDetail',
                 'updatePlan'
             ]),
+            checkDateIsValid (date) {
+                // date 对其的是当前日期的24点，因此判断小于时，需要判断是否等于小于当前日期的0点
+                return date <= (new Date().setHours(0, 0, 0, 0) - 24 * 60 * 60 * 1000)
+            },
             formatDate,
             handlePlanDetail () {
                 this.isLoading = true

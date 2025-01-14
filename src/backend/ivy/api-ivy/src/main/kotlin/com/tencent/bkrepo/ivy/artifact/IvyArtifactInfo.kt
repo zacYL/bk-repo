@@ -34,6 +34,7 @@ package com.tencent.bkrepo.ivy.artifact
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.DISPLAY_REPO_TYPE_KEY
 import com.tencent.bkrepo.ivy.enum.HashType
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.slf4j.Logger
@@ -99,6 +100,10 @@ class IvyArtifactInfo(
 
     fun getRepoIvyPattern(repositoryDetail: RepositoryDetail): String {
         return repositoryDetail.configuration.getStringSetting(IVY_PATTERN_KEY) ?: ""
+    }
+
+    fun getDisplayRepoType(repositoryDetail: RepositoryDetail): String {
+        return repositoryDetail.configuration.getStringSetting(DISPLAY_REPO_TYPE_KEY) ?: repositoryDetail.type.name
     }
 
     fun getFile(artifactFile: ArtifactFile): File {

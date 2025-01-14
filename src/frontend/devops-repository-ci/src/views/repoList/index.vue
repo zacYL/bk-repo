@@ -59,7 +59,7 @@
                     class="ml10 w250"
                     @change="handlerPaginationChange"
                     :placeholder="$t('allTypes')">
-                    <bk-option v-for="type in repoEnum" :key="type.value" :id="type.value" :name="type.label">
+                    <bk-option v-for="type in repoEnum.filter(type => type.value !== 'sbt')" :key="type.value" :id="type.value" :name="type.label">
                         <div class="flex-align-center">
                             <Icon size="20" :name="type.value" />
                             <span class="ml10 flex-1 text-overflow">{{type.label}}</span>
@@ -80,13 +80,20 @@
             </template>
             <bk-table-column :label="$t('repoName')" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <Icon class="mr5 table-svg" size="16" :name="row.repoType" />
+                    <template v-if="$isSbt(row)">
+                        <Icon class="mr5 table-svg" size="16" name="sbt" />
+                    </template>
+                    <template v-else>
+                        <Icon class="mr5 table-svg" size="16" :name="row.repoType" />
+                    </template>
+                    
                     <span class="hover-btn" @click="toPackageList(row)">{{replaceRepoName(row.name)}}</span>
                     <span v-if="['custom', 'pipeline', 'docker-local','report'].includes(row.name)"
                         class="mr5 repo-tag SUCCESS" :data-name="$t('builtIn')">
                     </span>
                     <span v-if="row.configuration.settings.system" class="mr5 repo-tag" :data-name="$t('system')"></span>
                     <span v-if="row.public" class="mr5 repo-tag WARNING" :data-name="$t('public')"></span>
+                    <Icon v-if="$isSbt(row)" class="mt3  table-svg" size="12" :name="row.repoType" />
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('storeTypes')" width="180">
@@ -271,7 +278,8 @@
                         ropeTypeValue: type,
                         publicType: row.public,
                         c: this.pagination.current,
-                        l: this.pagination.limit
+                        l: this.pagination.limit,
+                        ...row.configuration.settings?.display_repo_type === 'sbt' ? { isSbt: true } : {}
                     }
                 })
             },

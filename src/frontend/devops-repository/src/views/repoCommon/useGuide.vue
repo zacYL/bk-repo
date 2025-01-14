@@ -1,3 +1,5 @@
+
+<!-- sbt 无法选择，也不能pull -->
 <template>
     <canway-dialog
         v-model="useGuideData.show"
@@ -8,15 +10,16 @@
         @cancel="cancel">
         <template #header>
             <div class="guide-dialog-header flex-align-center">
-                <icon class="mr5" :name="repoType" size="32"></icon>
+                <icon class="mr5" :name="isSbt ? 'sbt' : repoType" size="32"></icon>
                 <span>{{ repoName + $t('space') + title }}</span>
+                <icon v-if="isSbt" class="ml5" :name="repoType" size="12"></icon>
             </div>
         </template>
         <div class="guide-container">
             <!-- 左侧tab标签页 -->
             <div class="guide-side w160">
                 <bk-select
-                    v-if="['maven', 'npm', 'gradle'].includes(repoType)"
+                    v-if="['maven', 'npm', 'gradle'].includes(repoType) && !isSbt"
                     class="w160"
                     :clearable="false"
                     v-model="activeDependType">
@@ -77,8 +80,9 @@
                 if (this.repoType === 'go' && this.storeType === 'remote' && this.removeProtocolFromUrl(this.repoUrl, true) === 'http') {
                     basicOption = basicOption.filter(item => item.name !== 'setCredentials')
                 }
+                
                 // ivy仓库不支持pull操作
-                if (this.repoType === 'ivy') {
+                if (this.repoType === 'ivy' || this.isSbt) {
                     basicOption = basicOption.filter(item => item.name !== 'pull')
                 }
                 if (!this.noShowOption) {

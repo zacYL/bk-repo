@@ -15,13 +15,16 @@
         v-bkloading="{ isLoading: treeLoading }"
         style="height:100%;"
     >
-        <template slot-scope="{ node }">
-
+        <template slot-scope="{ node: { data, label } }">
             <div class=" repo-catalog-tree">
-                <Icon size="16" :name="node.data.type ? node.data.type.toLowerCase() : node.data.folder ? 'folder' : 'file'" class="ml5 mr5" />
+                <Icon size="16"
+                    :name="data.type
+                        ? ($isSbt(data) ? 'sbt' : data.type.toLowerCase()) : data.folder ? 'folder' : 'file'" class="ml5 mr5" />
                 <span>
-                    {{ node.label }}
+                    {{ label }}
                 </span>
+
+                <Icon class="ml5" v-if="$isSbt(data) && data.type" size="12" :name="data.type.toLowerCase()" />
             </div>
         </template>
     </vue-tree>
@@ -96,7 +99,8 @@
                             projectId: item.projectId,
                             repoName: item.name,
                             // 默认为当前节点添加一个子节点，让其显示左边的展开图标按钮
-                            children: [{ id: '000000', name: '' }]
+                            children: [{ id: '000000', name: '' }],
+                            configuration: item.configuration
                         }
                         return node
                     })

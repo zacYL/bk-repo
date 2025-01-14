@@ -31,10 +31,14 @@
 
 package com.tencent.bkrepo.helm.artifact.resolver
 
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
+import com.tencent.bkrepo.common.api.constant.ensurePrefix
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
+import com.tencent.bkrepo.helm.constants.CHART
 import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo
 import org.springframework.stereotype.Component
+import org.springframework.web.multipart.MultipartHttpServletRequest
 import javax.servlet.http.HttpServletRequest
 
 @Component
@@ -46,6 +50,9 @@ class HelmArtifactInfoResolver : ArtifactInfoResolver {
         artifactUri: String,
         request: HttpServletRequest
     ): HelmArtifactInfo {
-        return HelmArtifactInfo(projectId, repoName, artifactUri)
+        val newArtifactUri = if (request is MultipartHttpServletRequest) {
+            request.fileMap[CHART]?.originalFilename?.ensurePrefix(SLASH) ?: artifactUri
+        } else artifactUri
+        return HelmArtifactInfo(projectId, repoName, newArtifactUri)
     }
 }

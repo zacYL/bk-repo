@@ -13,12 +13,13 @@
                     :title="tipsObj.tips">
                 </bk-alert>
                 <div>
-                    
+
                     <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="150" :model="repoBaseInfo" :rules="rules">
                         <bk-form-item :label="$t('repoName')">
                             <div class="flex-align-center">
-                                <icon size="20" :name="repoBaseInfo.repoType || repoType" />
+                                <icon size="20" :name="$isSbt(repoBaseInfo) ? 'sbt' : (repoBaseInfo.repoType || repoType)" />
                                 <span class="ml10">{{replaceRepoName(repoBaseInfo.name || repoName)}}</span>
+                                <icon v-if="$isSbt(repoBaseInfo)" class="ml10" size="12" :name="repoBaseInfo.repoType || repoType" />
                             </div>
                         </bk-form-item>
                         <template v-if="repoType === 'ivy'">

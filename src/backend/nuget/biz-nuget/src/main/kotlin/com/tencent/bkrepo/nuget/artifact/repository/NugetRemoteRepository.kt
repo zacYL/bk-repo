@@ -120,17 +120,13 @@ class NugetRemoteRepository(
         }
     }
 
-    override fun onDownloadBefore(context: ArtifactDownloadContext) {
-        super.onDownloadBefore(context)
-        downloadIntercept(context, null)
-    }
-
     override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
         requireNotNull(context)
         return nugetOperationService.packageVersion(context)
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        downloadIntercept(context, null)
         val nugetArtifactInfo = context.artifactInfo as NugetDownloadArtifactInfo
         with(context) {
             getFullPathInterceptors().forEach { it.intercept(projectId, nugetArtifactInfo.getArtifactFullPath()) }

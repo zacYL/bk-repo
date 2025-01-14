@@ -43,10 +43,11 @@
             />
             <div class="repo-rely-content" v-bkloading="{ isLoading: basicTabLoading }">
                 <div class="repo-rely-content-header" v-if="baseDetailInfo">
-                    <Icon size="14" :name="currentRepoType.toLowerCase()" />
+                    <Icon size="14" :name="$isSbt(baseDetailInfo) ? 'sbt' : currentRepoType.toLowerCase()" />
                     <div class="ml10" :title="replaceRepoName(baseDetailInfo.repoName || baseDetailInfo.name)">
                         {{ replaceRepoName(baseDetailInfo.repoName || baseDetailInfo.name) }}
                     </div>
+                    <icon class="ml10" v-if="$isSbt(baseDetailInfo)" size="12" :name="currentRepoType.toLowerCase()" />
                 </div>
                 <div class="repo-rely-content-show">
                     <bk-tab :active.sync="active" type="unborder-card">
@@ -156,7 +157,7 @@
                 fileNameSearch: '', // 搜索的文件名称
                 searchFlag: false, // 是否是搜索事件
                 searchNode: '', // 搜索后点击的节点
-                depotList: repoEnum.filter(item => item.value !== 'generic'),
+                depotList: repoEnum.filter(item => item.value !== 'generic' && item.value !== 'sbt'),
                 checkRepoType: '',
                 active: 'basic', // 当前选中的标签页
                 currentNodeType: 'depot', // 当前选中的节点类型

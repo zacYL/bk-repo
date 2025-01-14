@@ -20,7 +20,7 @@
                     :limit="1"
                     :multiple="false"
                     v-bind="{
-                        ...repoType === 'MAVEN' ? { accept: '.pom,.jar' } : {}
+                        ...repoType === 'MAVEN' ? { accept: '.pom,.jar,.war,.tar,.ear,.ejb,.rar,.msi,.aar,.kar,.rpm,.tar.bz2,.tar.gz,.tar.xz,.tbz,.zip' } : {}
                     }"
                     :custom-request="onRequestUpload"
                     ext-cls="content-upload"

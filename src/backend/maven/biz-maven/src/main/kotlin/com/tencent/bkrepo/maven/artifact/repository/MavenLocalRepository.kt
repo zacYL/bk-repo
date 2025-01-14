@@ -36,6 +36,7 @@ import com.tencent.bkrepo.common.api.constant.ensureSuffix
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.constant.DISPLAY_REPO_TYPE_KEY
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.hash.sha1
@@ -84,8 +85,8 @@ import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
 import com.tencent.bkrepo.maven.model.TMavenMetadataRecord
-import com.tencent.bkrepo.maven.pojo.MavenBasicInfo
 import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
+import com.tencent.bkrepo.maven.pojo.MavenBasicInfo
 import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.pojo.MavenMetadataSearchPojo
 import com.tencent.bkrepo.maven.pojo.MavenRepoConf
@@ -1001,12 +1002,21 @@ class MavenLocalRepository(
         return fullPath.replace(name, uniqueName)
     }
 
+    private fun getDisplayRepoType(repositoryDetail: RepositoryDetail): String {
+        return repositoryDetail.configuration.getStringSetting(DISPLAY_REPO_TYPE_KEY) ?: repositoryDetail.type.name
+    }
+
     private fun createMavenVersion(context: ArtifactUploadContext, mavenGAVC: MavenGAVC, fullPath: String) {
         val metadata = mutableListOf(
             MetadataModel(key = METADATA_KEY_PACKAGING, value = mavenGAVC.packaging, system = true),
             MetadataModel(key = METADATA_KEY_GROUP_ID, value = mavenGAVC.groupId, system = true),
             MetadataModel(key = METADATA_KEY_ARTIFACT_ID, value = mavenGAVC.artifactId, system = true),
-            MetadataModel(key = METADATA_KEY_VERSION, value = mavenGAVC.version, system = true)
+            MetadataModel(key = METADATA_KEY_VERSION, value = mavenGAVC.version, system = true),
+            MetadataModel(
+                key = DISPLAY_REPO_TYPE_KEY,
+                value = getDisplayRepoType(context.repositoryDetail),
+                system = true
+            ),
         )
         mavenGAVC.name?.let { metadata.add(MetadataModel(key = METADATA_KEY_NAME, value = it)) }
         mavenGAVC.modelVersion?.let{ metadata.add(MetadataModel(key = METADATA_KEY_MODEL_VERSION, value = it)) }

@@ -347,9 +347,9 @@ class ClusterReplicator(
                 md5 = node.md5!!,
                 nodeMetadata = metadata,
                 operator = SYSTEM_USER,
-                createdBy = node.createdBy,
+                createdBy = SYSTEM_USER,
                 createdDate = LocalDateTime.now(),
-                lastModifiedBy = node.lastModifiedBy,
+                lastModifiedBy = SYSTEM_USER,
                 lastModifiedDate = LocalDateTime.now()
             )
         }

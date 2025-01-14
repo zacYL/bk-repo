@@ -12,7 +12,7 @@
         </template>
         <div class="flex-between-center">
             <bk-button @click="selectFiles(false)">{{$t('continueUploading')}}</bk-button>
-            <div class="flex-align-center">
+            <div class="flex-align-center" v-if="!rootData.uploadType">
                 <label style="white-space:nowrap;">{{$t('fileSameNameOverwrites')}}: </label>
                 <bk-radio-group v-model="overwrite">
                     <bk-radio class="ml20" :value="true">{{ $t('allow') }}</bk-radio>
@@ -90,7 +90,20 @@
             </bk-table>
         </div>
         
-        <input class="upload-input" key="uploadInput" ref="uploadInput" type="file" :webkitdirectory="rootData.folder" @change="selectedFilesHandler" multiple>
+        <input
+            class="upload-input"
+            key="uploadInput"
+            ref="uploadInput"
+            type="file"
+            v-bind="rootData.uploadType === 'mavenUpload'
+                ? {
+                    accept: '.pom,.jar,.war,.tar,.ear,.ejb,.rar,.msi,.aar,.kar,.rpm,.tar.bz2,.tar.gz,.tar.xz,.tbz,.zip'
+                }
+                : {}"
+            :webkitdirectory="rootData.folder"
+            @change="selectedFilesHandler"
+            multiple
+        />
         <!-- 重新上传文件input，单选只能.pom后缀 -->
         <input class="upload-input" key="reuploadInput" ref="reuploadInput" type="file" :webkitdirectory="rootData.folder" @change="reselectedFilesHandler" accept=".pom">
         <template #footer>

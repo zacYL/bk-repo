@@ -10,7 +10,7 @@
             <div v-if="customSettings.uploadFlag">
                 <div class="content-info">
                     <p v-if="repoType === 'MAVEN'">{{ $t('selectMavenArtifact') }}</p>
-                    <p v-if="repoType === 'NPM'">{{ $t('selectMavenArtifact') }}</p>
+                    <p v-if="repoType === 'NPM'">{{ $t('selectNpmArtifact') }}</p>
                     <p v-if="repoType === 'DOCKER'">{{ $t('selectDockerImage') }}</p>
                 </div>
                 <bk-upload

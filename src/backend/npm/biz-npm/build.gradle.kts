@@ -34,6 +34,7 @@ dependencies {
     api(project(":npm:api-npm"))
     api(project(":common:common-job"))
     api(project(":common:common-artifact:artifact-service"))
+    api(project(":common:common-lock"))
     implementation("org.springframework.retry:spring-retry")
     implementation("com.google.code.gson:gson")
 }

@@ -49,6 +49,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadConte
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.version.SemVersionParser.parse
+import com.tencent.bkrepo.common.lock.service.LockOperation
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
@@ -106,6 +107,7 @@ class NpmClientServiceImpl(
     private val metadataClient: MetadataClient,
     private val npmPackageHandler: NpmPackageHandler,
     private val npmOperationService: NpmOperationService,
+    private val lockOperation: LockOperation
 ) : NpmClientService, AbstractNpmService() {
 
     @Transactional(rollbackFor = [Throwable::class])
@@ -385,18 +387,29 @@ class NpmClientServiceImpl(
             }
             // 第一次上传
             if (!packageExist(projectId, repoName, packageKey)) {
-                npmPackageMetaData.time.add(CREATED, gmtTime)
-                npmPackageMetaData.time.add(MODIFIED, gmtTime)
-                npmPackageMetaData.time.add(npmMetadata.version!!, gmtTime)
-                doPackageFileUpload(userId, artifactInfo, npmPackageMetaData)
-                return
+                val lock = lockOperation.getLock(packageKey)
+                if (lockOperation.acquireLock(packageKey, lock)) {
+                    try {
+                        if (!packageExist(projectId, repoName, packageKey)) {//二次判断
+                            npmPackageMetaData.time.add(CREATED, gmtTime)
+                            npmPackageMetaData.time.add(MODIFIED, gmtTime)
+                            npmPackageMetaData.time.add(npmMetadata.version!!, gmtTime)
+                            doPackageFileUpload(userId, artifactInfo, npmPackageMetaData)
+                            return
+                        }
+                    } finally {
+                        lockOperation.close(packageKey, lock)
+                    }
+                }
             }
-            val originalPackageInfo = queryPackageInfo(artifactInfo, npmPackageMetaData.name!!, false)
-            originalPackageInfo.versions.map.putAll(npmPackageMetaData.versions.map)
-            originalPackageInfo.distTags.getMap().putAll(npmPackageMetaData.distTags.getMap())
-            originalPackageInfo.time.add(MODIFIED, gmtTime)
-            originalPackageInfo.time.add(npmMetadata.version!!, gmtTime)
-            doPackageFileUpload(userId, artifactInfo, originalPackageInfo)
+            lockOperation.doWithLock(packageKey) {
+                val originalPackageInfo = queryPackageInfo(artifactInfo, npmPackageMetaData.name!!, false)
+                originalPackageInfo.versions.map.putAll(npmPackageMetaData.versions.map)
+                originalPackageInfo.distTags.getMap().putAll(npmPackageMetaData.distTags.getMap())
+                originalPackageInfo.time.add(MODIFIED, gmtTime)
+                originalPackageInfo.time.add(npmMetadata.version!!, gmtTime)
+                doPackageFileUpload(userId, artifactInfo, originalPackageInfo)
+            }
         }
     }
 

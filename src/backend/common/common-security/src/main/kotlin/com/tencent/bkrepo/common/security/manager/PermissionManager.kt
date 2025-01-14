@@ -153,7 +153,7 @@ open class PermissionManager(
         if (isReadPublicRepo(action, repoInfo, public)) {
             return
         }
-        if (httpAuthProperties.enabled && isReadSystemRepo(action, projectId, repoName)) {
+        if (httpAuthProperties.enabled && isReadSystemRepo(action, projectId, repoName, userId)) {
             return
         }
         checkPermission(
@@ -161,7 +161,8 @@ open class PermissionManager(
             action = action,
             projectId = projectId,
             repoName = repoName,
-            anonymous = anonymous
+            anonymous = anonymous,
+            userId = userId
         )
     }
 
@@ -322,12 +323,12 @@ open class PermissionManager(
     private fun isReadSystemRepo(
         action: PermissionAction,
         projectId: String,
-        repoName: String
+        repoName: String,
+        userId: String = SecurityUtils.getUserId()
     ): Boolean {
         if (action != PermissionAction.READ) {
             return false
         }
-        val userId = SecurityUtils.getUserId()
         val platformId = SecurityUtils.getPlatformId()
         checkAnonymous(userId, platformId)
         // 加载仓库信息

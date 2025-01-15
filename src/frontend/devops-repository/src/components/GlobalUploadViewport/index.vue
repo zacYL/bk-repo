@@ -55,7 +55,7 @@
                     <template #default="{ row }">
                         <bk-button v-if="row.status === 'INIT' || row.status === 'UPLOADING'"
                             text theme="primary" @click="cancelUpload(row)">{{$t('cancel')}}</bk-button>
-                        <bk-button v-else-if="row.status === 'SUCCESS'"
+                        <bk-button v-else-if="row.status === 'SUCCESS' && rootData.uploadType"
                             text theme="primary" @click="$router.push({
                                 name: 'repoGeneric',
                                 params: { projectId: row.projectId },

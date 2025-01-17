@@ -682,7 +682,7 @@
     "pypiCreditGuideSubTitle7":"如果服务地址为http, 还需额外配置授信该站点",
     "pypiPushGuideSubTitle":"进入 Python 项目目录，在命令行执行以下命令进行推送",
     "cmdPullGuideSubTitle":"在命令行执行以下命令进行拉取",
-    "pypiInstallGuideSubTitle":"通过指定registry的方式去拉取制品",
+    "pypiInstallGuideSubTitle":"拉取制品",
     "composerCreditGuideSubTitle1":"1、在 Composer 制品的文件目录，在命令行执行以下命令配置制品仓库凭据",
     "composerCreditGuideSubTitle2":"2、请进入 Composer 包文件目录，并将以下配置添加到 auth.json 文件中(若没有该文件请手动创建后添加)，配置仓库认证信息",
     "composerPushGuideSubTitle":"使用 curl 命令将压缩包上传至仓库",

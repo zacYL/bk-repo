@@ -201,7 +201,7 @@
         data () {
             return {
                 mavenRules: {
-                    groupID: [
+                    groupId: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'groupID',

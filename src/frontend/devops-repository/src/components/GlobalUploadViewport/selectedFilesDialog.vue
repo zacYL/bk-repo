@@ -69,7 +69,7 @@
                                                 <p>Version: ${row?._tempParams?.version || ''}</p>
                                             </div>`,
                                     width: 300,
-                                    placements: ['top']
+                                    placements: ['right']
                                 }">
                                 {{$t('view')}}
                             </bk-button>

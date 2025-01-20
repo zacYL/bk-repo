@@ -1791,7 +1791,7 @@ export default {
                         {
                             subTitle: this.$t('pypiInstallGuideSubTitle'),
                             codeList: [
-                                `pip3 install -i ${this.repoUrl}/simple ${this.packageName}==${this.versionLabel}`
+                                `pip3 install ${this.packageName}==${this.versionLabel}`
                             ]
                         }
                     ]

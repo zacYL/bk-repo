@@ -684,7 +684,7 @@
     "pypiCreditGuideSubTitle7":"If the service address is http, additional configuration is required to grant credit to the site.",
     "pypiPushGuideSubTitle":"Enter the Python project directory, execute the following command on the command line to push",
     "cmdPullGuideSubTitle":"Execute the following command on the command line to pull",
-    "pypiInstallGuideSubTitle":"Pull the artifact by specifying the registry",
+    "pypiInstallGuideSubTitle":"Resolve package using pip",
     "composerCreditGuideSubTitle1":"1. In the file directory of the Composer artifact, execute the following command on the command line to configure the artifact repository credentials",
     "composerCreditGuideSubTitle2":"2. Please enter the Composer package file directory and add the following configuration to the auth.json file (if there is no such file, please create it manually and then add it), and configure the repository authentication information",
     "composerPushGuideSubTitle":"Upload the tarball to the repository using the curl command",

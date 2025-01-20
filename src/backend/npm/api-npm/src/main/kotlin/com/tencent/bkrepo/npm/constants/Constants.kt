@@ -68,7 +68,9 @@ const val NPM_PKG_VERSION_JSON_FILE_FULL_PATH = NPM_PACKAGE_VERSION_JSON_FILE + 
 const val NPM_PKG_JSON_FILE_FULL_PATH = NPM_PACKAGE_JSON_FILE + "_full_path"
 // full path value
 const val NPM_METADATA_ROOT = "/.npm"
-const val TARBALL_FULL_PATH_FORMAT = "/%s/%s/%s-%s.tgz"
+const val TARBALL_FULL_PATH_FORMAT = "/%s/%s/%s-%s%s"
+const val NPM_PKG_TGZ_FULL_PATH = "/%s/-/%s-%s%s"
+const val NPM_PKG_TGZ_WITH_DOWNLOAD_FULL_PATH = "/%s/download/%s-%s%s"
 const val NPM_PKG_VERSION_METADATA_FULL_PATH = "$NPM_METADATA_ROOT/%s/%s-%s.json"
 const val NPM_PKG_METADATA_FULL_PATH = "$NPM_METADATA_ROOT/%s/package.json"
 
@@ -86,3 +88,18 @@ const val VERSION_METADATA = "versionMetadata"
 val ERROR_MAP = mapOf("error" to "not_found", "reason" to "document not found")
 
 const val NPM_TGZ_TARBALL_PREFIX = "X-BKREPO-NPM-PREFIX"
+
+// OHPM
+const val INTEGRITY_HSP = "integrity_hsp"
+const val RESOLVED_HSP = "resolved_hsp"
+const val HSP_FILE_EXT = ".hsp"
+const val HAR_FILE_EXT = ".har"
+const val HSP_TYPE = "hspType"
+const val HSP_TYPE_BUNDLE_APP = "bundle_app"
+const val OHPM_PACKAGE_TYPE = "packageType"
+const val OHPM_PACKAGE_TYPE_HSP = "InterfaceHar"
+const val OHPM_ARTIFACT_TYPE = "artifactType"
+const val OHPM_DEFAULT_ARTIFACT_TYPE = "original"
+const val OHPM_DEPRECATE = "deprecate"
+const val OHPM_CHANGELOG_FILE_NAME = "changelog.md"
+const val OHPM_README_FILE_NAME = "readme.md"

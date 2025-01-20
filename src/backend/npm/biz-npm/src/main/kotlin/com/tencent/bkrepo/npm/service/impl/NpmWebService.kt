@@ -84,7 +84,7 @@ class NpmWebService(
     override fun getVersionDetail(userId: String, artifactInfo: ArtifactInfo): NpmPackageVersionInfo {
         with(artifactInfo as NpmArtifactInfo) {
             require(!version.isNullOrBlank()) { "version must not be blank" }
-            val packageKey = PackageKeys.ofNpm(artifactInfo.packageName)
+            val packageKey = NpmUtils.packageKeyByRepoType(artifactInfo.packageName)
             val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version!!).data
                 ?: run {
                     logger.warn("packageKey [$packageKey] don't found.")
@@ -131,7 +131,7 @@ class NpmWebService(
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteVersion(userId: String, artifactInfo: ArtifactInfo) {
         with(artifactInfo as NpmArtifactInfo) {
-            val packageKey = PackageKeys.ofNpm(packageName)
+            val packageKey = NpmUtils.resolveNameByRepoType(packageName)
             val packageInfo = packageClient.findPackageByKey(projectId, repoName, packageKey).data
                 ?: throw PackageNotFoundException(packageKey)
             // 如果删除最后一个版本直接删除整个包
@@ -195,7 +195,7 @@ class NpmWebService(
 
     private fun findNewLatest(artifactInfo: NpmArtifactInfo): String {
         return with(artifactInfo) {
-            packageClient.findPackageByKey(projectId, repoName, PackageKeys.ofNpm(packageName)).data?.latest
+            packageClient.findPackageByKey(projectId, repoName, NpmUtils.packageKeyByRepoType(packageName)).data?.latest
                 ?: run {
                     val message =
                         "delete version by web operator to find new latest version failed with package [$packageName]"

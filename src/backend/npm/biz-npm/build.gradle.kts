@@ -37,4 +37,5 @@ dependencies {
     api(project(":common:common-lock"))
     implementation("org.springframework.retry:spring-retry")
     implementation("com.google.code.gson:gson")
+    implementation("com.github.zafarkhaja:java-semver")
 }

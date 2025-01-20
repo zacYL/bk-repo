@@ -55,7 +55,6 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
@@ -119,7 +118,7 @@ class NpmRemoteRepository(
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
             val versionMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(packageInfo.first, packageInfo.second)
-            val packageKey = PackageKeys.ofNpm(packageInfo.first)
+            val packageKey = NpmUtils.packageKeyByRepoType(packageInfo.first)
             val pkgVersion = packageClient.findVersionByName(projectId, repoName, packageKey, packageInfo.second).data
             if (pkgVersion == null) {
                 // 存储package-version.json文件并创建版本信息
@@ -130,7 +129,7 @@ class NpmRemoteRepository(
                     query(queryContext)?.use {
                         val versionMetadata = it.readJsonString<NpmVersionMetadata>()
                         val size = artifactResource.getTotalSize()
-                        npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size)
+                        npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size, repositoryDetail.type == RepositoryType.OHPM)
                     }
                     super.onDownloadSuccess(this, artifactResource, throughput)
                 }
@@ -246,7 +245,7 @@ class NpmRemoteRepository(
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
             with(packageInfo) {
-                return PackageDownloadRecord(projectId, repoName, PackageKeys.ofNpm(first), second, userId)
+                return PackageDownloadRecord(projectId, repoName, NpmUtils.packageKeyByRepoType(first), second, userId)
             }
         }
     }

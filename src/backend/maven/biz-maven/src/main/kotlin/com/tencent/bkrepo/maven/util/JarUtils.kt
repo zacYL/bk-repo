@@ -2,6 +2,7 @@ package com.tencent.bkrepo.maven.util
 
 import com.tencent.bkrepo.common.api.util.DecompressUtils
 import com.tencent.bkrepo.maven.exception.JarFormatException
+import org.apache.commons.compress.archivers.ArchiveException
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException
@@ -24,14 +25,11 @@ object JarUtils {
         } catch (e: IOException) {
             throw JarFormatException("only jar file is supported")
         }
-        val model = DecompressUtils.doWithArchiver<Model, Model>(
-            jarFile.inputStream(),
-            callbackPre = { it.name.endsWith("pom.xml") },
-            callback = { stream, _ -> readModel(stream).transform() },
-            handleResult = { _, e, _ -> e },
-            callbackPost = { _, e -> e != null }
-        )
-        return model ?: throw JarFormatException("pom.xml not found")
+        val bytes = extractPom(jarFile.inputStream())
+        if (bytes.contentEquals(noPom)) {
+            throw JarFormatException("pom.xml not found")
+        }
+        return readModel(bytes.inputStream())
     }
 
     fun readModel(inputStream: InputStream): Model {
@@ -68,13 +66,17 @@ object JarUtils {
      * @return pom.xml文件的字节内容，如果没有找到则返回空字节数组。
      */
     private fun extractPom(inputStream: InputStream): ByteArray {
-        val bytes = DecompressUtils.doWithArchiver<ByteArray, ByteArray>(
-            inputStream,
-            callbackPre = { it.name.endsWith("pom.xml") },
-            callback = { stream, _ -> stream.readBytes() },
-            handleResult = { _, e, _ -> e },
-            callbackPost = { _, e -> e != null }
-        )
+        val bytes = try {
+            DecompressUtils.doWithArchiver<ByteArray, ByteArray>(
+                inputStream,
+                callbackPre = { it.name.endsWith("pom.xml") },
+                callback = { stream, _ -> stream.readBytes() },
+                handleResult = { _, e, _ -> e },
+                callbackPost = { _, e -> e != null }
+            )
+        } catch (e: ArchiveException) {
+            throw JarFormatException("Unsupported files")
+        }
         return bytes ?: noPom
     }
 

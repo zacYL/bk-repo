@@ -68,6 +68,7 @@ import com.tencent.bkrepo.oci.util.OciResponseUtils
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import org.apache.commons.compress.archivers.ArchiveException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.StreamUtils
@@ -306,7 +307,7 @@ class OciBlobServiceImpl(
                     return@tryArchiverWithCompressor r
                 }
             )
-        } catch (e: IOException) {
+        } catch (e: ArchiveException) {
             logger.error("Illegal image files!", e)
             throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
         }

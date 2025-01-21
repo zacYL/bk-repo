@@ -84,7 +84,7 @@ class NpmWebService(
     override fun getVersionDetail(userId: String, artifactInfo: ArtifactInfo): NpmPackageVersionInfo {
         with(artifactInfo as NpmArtifactInfo) {
             require(!version.isNullOrBlank()) { "version must not be blank" }
-            val packageKey = artifactInfo.packageName
+            val packageKey = NpmUtils.packageKeyByRepoType(artifactInfo.packageName)
             val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version!!).data
                 ?: run {
                     logger.warn("packageKey [$packageKey] don't found.")

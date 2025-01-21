@@ -25,7 +25,7 @@
                 size="small">
                 <bk-table-column :label="$t('fileName')" min-width="300">
                     <template #default="{ row }">
-                        <bk-popover placement="top">
+                        <bk-popover placement="top" :disabled="!row.fullPath">
                             <div class="file-name-info">{{row.name || row.file.name}}</div>
                             <template #content>
                                 <div>{{$t('project') + ': ' + (projectList.find(p => p.id === row.projectId)).name }}</div>

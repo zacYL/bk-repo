@@ -34,6 +34,7 @@ export const repoSupportEnum = [
 export const remoteRepoSupportEnum = [
     { label: 'Generic', value: 'generic' },
     { label: 'Cocoapods', value: 'cocoapods' },
+    { label: 'Ohpm', value: 'ohpm' },
     ...repoSupportEnum
 ]
 

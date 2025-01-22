@@ -106,7 +106,7 @@ abstract class ArtifactExtService : ArtifactService() {
                     tags = srcVersion.tags,
                     extension = srcVersion.extension,
                     overwrite = true,
-                    createdBy = SecurityUtils.getPrincipal()
+                    createdBy = SecurityUtils.getUserId()
                 )
             )
             logger.info(
@@ -118,7 +118,7 @@ abstract class ArtifactExtService : ArtifactService() {
                 val versionDeleteInfo = buildVersionDeleteArtifactInfo(srcProjectId, srcRepoName, packageKey, version)
                 HttpContextHolder.getRequest().setAttribute(ARTIFACT_INFO_KEY, versionDeleteInfo)
                 logger.info("prepare to remove [$packageKey/$version] from [$srcProjectId/$srcRepoName]")
-                deleteVersion(SecurityUtils.getPrincipal(), versionDeleteInfo)
+                deleteVersion(SecurityUtils.getUserId(), versionDeleteInfo)
             }
         }
     }
@@ -179,7 +179,7 @@ abstract class ArtifactExtService : ArtifactService() {
         manifestPath: String?,
         artifactPath: String?
     ) {
-        val operator = SecurityUtils.getPrincipal()
+        val operator = SecurityUtils.getUserId()
         getArtifactNodes(srcProjectId, srcRepoName, packageKey, version, manifestPath, artifactPath).forEach {
             // 目录/文件 -> 已存在的目录: 作为已存在目录的子目录/文件
             val dstNode = nodeClient.getNodeDetail(dstProjectId, dstRepoName, it.fullPath).data

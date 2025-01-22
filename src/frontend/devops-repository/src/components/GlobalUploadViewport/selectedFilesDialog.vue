@@ -75,9 +75,9 @@
                             </bk-button>
 
                             <!-- 重新上传按钮 -->
-                            <!-- 如果坐标信息不存在，或者坐标核心信息存在空的情况 -->
+                            <!-- 如果坐标信息不存在，或者坐标核心信息存在空的情况，且非pom文件的情况下 -->
                             <bk-button
-                                v-if="(!row._tempParams) || (row._tempParams && checkCoordinateEmpty(row._tempParams))"
+                                v-if="((!row._tempParams) || (row._tempParams && checkCoordinateEmpty(row._tempParams))) && !row.name.endsWith('.pom')"
                                 text
                                 theme="primary"
                                 class="ml5"

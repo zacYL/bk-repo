@@ -112,7 +112,6 @@ class NpmClientController(
         return npmClientService.publishOrUpdatePackage(userId, artifactInfo, pkgName)
     }
 
-
     @PostMapping(
         "/{projectId}/{repoName}/stream/{name}",
         "/{projectId}/{repoName}/stream/@{scope}/{name}"
@@ -120,7 +119,6 @@ class NpmClientController(
     fun ohpmStreamPublishOrUpdatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @PathVariable name: String,
         artifactFileMap: ArtifactFileMap,
     ): OhpmResponse {
         val npmPackageMetadata = HttpContextHolder
@@ -134,7 +132,6 @@ class NpmClientController(
             artifactFileMap["pkg_stream"]!!
         )
     }
-
 
     /**
      * query package.json info
@@ -314,8 +311,6 @@ class NpmClientController(
         npmClientService.deletePackage(artifactInfo)
         return NpmDeleteResponse(true, artifactInfo.packageName, rev)
     }
-
-
     /**
      * ohpm unpublish package or package version
      */
@@ -339,7 +334,6 @@ class NpmClientController(
             npmClientService.deleteVersion(ohpmArtifactInfo)
         }
     }
-
 
     companion object {
         fun isFullMetadata(): Boolean {

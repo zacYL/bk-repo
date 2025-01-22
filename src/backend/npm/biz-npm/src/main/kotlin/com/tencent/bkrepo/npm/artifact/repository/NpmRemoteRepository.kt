@@ -35,9 +35,10 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_JSON_WITHOU
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toCompactJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
-import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
+import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
@@ -90,16 +91,6 @@ class NpmRemoteRepository(
     private val npmOperationService: NpmOperationService
 ) : RemoteRepository() {
 
-    override fun whitelistInterceptor(context: ArtifactDownloadContext) {
-        if (whitelistSwitchClient.get(RepositoryType.NPM).data == true) {
-            val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(context.artifactInfo.getArtifactFullPath())
-            logger.info("npm remote packageInfo: [${packageInfo.first} : ${packageInfo.second}]")
-            if (remotePackageClient.search(RepositoryType.NPM, packageInfo.first, packageInfo.second).data != true) {
-                throw ArtifactNotInWhitelistException()
-            }
-        }
-    }
-
     override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
         requireNotNull(context)
         return npmOperationService.packageVersion(context)
@@ -113,7 +104,7 @@ class NpmRemoteRepository(
     override fun onDownloadSuccess(
         context: ArtifactDownloadContext,
         artifactResource: ArtifactResource,
-        throughput: Throughput
+        throughput: Throughput,
     ) {
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
@@ -127,15 +118,66 @@ class NpmRemoteRepository(
                 queryContext.putAttribute(REQUEST_URI, "/${packageInfo.first}/${packageInfo.second}")
                 executor.execute {
                     query(queryContext)?.use {
-                        val versionMetadata = it.readJsonString<NpmVersionMetadata>()
+                        it.readJsonString<NpmVersionMetadata>()
+                    } ?: run {
+                        // 如果package-version.json没有,则从package json中获取
+                        getVersionMetadataFromPackage(context, packageInfo).also {
+                            if (it != null) {
+                                // 保存package-version.json文件
+                                storageVersionMetadata(context, it, versionMetadataFullPath)
+                            }
+                        }
+                    }?.let {
                         val size = artifactResource.getTotalSize()
-                        npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size, repositoryDetail.type == RepositoryType.OHPM)
+                        npmPackageHandler.createVersion(userId, artifactInfo, it, size,
+                            ohpm = repositoryDetail.type == RepositoryType.OHPM
+                        )
                     }
                     super.onDownloadSuccess(this, artifactResource, throughput)
                 }
             } else {
                 super.onDownloadSuccess(this, artifactResource, throughput)
             }
+        }
+    }
+
+    private fun storageVersionMetadata(
+        context: ArtifactDownloadContext,
+        metadata: NpmVersionMetadata,
+        versionMetadataFullPath: String,
+    ) {
+        val specArtifact =
+            ArtifactFileFactory.build(
+                metadata.toJsonString().toByteArray().inputStream(),
+                context.repositoryDetail.storageCredentials
+            )
+        val nodeCreateRequest = NodeCreateRequest(
+            projectId = context.projectId,
+            repoName = context.repoName,
+            fullPath = versionMetadataFullPath,
+            folder = false,
+            size = specArtifact.getSize(),
+            sha256 = specArtifact.getFileSha256(),
+            md5 = specArtifact.getFileMd5(),
+            overwrite = true,
+            operator = context.userId
+        )
+        storageManager.storeArtifactFile(nodeCreateRequest, specArtifact, null)
+    }
+
+    private fun getVersionMetadataFromPackage(
+        context: ArtifactDownloadContext,
+        packageInfo: Pair<String, String>
+    ): NpmVersionMetadata? {
+        with(context) {
+            val pkgMetadataFullPath = NpmUtils.getPackageMetadataPath(packageInfo.first)
+            val originMetadataNode = nodeClient.getNodeDetail(projectId, repoName, pkgMetadataFullPath).data
+                ?: throw NodeNotFoundException("$projectId/$repoName/$pkgMetadataFullPath")
+            return storageManager.loadArtifactInputStream(
+                originMetadataNode, repositoryDetail.storageCredentials
+            ).use {
+                JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
+            }.versions.map[packageInfo.second]
         }
     }
 
@@ -156,7 +198,9 @@ class NpmRemoteRepository(
             ?: super.query(context) as ArtifactInputStream?
             ?: if (context.getStringAttribute(NPM_FILE_FULL_PATH)?.endsWith("/$PACKAGE_JSON") == true) {
                 findCacheNodeDetail(context)?.let { loadArtifactResource(it, context) }?.getSingleStream()
-            } else null
+            } else {
+                null
+            }
     }
 
     override fun checkQueryResponse(response: Response): Boolean {
@@ -178,7 +222,9 @@ class NpmRemoteRepository(
                     findCacheNodeDetail(context)?.let { loadArtifactResource(it, context) }
                 } else if (context.getRemoteConfiguration().cache.expiration > 0) {
                     super.getCacheArtifactResource(context)
-                } else null
+                } else {
+                    null
+                }
             }
             else -> null
         }
@@ -240,12 +286,18 @@ class NpmRemoteRepository(
 
     override fun buildDownloadRecord(
         context: ArtifactDownloadContext,
-        artifactResource: ArtifactResource
+        artifactResource: ArtifactResource,
     ): PackageDownloadRecord? {
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
             with(packageInfo) {
-                return PackageDownloadRecord(projectId, repoName, NpmUtils.packageKeyByRepoType(first), second, userId)
+                return PackageDownloadRecord(
+                    projectId,
+                    repoName,
+                    NpmUtils.packageKeyByRepoType(first, context.repo.type),
+                    second,
+                    userId
+                )
             }
         }
     }
@@ -255,10 +307,12 @@ class NpmRemoteRepository(
             val npmArtifactInfo = artifactInfo as NpmArtifactInfo
             val fullPaths = if (npmArtifactInfo.version == null) {
                 listOf("$NPM_METADATA_ROOT/${npmArtifactInfo.packageName}", "/${npmArtifactInfo.packageName}")
-            } else listOf(
-                getStringAttribute(TARBALL_FULL_PATH)!!,
-                NpmUtils.getVersionPackageMetadataPath(npmArtifactInfo.packageName, npmArtifactInfo.version!!)
-            )
+            } else {
+                listOf(
+                    getStringAttribute(TARBALL_FULL_PATH)!!,
+                    NpmUtils.getVersionPackageMetadataPath(npmArtifactInfo.packageName, npmArtifactInfo.version!!)
+                )
+            }
             nodeClient.deleteNodes(NodesDeleteRequest(projectId, repoName, fullPaths, userId))
             logger.info("delete artifact $fullPaths success in repo [$projectId/$repoName].")
         }

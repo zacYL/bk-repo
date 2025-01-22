@@ -65,7 +65,7 @@ class CocoapodsIndexService(
     private val repositoryClient: RepositoryClient,
     private val storageManager: StorageManager,
     private val cocoapodsRepoService: CocoapodsRepoService,
-    private val cocoapodsSpecsService:CocoapodsSpecsService,
+    private val cocoapodsSpecsService: CocoapodsSpecsService,
     private val remoteEventJobExecutor: RemoteEventJobExecutor,
     private val artifactResourceWriterContext: ArtifactResourceWriterContext,
 ) {
@@ -86,7 +86,7 @@ class CocoapodsIndexService(
             ?: throw RepoNotFoundException(repoName)
         val resource = when (repoDetail.category) {
             RepositoryCategory.LOCAL -> {
-                //下载index文件,将.specs目录下的文件压缩返回
+                // 下载index文件,将.specs目录下的文件压缩返回
                 val prefix = SLASH + DOT_SPECS
                 val nodes = queryNodeDetailList(
                     projectId = projectId,
@@ -114,7 +114,7 @@ class CocoapodsIndexService(
             }
 
             RepositoryCategory.REMOTE -> {
-                //下载index文件
+                // 下载index文件
                 if (cocoapodsSpecsService.indexExist(projectId, repoName).not()) {
                     logger.warn("repo $repoName index file not exist")
                     remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, SecurityUtils.getUserId()))

@@ -135,12 +135,15 @@ open class AbstractNpmService : ArtifactService() {
 				it.readText().replace(tarballRegex) { matchRes ->
 					val originTarball = matchRes.groupValues[1]
 					val newTarball = NpmUtils.buildPackageTgzTarball(
-						originTarball, npmProperties.domain, npmProperties.tarball.prefix,
+//						originTarball, npmProperties.domain, npmProperties.tarball.prefix,
+						originTarball, "http://localhost:25907", "http://localhost:25907",
 						artifactInfo.packageName, artifactInfo
 					)
 					matchRes.value.replace(originTarball, newTarball)
 				}.toArtifactStream()
-			} else it
+			} else {
+			    it
+			}
 		} ?: throw NpmArtifactNotFoundException("document not found")
 		val artifactResource = ArtifactResource(
 			inputStream = artifactStream,
@@ -270,7 +273,7 @@ open class AbstractNpmService : ArtifactService() {
 		while (true) {
 			val records = nodeClient.listNodePage(projectId, repoName, fullPath, option).data?.records
 				.takeUnless { it.isNullOrEmpty() } ?: return nodes
-			option.pageNumber ++
+			option.pageNumber++
 			nodes.addAll(records.map { NodeDetail(it) })
 		}
 	}

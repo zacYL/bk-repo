@@ -229,27 +229,34 @@ class MavenServiceImpl(
             }
             logger.info("[ $projectId, $repoName, ${request.uuid} ] maven version is $mavenVersion")
             if (model.packaging != SOURCE_POM) {
-                uploadArtifact(
-                    repo,
-                    createArtifact(mavenArtifactInfo, model, mavenVersion, classifier = classifier),
-                    Files.newInputStream(file)
+                val artifactInfo = createArtifact(mavenArtifactInfo, model, mavenVersion, classifier = classifier)
+                uploadArtifact(repo, artifactInfo, Files.newInputStream(file))
+                nodeClient.deleteNode(
+                    NodeDeleteRequest(
+                        projectId = artifactInfo.projectId,
+                        repoName = artifactInfo.repoName,
+                        fullPath = "${artifactInfo.getArtifactFullPath()}.sha1",
+                        operator = "maven-web-deploy"
+                    )
                 )
             }
-            uploadArtifact(repo, createPom(mavenArtifactInfo, model, mavenVersion), pom.inputStream())
+            createPom(mavenArtifactInfo, model, mavenVersion).apply {
+                uploadArtifact(repo, this, pom.inputStream())
+                nodeClient.deleteNode(
+                    NodeDeleteRequest(
+                        projectId = mavenArtifactInfo.projectId,
+                        repoName = mavenArtifactInfo.repoName,
+                        fullPath = "${model.toArtifactUri().replace(".jar", ".pom")}.sha1",
+                        operator = "maven-web-deploy"
+                    )
+                )
+            }
             if (mavenVersion != null) {
                 // version/maven-metadata.xml
                 uploadArtifact(repo, createSnapshotMetadata(mavenArtifactInfo, model), "".byteInputStream())
             }
             // maven-metadata.xml
             updateMetadata(repo, model)
-            nodeClient.deleteNode(
-                NodeDeleteRequest(
-                    projectId = mavenArtifactInfo.projectId,
-                    repoName = mavenArtifactInfo.repoName,
-                    fullPath = request.uuid,
-                    operator = "maven-web-deploy"
-                )
-            )
         } finally {
             Files.deleteIfExists(file)
         }
@@ -433,12 +440,7 @@ class MavenServiceImpl(
     }
 
     override fun extractGavFromPom(file: MultipartFile): MavenWebDeployResponse {
-        val filename = file.getFilename()
-        val model = readModel(file.inputStream)
-        if (filename != "${model.artifactId}-${model.version}.pom") {
-            throw JarFormatException("invalid pom file")
-        }
-        return model.toGav("")
+        return readModel(file.inputStream).toGav("")
     }
 
     private fun MultipartFile.getFilename(): String {

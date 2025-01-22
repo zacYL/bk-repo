@@ -35,7 +35,7 @@
                         form-type="vertical"
                     >
                         <bk-form-item :label="$t('currentFile')" v-if="npmFormData.currentFile" required>
-                            <bk-input disabled v-model="npmFormData.currentFile" />
+                            <bk-input disabled v-model.trim="npmFormData.currentFile" />
                         </bk-form-item>
                     </bk-form>
                     <div class="g-flex mt10">
@@ -53,13 +53,13 @@
                         :rules="dockerRules"
                     >
                         <bk-form-item :label="$t('currentFile')" v-if="dockerFormData.currentFile" required>
-                            <bk-input disabled v-model="dockerFormData.currentFile" />
+                            <bk-input disabled v-model.trim="dockerFormData.currentFile" />
                         </bk-form-item>
                         <bk-form-item label="Package Name" property="packageName" required>
-                            <bk-input v-model="dockerFormData.packageName" />
+                            <bk-input v-model.trim="dockerFormData.packageName" />
                         </bk-form-item>
                         <bk-form-item label="Version" property="version" required>
-                            <bk-input v-model="dockerFormData.version" />
+                            <bk-input v-model.trim="dockerFormData.version" />
                         </bk-form-item>
                     </bk-form>
                     <div class="g-flex mt10">
@@ -110,19 +110,19 @@
                         :rules="mavenRules"
                     >
                         <bk-form-item label="Group ID" property="groupId" :required="checkFail">
-                            <bk-input :readonly="!checkFail" v-model="mavenFormData.groupId" />
+                            <bk-input :readonly="!checkFail" v-model.trim="mavenFormData.groupId" />
                         </bk-form-item>
                         <bk-form-item label="Artifact ID" property="artifactId" :required="checkFail">
-                            <bk-input :readonly="!checkFail" v-model="mavenFormData.artifactId" />
+                            <bk-input :readonly="!checkFail" v-model.trim="mavenFormData.artifactId" />
                         </bk-form-item>
                         <bk-form-item label="Version" property="version" :required="checkFail">
-                            <bk-input :readonly="!checkFail" v-model="mavenFormData.version" />
+                            <bk-input :readonly="!checkFail" v-model.trim="mavenFormData.version" />
                         </bk-form-item>
                         <bk-form-item v-if="mavenFormData.classifier" label="Classifier" property="classifier">
-                            <bk-input readonly v-model="mavenFormData.classifier" />
+                            <bk-input readonly v-model.trim="mavenFormData.classifier" />
                         </bk-form-item>
                         <bk-form-item label="Type" property="type">
-                            <bk-input readonly v-model="mavenFormData.type" />
+                            <bk-input readonly v-model.trim="mavenFormData.type" />
                         </bk-form-item>
                         <bk-form-item v-if="checkFail">
                             <bk-button

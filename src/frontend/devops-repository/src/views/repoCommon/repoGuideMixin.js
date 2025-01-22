@@ -233,11 +233,11 @@ export default {
                                 subTitle: this.$t('npmPushGuideSubTitle1'),
                                 codeList: [
                                     ' {',
-                                    `    "name": "${this.dependInputValue1 || '<PACKAGE_NAME>'}"`,
-                                    `    "version": "${this.dependInputValue2 || '<PACKAGE_VERSION>'}"`,
-                                    '    "description": ""',
-                                    '    "main": "index.js"',
-                                    '    "author": ""',
+                                    `    "name": "${this.dependInputValue1 || '<PACKAGE_NAME>'}",`,
+                                    `    "version": "${this.dependInputValue2 || '<PACKAGE_VERSION>'}",`,
+                                    '    "description": "",',
+                                    '    "main": "index.js",',
+                                    '    "author": "",',
                                     '    "license": "MIT"',
                                     ' }'
                                 ]

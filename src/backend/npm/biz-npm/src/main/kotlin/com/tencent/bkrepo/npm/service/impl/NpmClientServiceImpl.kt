@@ -108,7 +108,7 @@ import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import org.apache.commons.codec.binary.Base64
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.archivers.ArchiveException
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
@@ -766,13 +766,19 @@ class NpmClientServiceImpl(
 
     override fun upload(projectId: String, repoName: String, file: MultipartFile) {
         val bytes = file.bytes
-        val packageVersion = DecompressUtils.tryArchiverWithCompressor<NpmVersionMetadata, ByteArray>(
-            bytes.inputStream(),
-            callbackPre = { it.name.endsWith(PACKAGE_JSON) },
-            callback = { stream, _ -> stream.readBytes() },
-            handleResult = { _, packageJson, _ -> packageJson?.readPackageJson(bytes) },
-            callbackPost = { _, _ -> false }
-        ) ?: throw NpmBadRequestException("Invalid npm package")
+        val packageVersion = try {
+            DecompressUtils.tryArchiverWithCompressor<NpmVersionMetadata, ByteArray>(
+                bytes.inputStream(),
+                callbackPre = { it.name.endsWith(PACKAGE_JSON) },
+                callback = { stream, _ -> stream.readBytes() },
+                handleResult = { _, packageJson, _ -> packageJson?.readPackageJson(bytes) },
+                callbackPost = { _, _ -> false }
+            )
+        } catch (e: ArchiveException) {
+            logger.error("Invalid npm package", e)
+            throw NpmBadRequestException("Invalid npm package")
+        }
+       packageVersion ?: throw NpmBadRequestException("Invalid npm package")
         with(packageVersion) {
             val artifactInfo = NpmArtifactInfo(projectId, repoName, name!!, version)
             HttpContextHolder.getRequest().setAttribute(ARTIFACT_INFO_KEY, artifactInfo)

@@ -433,12 +433,7 @@ class MavenServiceImpl(
     }
 
     override fun extractGavFromPom(file: MultipartFile): MavenWebDeployResponse {
-        val filename = file.getFilename()
-        val model = readModel(file.inputStream)
-        if (filename != "${model.artifactId}-${model.version}.pom") {
-            throw JarFormatException("invalid pom file")
-        }
-        return model.toGav("")
+        return readModel(file.inputStream).toGav("")
     }
 
     private fun MultipartFile.getFilename(): String {

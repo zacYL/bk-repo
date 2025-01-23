@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__api_node_clean_{projectId}_{repoName}_**",
+  "name" : "DELETE__api_node_clean_{projectId}_{repoName}_**",
+  "desc" : "清理创建时间早于{date}的文件节点",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/api/node/clean/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/node/clean/{projectId}/{repoName}/**",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "DELETE__api_node_clean_{projectId}_{repoName}_**_81435155.md"
+}

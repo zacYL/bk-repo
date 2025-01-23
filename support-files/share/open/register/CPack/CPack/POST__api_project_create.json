@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_project_create",
+  "name" : "POST__api_project_create",
+  "desc" : "创建项目",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/project/create",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/project/create",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_project_create_d38db9d3.md"
+}

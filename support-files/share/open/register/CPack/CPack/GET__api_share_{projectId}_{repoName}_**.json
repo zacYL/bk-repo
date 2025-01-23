@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_share_{projectId}_{repoName}_**",
+  "name" : "GET__api_share_{projectId}_{repoName}_**",
+  "desc" : "下载分享文件",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/api/share/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/share/{projectId}/{repoName}/**",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "GET__api_share_{projectId}_{repoName}_**_bc6bec51.md"
+}

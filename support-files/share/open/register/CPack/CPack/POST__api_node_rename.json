@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_node_rename",
+  "name" : "POST__api_node_rename",
+  "desc" : "重命名节点",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/node/rename",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/node/rename",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_node_rename_99a84ae2.md"
+}

@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_node_query",
+  "name" : "POST__api_node_query",
+  "desc" : "自定义查询节点",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/node/query",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/node/query",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_node_query_f4ed5f99.md"
+}

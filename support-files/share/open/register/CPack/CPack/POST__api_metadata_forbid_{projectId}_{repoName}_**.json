@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_metadata_forbid_{projectId}_{repoName}_**",
+  "name" : "POST__api_metadata_forbid_{projectId}_{repoName}_**",
+  "desc" : "创建/更新禁用元数据",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/metadata/forbid/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/metadata/forbid/{projectId}/{repoName}/**",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_metadata_forbid_{projectId}_{repoName}_**_06a9d7fe.md"
+}

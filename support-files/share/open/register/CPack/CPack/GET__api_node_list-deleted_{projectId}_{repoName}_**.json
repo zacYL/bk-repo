@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_node_list-deleted_{projectId}_{repoName}_**",
+  "name" : "GET__api_node_list-deleted_{projectId}_{repoName}_**",
+  "desc" : "查询节点删除点",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/api/node/list-deleted/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/node/list-deleted/{projectId}/{repoName}/**",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "GET__api_node_list-deleted_{projectId}_{repoName}_**_f45ddf31.md"
+}

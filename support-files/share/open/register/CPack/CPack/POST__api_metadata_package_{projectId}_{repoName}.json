@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_metadata_package_{projectId}_{repoName}",
+  "name" : "POST__api_metadata_package_{projectId}_{repoName}",
+  "desc" : "创建/更新元数据列表",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/metadata/package/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/metadata/package/{projectId}/{repoName}",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_metadata_package_{projectId}_{repoName}_3f2d0c6a.md"
+}

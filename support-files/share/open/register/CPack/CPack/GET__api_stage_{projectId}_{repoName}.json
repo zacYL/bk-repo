@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_stage_{projectId}_{repoName}",
+  "name" : "GET__api_stage_{projectId}_{repoName}",
+  "desc" : "查询制品状态",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/api/stage/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/stage/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "GET__api_stage_{projectId}_{repoName}_dc78a35e.md"
+}

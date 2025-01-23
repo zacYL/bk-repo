@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_software_node_search",
+  "name" : "POST__api_software_node_search",
+  "desc" : "自定义查询节点",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/software/node/search",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/software/node/search",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_software_node_search_8b21f64b.md"
+}

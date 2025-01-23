@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_node_page_{projectId}_{repoName}_**",
+  "name" : "GET__api_node_page_{projectId}_{repoName}_**",
+  "desc" : "分页查询节点",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/api/node/page/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/node/page/{projectId}/{repoName}/**",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "GET__api_node_page_{projectId}_{repoName}_**_41c371f7.md"
+}

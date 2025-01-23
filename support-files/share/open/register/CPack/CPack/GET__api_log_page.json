@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_log_page",
+  "name" : "GET__api_log_page",
+  "desc" : "审计日志查询接口",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/api/log/page",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/log/page",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "GET__api_log_page_3fdd2603.md"
+}

@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_project_statistics_summary",
+  "name" : "GET__api_project_statistics_summary",
+  "desc" : "查询时间段内依赖包版本上传下载数和相关用户数",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/api/project/statistics/summary",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/project/statistics/summary",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "GET__api_project_statistics_summary_ab6cac2d.md"
+}

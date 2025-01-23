@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_repo_page_{projectId}_{pageNumber}_{pageSize}",
+  "name" : "GET__api_repo_page_{projectId}_{pageNumber}_{pageSize}",
+  "desc" : "分页查询有权限的仓库列表",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/api/repo/page/{projectId}/{pageNumber}/{pageSize}",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/repo/page/{projectId}/{pageNumber}/{pageSize}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "GET__api_repo_page_{projectId}_{pageNumber}_{pageSize}_9b5067ee.md"
+}

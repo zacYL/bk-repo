@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_node_mkdir_{projectId}_{repoName}_**",
+  "name" : "POST__api_node_mkdir_{projectId}_{repoName}_**",
+  "desc" : "创建文件夹",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/node/mkdir/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/node/mkdir/{projectId}/{repoName}/**",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_node_mkdir_{projectId}_{repoName}_**_8ddb855b.md"
+}

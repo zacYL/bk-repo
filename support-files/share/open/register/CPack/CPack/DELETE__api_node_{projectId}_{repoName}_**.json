@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__api_node_{projectId}_{repoName}_**",
+  "name" : "DELETE__api_node_{projectId}_{repoName}_**",
+  "desc" : "删除节点",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/api/node/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/node/{projectId}/{repoName}/**",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "DELETE__api_node_{projectId}_{repoName}_**_f023e6a1.md"
+}

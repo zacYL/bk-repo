@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_node_move",
+  "name" : "POST__api_node_move",
+  "desc" : "移动节点",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/node/move",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/node/move",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_node_move_da822c2b.md"
+}

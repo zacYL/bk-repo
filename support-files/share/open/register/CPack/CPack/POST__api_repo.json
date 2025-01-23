@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_repo",
+  "name" : "POST__api_repo",
+  "desc" : "创建仓库",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/repo",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/repo",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_repo_65e623bb.md"
+}

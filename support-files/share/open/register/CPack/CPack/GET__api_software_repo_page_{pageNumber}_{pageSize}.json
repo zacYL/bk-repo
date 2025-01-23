@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_software_repo_page_{pageNumber}_{pageSize}",
+  "name" : "GET__api_software_repo_page_{pageNumber}_{pageSize}",
+  "desc" : "软件源仓库列表",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/api/software/repo/page/{pageNumber}/{pageSize}",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/software/repo/page/{pageNumber}/{pageSize}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "GET__api_software_repo_page_{pageNumber}_{pageSize}_54c10f52.md"
+}

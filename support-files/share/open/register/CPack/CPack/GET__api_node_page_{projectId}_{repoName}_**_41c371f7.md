@@ -1,0 +1,36 @@
+# 分页查询节点
+功能描述：分页查询节点
+
+### 请求地址
+```
+/api/node/page/{projectId}/{repoName}/**
+```
+
+### 请求方法
+`GET`
+### 请求参数
+
+#### 查询参数
+
+| 字段 | 类型 | 必填 | 描述 |
+| -------- | -------- | -------- | -------- |
+| artifactFullPath     | string   | false       |  |
+| artifactName     | string   | false       |  |
+| artifactVersion     | string   | false       |  |
+| deep     | boolean   | false       | 是否深度查询文件 |
+| direction     | array<>   | false       | 排序方向 |
+| includeFolder     | boolean   | false       | 是否包含目录 |
+| includeMetadata     | boolean   | false       | 是否包含元数据 |
+| pageNumber     | integer   | false       | 当前页 |
+| pageSize     | integer   | false       | 分页大小 |
+| projectId     | string   | false       |  |
+| repoIdentify     | string   | false       |  |
+| repoName     | string   | false       |  |
+| responseName     | string   | false       |  |
+| sort     | boolean   | false       | 是否排序，目录在前，文件在后，并按照文件名称排序 |
+| sortProperty     | array<>   | false       | 排序字段 |
+
+
+
+### 返回结果
+

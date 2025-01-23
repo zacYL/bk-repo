@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_package_downloads_details",
+  "name" : "POST__api_package_downloads_details",
+  "desc" : "查询包下载记录明细",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/api/package/downloads/details",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/package/downloads/details",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "POST__api_package_downloads_details_b439fc10.md"
+}

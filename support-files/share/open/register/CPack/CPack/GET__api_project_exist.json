@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_project_exist",
+  "name" : "GET__api_project_exist",
+  "desc" : "校验项目参数是否存在",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/api/project/exist",
+  "headers" : [ ],
+  "targetService" : "repository",
+  "targetPath" : "/api/project/exist",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "GET__api_project_exist_b55c40c0.md"
+}

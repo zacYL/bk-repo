@@ -465,406 +465,406 @@
       "configJsonPath" : "CPack/POST__api_node_mkdir_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782752,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_repo_page_{projectId}_{pageNumber}_{pageSize}",
       "name" : "GET__api_repo_page_{projectId}_{pageNumber}_{pageSize}",
       "configJsonPath" : "CPack/GET__api_repo_page_{projectId}_{pageNumber}_{pageSize}.json",
       "nodeType" : "API",
       "sort" : 1715782782751,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_metadata_package_{projectId}_{repoName}",
       "name" : "POST__api_metadata_package_{projectId}_{repoName}",
       "configJsonPath" : "CPack/POST__api_metadata_package_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782751,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_node_rename",
       "name" : "POST__api_node_rename",
       "configJsonPath" : "CPack/POST__api_node_rename.json",
       "nodeType" : "API",
       "sort" : 1715782782751,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_software_node_search",
       "name" : "POST__api_software_node_search",
       "configJsonPath" : "CPack/POST__api_software_node_search.json",
       "nodeType" : "API",
       "sort" : 1715782782751,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_metadata_forbid_{projectId}_{repoName}_**",
       "name" : "POST__api_metadata_forbid_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/POST__api_metadata_forbid_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782751,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_repo_info_{projectId}_{repoName}_{type}",
       "name" : "GET__api_repo_info_{projectId}_{repoName}_{type}",
       "configJsonPath" : "CPack/GET__api_repo_info_{projectId}_{repoName}_{type}.json",
       "nodeType" : "API",
       "sort" : 1715782782751,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_stage_{projectId}_{repoName}",
       "name" : "GET__api_stage_{projectId}_{repoName}",
       "configJsonPath" : "CPack/GET__api_stage_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782751,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_project_create",
       "name" : "POST__api_project_create",
       "configJsonPath" : "CPack/POST__api_project_create.json",
       "nodeType" : "API",
       "sort" : 1715782782751,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_node_size_{projectId}_{repoName}_**",
       "name" : "GET__api_node_size_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/GET__api_node_size_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782750,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_package_downloads_details",
       "name" : "POST__api_package_downloads_details",
       "configJsonPath" : "CPack/POST__api_package_downloads_details.json",
       "nodeType" : "API",
       "sort" : 1715782782750,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_version_download_{projectId}_{repoName}",
       "name" : "GET__api_version_download_{projectId}_{repoName}",
       "configJsonPath" : "CPack/GET__api_version_download_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782750,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_node_copy",
       "name" : "POST__api_node_copy",
       "configJsonPath" : "CPack/POST__api_node_copy.json",
       "nodeType" : "API",
       "sort" : 1715782782750,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__version_history_repair",
       "name" : "GET__version_history_repair",
       "configJsonPath" : "CPack/GET__version_history_repair.json",
       "nodeType" : "API",
       "sort" : 1715782782750,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_stage_upgrade_{projectId}_{repoName}",
       "name" : "POST__api_stage_upgrade_{projectId}_{repoName}",
       "configJsonPath" : "CPack/POST__api_stage_upgrade_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782750,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_package_page_{projectId}_{repoName}",
       "name" : "GET__api_package_page_{projectId}_{repoName}",
       "configJsonPath" : "CPack/GET__api_package_page_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782750,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_version_list_{projectId}_{repoName}",
       "name" : "GET__api_version_list_{projectId}_{repoName}",
       "configJsonPath" : "CPack/GET__api_version_list_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782750,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_repo_info_{projectId}_{repoName}",
       "name" : "GET__api_repo_info_{projectId}_{repoName}",
       "configJsonPath" : "CPack/GET__api_repo_info_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782749,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "DELETE__api_metadata_{projectId}_{repoName}_**",
       "name" : "DELETE__api_metadata_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/DELETE__api_metadata_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782749,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_node_restore_{projectId}_{repoName}_**",
       "name" : "POST__api_node_restore_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/POST__api_node_restore_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782749,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_storage_credentials_default",
       "name" : "GET__api_storage_credentials_default",
       "configJsonPath" : "CPack/GET__api_storage_credentials_default.json",
       "nodeType" : "API",
       "sort" : 1715782782748,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_package_downloads_summary",
       "name" : "POST__api_package_downloads_summary",
       "configJsonPath" : "CPack/POST__api_package_downloads_summary.json",
       "nodeType" : "API",
       "sort" : 1715782782748,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_repo_create",
       "name" : "POST__api_repo_create",
       "configJsonPath" : "CPack/POST__api_repo_create.json",
       "nodeType" : "API",
       "sort" : 1715782782748,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_share_{projectId}_{repoName}_**",
       "name" : "POST__api_share_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/POST__api_share_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782748,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "DELETE__api_metadata_package_{projectId}_{repoName}",
       "name" : "DELETE__api_metadata_package_{projectId}_{repoName}",
       "configJsonPath" : "CPack/DELETE__api_metadata_package_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782748,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_node_move",
       "name" : "POST__api_node_move",
       "configJsonPath" : "CPack/POST__api_node_move.json",
       "nodeType" : "API",
       "sort" : 1715782782748,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_repo",
       "name" : "POST__api_repo",
       "configJsonPath" : "CPack/POST__api_repo.json",
       "nodeType" : "API",
       "sort" : 1715782782748,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_log_page",
       "name" : "GET__api_log_page",
       "configJsonPath" : "CPack/GET__api_log_page.json",
       "nodeType" : "API",
       "sort" : 1715782782747,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_project",
       "name" : "POST__api_project",
       "configJsonPath" : "CPack/POST__api_project.json",
       "nodeType" : "API",
       "sort" : 1715782782747,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_software_repo_page_{pageNumber}_{pageSize}",
       "name" : "GET__api_software_repo_page_{pageNumber}_{pageSize}",
       "configJsonPath" : "CPack/GET__api_software_repo_page_{pageNumber}_{pageSize}.json",
       "nodeType" : "API",
       "sort" : 1715782782747,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_storage_credentials",
       "name" : "GET__api_storage_credentials",
       "configJsonPath" : "CPack/GET__api_storage_credentials.json",
       "nodeType" : "API",
       "sort" : 1715782782747,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_project_statistics_summary",
       "name" : "GET__api_project_statistics_summary",
       "configJsonPath" : "CPack/GET__api_project_statistics_summary.json",
       "nodeType" : "API",
       "sort" : 1715782782747,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "DELETE__api_node_{projectId}_{repoName}_**",
       "name" : "DELETE__api_node_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/DELETE__api_node_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782747,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_node_list-deleted_{projectId}_{repoName}_**",
       "name" : "GET__api_node_list-deleted_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/GET__api_node_list-deleted_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782747,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_node_query",
       "name" : "POST__api_node_query",
       "configJsonPath" : "CPack/POST__api_node_query.json",
       "nodeType" : "API",
       "sort" : 1715782782747,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_node_{projectId}_{repoName}_**",
       "name" : "GET__api_node_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/GET__api_node_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782746,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_metadata_package_{projectId}_{repoName}",
       "name" : "GET__api_metadata_package_{projectId}_{repoName}",
       "configJsonPath" : "CPack/GET__api_metadata_package_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782746,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_node_page_{projectId}_{repoName}_**",
       "name" : "GET__api_node_page_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/GET__api_node_page_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782746,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "PUT__api_project_{name}",
       "name" : "PUT__api_project_{name}",
       "configJsonPath" : "CPack/PUT__api_project_{name}.json",
       "nodeType" : "API",
       "sort" : 1715782782746,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_proxy-channel_{projectId}_{repoName}",
       "name" : "GET__api_proxy-channel_{projectId}_{repoName}",
       "configJsonPath" : "CPack/GET__api_proxy-channel_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782746,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "DELETE__api_node_clean_{projectId}_{repoName}_**",
       "name" : "DELETE__api_node_clean_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/DELETE__api_node_clean_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782746,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "DELETE__api_repo_delete_{projectId}_{repoName}",
       "name" : "DELETE__api_repo_delete_{projectId}_{repoName}",
       "configJsonPath" : "CPack/DELETE__api_repo_delete_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782746,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_references_{sha256}",
       "name" : "GET__api_references_{sha256}",
       "configJsonPath" : "CPack/GET__api_references_{sha256}.json",
       "nodeType" : "API",
       "sort" : 1715782782746,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_repo_quota_{projectId}_{repoName}",
       "name" : "POST__api_repo_quota_{projectId}_{repoName}",
       "configJsonPath" : "CPack/POST__api_repo_quota_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_node_batch_{projectId}_{repoName}",
       "name" : "POST__api_node_batch_{projectId}_{repoName}",
       "configJsonPath" : "CPack/POST__api_node_batch_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_share_{projectId}_{repoName}_**",
       "name" : "GET__api_share_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/GET__api_share_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "DELETE__api_node_batch_{projectId}_{repoName}",
       "name" : "DELETE__api_node_batch_{projectId}_{repoName}",
       "configJsonPath" : "CPack/DELETE__api_node_batch_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_project_statistics_node_download_rank",
       "name" : "GET__api_project_statistics_node_download_rank",
       "configJsonPath" : "CPack/GET__api_project_statistics_node_download_rank.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_repo_quota_{projectId}_{repoName}",
       "name" : "GET__api_repo_quota_{projectId}_{repoName}",
       "configJsonPath" : "CPack/GET__api_repo_quota_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_project_exist",
       "name" : "GET__api_project_exist",
       "configJsonPath" : "CPack/GET__api_project_exist.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "POST__api_storage_credentials",
       "name" : "POST__api_storage_credentials",
       "configJsonPath" : "CPack/POST__api_storage_credentials.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_node_search_overview",
       "name" : "GET__api_node_search_overview",
       "configJsonPath" : "CPack/GET__api_node_search_overview.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "DELETE__api_node_delete_{projectId}_{repoName}_**",
       "name" : "DELETE__api_node_delete_{projectId}_{repoName}_**",
       "configJsonPath" : "CPack/DELETE__api_node_delete_{projectId}_{repoName}_**.json",
       "nodeType" : "API",
       "sort" : 1715782782745,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_version_page_{projectId}_{repoName}",
       "name" : "GET__api_version_page_{projectId}_{repoName}",
       "configJsonPath" : "CPack/GET__api_version_page_{projectId}_{repoName}.json",
       "nodeType" : "API",
       "sort" : 1715782782744,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_node_page",
       "name" : "GET__api_node_page",
       "configJsonPath" : "CPack/GET__api_node_page.json",
       "nodeType" : "API",
       "sort" : 1715782782744,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_log_migrate",
       "name" : "GET__api_log_migrate",
       "configJsonPath" : "CPack/GET__api_log_migrate.json",
       "nodeType" : "API",
       "sort" : 1715782782744,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "GET__api_project_exist_{projectId}",
       "name" : "GET__api_project_exist_{projectId}",
       "configJsonPath" : "CPack/GET__api_project_exist_{projectId}.json",
       "nodeType" : "API",
       "sort" : 1715782782744,
-      "unShelve" : false
+      "unShelve" : true
     }, {
       "code" : "PUT__api_storage_credentials_{credentialsKey}",
       "name" : "PUT__api_storage_credentials_{credentialsKey}",
       "configJsonPath" : "CPack/PUT__api_storage_credentials_{credentialsKey}.json",
       "nodeType" : "API",
       "sort" : 1715782782743,
-      "unShelve" : false
+      "unShelve" : true
     }  ]
   } ]
 }

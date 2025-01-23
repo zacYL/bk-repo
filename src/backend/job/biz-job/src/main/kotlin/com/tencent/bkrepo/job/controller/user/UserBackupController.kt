@@ -31,7 +31,7 @@ import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.mongo.util.Pages
+import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -65,11 +65,12 @@ class UserBackupController(
 
     @GetMapping("/tasks")
     fun tasks(
+        @RequestParam(required = false) type: String? = null,
         @RequestParam(required = false) state: String? = null,
         @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_NUMBER") pageNumber: Int = DEFAULT_PAGE_NUMBER,
         @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_SIZE") pageSize: Int = DEFAULT_PAGE_SIZE,
     ): Response<Page<BackupTask>> {
-        val page = dataBackupService.findTasks(state, Pages.ofRequest(pageNumber, pageSize))
+        val page = dataBackupService.findTasks(type, state, Pages.ofRequest(pageNumber, pageSize))
         return ResponseBuilder.success(page)
     }
 }

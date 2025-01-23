@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.job.backup.service.impl.base
 
+import com.tencent.bkrepo.job.PROJECT
 import com.tencent.bkrepo.job.backup.pojo.query.common.BackupPermission
 import com.tencent.bkrepo.job.backup.pojo.query.enums.BackupDataEnum
 import com.tencent.bkrepo.job.backup.pojo.record.BackupContext
@@ -10,6 +11,7 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.stereotype.Component
 
 @Component
@@ -21,7 +23,8 @@ class BackupPermissionDataHandler(
     }
 
     override fun buildQueryCriteria(context: BackupContext): Criteria {
-        val criteria = Criteria()
+        val criteria = Criteria.where(PROJECT).isEqualTo(context.currentProjectId)
+            .and(BackupPermission::repos.name).`in`(context.currentRepoName)
         if (context.incrementDate != null) {
             criteria.and(BackupPermission::updateAt.name).gte(context.incrementDate!!)
         }

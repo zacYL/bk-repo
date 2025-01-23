@@ -11,5 +11,5 @@ interface DataBackupService {
 
     fun executeTask(taskId: String)
 
-    fun findTasks(state: String?, pageRequest: PageRequest): Page<BackupTask>
+    fun findTasks(type: String?, state: String?, pageRequest: PageRequest): Page<BackupTask>
 }

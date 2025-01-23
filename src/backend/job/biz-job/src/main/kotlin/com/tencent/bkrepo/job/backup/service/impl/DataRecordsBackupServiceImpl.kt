@@ -75,9 +75,17 @@ class DataRecordsBackupServiceImpl(
                     logger.error("compress or upload zip file to cos error, $e")
                     throw StorageErrorException(StorageMessageCode.STORE_ERROR)
                 }
+                context.task.backupFilePaths.add(zipFilePath)
                 deleteFolder(targertPath)
+            } else {
+                context.task.backupFilePaths.add(targertPath.toString())
             }
-            backupTaskDao.updateState(taskId, BackupTaskState.FINISHED, endDate = LocalDateTime.now())
+            backupTaskDao.updateState(
+                taskId,
+                BackupTaskState.FINISHED,
+                endDate = LocalDateTime.now(),
+                backupFilePaths = context.task.backupFilePaths
+            )
             logger.info("Backup task ${context.task} has been finished!")
         }
     }
@@ -89,7 +97,7 @@ class DataRecordsBackupServiceImpl(
             Files.createDirectories(path)
         }
         context.targertPath = path
-        if (context.task.content?.increment != null) {
+        if (context.task.content?.increment != null && context.task.content?.increment == true) {
             val date = if (context.task.content?.incrementDate != null) {
                 LocalDateTime.parse(context.task.content!!.incrementDate, DateTimeFormatter.ISO_DATE_TIME)
             } else {

@@ -52,9 +52,9 @@ class DataBackupServiceImpl(
         }
     }
 
-    override fun findTasks(state: String?, pageRequest: PageRequest): Page<BackupTask> {
-        val count = backupTaskDao.count(state)
-        val records = backupTaskDao.find(state, pageRequest).map { it.toDto() }
+    override fun findTasks(type: String?, state: String?, pageRequest: PageRequest): Page<BackupTask> {
+        val count = backupTaskDao.count(type, state)
+        val records = backupTaskDao.find(type, state, pageRequest).map { it.toDto() }
         return Pages.ofResponse(pageRequest, count, records)
     }
 
@@ -93,9 +93,11 @@ class DataBackupServiceImpl(
                 }
                 return
             }
+
             DATA_RECORDS_RESTORE -> {
                 return
             }
+
             else -> {
                 logger.warn("task type [$type] is illegal!")
                 throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, BackupTaskRequest::type.name)

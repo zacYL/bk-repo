@@ -74,14 +74,16 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
         return findOne(Query(criteria))
     }
 
-    fun find(state: String?, pageRequest: PageRequest): List<TBackupTask> {
+    fun find(type: String?, state: String?, pageRequest: PageRequest): List<TBackupTask> {
         val criteria = Criteria()
+        type?.let { criteria.and(TBackupTask::type.name).isEqualTo(it) }
         state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
         return find(Query(criteria).with(pageRequest))
     }
 
-    fun count(state: String?): Long {
+    fun count(type: String?, state: String?): Long {
         val criteria = Criteria()
+        type?.let { criteria.and(TBackupTask::type.name).isEqualTo(it) }
         state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
         return count(Query(criteria))
     }
@@ -90,7 +92,8 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
         taskId: String,
         state: BackupTaskState,
         startDate: LocalDateTime? = null,
-        endDate: LocalDateTime? = null
+        endDate: LocalDateTime? = null,
+        backupFilePaths: List<String>? = null,
     ) {
         val criteria = Criteria().and(ID).isEqualTo(taskId)
         val update = Update.update(TBackupTask::lastModifiedBy.name, SYSTEM_USER)
@@ -98,6 +101,7 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
             .set(TBackupTask::state.name, state.name)
         startDate?.let { update.set(TBackupTask::startDate.name, startDate) }
         endDate?.let { update.set(TBackupTask::endDate.name, endDate) }
+        backupFilePaths?.let { update.set(TBackupTask::backupFilePaths.name, backupFilePaths) }
         this.updateFirst(Query(criteria), update)
     }
 }

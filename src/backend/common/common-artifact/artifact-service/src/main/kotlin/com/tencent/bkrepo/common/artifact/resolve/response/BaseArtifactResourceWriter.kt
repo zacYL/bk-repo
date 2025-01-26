@@ -47,7 +47,7 @@ abstract class BaseArtifactResourceWriter(
      */
     protected fun getBufferSize(totalSize: Int): Int {
         val bufferSize = storageProperties.response.bufferSize.toBytes().toInt()
-        if (bufferSize < 0 || totalSize < 0) {
+        if (bufferSize <= 0 || totalSize <= 0) {
             return STREAM_BUFFER_SIZE
         }
         return if (totalSize < bufferSize) totalSize else bufferSize

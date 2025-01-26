@@ -46,7 +46,7 @@
                                     
                                     ...(
                                         // 禁用或者黑名单时，不支持下载
-                                        (!$version.metadata.forbidStatus || versionNoInLockList)
+                                        (!$version.metadata.forbidStatus && versionNoInLockList)
                                             ? [
                                                 (showPromotion && !$version.metadata.lockStatus) && {
                                                     label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),

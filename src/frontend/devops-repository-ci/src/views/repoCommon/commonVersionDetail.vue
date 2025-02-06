@@ -25,9 +25,9 @@
                         </span>
                     </template>
                 </div>
-                <div v-if="detail.basic.os" class="package-name grid-item">
+                <div v-if="detail.basic.platform" class="package-name grid-item">
                     <label>OS/ARCH</label>
-                    <span class="flex-1 text-overflow" :title="detail.basic.os.join()">{{ detail.basic.os.join() }}</span>
+                    <span class="flex-1 text-overflow" :title="detail.basic.platform.join()">{{ detail.basic.platform.join() }}</span>
                 </div>
                 <template v-if="detail.basic.version">
                     <div class="grid-item"

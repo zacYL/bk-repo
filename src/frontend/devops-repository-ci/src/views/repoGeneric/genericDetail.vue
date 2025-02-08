@@ -134,7 +134,7 @@
             codeList () {
                 const { projectId, repoName, path } = this.detailSlider
                 return [
-                    `wget --user=${this.userInfo.username} --password=<PERSONAL_ACCESS_TOKEN> "${location.origin}/generic/${projectId}/${repoName}${encodeURIComponent(path)}?download=true"`
+                    `wget --user=${this.userInfo.username} --password=<PERSONAL_ACCESS_TOKEN> -O "${path.substring(path.lastIndexOf('/') + 1)}" "${location.origin}/generic/${projectId}/${repoName}${encodeURI(path)}?download=true"`
                 ]
             },
             // 用户是否设置了锁定，当前文件处于锁定状态下时不允许添加及删除任何元数据

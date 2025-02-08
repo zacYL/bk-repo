@@ -25,12 +25,13 @@
                 size="small">
                 <bk-table-column :label="$t('fileName')" min-width="300">
                     <template #default="{ row }">
-                        <bk-popover placement="top" :disabled="!row.fullPath">
+                        <bk-popover placement="top">
                             <div class="file-name-info">{{row.name || row.file.name}}</div>
                             <template #content>
                                 <div>{{$t('project') + ': ' + (projectList.find(p => p.id === row.projectId)).name }}</div>
                                 <div>{{$t('repository') + ': ' + replaceRepoName(row.repoName) }}</div>
-                                <div>{{$t('fileStoragePath') + ': ' + row.fullPath }}</div>
+                                <div>{{$t('fileName') + ': ' + (row.name || row.file.name) }}</div>
+                                <div v-if="row.fullPath">{{$t('fileStoragePath') + ': ' + row.fullPath }}</div>
                             </template>
                         </bk-popover>
                     </template>

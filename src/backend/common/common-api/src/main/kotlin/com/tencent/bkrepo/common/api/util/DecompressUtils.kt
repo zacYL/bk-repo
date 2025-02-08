@@ -37,6 +37,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveException
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.ArchiveStreamFactory
+import org.apache.commons.compress.compressors.CompressorException
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import java.io.BufferedInputStream
 import java.io.InputStream
@@ -123,7 +124,11 @@ object DecompressUtils {
         } catch (e: ArchiveException) {
             // 如果遇到ArchiveException异常，重置输入流并使用压缩流重新尝试
             wrap.reset()
-            wrap = BufferedInputStream(CompressorStreamFactory().createCompressorInputStream(wrap))
+            wrap = try {
+                BufferedInputStream(CompressorStreamFactory().createCompressorInputStream(wrap))
+            } catch (e: CompressorException) {
+                throw ArchiveException(e.message, e)
+            }
             doWithArchiver(wrap, resultFactory, callbackPre, callback, handleResult, callbackPost)
         }
     }

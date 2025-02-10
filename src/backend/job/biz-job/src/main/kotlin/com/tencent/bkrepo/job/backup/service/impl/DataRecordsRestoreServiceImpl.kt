@@ -35,30 +35,42 @@ class DataRecordsRestoreServiceImpl(
 ) : DataRecordsRestoreService, BaseService() {
     override fun projectDataRestore(context: BackupContext) {
         with(context) {
-            logger.info("Start to run restore task ${context.task}.")
-            startDate = LocalDateTime.now()
-            backupTaskDao.updateState(taskId, BackupTaskState.RUNNING, startDate)
-            // TODO 需要进行磁盘判断
-            // TODO 异常需要捕获
-            if (task.content == null) return
-            preProcessFile(context)
-            // 恢复公共基础数据
-            if (task.content!!.commonData) {
-                context.currentPath = context.targertPath
-                commonDataRestore(context)
-            }
-            // 备份业务数据
-            findSecondLevelDirectories(context.targertPath).forEach {
-                if (filterFolder(it, task.content)) {
-                    context.currentPath = it
-                    customDataRestore(context)
+            try {
+                logger.info("Start to run restore task ${context.task}.")
+                startDate = LocalDateTime.now()
+                backupTaskDao.updateState(taskId, BackupTaskState.RUNNING, startDate = startDate)
+                // TODO 需要进行磁盘判断
+                // TODO 异常需要捕获
+                if (task.content == null) return
+                preProcessFile(context)
+                // 恢复公共基础数据
+                if (task.content!!.commonData) {
+                    context.currentPath = context.targertPath
+                    commonDataRestore(context)
                 }
+                // 备份业务数据
+                findSecondLevelDirectories(context.targertPath).forEach {
+                    if (filterFolder(it, task.content)) {
+                        context.currentPath = it
+                        customDataRestore(context)
+                    }
+                }
+                if (task.content!!.compression) {
+                    deleteFolder(targertPath)
+                }
+                backupTaskDao.updateState(taskId, BackupTaskState.SUCCESS, endDate = LocalDateTime.now())
+                logger.info("Restore task ${context.task} has been success!")
+            } catch (e: Exception) {
+                backupTaskDao.updateState(
+                    taskId,
+                    BackupTaskState.FAILURE,
+                    message = e.message,
+                    endDate = LocalDateTime.now()
+                )
+                logger.error("Restore task ${context.task} has been failed!")
+                throw e
             }
-            if (task.content!!.compression) {
-                deleteFolder(targertPath)
-            }
-            backupTaskDao.updateState(taskId, BackupTaskState.FINISHED, endDate = LocalDateTime.now())
-            logger.info("Restore task ${context.task} has been finished!")
+
         }
     }
 

@@ -59,6 +59,8 @@ data class BackupTask(
     val backupSetting: BackupSetting,
     @ApiModelProperty("任务类型")
     val type: String,
+    @ApiModelProperty("备份文件路径")
+    val backupFilePaths: MutableList<String> = mutableListOf(),
 ) {
     companion object {
         fun TBackupTask.toDto() = BackupTask(
@@ -73,7 +75,8 @@ data class BackupTask(
             content = content,
             storeLocation = storeLocation,
             backupSetting = backupSetting,
-            type = type
+            type = type,
+            backupFilePaths = backupFilePaths,
         )
     }
 }

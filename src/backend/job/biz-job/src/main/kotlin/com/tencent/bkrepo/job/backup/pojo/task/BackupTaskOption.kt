@@ -25,16 +25,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.job.backup.pojo
+package com.tencent.bkrepo.job.backup.pojo.task
 
+import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
+import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
+import org.springframework.web.bind.annotation.RequestParam
 
-enum class BackupTaskState {
-
-    PENDING,
-
-    RUNNING,
-
-    FAILURE,
-
-    SUCCESS,
-}
+data class BackupTaskOption(
+    @RequestParam(required = false)
+    val name: String? = null,
+    @RequestParam(required = false)
+    val type: String? = null,
+    @RequestParam(required = false)
+    val state: String? = null,
+    @RequestParam(required = false)
+    val repoNames: String? = null,
+    @RequestParam(required = false)
+    val projectIds: List<String>? = emptyList(),
+    @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_NUMBER")
+    val pageNumber: Int = DEFAULT_PAGE_NUMBER,
+    @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_SIZE")
+    val pageSize: Int = DEFAULT_PAGE_SIZE,
+)

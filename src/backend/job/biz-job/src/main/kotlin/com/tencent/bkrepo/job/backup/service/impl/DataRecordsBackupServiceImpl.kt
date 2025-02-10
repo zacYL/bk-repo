@@ -44,49 +44,60 @@ class DataRecordsBackupServiceImpl(
 ) : DataRecordsBackupService, BaseService() {
     override fun projectDataBackup(context: BackupContext) {
         with(context) {
-            logger.info("Start to run backup task ${context.task}.")
-            startDate = LocalDateTime.now()
-            backupTaskDao.updateState(taskId, BackupTaskState.RUNNING, startDate)
-            // 需要进行磁盘判断， 当达到磁盘容量大小的限定百分比时则停止
-            freeSpaceCheck(context, dataBackupConfig.usageThreshold)
-            // TODO 需要进行仓库用量判断
-            // TODO 异常需要捕获
-            // TODO 历史备份保留周期，当超过该周期时需要进行删除
-            if (task.content == null || task.content!!.projects.isNullOrEmpty()) return
-            init(context)
-            // 备份公共基础数据
-            if (task.content!!.commonData) {
-                commonDataBackup(context)
-            }
-            // 备份业务数据
-            customDataBackup(context)
-            //  最后进行压缩
-            if (task.content!!.compression) {
-                // TODO 使用压缩需要关注对CPU的影响
-                logger.info("start to compress file and upload to cos")
-                val zipFileName = buildZipFileName(context)
-                val zipFilePath = buildZipFilePath(context)
-                try {
-                    ZipFileUtil.compressDirectory(targertPath.toString(), zipFilePath)
-                    val zipFile = File(zipFilePath)
-                    val cosClient = onCreateClient(dataBackupConfig.cos)
-                    cosClient.putFileObject(zipFileName, zipFile)
-                } catch (e: Exception) {
-                    logger.error("compress or upload zip file to cos error, $e")
-                    throw StorageErrorException(StorageMessageCode.STORE_ERROR)
+            try {
+                logger.info("Start to run backup task ${context.task}.")
+                startDate = LocalDateTime.now()
+                backupTaskDao.updateState(taskId, BackupTaskState.RUNNING, startDate = startDate)
+                // 需要进行磁盘判断， 当达到磁盘容量大小的限定百分比时则停止
+                freeSpaceCheck(context, dataBackupConfig.usageThreshold)
+                // TODO 需要进行仓库用量判断
+                // TODO 异常需要捕获
+                // TODO 历史备份保留周期，当超过该周期时需要进行删除
+                if (task.content == null || task.content!!.projects.isNullOrEmpty()) return
+                init(context)
+                // 备份公共基础数据
+                if (task.content!!.commonData) {
+                    commonDataBackup(context)
                 }
-                context.task.backupFilePaths.add(zipFilePath)
-                deleteFolder(targertPath)
-            } else {
-                context.task.backupFilePaths.add(targertPath.toString())
+                // 备份业务数据
+                customDataBackup(context)
+                //  最后进行压缩
+                if (task.content!!.compression) {
+                    // TODO 使用压缩需要关注对CPU的影响
+                    logger.info("start to compress file and upload to cos")
+                    val zipFileName = buildZipFileName(context)
+                    val zipFilePath = buildZipFilePath(context)
+                    try {
+                        ZipFileUtil.compressDirectory(targertPath.toString(), zipFilePath)
+                        val zipFile = File(zipFilePath)
+                        val cosClient = onCreateClient(dataBackupConfig.cos)
+                        cosClient.putFileObject(zipFileName, zipFile)
+                    } catch (e: Exception) {
+                        logger.error("compress or upload zip file to cos error, $e")
+                        throw StorageErrorException(StorageMessageCode.STORE_ERROR)
+                    }
+                    context.task.backupFilePaths.add(zipFilePath)
+                    deleteFolder(targertPath)
+                } else {
+                    context.task.backupFilePaths.add(targertPath.toString())
+                }
+                backupTaskDao.updateState(
+                    taskId,
+                    BackupTaskState.SUCCESS,
+                    endDate = LocalDateTime.now(),
+                    backupFilePaths = context.task.backupFilePaths
+                )
+                logger.info("Backup task ${context.task} has been success!")
+            } catch (e: Exception) {
+                backupTaskDao.updateState(
+                    taskId,
+                    BackupTaskState.FAILURE,
+                    endDate = LocalDateTime.now(),
+                    backupFilePaths = context.task.backupFilePaths
+                )
+                logger.error("Backup task ${context.task} has been failure!", e)
+                throw e
             }
-            backupTaskDao.updateState(
-                taskId,
-                BackupTaskState.FINISHED,
-                endDate = LocalDateTime.now(),
-                backupFilePaths = context.task.backupFilePaths
-            )
-            logger.info("Backup task ${context.task} has been finished!")
         }
     }
 

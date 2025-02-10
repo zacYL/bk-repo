@@ -27,8 +27,6 @@
 
 package com.tencent.bkrepo.job.controller.user
 
-import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
-import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
@@ -36,6 +34,7 @@ import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.job.backup.pojo.task.BackupTask
+import com.tencent.bkrepo.job.backup.pojo.task.BackupTaskOption
 import com.tencent.bkrepo.job.backup.pojo.task.BackupTaskRequest
 import com.tencent.bkrepo.job.backup.service.DataBackupService
 import org.springframework.web.bind.annotation.GetMapping
@@ -43,7 +42,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -65,12 +63,9 @@ class UserBackupController(
 
     @GetMapping("/tasks")
     fun tasks(
-        @RequestParam(required = false) type: String? = null,
-        @RequestParam(required = false) state: String? = null,
-        @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_NUMBER") pageNumber: Int = DEFAULT_PAGE_NUMBER,
-        @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_SIZE") pageSize: Int = DEFAULT_PAGE_SIZE,
+        option: BackupTaskOption
     ): Response<Page<BackupTask>> {
-        val page = dataBackupService.findTasks(type, state, Pages.ofRequest(pageNumber, pageSize))
+        val page = dataBackupService.findTasks(option, Pages.ofRequest(option.pageNumber, option.pageSize))
         return ResponseBuilder.success(page)
     }
 }

@@ -83,6 +83,7 @@ data class TBackupTask(
     var content: BackupContent? = null,
     val backupSetting: BackupSetting,
     val state: String = BackupTaskState.PENDING.name,
+    val message: String = "",
     val createdBy: String,
     val createdDate: LocalDateTime,
     val lastModifiedBy: String,

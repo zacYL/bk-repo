@@ -8,16 +8,20 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.job.DATA_RECORDS_BACKUP
 import com.tencent.bkrepo.job.DATA_RECORDS_RESTORE
 import com.tencent.bkrepo.job.backup.dao.BackupTaskDao
+import com.tencent.bkrepo.job.backup.event.TaskCreateContext
+import com.tencent.bkrepo.job.backup.event.TaskCreateEvent
 import com.tencent.bkrepo.job.backup.model.TBackupTask
 import com.tencent.bkrepo.job.backup.pojo.BackupTaskState
 import com.tencent.bkrepo.job.backup.pojo.record.BackupContext
 import com.tencent.bkrepo.job.backup.pojo.task.BackupTask
 import com.tencent.bkrepo.job.backup.pojo.task.BackupTask.Companion.toDto
+import com.tencent.bkrepo.job.backup.pojo.task.BackupTaskOption
 import com.tencent.bkrepo.job.backup.pojo.task.BackupTaskRequest
 import com.tencent.bkrepo.job.backup.service.DataBackupService
 import com.tencent.bkrepo.job.backup.service.DataRecordsBackupService
 import com.tencent.bkrepo.job.backup.service.DataRecordsRestoreService
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationContext
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.io.FileNotFoundException
@@ -30,12 +34,21 @@ import java.time.LocalDateTime
 class DataBackupServiceImpl(
     private val backupTaskDao: BackupTaskDao,
     private val dataRecordsBackupService: DataRecordsBackupService,
-    private val dataRecordsRestoreService: DataRecordsRestoreService
+    private val dataRecordsRestoreService: DataRecordsRestoreService,
+    private val applicationContext: ApplicationContext
 ) : DataBackupService {
     override fun createTask(taskRequest: BackupTaskRequest): String {
         contentCheck(taskRequest)
         val task = buildBackupTask(taskRequest)
-        return backupTaskDao.save(task).id!!
+        val saveTask = backupTaskDao.save(task)
+        applicationContext.publishEvent(
+            TaskCreateEvent(
+                context = TaskCreateContext(
+                    taskId = saveTask.id!!,
+                )
+            )
+        )
+        return saveTask.id
     }
 
     override fun executeTask(taskId: String) {
@@ -52,9 +65,9 @@ class DataBackupServiceImpl(
         }
     }
 
-    override fun findTasks(type: String?, state: String?, pageRequest: PageRequest): Page<BackupTask> {
-        val count = backupTaskDao.count(type, state)
-        val records = backupTaskDao.find(type, state, pageRequest).map { it.toDto() }
+    override fun findTasks(option: BackupTaskOption, pageRequest: PageRequest): Page<BackupTask> {
+        val count = backupTaskDao.count(option)
+        val records = backupTaskDao.find(option, pageRequest).map { it.toDto() }
         return Pages.ofResponse(pageRequest, count, records)
     }
 

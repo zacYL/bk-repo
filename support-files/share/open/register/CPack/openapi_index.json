@@ -872,6 +872,447 @@
         "nodeType" : "API",
         "sort" : 1715782782743,
         "unShelve" : true
+      },{
+        "code" : "POST__api_package_downloads_summary_repo-repository",
+        "name" : "POST__api_package_downloads_summary",
+        "configJsonPath" : "CPack/POST__api_package_downloads_summary_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224964,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_storage_credentials_default_repo-repository",
+        "name" : "GET__api_storage_credentials_default",
+        "configJsonPath" : "CPack/GET__api_storage_credentials_default_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224964,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_log_page_repo-repository",
+        "name" : "GET__api_log_page",
+        "configJsonPath" : "CPack/GET__api_log_page_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224964,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_software_node_search_repo-repository",
+        "name" : "POST__api_software_node_search",
+        "configJsonPath" : "CPack/POST__api_software_node_search_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224964,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_log_event_type_repo-repository",
+        "name" : "GET__api_log_event_type",
+        "configJsonPath" : "CPack/GET__api_log_event_type_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224965,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_permission_{projectId}_{action}_repo-repository",
+        "name" : "GET__api_permission_{projectId}_{action}",
+        "configJsonPath" : "CPack/GET__api_permission_{projectId}_{action}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224965,
+        "unShelve" : true
+      }, {
+        "code" : "GET__version_history_repair_repo-repository",
+        "name" : "GET__version_history_repair",
+        "configJsonPath" : "CPack/GET__version_history_repair_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224966,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_repo_list_package_{projectId}_repo-repository",
+        "name" : "GET__api_repo_list_package_{projectId}",
+        "configJsonPath" : "CPack/GET__api_repo_list_package_{projectId}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224966,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_project_exist_repo-repository",
+        "name" : "GET__api_project_exist",
+        "configJsonPath" : "CPack/GET__api_project_exist_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224966,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_tag_{projectId}_{repoName}_{name}_repo-docker",
+        "name" : "GET__ext_tag_{projectId}_{repoName}_{name}",
+        "configJsonPath" : "CPack/GET__ext_tag_{projectId}_{repoName}_{name}_repo-docker.json",
+        "nodeType" : "API",
+        "sort" : 1737630224967,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_address_repo-nuget",
+        "name" : "GET__ext_address",
+        "configJsonPath" : "CPack/GET__ext_address_repo-nuget.json",
+        "nodeType" : "API",
+        "sort" : 1737630224967,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_config_update_repo-repository",
+        "name" : "POST__api_config_update",
+        "configJsonPath" : "CPack/POST__api_config_update_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224967,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_references_{sha256}_repo-repository",
+        "name" : "GET__api_references_{sha256}",
+        "configJsonPath" : "CPack/GET__api_references_{sha256}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224967,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_storage_credentials_repo-repository",
+        "name" : "GET__api_storage_credentials",
+        "configJsonPath" : "CPack/GET__api_storage_credentials_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224968,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_package_search_overview_repo-repository",
+        "name" : "GET__api_package_search_overview",
+        "configJsonPath" : "CPack/GET__api_package_search_overview_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224968,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_license_repo-repository",
+        "name" : "GET__api_license",
+        "configJsonPath" : "CPack/GET__api_license_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224968,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_project_create_repo-repository",
+        "name" : "POST__api_project_create",
+        "configJsonPath" : "CPack/POST__api_project_create_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224970,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_addr_repo-docker",
+        "name" : "GET__ext_addr",
+        "configJsonPath" : "CPack/GET__ext_addr_repo-docker.json",
+        "nodeType" : "API",
+        "sort" : 1737630224970,
+        "unShelve" : true
+      }, {
+        "code" : "PUT__package_version_recount_repo-repository",
+        "name" : "PUT__package_version_recount",
+        "configJsonPath" : "CPack/PUT__package_version_recount_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224971,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_dependencies_{projectId}_{repoName}_repo-maven",
+        "name" : "GET__ext_dependencies_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__ext_dependencies_{projectId}_{repoName}_repo-maven.json",
+        "nodeType" : "API",
+        "sort" : 1737630224971,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_plugins_{projectId}_{repoName}_repo-maven",
+        "name" : "GET__ext_plugins_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__ext_plugins_{projectId}_{repoName}_repo-maven.json",
+        "nodeType" : "API",
+        "sort" : 1737630224972,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-docker",
+        "name" : "GET__ext_version_detail_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__ext_version_detail_{projectId}_{repoName}_repo-docker.json",
+        "nodeType" : "API",
+        "sort" : 1737630224972,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_repo_list_{projectId}_repo-repository",
+        "name" : "GET__api_repo_list_{projectId}",
+        "configJsonPath" : "CPack/GET__api_repo_list_{projectId}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224972,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_config_info_repo-repository",
+        "name" : "GET__api_config_info",
+        "configJsonPath" : "CPack/GET__api_config_info_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224973,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_package_info_{projectId}_{repoName}_repo-repository",
+        "name" : "GET__api_package_info_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__api_package_info_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224973,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_project_list_repo-repository",
+        "name" : "GET__api_project_list",
+        "configJsonPath" : "CPack/GET__api_project_list_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224973,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_proxy-channel_{projectId}_{repoName}_repo-repository",
+        "name" : "GET__api_proxy-channel_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__api_proxy-channel_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224974,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_log_migrate_repo-repository",
+        "name" : "GET__api_log_migrate",
+        "configJsonPath" : "CPack/GET__api_log_migrate_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224974,
+        "unShelve" : true
+      }, {
+        "code" : "DELETE__api_version_delete_{projectId}_{repoName}_repo-repository",
+        "name" : "DELETE__api_version_delete_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/DELETE__api_version_delete_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224974,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_software_repo_page_{pageNumber}_{pageSize}_repo-repository",
+        "name" : "GET__api_software_repo_page_{pageNumber}_{pageSize}",
+        "configJsonPath" : "CPack/GET__api_software_repo_page_{pageNumber}_{pageSize}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224975,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_project_exist_{projectId}_repo-repository",
+        "name" : "GET__api_project_exist_{projectId}",
+        "configJsonPath" : "CPack/GET__api_project_exist_{projectId}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224975,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_manifest_{projectId}_{repoName}_{imageName}_{tag}_repo-docker",
+        "name" : "GET__ext_manifest_{projectId}_{repoName}_{imageName}_{tag}",
+        "configJsonPath" : "CPack/GET__ext_manifest_{projectId}_{repoName}_{imageName}_{tag}_repo-docker.json",
+        "nodeType" : "API",
+        "sort" : 1737630224975,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_project_search_repo-repository",
+        "name" : "GET__api_project_search",
+        "configJsonPath" : "CPack/GET__api_project_search_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224976,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_software_package_search_overview_repo-repository",
+        "name" : "GET__api_software_package_search_overview",
+        "configJsonPath" : "CPack/GET__api_software_package_search_overview_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224976,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_project_statistics_node_download_rank_repo-repository",
+        "name" : "GET__api_project_statistics_node_download_rank",
+        "configJsonPath" : "CPack/GET__api_project_statistics_node_download_rank_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224976,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_software_package_search_repo-repository",
+        "name" : "POST__api_software_package_search",
+        "configJsonPath" : "CPack/POST__api_software_package_search_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224977,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_project_statistics_download_rank_repo-repository",
+        "name" : "GET__api_project_statistics_download_rank",
+        "configJsonPath" : "CPack/GET__api_project_statistics_download_rank_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224977,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_storage_credentials_repo-repository",
+        "name" : "POST__api_storage_credentials",
+        "configJsonPath" : "CPack/POST__api_storage_credentials_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224977,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_node_search_overview_repo-repository",
+        "name" : "GET__api_node_search_overview",
+        "configJsonPath" : "CPack/GET__api_node_search_overview_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224977,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_metadata_package_forbid_{projectId}_{repoName}_repo-repository",
+        "name" : "POST__api_metadata_package_forbid_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/POST__api_metadata_package_forbid_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630224978,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_repo_{projectId}_{repoName}_repo-docker",
+        "name" : "GET__ext_repo_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__ext_repo_{projectId}_{repoName}_repo-docker.json",
+        "nodeType" : "API",
+        "sort" : 1737630224978,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_repo_debug_clean_{projectId}_{repoName}_repo-repository",
+        "name" : "GET__api_repo_debug_clean_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__api_repo_debug_clean_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225040,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_share_batch_repo-repository",
+        "name" : "POST__api_share_batch",
+        "configJsonPath" : "CPack/POST__api_share_batch_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225041,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_address_repo-helm",
+        "name" : "GET__ext_address",
+        "configJsonPath" : "CPack/GET__ext_address_repo-helm.json",
+        "nodeType" : "API",
+        "sort" : 1737630225041,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_dependencies_reverse_{projectId}_{repoName}_repo-maven",
+        "name" : "GET__ext_dependencies_reverse_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__ext_dependencies_reverse_{projectId}_{repoName}_repo-maven.json",
+        "nodeType" : "API",
+        "sort" : 1737630225041,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_node_batch_{projectId}_{repoName}_repo-repository",
+        "name" : "POST__api_node_batch_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/POST__api_node_batch_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225042,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_repo_quota_{projectId}_{repoName}_repo-repository",
+        "name" : "POST__api_repo_quota_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/POST__api_repo_quota_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225042,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_repo_testremote_repo-repository",
+        "name" : "POST__api_repo_testremote",
+        "configJsonPath" : "CPack/POST__api_repo_testremote_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225043,
+        "unShelve" : true
+      }, {
+        "code" : "DELETE__api_package_delete_{projectId}_{repoName}_repo-repository",
+        "name" : "DELETE__api_package_delete_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/DELETE__api_package_delete_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225043,
+        "unShelve" : true
+      }, {
+        "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-docker",
+        "name" : "DELETE__ext_package_delete_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/DELETE__ext_package_delete_{projectId}_{repoName}_repo-docker.json",
+        "nodeType" : "API",
+        "sort" : 1737630225043,
+        "unShelve" : true
+      }, {
+        "code" : "POST__api_package_downloads_details_repo-repository",
+        "name" : "POST__api_package_downloads_details",
+        "configJsonPath" : "CPack/POST__api_package_downloads_details_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225043,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_project_statistics_summary_repo-repository",
+        "name" : "GET__api_project_statistics_summary",
+        "configJsonPath" : "CPack/GET__api_project_statistics_summary_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225044,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_repo_exist_{projectId}_{repoName}_repo-repository",
+        "name" : "GET__api_repo_exist_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__api_repo_exist_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225044,
+        "unShelve" : true
+      }, {
+        "code" : "PUT__api_project_{name}_repo-repository",
+        "name" : "PUT__api_project_{name}",
+        "configJsonPath" : "CPack/PUT__api_project_{name}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225044,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_repo_migrate_cleanStrategy_repo-repository",
+        "name" : "GET__api_repo_migrate_cleanStrategy",
+        "configJsonPath" : "CPack/GET__api_repo_migrate_cleanStrategy_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225044,
+        "unShelve" : true
+      }, {
+        "code" : "DELETE__api_project_delete_{name}_repo-repository",
+        "name" : "DELETE__api_project_delete_{name}",
+        "configJsonPath" : "CPack/DELETE__api_project_delete_{name}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225044,
+        "unShelve" : true
+      }, {
+        "code" : "PUT__api_storage_credentials_{credentialsKey}_repo-repository",
+        "name" : "PUT__api_storage_credentials_{credentialsKey}",
+        "configJsonPath" : "CPack/PUT__api_storage_credentials_{credentialsKey}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225045,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_repo_quota_{projectId}_{repoName}_repo-repository",
+        "name" : "GET__api_repo_quota_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/GET__api_repo_quota_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225045,
+        "unShelve" : true
+      }, {
+        "code" : "DELETE__api_storage_credentials_{credentialKey}_repo-repository",
+        "name" : "DELETE__api_storage_credentials_{credentialKey}",
+        "configJsonPath" : "CPack/DELETE__api_storage_credentials_{credentialKey}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225045,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_repo_info_{projectId}_{repoName}_{type}_repo-repository",
+        "name" : "GET__api_repo_info_{projectId}_{repoName}_{type}",
+        "configJsonPath" : "CPack/GET__api_repo_info_{projectId}_{repoName}_{type}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225046,
+        "unShelve" : true
+      }, {
+        "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-docker",
+        "name" : "DELETE__ext_version_delete_{projectId}_{repoName}",
+        "configJsonPath" : "CPack/DELETE__ext_version_delete_{projectId}_{repoName}_repo-docker.json",
+        "nodeType" : "API",
+        "sort" : 1737630225046,
+        "unShelve" : true
+      }, {
+        "code" : "GET__api_project_statistics_node_summary_repo-repository",
+        "name" : "GET__api_project_statistics_node_summary",
+        "configJsonPath" : "CPack/GET__api_project_statistics_node_summary_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1737630225046,
+        "unShelve" : true
+      }, {
+        "code" : "GET__ext_address_repo-npm",
+        "name" : "GET__ext_address",
+        "configJsonPath" : "CPack/GET__ext_address_repo-npm.json",
+        "nodeType" : "API",
+        "sort" : 1737630225046,
+        "unShelve" : true
       } ]
     }
     ]

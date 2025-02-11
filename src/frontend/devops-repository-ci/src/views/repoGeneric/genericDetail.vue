@@ -134,7 +134,7 @@
             codeList () {
                 const { projectId, repoName, path } = this.detailSlider
                 return [
-                    `wget --user=${this.userInfo.username} --password=<PERSONAL_ACCESS_TOKEN> "${location.origin}/generic/${projectId}/${repoName}${path}"`
+                    `wget --user=${this.userInfo.username} --password=<PERSONAL_ACCESS_TOKEN> -O "${this.detailSlider.data.name}" --no-iri "${location.origin}/generic/${projectId}/${repoName}${encodeURI(path)}?download=true"`
                 ]
             },
             // 用户是否设置了锁定，当前文件处于锁定状态下时不允许添加及删除任何元数据
@@ -180,7 +180,7 @@
             jumpCCommonUserToken () {
                 window.open(window.DEVOPS_SITE_URL + '/console/userCenter/userToken', '_blank')
             },
-           
+
             addMetadataHandler (item) {
                 const { key, value, description } = item
                 this.addMetadata({

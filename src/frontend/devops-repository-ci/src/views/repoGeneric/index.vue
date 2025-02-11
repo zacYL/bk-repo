@@ -963,7 +963,9 @@
                 }
 
                 if (!row.metadata.forbidStatus) {
-                    if (!row.folder && this.handlerPreview(row) && !this.isRemote & this.readOperationPermission) {
+                    const noPreviewEnd = ['.tar', '.gz', '.rar']
+                    const isNoPreview = noPreviewEnd.some(item => row.name.endsWith(item))
+                    if (!row.folder && this.handlerPreview(row) && !this.isRemote & this.readOperationPermission && !isNoPreview) {
                         actions.push({ clickEvent: () => this.handlerPreview(row, true), label: this.$t('preview') })
                     }
                     if (!(row.folder && this.isGenericRemote) & this.readOperationPermission) {

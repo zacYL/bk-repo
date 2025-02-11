@@ -212,54 +212,51 @@ class MavenServiceImpl(
         val repo = repositoryClient.getRepoDetail(projectId, repoName).data
             ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
         val (model, pom, file) = artifactInfo(request)
-        try {
-            // 以mavenVersion是否为空来决定snapshot or release
-            var mavenVersion = try {
-                request.uuid.substringAfterLast("/").resolverName(model.artifactId, model.version)
-            } catch (e: MavenArtifactFormatException) {
-                logger.warn("Failed to parse maven version for [$projectId, $repoName, ${request.uuid}]")
-                null
-            }
-            val classifier = if (request.classifier.isNullOrBlank()) mavenVersion?.classifier else request.classifier
-            // 此处至空，表示是release版本
-            mavenVersion = null
-            // 在接下来的if 中，如果是snapshot版本，会对mavenVersion重新赋值
-            if (model.version.isSnapshotUri()) {
-                mavenVersion = getSnapshotVersion(mavenArtifactInfo, model, classifier)
-            }
-            logger.info("[ $projectId, $repoName, ${request.uuid} ] maven version is $mavenVersion")
-            if (model.packaging != SOURCE_POM) {
-                val artifactInfo = createArtifact(mavenArtifactInfo, model, mavenVersion, classifier = classifier)
-                uploadArtifact(repo, artifactInfo, Files.newInputStream(file))
-                nodeClient.deleteNode(
-                    NodeDeleteRequest(
-                        projectId = artifactInfo.projectId,
-                        repoName = artifactInfo.repoName,
-                        fullPath = "${artifactInfo.getArtifactFullPath()}.sha1",
-                        operator = "maven-web-deploy"
-                    )
-                )
-            }
-            createPom(mavenArtifactInfo, model, mavenVersion).apply {
-                uploadArtifact(repo, this, pom.inputStream())
-                nodeClient.deleteNode(
-                    NodeDeleteRequest(
-                        projectId = mavenArtifactInfo.projectId,
-                        repoName = mavenArtifactInfo.repoName,
-                        fullPath = "${model.toArtifactUri().replace(".jar", ".pom")}.sha1",
-                        operator = "maven-web-deploy"
-                    )
-                )
-            }
-            if (mavenVersion != null) {
-                // version/maven-metadata.xml
-                uploadArtifact(repo, createSnapshotMetadata(mavenArtifactInfo, model), "".byteInputStream())
-            }
-            // maven-metadata.xml
-            updateMetadata(repo, model)
-        } finally {
-            Files.deleteIfExists(file)
+        // 以mavenVersion是否为空来决定snapshot or release
+        var mavenVersion = try {
+            request.uuid.substringAfterLast("/").resolverName(model.artifactId, model.version)
+        } catch (e: MavenArtifactFormatException) {
+            logger.warn("Failed to parse maven version for [$projectId, $repoName, ${request.uuid}]")
+            null
         }
+        val classifier = if (request.classifier.isNullOrBlank()) mavenVersion?.classifier else request.classifier
+        // 此处至空，表示是release版本
+        mavenVersion = null
+        // 在接下来的if 中，如果是snapshot版本，会对mavenVersion重新赋值
+        if (model.version.isSnapshotUri()) {
+            mavenVersion = getSnapshotVersion(mavenArtifactInfo, model, classifier)
+        }
+        logger.info("[ $projectId, $repoName, ${request.uuid} ] maven version is $mavenVersion")
+        if (model.packaging != SOURCE_POM) {
+            val artifactInfo = createArtifact(mavenArtifactInfo, model, mavenVersion, classifier = classifier)
+            uploadArtifact(repo, artifactInfo, Files.newInputStream(file))
+            nodeClient.deleteNode(
+                NodeDeleteRequest(
+                    projectId = artifactInfo.projectId,
+                    repoName = artifactInfo.repoName,
+                    fullPath = "${artifactInfo.getArtifactFullPath()}.sha1",
+                    operator = "maven-web-deploy"
+                )
+            )
+        }
+        createPom(mavenArtifactInfo, model, mavenVersion).apply {
+            uploadArtifact(repo, this, pom.inputStream())
+            nodeClient.deleteNode(
+                NodeDeleteRequest(
+                    projectId = mavenArtifactInfo.projectId,
+                    repoName = mavenArtifactInfo.repoName,
+                    fullPath = "${model.toArtifactUri().replace(".jar", ".pom")}.sha1",
+                    operator = "maven-web-deploy"
+                )
+            )
+        }
+        if (mavenVersion != null) {
+            // version/maven-metadata.xml
+            uploadArtifact(repo, createSnapshotMetadata(mavenArtifactInfo, model), "".byteInputStream())
+        }
+        // maven-metadata.xml
+        updateMetadata(repo, model)
+        Files.deleteIfExists(file)
     }
 
     override fun buildVersionDeleteArtifactInfo(

@@ -518,6 +518,18 @@
                                     if (type === 'move') {
                                         this.getVersionListHandler()
                                     }
+                                }).catch((error) => {
+                                    if (error?.status?.toString() === '403') {
+                                        this.$bkMessage({
+                                            theme: 'error',
+                                            message: this.$t('noBusinessTip')
+                                        })
+                                    } else {
+                                        this.$bkMessage({
+                                            theme: 'error',
+                                            message: error.message
+                                        })
+                                    }
                                 }).finally(() => {
                                     this.$refs.repoListDialog.loading(false)
                                 })

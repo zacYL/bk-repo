@@ -87,7 +87,6 @@ object CocoapodsUtil {
         return jsonObject.toString()
     }
 
-
     // 解析 Podspec 内容并返回 Source 对象
     fun parseSourceFromContent(content: String, contentType: PodSpecType): ArchiveModifier.Podspec? {
         return when (contentType) {
@@ -107,10 +106,10 @@ object CocoapodsUtil {
         for (line in lines) {
             val sourceLine = line.trim()
             val key = line.substringBefore("=")
-            if (key.contains(".name")){
+            if (key.contains(".name")) {
                 name = getValueFromPodspecLine(line) ?: break
             }
-            if (key.contains(".version")){
+            if (key.contains(".version")) {
                 version = getValueFromPodspecLine(line) ?: break
             }
 
@@ -118,7 +117,7 @@ object CocoapodsUtil {
             if (sourceLine.contains(":http")) {
                 type = PodSpecSourceType.HTTP.name
                 url = getByRegex("http", sourceLine)
-            }else {
+            } else {
                 // 如果是 Git 源
                 if (sourceLine.contains(":git")) {
                     type = PodSpecSourceType.GIT.name
@@ -130,7 +129,7 @@ object CocoapodsUtil {
             }
         }
 
-        //tag可能是v#{s.version.to_s}这样的 Ruby 语言中的一个 字符串插值表达式
+        // tag可能是v#{s.version.to_s}这样的 Ruby 语言中的一个 字符串插值表达式
         if (gitTag?.contains("version") == true) {
             resolveTag(gitTag, version ?: gitTag).also { gitTag = it }
         }
@@ -138,8 +137,9 @@ object CocoapodsUtil {
         // 如果没有找到有效的 source 信息，则返回 null
         return if (name != null && version != null && type != null && url != null) {
             ArchiveModifier.Podspec(name, version, Source(type, url, gitTag), null)
-        } else null
-
+        } else {
+            null
+        }
     }
 
     // 解析 podspec.json 文件的 s.source
@@ -157,28 +157,28 @@ object CocoapodsUtil {
             url = sourceJson.get("http")?.asString
             Source(PodSpecSourceType.HTTP.name, url.toString(), null)
         }
-        return if (name != null && version != null && url != null){
-             ArchiveModifier.Podspec(name, version, source, null)
-        }else {
+        return if (name != null && version != null && url != null) {
+            ArchiveModifier.Podspec(name, version, source, null)
+        } else {
             null
         }
     }
 
-    fun extractNameFromPodspec(podspecContent: String): String? {
-        return podspecContent.lines().find { it.contains(".name") }.let {
+    fun extractValueFromPodspec(podspecContent: String, key: String): String? {
+        return podspecContent.lines().find { it.contains(key) }.let {
             getValueFromPodspecLine(it)
         }
     }
 
-    fun extractNameFromPodspecJson(content: String): String? {
+    fun extractValueFromPodspecJson(content: String, key: String): String? {
         val jsonObject = JsonParser.parseString(content).asJsonObject
-        return jsonObject.get("name").asString
+        return jsonObject.get(key).asString
     }
 
     private fun getValueFromPodspecLine(line: String?): String? {
         return line?.split("=")?.last()?.trim()?.removeSurrounding("\"")?.removeSurrounding("'")
     }
-    private fun getByRegex(key:String,line:String): String? {
+    private fun getByRegex(key: String, line: String): String? {
         val urlMatch = Regex(":$key\\s*=>\\s*['\"]([^'\"]+)['\"]").find(line)
         return urlMatch?.groupValues?.get(1)
     }
@@ -186,6 +186,11 @@ object CocoapodsUtil {
     private fun resolveTag(template: String, version: String): String {
         // 使用正则表达式来替换 `#{}` 中的内容
         val regex = Regex("""#\{([^}]+)}""")
-        return regex.replace(template,version)
+        return regex.replace(template, version)
     }
+
+    const val PODSPEC_KEY_DOT_NAME = ".name"
+    const val PODSPEC_KEY_NAME = "name"
+    const val PODSPEC_KEY_DOT_VERSION = ".version"
+    const val PODSPEC_KEY_VERSION = "version"
 }

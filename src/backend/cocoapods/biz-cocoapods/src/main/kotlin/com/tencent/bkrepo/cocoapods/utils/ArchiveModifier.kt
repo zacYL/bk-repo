@@ -6,6 +6,7 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_GZIP
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_ZIP
 import org.apache.commons.compress.archivers.tar.*
 import org.apache.commons.compress.compressors.gzip.*
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.*
 import java.util.zip.*
@@ -14,7 +15,15 @@ import kotlin.math.ceil
 object ArchiveModifier {
 
     @Throws(IOException::class)
-    fun modifyArchive(projectId: String, repoName: String, domain: String, archiveInputStream: InputStream, archiveOutputStream: OutputStream, archiveType: String, tempDir: File): MutableList<Podspec> {
+    fun modifyArchive(
+        projectId: String,
+        repoName: String,
+        domain: String,
+        archiveInputStream: InputStream,
+        archiveOutputStream: OutputStream,
+        archiveType: String,
+        tempDir: File,
+    ): MutableList<Podspec> {
 
         // 解压文件
         when (archiveType) {
@@ -71,7 +80,13 @@ object ArchiveModifier {
         return modifyAndZip(tempDir, projectId, repoName, domain, archiveOutputStream)
     }
 
-    fun modifyAndZip(tempDir: File, projectId: String, repoName: String, domain: String, archiveOutputStream: OutputStream): MutableList<Podspec> {
+    fun modifyAndZip(
+        tempDir: File,
+        projectId: String,
+        repoName: String,
+        domain: String,
+        archiveOutputStream: OutputStream,
+    ): MutableList<Podspec> {
         // 遍历解压目录中的所有文件，查找 .podspec 或 podspec.json 文件并获取 NAME 和 VERSION
         val podspecList = mutableListOf<Podspec>()
 
@@ -84,16 +99,7 @@ object ArchiveModifier {
             modifyPodspecFile(podspec, targetPath)
         }
 
-        // 重新压缩文件，tar.gz
-//        GzipCompressorOutputStream(archiveOutputStream).use { gzipOut ->
-//            TarArchiveOutputStream(gzipOut).use { tarOut ->
-//                val files = tempDir.listFiles()
-//                files?.forEach { file ->
-//                    addFileToTar(file, tarOut, "")
-//                }
-//            }
-//        }
-        compressFilesInBatches(tempDir,archiveOutputStream)
+        compressFilesInBatches(tempDir, archiveOutputStream)
         // 清理临时文件
         deleteDirectory(tempDir)
 
@@ -106,15 +112,13 @@ object ArchiveModifier {
                 traverseDirectory(file, podspecList)
             } else {
                 // 如果是 .podspec 或 podspec.json 文件，添加到列表
-                if (file.extension == PodSpecType.POD_SPEC.extendedName || file.name.contains(PodSpecType.JSON.extendedName) ) {
+                if (file.extension == PodSpecType.POD_SPEC.extendedName || file.name.contains(PodSpecType.JSON.extendedName)) {
                     // 获取上一级文件名 VERSION 和 NAME
                     val parentDir = file.parentFile
-//                    val version = parentDir.name // 父目录名称就是 VERSION
-//                    val name = parentDir.parentFile.name // 父目录的父目录名称就是 NAME
                     val podSpecType = (PodSpecType.matchPath(file.path) ?: PodSpecType.POD_SPEC)
                     val text = file.readText()
                     try {
-                        CocoapodsUtil.parseSourceFromContent(text,podSpecType )?.let {
+                        CocoapodsUtil.parseSourceFromContent(text, podSpecType)?.let {
                             it.apply {
                                 this.file = file
                                 this.fileType = podSpecType
@@ -147,61 +151,9 @@ object ArchiveModifier {
         podspecFile.writeText(updateContent)
     }
 
-//    @Throws(IOException::class)
-//    private fun addFileToZip(file: File, zos: ZipOutputStream, parentDir: String) {
-//        if (file.isDirectory) {
-//            // 如果是目录，递归添加
-//            zos.putNextEntry(ZipEntry(parentDir + file.name + "/"))
-//            zos.closeEntry()
-//            file.listFiles()?.forEach { subFile ->
-//                addFileToZip(subFile, zos, "$parentDir${file.name}/")
-//            }
-//        } else {
-//            // 如果是文件，直接添加
-//            zos.putNextEntry(ZipEntry(parentDir + file.name))
-//            FileInputStream(file).use { fis ->
-//                val buffer = ByteArray(1024)
-//                var len: Int
-//                while (fis.read(buffer).also { len = it } > 0) {
-//                    zos.write(buffer, 0, len)
-//                }
-//            }
-//            zos.closeEntry()
-//        }
-//    }
-
-//    @Throws(IOException::class)
-//    private fun addFileToTar(file: File, tarOut: TarArchiveOutputStream, parentDir: String) {
-//        // 设置长路径处理模式为 GNU
-//        tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU)
-//        if (file.isDirectory) {
-//            // 如果是目录，递归添加
-//            tarOut.putArchiveEntry(TarArchiveEntry(file, "$parentDir${file.name}/"))
-//            tarOut.closeArchiveEntry()
-//            file.listFiles()?.forEach { subFile ->
-//                addFileToTar(subFile, tarOut, "$parentDir${file.name}/")
-//            }
-//        } else {
-//            // 如果是文件，直接添加
-//            try {
-//                tarOut.putArchiveEntry(TarArchiveEntry(file, "$parentDir${file.name}"))
-//                FileInputStream(file).use { fis ->
-//                    val buffer = ByteArray(1024)
-//                    var len: Int
-//                    while (fis.read(buffer).also { len = it } > 0) {
-//                        tarOut.write(buffer, 0, len)
-//                    }
-//                }
-//                tarOut.closeArchiveEntry()
-//            } catch (e: Exception) {
-//                logger.warn("Failed to add file to tar: ${e.message}")
-//            }
-//        }
-//    }
-
     private fun compressFilesInBatches(tempDir: File, archiveOutputStream: OutputStream, batchCount: Int = 10) {
-        // 检查是否有 Specs 目录
-        val specsDir = File(tempDir, "Specs")
+        // 检查是否有 Specs/0 目录，即判断为github中央仓库，其索引太多需进入Specs目录进行分批
+        val specsDir = File(tempDir, "Specs/0")
         val files = if (specsDir.exists() && specsDir.isDirectory) {
             specsDir.listFiles()
         } else {
@@ -220,23 +172,21 @@ object ArchiveModifier {
         println("Total files: $totalFiles, Processing in $batchCount batches (batch size: $batchSize)")
         // 处理每一批文件
         TarArchiveOutputStream(BufferedOutputStream(GzipCompressorOutputStream(archiveOutputStream))).use { tarOut ->
-//        GzipCompressorOutputStream(archiveOutputStream).use { gzipOut ->
-//            TarArchiveOutputStream(gzipOut).use { tarOut ->
-                tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU) // 支持长路径
+            tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU) // 支持长路径
 
-                for (batchIndex in 0 until batchCount) {
-                    println("Processing batch ${batchIndex + 1} of $batchCount...")
-                    val startIdx = batchIndex * batchSize
-                    val endIdx = minOf(startIdx + batchSize, totalFiles)
+            for (batchIndex in 0 until batchCount) {
+                println("Processing batch ${batchIndex + 1} of $batchCount...")
+                val startIdx = batchIndex * batchSize
+                val endIdx = minOf(startIdx + batchSize, totalFiles)
 
-                    // 获取当前批次的文件
-                    val batchFiles = files.slice(startIdx until endIdx)
-                    batchFiles.forEach { file ->
-                        addFileToTar(file, tarOut, "")
-                    }
+                // 获取当前批次的文件
+                val batchFiles = files.slice(startIdx until endIdx)
+                batchFiles.forEach { file ->
+                    addFileToTar(file, tarOut, "")
                 }
             }
         }
+    }
 
     private fun addFileToTar(file: File, tarOut: TarArchiveOutputStream, parentDir: String) {
         if (file.isDirectory) {
@@ -288,5 +238,5 @@ object ArchiveModifier {
         var fileType: PodSpecType? = null,
     )
 
-    val logger = LoggerFactory.getLogger(this::class.java)
+    val logger: Logger = LoggerFactory.getLogger(this::class.java)
 }

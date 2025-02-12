@@ -41,9 +41,14 @@ data class OciDigest(val digest: String? = null) {
     init {
         digest?.let {
             val sepIndex = StringUtils.indexOf(digest, CharPool.COLON.toInt())
-            require(sepIndex >= 0) { "could not find ':' in digest: $digest" }
-            this.alg = StringUtils.substring(digest, 0, sepIndex)
-            this.hex = StringUtils.substring(digest, sepIndex + 1)
+            // require(sepIndex >= 0) { "could not find ':' in digest: $digest" }
+            // 低版本的docker镜像digest没有sha256:
+            if (sepIndex < 0) {
+                this.hex = digest
+            } else {
+                this.alg = StringUtils.substring(digest, 0, sepIndex)
+                this.hex = StringUtils.substring(digest, sepIndex + 1)
+            }
         }
     }
 

@@ -37,6 +37,8 @@ import java.time.LocalDateTime
 data class BackupTask(
     @ApiModelProperty("ID")
     val id: String? = null,
+    @ApiModelProperty("名称")
+    val name: String,
     @ApiModelProperty("创建人")
     val createdBy: String,
     @ApiModelProperty("创建时间")
@@ -65,6 +67,7 @@ data class BackupTask(
     companion object {
         fun TBackupTask.toDto() = BackupTask(
             id = id,
+            name = name,
             createdBy = createdBy,
             createdDate = createdDate,
             lastModifiedBy = lastModifiedBy,

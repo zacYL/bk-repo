@@ -60,6 +60,7 @@ import com.tencent.bkrepo.job.backup.pojo.BackupTaskState
 import com.tencent.bkrepo.job.backup.pojo.task.BackupTaskOption
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
@@ -80,8 +81,10 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
             val criteria = Criteria()
             type?.let { criteria.and(TBackupTask::type.name).isEqualTo(it) }
             state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
-            repoNames?.let { criteria.and("").regex(repoNames, "i") }
-            return find(Query(criteria).with(pageRequest))
+            repoNames?.let { criteria.and("content.projects.repoList").regex(repoNames, "i") }
+            projectIds?.let { criteria.and("content.projects.projectId").`in`(projectIds) }
+            val sort = Sort.by(Sort.Direction.DESC, TBackupTask::createdDate.name)
+            return find(Query(criteria).with(pageRequest).with(sort))
         }
     }
 

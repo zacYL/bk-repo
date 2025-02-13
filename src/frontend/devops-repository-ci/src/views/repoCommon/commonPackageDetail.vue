@@ -510,6 +510,8 @@
                             confirmFn: () => {
                                 this.$refs.repoListDialog.loading()
                                 apiMehods({ repoType: this.repoType, body }).then(res => {
+                                    console.log(res)
+                                    
                                     this.$refs.repoListDialog.close()
                                     this.$bkMessage({
                                         theme: 'success',
@@ -546,6 +548,18 @@
                         })
                         if (type === 'move') {
                             this.getVersionListHandler()
+                        }
+                    }).catch((error) => {
+                        if (error?.status?.toString() === '403') {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('noBusinessTip')
+                            })
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: error.message
+                            })
                         }
                     }).finally(() => {
                         this.$refs.repoListDialog.loading(false)

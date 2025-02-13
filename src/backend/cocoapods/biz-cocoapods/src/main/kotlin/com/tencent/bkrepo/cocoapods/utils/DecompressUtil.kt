@@ -35,6 +35,10 @@ import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsCommonException
 import com.tencent.bkrepo.cocoapods.pojo.PodSpec
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
+import com.tencent.bkrepo.cocoapods.utils.CocoapodsUtil.PODSPEC_KEY_DOT_NAME
+import com.tencent.bkrepo.cocoapods.utils.CocoapodsUtil.PODSPEC_KEY_DOT_VERSION
+import com.tencent.bkrepo.cocoapods.utils.CocoapodsUtil.PODSPEC_KEY_NAME
+import com.tencent.bkrepo.cocoapods.utils.CocoapodsUtil.PODSPEC_KEY_VERSION
 import com.tencent.bkrepo.common.api.util.DecompressUtils
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -68,18 +72,21 @@ object DecompressUtil {
             ?: throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
 
         val specName: String?
+        val specVersion: String?
         val podSpecContent = when (type) {
             PodSpecType.POD_SPEC -> {
-                specName = CocoapodsUtil.extractNameFromPodspec(content)
+                specName = CocoapodsUtil.extractValueFromPodspec(content, PODSPEC_KEY_DOT_NAME)
+                specVersion = CocoapodsUtil.extractValueFromPodspec(content, PODSPEC_KEY_DOT_VERSION)
                 CocoapodsUtil.updatePodspecSource(content, cachePath)
             }
 
             PodSpecType.JSON -> {
-                specName = CocoapodsUtil.extractNameFromPodspecJson(content)
+                specName = CocoapodsUtil.extractValueFromPodspecJson(content,PODSPEC_KEY_NAME)
+                specVersion = CocoapodsUtil.extractValueFromPodspecJson(content, PODSPEC_KEY_VERSION)
                 CocoapodsUtil.updatePodspecJsonSource(content, cachePath)
             }
         }
-        return PodSpec(name = specName, fileName = fileName, content = podSpecContent)
+        return PodSpec(name = specName, version = specVersion, fileName = fileName, content = podSpecContent)
     }
 
     fun buildEmptySpecGzOps(response: HttpServletResponse): GZIPOutputStream {

@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.npm.artifact
 
 import com.tencent.bkrepo.npm.constants.DELIMITER_HYPHEN
+import com.tencent.bkrepo.npm.constants.FILE_SUFFIX
+import com.tencent.bkrepo.npm.constants.HAR_FILE_EXT
 import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH_FORMAT
 
 class NpmTarballArtifactInfo(
@@ -40,16 +42,23 @@ class NpmTarballArtifactInfo(
     packageName: String,
     version: String? = null,
     private val delimiter: String = DELIMITER_HYPHEN,
-    private val repeatedScope: Boolean = true
+    private val repeatedScope: Boolean = true,
+    private val ohpm: Boolean = false,
 ) : NpmArtifactInfo(projectId, repoName, packageName, version) {
 
     override fun getArtifactFullPath(): String {
         require(version != null)
-        return getTarballFullPath(packageName, version, delimiter, repeatedScope)
+        return getTarballFullPath(packageName, version, delimiter, repeatedScope,ohpm)
     }
 
-    private fun getTarballFullPath(name: String, version: String, delimiter: String, repeatedScope: Boolean) =
+    private fun getTarballFullPath(name: String, version: String, delimiter: String, repeatedScope: Boolean, ohpm: Boolean) =
         TARBALL_FULL_PATH_FORMAT.format(
-            name, delimiter, if (repeatedScope) name else name.substringAfterLast("/"), version
+            name, delimiter, if (repeatedScope) name else name.substringAfterLast("/"), version, getContentFileExt(ohpm)
         )
+
+    private fun getContentFileExt(ohpm: Boolean) = if (ohpm) {
+        HAR_FILE_EXT
+    } else {
+        FILE_SUFFIX
+    }
 }

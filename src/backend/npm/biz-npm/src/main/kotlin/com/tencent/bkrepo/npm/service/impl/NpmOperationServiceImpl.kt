@@ -4,7 +4,6 @@ import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.PACKAGE_METADATA
@@ -29,7 +28,7 @@ class NpmOperationServiceImpl(
             } else {
                 NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
             }
-            val packageKey = PackageKeys.ofNpm(packageName)
+            val packageKey = NpmUtils.packageKeyByRepoType(packageName, context.repositoryDetail.type)
             return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion).data
         }
     }

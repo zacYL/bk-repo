@@ -12,7 +12,6 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContex
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
@@ -20,7 +19,14 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
-import com.tencent.bkrepo.npm.constants.*
+import com.tencent.bkrepo.npm.constants.DIST
+import com.tencent.bkrepo.npm.constants.LATEST
+import com.tencent.bkrepo.npm.constants.NAME
+import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
+import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
+import com.tencent.bkrepo.npm.constants.SIZE
+import com.tencent.bkrepo.npm.constants.TIME
+import com.tencent.bkrepo.npm.constants.VERSIONS
 import com.tencent.bkrepo.npm.handler.NpmPackageHandler
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.pojo.fixtool.DateTimeFormatResponse
@@ -385,7 +391,7 @@ class NpmFixToolServiceImpl(
 		 * 处理时注意tag处理，如果tag关联的版本不存在，删除该tag，如果是latest版本删除了则需要重新找个最新版本为latest版本
 		 */
 		with(artifactInfo) {
-			val packageKey = PackageKeys.ofNpm(name)
+			val packageKey = NpmUtils.packageKeyByRepoType(name)
 			val packageSummary = packageClient.findPackageByKey(projectId, repoName, packageKey).data
 				?: throw PackageNotFoundException("package [$name] not found")
 			val packageInfo = queryPackageInfo(this, name, false)

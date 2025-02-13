@@ -31,6 +31,8 @@
 
 package com.tencent.bkrepo.npm.artifact.resolver
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
@@ -62,7 +64,8 @@ class NpmTarballArtifactInfoResolver : ArtifactInfoResolver {
             val version = NpmUtils.analyseVersionFromPackageName(attributes[FILENAME].toString(), name)
             val delimiter = attributes[DELIMITER].toString().trim()
             val repeatedScope = attributes[REPEATED_SCOPE] != null
-            return NpmTarballArtifactInfo(projectId, repoName, packageName, version, delimiter, repeatedScope)
+            val ohpm = RepositoryType.OHPM == ArtifactContextHolder.getRepoDetail()?.type
+            return NpmTarballArtifactInfo(projectId, repoName, packageName, version, delimiter, repeatedScope, ohpm)
         }
     }
 }

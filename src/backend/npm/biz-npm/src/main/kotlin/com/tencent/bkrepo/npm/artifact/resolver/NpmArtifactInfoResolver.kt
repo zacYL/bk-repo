@@ -61,7 +61,7 @@ class NpmArtifactInfoResolver : ArtifactInfoResolver {
             val (packageName, version) =
                 if (requestURL.contains(USER_PACKAGE_API_PREFIX) || requestURL.contains(USER_VERSION_API_PREFIX)) {
                     Pair(
-                        PackageKeys.resolveNpm(getParameter(PACKAGE_KEY)!!.toString()),
+                        NpmUtils.resolveNameByRepoType(getParameter(PACKAGE_KEY)!!.toString()),
                         getParameter(VERSION)?.toString()
                     )
                 } else {

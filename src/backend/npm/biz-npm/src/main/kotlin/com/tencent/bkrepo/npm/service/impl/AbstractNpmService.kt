@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.StreamUtils.readText
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
@@ -44,12 +45,14 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWrite
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
+import com.tencent.bkrepo.npm.constants.INTEGRITY_HSP
 import com.tencent.bkrepo.npm.constants.MODIFIED
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
 import com.tencent.bkrepo.npm.constants.PACKAGE_JSON
 import com.tencent.bkrepo.npm.constants.REQUEST_URI
+import com.tencent.bkrepo.npm.constants.RESOLVED_HSP
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmRepoNotFoundException
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
@@ -95,7 +98,7 @@ open class AbstractNpmService : ArtifactService() {
 	 * 查询仓库是否存在
 	 */
 	fun checkRepositoryExist(projectId: String, repoName: String): RepositoryDetail {
-		return repositoryClient.getRepoDetail(projectId, repoName, "NPM").data ?: run {
+		return ArtifactContextHolder.getRepoDetailOrNull() ?: run {
 			logger.error("check repository [$repoName] in projectId [$projectId] failed!")
 			throw NpmRepoNotFoundException("repository [$repoName] in projectId [$projectId] not existed.")
 		}
@@ -132,12 +135,15 @@ open class AbstractNpmService : ArtifactService() {
 				it.readText().replace(tarballRegex) { matchRes ->
 					val originTarball = matchRes.groupValues[1]
 					val newTarball = NpmUtils.buildPackageTgzTarball(
-						originTarball, npmProperties.domain, npmProperties.tarball.prefix,
+//						originTarball, npmProperties.domain, npmProperties.tarball.prefix,
+						originTarball, "http://localhost:25907", "http://localhost:25907",
 						artifactInfo.packageName, artifactInfo
 					)
 					matchRes.value.replace(originTarball, newTarball)
 				}.toArtifactStream()
-			} else it
+			} else {
+			    it
+			}
 		} ?: throw NpmArtifactNotFoundException("document not found")
 		val artifactResource = ArtifactResource(
 			inputStream = artifactStream,
@@ -190,6 +196,7 @@ open class AbstractNpmService : ArtifactService() {
 			NpmUtils.buildPackageTgzTarball(
 				oldTarball, npmProperties.domain, npmProperties.tarball.prefix, name, artifactInfo
 			)
+		resolveOhpmHsp(versionMetadata)
 	}
 
 	private fun checkAndCompletePackageMetadata(
@@ -266,9 +273,18 @@ open class AbstractNpmService : ArtifactService() {
 		while (true) {
 			val records = nodeClient.listNodePage(projectId, repoName, fullPath, option).data?.records
 				.takeUnless { it.isNullOrEmpty() } ?: return nodes
-			option.pageNumber ++
+			option.pageNumber++
 			nodes.addAll(records.map { NodeDetail(it) })
 		}
+	}
+
+	protected fun resolveOhpmHsp(versionMetadata: NpmVersionMetadata) {
+		if (versionMetadata.dist?.any()?.get(INTEGRITY_HSP) == null) {
+			return
+		}
+		// OHPM HSP包
+		val hspTarball = NpmUtils.harPathToHspPath(versionMetadata.dist?.tarball!!)
+		versionMetadata.dist!!.set(RESOLVED_HSP, hspTarball)
 	}
 
 	companion object {

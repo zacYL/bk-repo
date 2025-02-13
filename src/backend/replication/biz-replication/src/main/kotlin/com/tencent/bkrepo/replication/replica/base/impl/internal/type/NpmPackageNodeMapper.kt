@@ -46,8 +46,13 @@ class NpmPackageNodeMapper : PackageNodeMapper {
         packageVersion: PackageVersion,
         type: RepositoryType
     ): List<String> {
-        val name = PackageKeys.resolveNpm(packageSummary.key)
+        val name = if (type == RepositoryType.OHPM) {
+            PackageKeys.resolveOhpm(packageSummary.key)
+        } else {
+            PackageKeys.resolveNpm(packageSummary.key)
+        }
         val version = packageVersion.name
+        //todo ohpm文件后缀兼容
         return listOf(
             NPM_PKG_TGZ_FULL_PATH.format(name, name, version),
             NPM_PKG_VERSION_METADATA_FULL_PATH.format(name, name, version),

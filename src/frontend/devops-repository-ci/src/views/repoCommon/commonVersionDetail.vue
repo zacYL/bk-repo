@@ -193,9 +193,15 @@
                     :data-title="type">
                     <template v-if="detail.dependencyInfo[type].length">
                         <template
+                            v-if="type !== 'dependents'"
                             v-for="{ name, version } in detail.dependencyInfo[type]">
                             <div class="version-dependencies-key text-overflow" :key="name" :title="name">{{ name }}</div>
-                            <div v-if="type !== 'dependents'" class="version-dependencies-value text-overflow" :key="name + version" :title="version">{{ version }}</div>
+                            <div class="version-dependencies-value text-overflow" :key="name + version" :title="version">{{ version }}</div>
+                        </template>
+                        <template
+                            v-else
+                            v-for="(item,index) in detail.dependencyInfo['dependents']">
+                            <div class="version-dependencies-key text-overflow" :key="index" :title="item">{{ item }}</div>
                         </template>
                     </template>
                     <empty-data v-else class="version-dependencies-empty"></empty-data>

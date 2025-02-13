@@ -46,7 +46,6 @@ import com.tencent.bkrepo.npm.service.NpmClientService
 import com.tencent.bkrepo.npm.service.impl.NpmWebService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -55,7 +54,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -73,11 +71,7 @@ class UserNpmController(
     @GetMapping("/version/detail/{projectId}/{repoName}")
     fun detailVersion(
         @RequestAttribute userId: String,
-        @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @ApiParam(value = "包唯一Key", required = true)
-        @RequestParam packageKey: String,
-        @ApiParam(value = "包版本", required = true)
-        @RequestParam version: String
+        @ArtifactPathVariable artifactInfo: NpmArtifactInfo
     ): Response<NpmPackageVersionInfo> {
         return ResponseBuilder.success(npmWebService.getVersionDetail(userId, artifactInfo))
     }
@@ -87,9 +81,7 @@ class UserNpmController(
     @DeleteMapping("/package/delete/{projectId}/{repoName}")
     fun deletePackage(
         @RequestAttribute userId: String,
-        @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @ApiParam(value = "包名称", required = true)
-        @RequestParam packageKey: String
+        @ArtifactPathVariable artifactInfo: NpmArtifactInfo
     ): Response<Void> {
         npmWebService.deletePackage(userId, artifactInfo)
         return ResponseBuilder.success()
@@ -101,10 +93,6 @@ class UserNpmController(
     fun deleteVersion(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @ApiParam(value = "包名称", required = true)
-        @RequestParam packageKey: String,
-        @ApiParam(value = "包版本", required = true)
-        @RequestParam version: String
     ): Response<Void> {
         npmWebService.deleteVersion(userId, artifactInfo)
         return ResponseBuilder.success()
@@ -136,19 +124,14 @@ class UserNpmController(
 
     @PostMapping("/upload/{projectId}/{repoName}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
-
         @PathVariable
         projectId: String,
-
         @PathVariable
         repoName: String,
-
         @RequestPart(value = "file")
         file: MultipartFile
-
     ): Response<Boolean> {
         npmClientService.upload(projectId, repoName, file)
         return ResponseBuilder.success()
     }
-
 }

@@ -510,8 +510,6 @@
                             confirmFn: () => {
                                 this.$refs.repoListDialog.loading()
                                 apiMehods({ repoType: this.repoType, body }).then(res => {
-                                    console.log(res)
-                                    
                                     this.$refs.repoListDialog.close()
                                     this.$bkMessage({
                                         theme: 'success',

@@ -364,6 +364,7 @@
         },
         beforeDestroy () {
             window.repositoryVue.$off('upload-refresh')
+            this.$hiddenGlobalUploadFiles && this.$hiddenGlobalUploadFiles()
         },
         methods: {
             convertFileSize,

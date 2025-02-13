@@ -111,6 +111,7 @@
         },
         mounted () {
             Vue.prototype.$globalUploadFiles = this.selectFiles
+            Vue.prototype.$hiddenGlobalUploadFiles = this.hidden
         },
         methods: {
             ...mapActions([
@@ -124,6 +125,12 @@
                     folder: false,
                     fullPath: ''
                 }
+            },
+            hidden () {
+                console.log(1231)
+                
+                this.initData()
+                this.show = false
             },
             selectFiles (data = {}) {
                 this.initData()

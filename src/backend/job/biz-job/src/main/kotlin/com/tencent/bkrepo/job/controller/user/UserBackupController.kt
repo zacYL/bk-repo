@@ -37,7 +37,6 @@ import com.tencent.bkrepo.job.backup.pojo.task.BackupTask
 import com.tencent.bkrepo.job.backup.pojo.task.BackupTaskOption
 import com.tencent.bkrepo.job.backup.pojo.task.BackupTaskRequest
 import com.tencent.bkrepo.job.backup.service.DataBackupService
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -61,8 +60,9 @@ class UserBackupController(
         return ResponseBuilder.success()
     }
 
-    @GetMapping("/tasks")
+    @PostMapping("/tasks")
     fun tasks(
+        @RequestBody
         option: BackupTaskOption
     ): Response<Page<BackupTask>> {
         val page = dataBackupService.findTasks(option, Pages.ofRequest(option.pageNumber, option.pageSize))

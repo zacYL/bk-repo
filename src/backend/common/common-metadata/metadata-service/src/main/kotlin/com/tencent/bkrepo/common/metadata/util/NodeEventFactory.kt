@@ -80,7 +80,7 @@ object NodeEventFactory {
     /**
      * 节点批量删除事件
      */
-    fun buildDeletedEvent(
+    fun buildBatchDeletedEvent(
         projectId: String,
         repoName: String,
         fullPaths: List<String>,

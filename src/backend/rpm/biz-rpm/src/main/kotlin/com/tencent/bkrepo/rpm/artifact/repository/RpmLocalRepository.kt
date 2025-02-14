@@ -42,6 +42,7 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.hash.md5
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -53,8 +54,8 @@ import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.metadata.service.packages.StageService
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
@@ -127,35 +128,35 @@ import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.nio.channels.Channels
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Component
 class RpmLocalRepository(
     private val stageService: StageService,
     private val jobService: JobService
 ) : LocalRepository() {
-
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
             val node = ArtifactContextHolder.getNodeDetail(artifactInfo)
-            node?.let {
-                downloadIntercept(context, it)
-                packageVersion(context, it)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
-            }
+            downloadIntercept(context, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
-
     override fun onUploadBefore(context: ArtifactUploadContext) {
         super.onUploadBefore(context)
         val overwrite = HeaderUtils.getRpmBooleanHeader("X-BKREPO-OVERWRITE")
-        if (!overwrite) {
-            with(context.artifactInfo) {
-                val node = nodeService.getNodeDetail(this)
-                if (node != null) {
+        with(context.artifactInfo) {
+            nodeService.getNodeDetail(this)?.let {
+                if (!overwrite) {
                     throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, getArtifactFullPath())
                 }
+                // TODO: 需要抽象处理
+                uploadIntercept(context, it)
+                packageVersion(context, it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
             }
         }
     }
@@ -296,7 +297,7 @@ class RpmLocalRepository(
         val repodataUri = repoData.repoDataPath
         logger.info(
             "storeIndexMarkFile, repodataUri: $repodataUri, repeat: $repeat, indexType: $indexType," +
-                " metadata: $metadata"
+                    " metadata: $metadata"
         )
         val artifactFile = when (repeat) {
             FULLPATH_SHA256 -> {
@@ -453,7 +454,7 @@ class RpmLocalRepository(
         val repeat = checkRepeatArtifact(context)
         logger.info(
             "onUpload, artifactFormat: $artifactFormat, needIndex: $needIndex, repeat: $repeat, artifactUri: " +
-                context.artifactInfo.getArtifactFullPath()
+                    context.artifactInfo.getArtifactFullPath()
         )
         if (repeat != FULLPATH_SHA256) {
             val nodeCreateRequest = if (needIndex) {
@@ -463,6 +464,13 @@ class RpmLocalRepository(
                         val metadata = rpmVersion.toMetadata()
                         metadata["action"] = repeat.name
                         val rpmPackagePojo = rpmVersion.toRpmPackagePojo(context.artifactInfo.getArtifactFullPath())
+                        //包元数据
+                        val packageMetadata= mutableListOf(
+                            MetadataModel(key = "name", value = rpmVersion.name, system = true, display = true),
+                            MetadataModel(key = "version", value = rpmVersion.ver, system = true, display = true),
+                            MetadataModel(key = "release", value = rpmVersion.rel, system = true, display = true),
+                            MetadataModel(key = "arch", value = rpmVersion.arch, system = true, display = true)
+                        )
                         // 保存包版本
                         val packageKey = PackageKeys.ofRpm(rpmPackagePojo.path, rpmPackagePojo.name)
                         packageService.createPackageVersion(
@@ -476,7 +484,8 @@ class RpmLocalRepository(
                                 size = context.getArtifactFile().getSize(),
                                 artifactPath = context.artifactInfo.getArtifactFullPath(),
                                 overwrite = true,
-                                createdBy = context.userId
+                                createdBy = context.userId,
+                                packageMetadata = packageMetadata
                             ),
                             HttpContextHolder.getClientAddress()
                         )
@@ -514,17 +523,18 @@ class RpmLocalRepository(
                     fullPath.toRpmPackagePojo()
                 }
                 val packageKey = PackageKeys.ofRpm(rpmPackagePojo.path, rpmPackagePojo.name)
-                return PackageDownloadRecord(projectId, repoName, packageKey, rpmPackagePojo.version)
+                return PackageDownloadRecord(projectId, repoName, packageKey, rpmPackagePojo.version, userId)
             } else {
                 null
             }
         }
     }
 
-    private fun packageVersion(context: ArtifactDownloadContext, node: NodeDetail): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
         with(context) {
             val fullPath = artifactInfo.getArtifactFullPath()
-            if (!fullPath.endsWith(".rpm")) {
+            if (!fullPath.endsWith(".rpm") || node == null) {
                 return null
             }
 
@@ -534,7 +544,6 @@ class RpmLocalRepository(
                 logger.error("rpm node[$node] metadata invalid")
                 null
             } ?: return null
-
             val packageKey = PackageKeys.ofRpm(rpmPackage.path, rpmPackage.name)
             return packageService.findVersionByName(projectId, repoName, packageKey, rpmPackage.version)
         }
@@ -693,14 +702,21 @@ class RpmLocalRepository(
             val packageVersion = packageService.findVersionByName(
                 projectId, repoName, packageKey, version
             )
+            val createdDate = packageVersion?.createdDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.createdDate
+            val lastModifiedDate = packageVersion?.lastModifiedDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.lastModifiedDate
             val count = packageVersion?.downloads ?: 0
             val rpmArtifactBasic = Basic(
                 path,
                 name,
                 version,
-                jarNode.size, jarNode.fullPath,
-                jarNode.createdBy, jarNode.createdDate,
-                jarNode.lastModifiedBy, jarNode.lastModifiedDate,
+                jarNode.size,
+                jarNode.fullPath,
+                jarNode.createdBy,
+                createdDate,
+                jarNode.lastModifiedBy,
+                lastModifiedDate,
                 count,
                 jarNode.sha256,
                 jarNode.md5,
@@ -768,7 +784,7 @@ class RpmLocalRepository(
             if (nodeInfoPage.records.isEmpty()) break@loop
             logger.info(
                 "populatePackage: found ${nodeInfoPage.records.size}," +
-                    " totalRecords: ${nodeInfoPage.totalRecords}"
+                        " totalRecords: ${nodeInfoPage.totalRecords}"
             )
             val rpmNodeList = nodeInfoPage.records.filter { it.name.endsWith(".rpm") }
             for (nodeInfo in rpmNodeList) {
@@ -852,7 +868,7 @@ class RpmLocalRepository(
         var firstLine = true
         while (reader.readLine().also { line = it } != null) {
             val isBugLine = (line!!.startsWith("  </package  ") || line!!.startsWith("  </packa  ")) &&
-                line!!.endsWith("<package type=\"rpm\">")
+                    line!!.endsWith("<package type=\"rpm\">")
             when {
                 isBugLine -> {
                     outputStream.write("\n  </package>\n  <package type=\"rpm\">".toByteArray())

@@ -53,7 +53,7 @@ interface ReplicaTaskService {
      * 根据任务name查询任务信息
      * @param name 任务name
      */
-    fun getByTaskName(name: String): ReplicaTaskInfo?
+    fun getByTaskName(name: String, projectId: String): ReplicaTaskInfo?
 
     /**
      * 根据任务key查询任务信息
@@ -127,6 +127,11 @@ interface ReplicaTaskService {
     fun deleteByTaskKey(key: String)
 
     /**
+     * 根据[projectId]删除同步任务
+     */
+    fun deleteByProjectId(name: String)
+
+    /**
      * 根据[key]切换任务状态
      */
     fun toggleStatus(key: String)
@@ -145,4 +150,9 @@ interface ReplicaTaskService {
      * 手动执行任务
      */
     fun execute(key: String)
+
+    /**
+     * 计算同步任务的同步制品总数
+     */
+    fun countArtifactToReplica(taskDetail: ReplicaTaskDetail): Long
 }

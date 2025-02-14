@@ -49,6 +49,7 @@ import com.tencent.bkrepo.common.artifact.constant.X_CHECKSUM_MD5
 import com.tencent.bkrepo.common.artifact.constant.X_CHECKSUM_SHA256
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -135,13 +136,15 @@ class GenericRemoteRepository(
         return UrlFormatter.format(configuration.url, artifactUri, queryString)
     }
 
-    override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactDownloadContext): ArtifactResource? {
+    override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactContext): ArtifactResource? {
         return storageManager.loadArtifactInputStream(cacheNode, context.repositoryDetail.storageCredentials)?.run {
             if (logger.isDebugEnabled) {
                 logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
             }
+            val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
             val artifactName = context.artifactInfo.getResponseName()
-            ArtifactResource(this, artifactName, cacheNode, ArtifactChannel.PROXY, context.useDisposition)
+            val useDisposition = if (context is ArtifactDownloadContext) context.useDisposition else false
+            ArtifactResource(this, artifactName, srcRepo, cacheNode, ArtifactChannel.PROXY, useDisposition)
         }
     }
 
@@ -177,6 +180,7 @@ class GenericRemoteRepository(
         return ArtifactResource(
             inputStream = artifactStream,
             artifactName = context.artifactInfo.getResponseName(),
+            srcRepo = RepositoryIdentify(context.projectId, context.repoName),
             node = null,
             channel = ArtifactChannel.LOCAL,
             useDisposition = preview != true || download == true,

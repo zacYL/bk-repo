@@ -79,6 +79,17 @@ class ArtifactPermissionCheckHandler(
                     )
                 }
             }
+            ResourceType.REPLICATION -> {
+                val uriAttribute = HttpContextHolder
+                    .getRequest()
+                    .getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE)
+                require(uriAttribute is Map<*, *>)
+                val projectId = uriAttribute[PROJECT_ID]?.toString() ?: throw PermissionException()
+                permissionManager.checkReplicationPermission(
+                    action = permission.action,
+                    projectId = projectId
+                )
+            }
             else -> throw PermissionException("unsupported resource type")
         }
     }

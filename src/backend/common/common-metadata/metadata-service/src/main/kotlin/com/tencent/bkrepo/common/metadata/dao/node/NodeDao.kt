@@ -147,6 +147,20 @@ class NodeDao : HashShardingMongoDao<TNode>() {
     }
 
     /**
+     * 查询项目下所有文件节点
+     */
+    fun findFileNode(projectId: String): List<TNode> {
+        return this.find(NodeQueryHelper.nodeFileQuery(projectId))
+    }
+
+    /**
+     * 查询项目下所有本删除的文件节点
+     */
+    fun findDeleteNode(projectId: String): List<TNode> {
+        return this.find(NodeQueryHelper.nodeDeleteQuery(projectId))
+    }
+
+    /**
      * 根据[sha256]查询node列表，用于不需要分页的场景提高查询速度
      *
      * @param sha256 待查询sha256

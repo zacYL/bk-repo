@@ -31,7 +31,7 @@
 
 package com.tencent.bkrepo.repository
 
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 
 const val UT_PROJECT_ID = "ut-project"
 const val UT_PROJECT_DISPLAY = "ut-project-display"

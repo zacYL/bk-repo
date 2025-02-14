@@ -128,6 +128,16 @@ interface PackageClient {
         @RequestParam realIpAddress: String? = null
     ): Response<Void>
 
+    @Deprecated("生成下载记录时,更新该时间")
+    @ApiOperation("更新包版本最近使用时间")
+    @PostMapping("/version/update/recentlyUserDate")
+    fun updateRecentlyUseDate(
+        @RequestParam projectId: String,
+        @RequestParam repoName: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String
+    ): Response<Void>
+
     @ApiOperation("更新版本")
     @PostMapping("/version/update")
     fun updateVersion(
@@ -186,6 +196,13 @@ interface PackageClient {
     @ApiOperation("查询包数量")
     @PostMapping("/package/count/{projectId}/{repoName}")
     fun getPackageCount(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String
+    ): Response<Long>
+
+    @ApiOperation("查询仓库包版本数量")
+    @GetMapping("/version/count/{projectId}/{repoName}")
+    fun getVersionCount(
         @PathVariable projectId: String,
         @PathVariable repoName: String
     ): Response<Long>

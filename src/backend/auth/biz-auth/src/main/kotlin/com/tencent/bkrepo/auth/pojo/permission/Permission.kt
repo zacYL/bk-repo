@@ -31,24 +31,26 @@
 
 package com.tencent.bkrepo.auth.pojo.permission
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import io.swagger.annotations.ApiModel
 import java.time.LocalDateTime
 
 @ApiModel("权限")
 data class Permission(
-    val id: String? = null,
-    val resourceType: String,
-    val projectId: String? = null,
-    val permName: String,
-    val repos: List<String> = emptyList(),
-    val includePattern: List<String> = emptyList(),
-    val excludePattern: List<String> = emptyList(),
-    val users: List<String> = emptyList(),
-    val roles: List<String> = emptyList(),
-    val departments: List<String> = emptyList(),
-    val actions: List<String> = emptyList(),
-    val createBy: String,
-    val updatedBy: String,
-    val createAt: LocalDateTime,
-    val updateAt: LocalDateTime
+	val id: String? = null,
+	val resourceType: ResourceType,
+	val projectId: String? = null,
+	val permName: String,
+	val repos: List<String> = emptyList(),
+	val includePattern: List<String> = emptyList(),
+	val excludePattern: List<String> = emptyList(),
+	val users: List<String> = emptyList(),
+	val roles: List<String> = emptyList(),
+	val departments: List<String> = emptyList(),
+	val actions: List<PermissionAction> = emptyList(),
+	val createBy: String,
+	val updatedBy: String,
+	val createAt: LocalDateTime,
+	val updateAt: LocalDateTime
 )

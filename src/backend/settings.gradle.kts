@@ -37,6 +37,15 @@ pluginManagement {
             maven(url = "https://mirrors.tencent.com/nexus/repository/gradle-plugins/")
             maven(url = "https://mirrors.tencent.com/nexus/repository/maven-public")
             maven(url = "https://repo.spring.io/milestone")
+            maven {
+                name = "canway"
+                url = uri(extra["canwayRepoUrl"] as String)
+                credentials {
+                    username = extra["canwayRepoUser"] as String
+                    password = extra["canwayRepoPassword"] as String
+                }
+            }
+            maven(url = extra["MAVEN_REPO_URL"] as String)
         } else {
             mavenCentral()
             maven(url = "https://repo.spring.io/milestone")
@@ -55,6 +64,7 @@ fun includeAll(module: String) {
     }
 }
 
+include(":common:common-license-canway")
 include(":boot-assembly")
 includeAll(":auth")
 includeAll(":common")
@@ -62,6 +72,8 @@ includeAll(":common:common-storage")
 includeAll(":common:common-query")
 includeAll(":common:common-artifact")
 includeAll(":common:common-notify")
+includeAll(":common:common-devops")
+include(":common:common-cpack")
 includeAll(":common:common-ratelimiter")
 includeAll(":composer")
 includeAll(":generic")
@@ -80,7 +92,6 @@ includeAll(":webhook")
 includeAll(":job")
 includeAll(":analyst")
 includeAll(":analysis-executor")
-includeAll(":common:common-checker")
 includeAll(":conan")
 includeAll(":fs")
 includeAll(":config")
@@ -95,3 +106,6 @@ includeAll(":common:common-metadata")
 includeAll(":common:common-service")
 includeAll(":preview")
 includeAll(":websocket")
+includeAll(":go-registry")
+includeAll(":cocoapods")
+includeAll(":ivy")

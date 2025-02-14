@@ -45,13 +45,15 @@ import kotlin.reflect.full.primaryConstructor
 
 /**
  * 构件下载context
+ * 修改主构造函数参数时，需要同步修改copy方法中的构造函数调用传参
  */
 open class ArtifactDownloadContext(
     repo: RepositoryDetail? = null,
     artifact: ArtifactInfo? = null,
     artifacts: List<ArtifactInfo>? = null,
     userId: String = SecurityUtils.getUserId(),
-    var useDisposition: Boolean = false
+    var useDisposition: Boolean = false,
+    val filterAuth: Boolean = false,
 ) : ArtifactContext(repo, artifact, userId) {
 
     val repo = repo ?: request.getAttribute(REPO_KEY) as RepositoryDetail
@@ -60,17 +62,17 @@ open class ArtifactDownloadContext(
 
     override fun copy(
         repositoryDetail: RepositoryDetail,
+        artifactInfoAttrMap: Map<String, Any?>?,
         instantiation: ((ArtifactInfo) -> ArtifactContext)?
     ): ArtifactContext {
-        return super.copy(repositoryDetail) { artifactInfo ->
+        return super.copy(repositoryDetail, artifactInfoAttrMap) { artifactInfo ->
             this::class.primaryConstructor!!.call(
-                repositoryDetail, artifactInfo, artifacts, this.userId, useDisposition
+                repositoryDetail, artifactInfo, artifacts, this.userId, useDisposition, false, true, false
             )
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun getInterceptors(): List<DownloadInterceptor<*, NodeDetail>> {
+    fun getNodeInterceptors(): List<DownloadInterceptor<*, NodeDetail>> {
         return DownloadInterceptorFactory.buildInterceptors(repo.configuration.settings)
     }
 
@@ -78,4 +80,7 @@ open class ArtifactDownloadContext(
         return listOf(DownloadInterceptorFactory.buildPackageInterceptor(DownloadInterceptorType.PACKAGE_FORBID)!!)
     }
 
+    fun getFullPathInterceptors(): List<DownloadInterceptor<*, String>> {
+        return DownloadInterceptorFactory.buildInterceptors(repo.configuration.settings)
+    }
 }

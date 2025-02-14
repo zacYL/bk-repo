@@ -32,8 +32,18 @@
 package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.api.util.StreamUtils.readText
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.manager.StorageManager
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
+import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
+import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.metadata.service.node.NodeSearchService
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.packages.PackageService
@@ -41,15 +51,23 @@ import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.INTEGRITY_HSP
+import com.tencent.bkrepo.npm.constants.MODIFIED
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
+import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
+import com.tencent.bkrepo.npm.constants.PACKAGE_JSON
+import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.constants.RESOLVED_HSP
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmRepoNotFoundException
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.properties.NpmProperties
+import com.tencent.bkrepo.npm.utils.NpmStreamUtils.toArtifactStream
 import com.tencent.bkrepo.npm.utils.NpmUtils
+import com.tencent.bkrepo.npm.utils.TimeUtil
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -58,7 +76,7 @@ import java.io.InputStream
 
 // LateinitUsage: 抽象类中使用构造器注入会造成不便
 @Suppress("LateinitUsage")
-open class AbstractNpmService {
+open class AbstractNpmService : ArtifactService() {
 
 	@Autowired
 	lateinit var nodeService: NodeService
@@ -74,6 +92,12 @@ open class AbstractNpmService {
 
 	@Autowired
 	lateinit var npmProperties: NpmProperties
+
+	@Autowired
+	lateinit var storageManager: StorageManager
+
+	@Autowired
+	lateinit var artifactResourceWriter: ArtifactResourceWriter
 
 	/**
 	 * 查询仓库是否存在
@@ -107,19 +131,43 @@ open class AbstractNpmService {
 		return packageSummary.historyVersion.contains(version)
 	}
 
+	fun queryPackageInfo(artifactInfo: NpmArtifactInfo) {
+		val context = ArtifactQueryContext()
+		context.putAttribute(NPM_FILE_FULL_PATH, NpmUtils.getPackageMetadataPath(artifactInfo.packageName))
+		context.putAttribute(REQUEST_URI, artifactInfo.packageName)
+		val artifactStream = (repository.query(context) as ArtifactInputStream?)?.let {
+			if (!showDefaultTarball()) {
+				it.readText().replace(tarballRegex) { matchRes ->
+					val originTarball = matchRes.groupValues[1]
+					val newTarball = NpmUtils.buildPackageTgzTarball(
+						originTarball, npmProperties.domain, npmProperties.tarball.prefix, npmProperties.returnRepoId,
+						artifactInfo.packageName, artifactInfo
+					)
+					matchRes.value.replace(originTarball, newTarball)
+				}.toArtifactStream()
+			} else it
+		} ?: throw NpmArtifactNotFoundException("document not found")
+		val artifactResource = ArtifactResource(
+			inputStream = artifactStream,
+			artifactName = PACKAGE_JSON,
+			srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+		)
+		artifactResourceWriter.write(artifactResource)
+	}
+
 	/**
 	 * query package metadata
 	 */
 	fun queryPackageInfo(
 		artifactInfo: NpmArtifactInfo,
 		name: String,
-		showCustomTarball: Boolean = true
+		showCustomTarball: Boolean
 	): NpmPackageMetaData {
 		val packageFullPath = NpmUtils.getPackageMetadataPath(name)
 		val context = ArtifactQueryContext()
 		context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
-		val inputStream =
-			ArtifactContextHolder.getRepository().query(context) as? InputStream
+		context.putAttribute(REQUEST_URI, name)
+		val inputStream = repository.query(context) as? InputStream
 				?: throw NpmArtifactNotFoundException("document not found")
 		val packageMetaData = inputStream.use { JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java) }
 		if (showCustomTarball && !showDefaultTarball()) {
@@ -166,7 +214,89 @@ open class AbstractNpmService {
 		versionMetadata.dist!!.set(RESOLVED_HSP, hspTarball)
 	}
 
+	private fun checkAndCompletePackageMetadata(
+		artifactInfo: NpmArtifactInfo,
+		packageMetaData: NpmPackageMetaData,
+		versionsInPackageMetadata: Set<String>,
+		upload: Boolean
+	) {
+		val name = packageMetaData.name.orEmpty()
+		val existVersions = queryExistVersion(artifactInfo.projectId, artifactInfo.repoName, name)
+		val missingVersions = (existVersions - versionsInPackageMetadata).takeUnless { it.isEmpty() } ?: return
+
+		missingVersions.forEach {
+			val versionMetaData = queryVersionMetadata(artifactInfo, name, it) ?: return@forEach
+			modifyPackageMetadata(packageMetaData, versionMetaData, it)
+			logger.info("complete package.json of [$name]: add metadata of version [$it] when query package info")
+		}
+		if (upload) {
+			uploadPackageMetadata(packageMetaData)
+		}
+	}
+
+	protected fun modifyPackageMetadata(
+		packageMetadata: NpmPackageMetaData,
+		versionMetadata: NpmVersionMetadata,
+		version: String = versionMetadata.version.orEmpty()
+	) {
+		val time = TimeUtil.getGMTTime()
+		packageMetadata.versions.map[version] = versionMetadata
+		packageMetadata.time.add(MODIFIED, time)
+		packageMetadata.time.add(version, time)
+	}
+
+	protected fun uploadPackageMetadata(packageInfo: NpmPackageMetaData) {
+		val name = packageInfo.name.orEmpty()
+		val artifactFile = JsonUtils.objectMapper.writeValueAsBytes(packageInfo).inputStream()
+			.use { ArtifactFileFactory.build(it) }
+		val context = ArtifactUploadContext(artifactFile)
+		val fullPath = String.format(NPM_PKG_METADATA_FULL_PATH, name)
+		context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
+		repository.upload(context)
+	}
+
+	protected fun queryVersionMetadata(
+		artifactInfo: NpmArtifactInfo,
+		name: String,
+		version: String
+	): NpmVersionMetadata? {
+		val versionMetadataPath = NpmUtils.getVersionPackageMetadataPath(name, version)
+        val node = nodeService.getNodeDetail(
+            ArtifactInfo(
+                artifactInfo.projectId,
+                artifactInfo.repoName,
+                versionMetadataPath
+            )
+        )
+		return storageManager.loadArtifactInputStream(node, null)?.use {
+			JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
+		}
+	}
+
+	private fun queryExistVersion(projectId: String, repoName: String, packageName: String): List<String> {
+		val metadataPath = NpmUtils.getPackageMetadataPath(packageName).removeSuffix("/package.json")
+		val versionMetadataNodes = queryNodes(projectId, repoName, metadataPath)
+		return versionMetadataNodes.filterNot { it.name == "package.json" }
+			.map { NpmUtils.analyseVersionFromVersionMetadataName(it.name, packageName) }
+	}
+
+	private fun queryNodes(projectId: String, repoName: String, fullPath: String): List<NodeDetail> {
+		val nodes = mutableListOf<NodeDetail>()
+		val option = NodeListOption(
+			pageNumber = 1,
+			pageSize = 1000,
+			includeFolder = false
+		)
+		while (true) {
+			val records = nodeService.listNodePage(ArtifactInfo(projectId, repoName, fullPath), option).records
+				.takeUnless { it.isEmpty() } ?: return nodes
+			option.pageNumber ++
+			nodes.addAll(records.map { NodeDetail(it) })
+		}
+	}
+
 	companion object {
 		val logger: Logger = LoggerFactory.getLogger(AbstractNpmService::class.java)
+		private val tarballRegex = Regex("\"tarball\"\\s?:\\s?\"(.+?)\"")
 	}
 }

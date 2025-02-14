@@ -55,4 +55,6 @@ data class ReplicaTaskUpdateRequest(
     val record: Boolean = true,
     @ApiModelProperty("分发日志保留天数", required = true)
     val recordReserveDays: Long = 30,
+    @ApiModelProperty("不记录制品的分发记录", required = true)
+    val notRecord: Boolean = true,
 )

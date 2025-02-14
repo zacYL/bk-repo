@@ -50,9 +50,10 @@ data class NodeInfo(
     val lastModifiedBy: String,
     @ApiModelProperty("修改时间")
     val lastModifiedDate: String,
+    @ApiModelProperty("最近使用时间")
+    val recentlyUseDate: String? = null,
     @ApiModelProperty("访问时间")
     val lastAccessDate: String? = null,
-
     @ApiModelProperty("是否为文件夹")
     val folder: Boolean,
     @ApiModelProperty("路径")

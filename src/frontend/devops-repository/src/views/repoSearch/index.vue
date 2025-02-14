@@ -1,33 +1,28 @@
 <template>
     <div class="repo-search-container" v-bkloading="{ isLoading }">
         <div class="repo-search-tools flex-column">
-            <div class="name-tool flex-center">
-                <type-select :repo-list="repoEnum" :repo-type="repoType" @change="changeRepoType"></type-select>
-                <bk-input
-                    v-focus
-                    style="width:390px"
-                    v-model.trim="packageName"
-                    size="large"
-                    :placeholder="$t('pleaseInput') + $t('space') + $t('packageName')"
-                    @enter="changePackageName()">
-                </bk-input>
-                <i class="name-search devops-icon icon-search flex-center" @click="changePackageName()"></i>
+            <div class="flex-align-center">
+                <type-select
+                    :repo-list="repoEnum"
+                    :repo-type="repoType"
+                    :artifact-original-list="artifactOriginalList"
+                    @change="changeRepoType"
+                    @search-artifact="onSearchArtifact">
+                </type-select>
             </div>
-            <div class="mt20 flex-between-center" style="align-items:flex-end;">
-                <div class="result-count flex-align-center">
-                </div>
-                <div v-if="resultList.length !== 0 || repoList[0].children.length !== 0" class="sort-tool flex-align-center">
+            <div v-if="resultList.length" class="mt10 flex-end-center" style="align-items:flex-end;">
+                <div class="sort-tool flex-align-center">
                     <bk-select
-                        style="width:220px;"
+                        style="width:200px;"
                         v-model="property"
                         :clearable="false"
                         @change="changeSortType">
                         <bk-option id="name" :name="$t('nameSorting')"></bk-option>
                         <bk-option id="lastModifiedDate" :name="$t('lastModifiedTimeSorting')"></bk-option>
-                        <bk-option id="createdDate" :name="$t('creatTimeSorting')"></bk-option>
-                        <bk-option id="downloads" :name="$t('downloadSorting')"></bk-option>
+                        <bk-option id="createdDate" :name="$t('createTimeSorting')"></bk-option>
+                        <bk-option v-if="repoType !== 'generic'" id="downloads" :name="$t('downloadSorting')"></bk-option>
                     </bk-select>
-                    <bk-popover :content="focusContent + ' ' + `${direction === 'ASC' ? $t('desc') : $t('asc')}`" placement="top">
+                    <bk-popover :content="$t('toggle') + $t('space') + `${direction === 'ASC' ? $t('desc') : $t('asc')}`" placement="top">
                         <div class="ml10 sort-order flex-center" @click="changeDirection">
                             <Icon :name="`order-${direction.toLowerCase()}`" size="16"></Icon>
                         </div>
@@ -36,27 +31,12 @@
             </div>
         </div>
         <main class="repo-search-result flex-align-center">
-            <template v-if="resultList.length !== 0 || repoList[0].children.length !== 0">
-                <repo-tree
-                    class="repo-tree"
-                    ref="dialogTree"
-                    :tree="repoList"
-                    :open-list="openList"
-                    :selected-node="selectedNode"
-                    @icon-click="iconClickHandler"
-                    @item-click="itemClickHandler">
-                    <template #icon><span></span></template>
-                    <template #text="{ item: { name } }">
-                        <div class="flex-1 flex-between-center">
-                            <span class="text-overflow" :title="name.length > 19 ? name : ''">{{ name }}</span>
-                        </div>
-                    </template>
-                </repo-tree>
+            <template v-if="resultList.length">
                 <infinite-scroll
                     ref="infiniteScroll"
                     class="package-list flex-1"
                     :is-loading="isLoading"
-                    :has-next="hasNext"
+                    :has-next="hasNextData"
                     @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
                     <package-card
                         class="mb10"
@@ -64,31 +44,49 @@
                         :key="pkg.repoName + (pkg.key || pkg.fullPath)"
                         :card-data="pkg"
                         readonly
+                        :show-search-version-list="((pkg.matchedVersions || []).length > 0 && repoType !== 'generic') ? true : false"
                         @show-detail="showDetail"
                         @share="handlerShare"
-                        @click.native="showCommonPackageDetail(pkg)">
+                        @click.native="showDependDetail(pkg)">
                     </package-card>
                 </infinite-scroll>
             </template>
             <empty-data v-else :is-loading="isLoading" class="flex-1" ex-style="align-self:start;margin-top:130px;"></empty-data>
         </main>
+        <!-- 依赖源仓库通过 projectId  repoName key 来唯一确定一个包-->
+        <!--  :key="commonPackageInfo.projectId + commonPackageInfo.repoName + commonPackageInfo.key" -->
+        <searchDependDetail
+            v-if="(commonPackageInfo.matchedVersions || []).length"
+            ref="searchDependDetailRef"
+            :info="commonPackageInfo"
+            :version-list="commonPackageInfo.matchedVersions"
+            @detail="(version) => showCommonPackageDetail(commonPackageInfo,version)">
+        </searchDependDetail>
         <generic-detail ref="genericDetail"></generic-detail>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
     </div>
 </template>
 <script>
-    import repoTree from '@repository/components/RepoTree'
     import packageCard from '@repository/components/PackageCard'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
     import genericShareDialog from '@repository/views/repoGeneric/genericShareDialog'
     import typeSelect from '@repository/views/repoSearch/typeSelect'
+    import searchDependDetail from '@repository/components/searchDependDetail'
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     import { repoEnum } from '@repository/store/publicEnum'
+    import { cloneDeep, isEmpty } from 'lodash'
     export default {
         name: 'repoSearch',
-        components: { repoTree, packageCard, InfiniteScroll, typeSelect, genericDetail, genericShareDialog },
+        components: {
+            packageCard,
+            InfiniteScroll,
+            typeSelect,
+            genericDetail,
+            genericShareDialog,
+            searchDependDetail
+        },
         directives: {
             focus: {
                 inserted (el) {
@@ -100,100 +98,62 @@
             return {
                 repoEnum,
                 isLoading: false,
-                property: this.$route.query.property || 'lastModifiedDate',
+                property: '',
                 direction: this.$route.query.direction || 'DESC',
                 packageName: this.$route.query.packageName || '',
                 repoType: this.$route.query.repoType || 'generic',
-                repoList: [{
-                    name: this.$t('total'),
-                    roadMap: '0',
-                    children: []
-                }],
-                selectedNode: {},
-                openList: [],
                 repoName: this.$route.query.repoName || '',
                 pagination: {
                     current: 1,
-                    limit: 20,
-                    count: 0
+                    limit: 20
                 },
                 resultList: [],
-                hasNext: true,
-                focusContent: this.$t('toggle'),
-                repoNames: [],
-                init: false
+                searchArtifactParams: {},
+                // 根据制品类型获取到的仓库列表集合
+                artifactOriginalList: [],
+                // 是否滚动加载下一页
+                hasNextData: false,
+                commonPackageInfo: {}
             }
         },
         computed: {
             ...mapState(['userList']),
             projectId () {
                 return this.$route.params.projectId
-            },
-            isSearching () {
-                const { packageName, repoType, repoName } = this.$route.query
-                return Boolean(packageName || repoType || repoName)
             }
         },
         created () {
-            // 更新程度：类型 》 包名 》 树/排序 》 滚动加载
-            this.changeRepoType(this.repoType)
+            // 默认请求获取当前类型的仓库数据，否则会导致刷新时不会请求，进而导致下拉仓库数据无法回显
+            this.getRepoSearchArtifactList()
+            // 因为支持复制浏览器URL重新打开时保留筛选条件，所以需要考虑generic仓库中url中带了下载量排序参数的情况，如果带了下载量，直接修改为按照最后修改时间排序
+            this.property = this.$route.query.repoType === 'generic'
+                ? (this.$route.query.property === 'downloads' ? 'lastModifiedDate' : this.$route.query.property || 'lastModifiedDate')
+                : (this.$route.query.property || 'lastModifiedDate')
         },
         methods: {
             formatDate,
-            ...mapActions(['searchPackageList', 'searchRepoList']),
-            refreshRoute () {
-                this.$router.replace({
-                    query: {
-                        repoType: this.repoType,
-                        repoName: this.repoName,
-                        packageName: this.packageName,
-                        property: this.property,
-                        direction: this.direction
-                    }
-                })
-            },
-            searchRepoHandler () {
-                this.searchRepoList({
-                    projectId: this.projectId,
-                    repoType: this.repoType,
-                    packageName: this.packageName || ''
-                }).then(([item]) => {
-                    this.repoList = [{
-                        name: this.$t('total'),
-                        roadMap: '0',
-                        children: item.repos.map((child, i) => {
-                            return {
-                                name: this.replaceRepoName(child.repoName),
-                                repoName: child.repoName,
-                                roadMap: '0,' + i,
-                                leaf: true,
-                                sum: child.packages || child.nodes
-                            }
-                        }),
-                        sum: item.sum
-                    }]
-                })
-            },
+            ...mapActions(['searchPackageList', 'getRepoListAll']),
             searckPackageHandler (scrollLoad) {
                 if (this.isLoading) return
                 this.isLoading = !scrollLoad
-                this.hasNext = true
                 this.searchPackageList({
                     projectId: this.projectId,
                     repoType: this.repoType,
                     repoName: this.repoName,
-                    repoNames: this.repoNames,
-                    packageName: this.packageName,
+                    packageName: this.searchArtifactParams.name,
                     property: this.property,
                     direction: this.direction,
                     current: this.pagination.current,
-                    limit: this.pagination.limit
-                }).then(({ records, totalRecords }) => {
-                    this.pagination.count = totalRecords
-                    if (records.length < this.pagination.limit) {
-                        this.hasNext = false
-                    }
+                    limit: this.pagination.limit,
+                    version: this.searchArtifactParams.version,
+                    md5: this.searchArtifactParams.md5,
+                    sha256: this.searchArtifactParams.sha256,
+                    metadataList: this.searchArtifactParams.metadataList,
+                    artifactList: this.searchArtifactParams.artifactList
+                }).then(({ records }) => {
                     scrollLoad ? this.resultList.push(...records) : (this.resultList = records)
+                    // 后端接口返回的数组数量是否大于等于当前页码，如果大于等于，表示可能还有下一页，需要支持加载下一页
+                    this.hasNextData = records?.length >= this.pagination.limit
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -201,15 +161,44 @@
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, scrollLoad = false) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.changeQuery(scrollLoad)
+                this.searckPackageHandler(scrollLoad)
+                !scrollLoad && this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
+                if (!isEmpty(this.searchArtifactParams)) {
+                    const urlParams = cloneDeep(this.searchArtifactParams)
+                    // 元数据需要转化后才能显示到url中，例如 metadataProperties[key] = value & metadataProperties[111] = 222
+                    if (urlParams.metadataList?.length > 0) {
+                        urlParams.metadataList.forEach((metadata) => {
+                            urlParams[`metadataProperties[${metadata.key}]`] = metadata.value
+                        })
+                        delete urlParams.metadataList
+                    }
+                    // 选择的仓库列表处理，例如artifactProperties[0] = test & artifactProperties[1] = test2
+                    if (urlParams.artifactList?.length > 0) {
+                        urlParams.artifactList.forEach((artifact, index) => {
+                            urlParams[`artifactProperties[${index}]`] = artifact
+                        })
+                        delete urlParams.artifactList
+                    }
+                    this.$router.replace({
+                        query: {
+                            repoType: this.repoType,
+                            property: this.property,
+                            direction: this.direction,
+                            ...urlParams
+                        }
+                    })
+                }
+            },
+            // 搜索制品
+            onSearchArtifact (params) {
+                this.searchArtifactParams = params
+                this.handlerPaginationChange()
             },
             changeSortType () {
-                this.refreshRoute()
                 this.handlerPaginationChange()
             },
             changeDirection () {
                 this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'
-                this.refreshRoute()
                 this.handlerPaginationChange()
             },
             changeRepoType (repoType) {
@@ -218,55 +207,80 @@
                     this.packageName = ''
                     this.repoType = repoType
                 }
-                this.changePackageName()
-            },
-            changePackageName () {
-                this.searchRepoHandler()
-                this.itemClickHandler(this.repoList[0]) // 重置树
-            },
-            iconClickHandler (node) {
-                const openList = this.openList
-                if (openList.includes(node.roadMap)) {
-                    openList.splice(0, openList.length, ...openList.filter(v => v !== node.roadMap))
-                } else {
-                    openList.push(node.roadMap)
-                }
-            },
-            itemClickHandler (node) {
-                this.selectedNode = node
-                this.openList.push(node.roadMap)
-
-                this.repoName = node.repoName
-
-                this.refreshRoute()
+                // 改变制品类型之后需要把搜索相关的参数重置为空，否则会保留之前的搜索参数，导致结果有误
+                this.searchArtifactParams = {}
+                this.getRepoSearchArtifactList()
                 this.handlerPaginationChange()
             },
-            showCommonPackageDetail (pkg) {
+            // 获取仓库下拉选择框原始数据，不分页
+            getRepoSearchArtifactList () {
+                this.getRepoListAll({ projectId: this.projectId, type: this.repoType, searchFlag: true }).then((res) => {
+                    this.artifactOriginalList = res
+                })
+            },
+            // 点击版本详情页，generic仓库直接进入详情页，依赖源仓库在搜索结果和当前包总版本数不一致时需要特殊处理
+            showDependDetail (pkg) {
                 if (pkg.fullPath) {
                     // generic
-                    this.$router.push({
-                        name: 'repoGeneric',
-                        params: {
-                            projectId: pkg.projectId
-                        },
-                        query: {
-                            repoName: pkg.repoName,
-                            path: pkg.fullPath
-                        }
-                    })
+                    this.showGenericDetail(pkg)
                 } else {
-                    this.$router.push({
-                        name: 'commonPackage',
-                        params: {
-                            projectId: pkg.projectId,
-                            repoType: pkg.type.toLowerCase()
-                        },
-                        query: {
-                            repoName: pkg.repoName,
-                            packageKey: pkg.key
+                    // 依赖源仓库
+                    if ((isEmpty(this.searchArtifactParams?.name)
+                        && isEmpty(this.searchArtifactParams?.version)
+                        && isEmpty(this.searchArtifactParams?.md5)
+                        && isEmpty(this.searchArtifactParams?.sha256)
+                        && !this.searchArtifactParams?.metadataList?.length)
+                        || (pkg.versions === pkg.matchedVersions?.length)
+                        || !pkg.matchedVersions?.length) {
+                        // 此时表明不是搜索状态下或当前包下的所有版本都符合搜索条件或者后端没有返回匹配到的版本列表这个字段
+                        this.showCommonPackageDetail(pkg)
+                    } else {
+                        this.commonPackageInfo = pkg
+                        if (pkg.matchedVersions?.length === 1) {
+                            // 此时表明搜索结果只有一个，此时也不需要在打开版本详情快照,直接进入版本详情即可，携带当前搜索的版本号
+                            this.showCommonPackageDetail(this.commonPackageInfo, pkg.matchedVersions[0])
+                        } else {
+                            this.$nextTick(() => {
+                                this.$refs.searchDependDetailRef && (this.$refs.searchDependDetailRef.show = true)
+                            })
                         }
-                    })
+                    }
                 }
+            },
+            showGenericDetail (pkg) {
+                // generic
+                this.$router.push({
+                    name: 'repoGeneric',
+                    params: {
+                        projectId: pkg.projectId
+                    },
+                    query: {
+                        repoName: pkg.repoName,
+                        path: pkg.fullPath
+                    }
+                })
+            },
+            showCommonPackageDetail (pkg, version) {
+                // 依赖源仓库进入制品详情需要知道仓库类型(远程、本地、组合)，根据仓库类型限制操作
+                this.artifactOriginalList?.forEach((item) => {
+                    if (item.name === pkg.repoName) {
+                        pkg.repoCategory = item.category || ''
+                    }
+                })
+                this.$router.push({
+                    name: 'commonPackage',
+                    params: {
+                        projectId: pkg.projectId,
+                        repoType: pkg.type.toLowerCase()
+                    },
+                    query: {
+                        repoName: pkg.repoName,
+                        packageKey: pkg.key,
+                        storeType: pkg.repoCategory?.toLowerCase() || '',
+                        // 只有搜索后选择的版本号存在时才需要在版本详情页回显相关参数
+                        ...(version ? { version, searchFlag: true } : '')
+                    }
+                })
             },
             showDetail (pkg) {
                 this.$refs.genericDetail.setData({
@@ -292,27 +306,6 @@
                     permits: '',
                     time: 7
                 })
-            },
-            // ci模式下generic的查询repoName的NIN条件会和repoType的In组装条件会异常（更改为传递查询repoName，去掉repoType传递）
-            changeQuery (scrollLoad) {
-                if (this.repoType === 'generic' && MODE_CONFIG === 'ci' && !this.init) {
-                    this.searchRepoList({
-                        projectId: this.projectId,
-                        repoType: this.repoType,
-                        packageName: this.packageName || ''
-                    }).then(([item]) => {
-                        item.repos.forEach(item => {
-                            this.repoNames.push(item.repoName)
-                        })
-                        this.init = true
-                        this.searckPackageHandler(scrollLoad)
-                        !scrollLoad && this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
-                    })
-                } else {
-                    this.init = true
-                    this.searckPackageHandler(scrollLoad)
-                    !scrollLoad && this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
-                }
             }
         }
     }
@@ -326,29 +319,6 @@
         padding: 20px 20px 10px;
         z-index: 1;
         background-color: white;
-        border-bottom: 1px solid var(--borderColor);
-        .name-tool {
-            height: 48px;
-            ::v-deep .bk-input-large {
-                border-radius: 0;
-                height: 48px;
-                line-height: 48px;
-            }
-            .name-search {
-                width: 81px;
-                height: 100%;
-                margin-left: -1px;
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-                background-color: var(--primaryColor);
-                border-radius: 0 2px 2px 0;
-                cursor: pointer;
-            }
-        }
-        .result-count {
-            color: var(--fontSubsidiaryColor);
-        }
         .sort-tool {
             color: var(--fontSubsidiaryColor);
             .sort-order {
@@ -367,12 +337,6 @@
     }
     .repo-search-result {
         height: calc(100% - 130px);
-        .repo-tree {
-            width: 200px;
-            height: 100%;
-            overflow: auto;
-            border-right: 1px solid var(--borderColor);
-        }
         .package-list {
             padding: 10px 20px 0;
         }

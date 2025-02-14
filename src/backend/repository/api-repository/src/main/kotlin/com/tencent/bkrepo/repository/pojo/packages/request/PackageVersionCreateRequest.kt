@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.repository.pojo.packages.request
 
+import com.tencent.bkrepo.repository.pojo.ServiceRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import io.swagger.annotations.ApiModelProperty
@@ -76,5 +77,7 @@ data class PackageVersionCreateRequest(
     @ApiModelProperty("创建人")
     val createdBy: String,
     @ApiModelProperty("同版本是否包含多个制品")
-    val multiArtifact: Boolean = false
-)
+    val multiArtifact: Boolean = false,
+    @ApiModelProperty("操作用户")
+    override val operator: String = createdBy
+) : ServiceRequest

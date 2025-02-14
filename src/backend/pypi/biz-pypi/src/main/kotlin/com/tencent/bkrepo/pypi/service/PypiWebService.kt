@@ -39,9 +39,9 @@ import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.packages.PackageService
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.metadata.util.version.SemVersion
 import com.tencent.bkrepo.common.metadata.util.version.SemVersionParser
 import com.tencent.bkrepo.common.security.permission.Permission
@@ -120,7 +120,9 @@ class PypiWebService(
         tags = packageVersion?.tags ?: emptyList(),
         extension = packageVersion?.extension ?: emptyMap(),
         contentPath = it.fullPath,
-        clusterNames = it.clusterNames
+        clusterNames = it.clusterNames,
+        recentlyUseDate = it.recentlyUseDate?.let { LocalDateTime.parse(it) },
+        ordinal = packageVersion?.ordinal ?: 0
     )
 
     /**

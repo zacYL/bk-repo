@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: pypi Service
+server:
+  port: __BK_REPO_PYPI_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: pypi
+pypi:
+  domain: ${cluster.self.url}/pypi

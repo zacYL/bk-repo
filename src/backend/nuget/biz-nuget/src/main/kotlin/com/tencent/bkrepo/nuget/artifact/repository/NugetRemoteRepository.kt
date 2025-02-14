@@ -31,23 +31,33 @@
 
 package com.tencent.bkrepo.nuget.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_JSON_WITHOUT_CHARSET
 import com.tencent.bkrepo.common.api.constant.StringPool.UTF_8
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
+import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.stream.Range
+import com.tencent.bkrepo.common.artifact.stream.artifactStream
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
 import com.tencent.bkrepo.nuget.common.NugetRemoteAndVirtualCommon
 import com.tencent.bkrepo.nuget.constant.CACHE_CONTEXT
 import com.tencent.bkrepo.nuget.constant.MANIFEST
+import com.tencent.bkrepo.nuget.constant.METADATA
 import com.tencent.bkrepo.nuget.constant.NugetQueryType
 import com.tencent.bkrepo.nuget.constant.PACKAGE_BASE_ADDRESS
 import com.tencent.bkrepo.nuget.constant.PACKAGE_NAME
@@ -55,17 +65,27 @@ import com.tencent.bkrepo.nuget.constant.QUERY_TYPE
 import com.tencent.bkrepo.nuget.constant.REGISTRATION_PATH
 import com.tencent.bkrepo.nuget.constant.REMOTE_URL
 import com.tencent.bkrepo.nuget.exception.NugetFeedNotFoundException
+import com.tencent.bkrepo.nuget.handler.NugetPackageHandler
+import com.tencent.bkrepo.nuget.pojo.artifact.NugetDeleteArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDownloadArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetRegistrationArtifactInfo
+import com.tencent.bkrepo.nuget.pojo.nuspec.NuspecMetadata
 import com.tencent.bkrepo.nuget.pojo.response.VersionListResponse
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.feed.Feed
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.feed.Resource
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.index.RegistrationIndex
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.leaf.RegistrationLeaf
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.page.RegistrationPage
+import com.tencent.bkrepo.nuget.service.NugetOperationService
+import com.tencent.bkrepo.nuget.util.DecompressUtil.resolverNuspec
 import com.tencent.bkrepo.nuget.util.NugetUtils
 import com.tencent.bkrepo.nuget.util.NugetUtils.getServiceIndexFullPath
 import com.tencent.bkrepo.nuget.util.RemoteRegistrationUtils
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -76,7 +96,9 @@ import java.net.URLEncoder
 @Suppress("TooManyFunctions")
 @Component
 class NugetRemoteRepository(
-    private val commonUtils: NugetRemoteAndVirtualCommon
+    private val nugetPackageHandler: NugetPackageHandler,
+    private val commonUtils: NugetRemoteAndVirtualCommon,
+    private val nugetOperationService: NugetOperationService
 ) : RemoteRepository() {
 
     override fun query(context: ArtifactQueryContext): Any? {
@@ -99,8 +121,17 @@ class NugetRemoteRepository(
         }
     }
 
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        return nugetOperationService.packageVersion(context)
+    }
+
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        downloadIntercept(context, null)
         val nugetArtifactInfo = context.artifactInfo as NugetDownloadArtifactInfo
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, nugetArtifactInfo.getArtifactFullPath()) }
+        }
         val feedContext = ArtifactQueryContext(context.repositoryDetail, nugetArtifactInfo)
         val packageBaseAddress = getResourceId(PACKAGE_BASE_ADDRESS, feedContext)
         val packageName = nugetArtifactInfo.getArtifactName()
@@ -113,6 +144,68 @@ class NugetRemoteRepository(
         val downloadUrl = UrlFormatter.format(packageBaseAddress, uri)
         context.putAttribute(REMOTE_URL, downloadUrl)
         return super.onDownload(context)
+    }
+
+    override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
+        val artifactFile = createTempFile(response.body!!)
+        val size = artifactFile.getSize()
+        if ((context.artifactInfo as NugetDownloadArtifactInfo).type != MANIFEST) {
+            context.putAttribute(METADATA, artifactFile.getInputStream().resolverNuspec().metadata)
+        }
+        val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
+        val node = cacheArtifactFile(context, artifactFile)
+        return ArtifactResource(
+            artifactStream,
+            context.artifactInfo.getResponseName(),
+            RepositoryIdentify(context.projectId, context.repoName),
+            node,
+            ArtifactChannel.PROXY,
+            context.useDisposition
+        )
+    }
+
+    override fun onDownloadSuccess(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource,
+        throughput: Throughput
+    ) {
+        val artifactInfo = context.artifactInfo as NugetDownloadArtifactInfo
+        val metadata = context.getAttribute<NuspecMetadata>(METADATA)
+        if (artifactInfo.type != MANIFEST && metadata != null) {
+            nugetPackageHandler.createPackageVersion(
+                context.userId,
+                artifactInfo,
+                metadata,
+                artifactResource.getTotalSize()
+            )
+        }
+        super.onDownloadSuccess(context, artifactResource, throughput)
+    }
+
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource
+    ): PackageDownloadRecord? {
+        with(context.artifactInfo as NugetDownloadArtifactInfo) {
+            return if (type != MANIFEST) {
+                PackageDownloadRecord(projectId, repoName, PackageKeys.ofNuget(packageName), version, context.userId)
+            } else null
+        }
+    }
+
+    override fun remove(context: ArtifactRemoveContext) {
+        with(context.artifactInfo as NugetDeleteArtifactInfo) {
+            if (version.isNotBlank()) {
+                packageService.findVersionByName(projectId, repoName, packageName, version)?.let {
+                    removeVersion(this, it, context.userId)
+                } ?: throw VersionNotFoundException(version)
+            } else {
+                packageService.listAllVersion(projectId, repoName, packageName, VersionListOption())
+                    .takeUnless { it.isEmpty() }
+                    ?.forEach { removeVersion(this, it, context.userId) }
+                    ?: throw PackageNotFoundException(packageName)
+            }
+        }
     }
 
     private fun feed(artifactInfo: NugetArtifactInfo): Feed {
@@ -132,10 +225,11 @@ class NugetRemoteRepository(
 
     override fun onQueryResponse(context: ArtifactQueryContext, response: Response): InputStream? {
         val artifactFile = createTempFile(response.body!!)
+        val inputStream = artifactFile.getInputStream()
         context.getAndRemoveAttribute<ArtifactContext>(CACHE_CONTEXT)?.let {
             cacheArtifactFile(it, artifactFile)
         }
-        return artifactFile.getInputStream()
+        return inputStream
     }
 
     override fun createRemoteDownloadUrl(context: ArtifactContext): String {
@@ -148,8 +242,8 @@ class NugetRemoteRepository(
         // 3、缓存索引文件，然后将文件中的URL改成对应的仓库URL进行返回
         val nugetArtifactInfo = context.artifactInfo as NugetRegistrationArtifactInfo
         val registrationPath = context.getStringAttribute(REGISTRATION_PATH)!!
-        val v2BaseUrl = NugetUtils.getV2Url(nugetArtifactInfo)
-        val v3BaseUrl = NugetUtils.getV3Url(nugetArtifactInfo)
+        val v2BaseUrl = NugetUtils.getV2Url()
+        val v3BaseUrl = NugetUtils.getV3Url()
         val registrationIndex = downloadRemoteRegistrationIndex(
             context, nugetArtifactInfo, registrationPath, v2BaseUrl, v3BaseUrl
         ) ?: return null
@@ -161,8 +255,8 @@ class NugetRemoteRepository(
     private fun registrationPage(context: ArtifactQueryContext): RegistrationPage? {
         val nugetArtifactInfo = context.artifactInfo as NugetRegistrationArtifactInfo
         val registrationPath = context.getStringAttribute(REGISTRATION_PATH)!!
-        val v2BaseUrl = NugetUtils.getV2Url(nugetArtifactInfo)
-        val v3BaseUrl = NugetUtils.getV3Url(nugetArtifactInfo)
+        val v2BaseUrl = NugetUtils.getV2Url()
+        val v3BaseUrl = NugetUtils.getV3Url()
         val registrationPage = downloadRemoteRegistrationPage(
             context, nugetArtifactInfo, registrationPath, v2BaseUrl, v3BaseUrl
         ) ?: return null
@@ -174,8 +268,8 @@ class NugetRemoteRepository(
     private fun registrationLeaf(context: ArtifactQueryContext): RegistrationLeaf? {
         val nugetArtifactInfo = context.artifactInfo as NugetRegistrationArtifactInfo
         val registrationPath = context.getStringAttribute(REGISTRATION_PATH)!!
-        val v2BaseUrl = NugetUtils.getV2Url(nugetArtifactInfo)
-        val v3BaseUrl = NugetUtils.getV3Url(nugetArtifactInfo)
+        val v2BaseUrl = NugetUtils.getV2Url()
+        val v3BaseUrl = NugetUtils.getV3Url()
         val registrationLeaf = downloadRemoteRegistrationLeaf(
             context, nugetArtifactInfo, registrationPath, v2BaseUrl, v3BaseUrl
         ) ?: return null
@@ -188,8 +282,7 @@ class NugetRemoteRepository(
         with(context) {
             val message = "Unable to upload nuget package into a remote repository [$projectId/$repoName]"
             logger.warn(message)
-            // return 400 bad request
-            response.status = HttpStatus.BAD_REQUEST.value
+            super.upload(context)
         }
     }
 
@@ -212,6 +305,7 @@ class NugetRemoteRepository(
             it.getSingleStream().use { inputStream -> JsonUtils.objectMapper.readValue(inputStream, Feed::class.java) }
         } ?: run {
             val requestUrl = context.getRemoteConfiguration().url
+            context.putAttribute(REMOTE_URL, requestUrl)
             logger.info("Query Remote Service Index from [$requestUrl]")
             super.query(context)?.let { JsonUtils.objectMapper.readValue(it as InputStream, Feed::class.java) }
                 ?: throw NugetFeedNotFoundException("query remote feed index.json for [$requestUrl] failed!")
@@ -291,8 +385,8 @@ class NugetRemoteRepository(
             val fullPath = getServiceIndexFullPath(URLEncoder.encode(configuration.url, UTF_8))
             val artifactInfo = ArtifactInfo(projectId, repoName, fullPath)
             return ArtifactDownloadContext(
-                artifact = artifactInfo,
-                repo = repositoryDetail
+                repo = repositoryDetail,
+                artifact = artifactInfo
             )
         }
     }
@@ -321,6 +415,27 @@ class NugetRemoteRepository(
             return false
         }
         return true
+    }
+
+
+    /**
+     * 删除[version] 对应的node节点也会一起删除
+     */
+    private fun removeVersion(artifactInfo: NugetDeleteArtifactInfo, version: PackageVersion, userId: String) {
+        with(artifactInfo) {
+            packageService.deleteVersion(
+                projectId,
+                repoName,
+                packageName,
+                version.name,
+                HttpContextHolder.getClientAddress()
+            )
+            val nugetPath = version.contentPath.orEmpty()
+            if (nugetPath.isNotBlank()) {
+                val request = NodeDeleteRequest(projectId, repoName, nugetPath, userId)
+                nodeService.deleteNode(request)
+            }
+        }
     }
 
     companion object {

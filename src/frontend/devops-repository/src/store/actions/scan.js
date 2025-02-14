@@ -26,6 +26,9 @@ export default {
     },
     // 所有扫描方案
     getScanAll (_, { projectId, type, fileNameExt = null }) {
+        if (!fileNameExt) {
+            fileNameExt = null
+        }
         return Vue.prototype.$ajax.get(
             `${prefix}/plan/all/${projectId}`,
             {
@@ -117,8 +120,24 @@ export default {
         }
         return Vue.prototype.$ajax.get(url)
     },
+    // 删除黑白漏洞名单
+    deleteVul (_, { body }) {
+        return Vue.prototype.$ajax.delete(
+            '/analyst/api/vul/rule/delete',
+            {
+                data: body
+            }
+        )
+    },
+    // 添加黑白漏洞名单
+    addVul (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            '/analyst/api/vul/rule/create',
+            body
+        )
+    },
     // 制品扫描报告漏洞列表
-    getLeakList (_, { projectId, recordId, viewType, vulId, severity, ignored, current = 1, limit = 20 }) {
+    getLeakList (_, { projectId, recordId, viewType, vulId, severity, current = 1, limit = 20 }) {
         let url = `${prefix}/artifact/leak/${projectId}/${recordId}`
         if (viewType === 'TASKVIEW') {
             url = `${prefix}/reports/${recordId}`
@@ -129,7 +148,6 @@ export default {
                 params: {
                     vulId: vulId || undefined,
                     leakType: severity || undefined,
-                    ignored: ignored,
                     pageNumber: current,
                     pageSize: limit
                 }
@@ -167,12 +185,18 @@ export default {
             body
         )
     },
-    // 单个扫描
-    startScanSingle (_, { projectId, id, repoName, version, packageKey, fullPath }) {
-        // return Vue.prototype.$ajax.post(
-        //     `${prefix}/single`,
-        //     body
-        // )
+    /**
+     * 单个制品扫描,此处包含二进制及依赖源仓库的扫描，二进制仓库没有packageKey字段，需要传参为 fullPath
+     * @param {*} _
+     * @param {id}  string
+     * @param {projectId}  string
+     * @param {repoName}  string
+     * @param {packageKey}  string
+     * @param {version}  string
+     * @param {fullPath}  string
+     * @returns
+     */
+    startScanSingle  (_, { id, projectId, repoName, packageKey, version, fullPath }) {
         return Vue.prototype.$ajax.post(
             `${prefix}`,
             {
@@ -244,13 +268,16 @@ export default {
         )
     },
     // 获取扫描器列表
-    getScannerList (_, { packageType = null, scanType = null }) {
+    // 此时如果不传任何参数，直接调用，控制台会报错，所以默认用一个空对象去解构
+    // 此时只需要展示标准扫描器，所以添加了  scannerType = 'standard' 这个参数
+    getScannerList (_, { packageType = null, scanType = null, scannerType = 'standard' } = {}) {
         return Vue.prototype.$ajax.get(
             '/analyst/api/scanners/base',
             {
                 params: {
                     packageType,
-                    scanType
+                    scanType,
+                    scannerType
                 }
             }
         )
@@ -264,9 +291,9 @@ export default {
             console.error(e)
         })
     },
-    // 获取系统支持的所有文件名后缀列表
+    // 获取系统支持的所有包名后缀列表
     refreshSupportPackageTypeList ({ commit }) {
-        Vue.prototype.$ajax.get('/analyst/api/scanners/support/package').then(packageTypeList => {
+        return Vue.prototype.$ajax.get('/analyst/api/scanners/support/package').then(packageTypeList => {
             commit('SET_SCANNER_SUPPORT_PACKAGE_TYPE_LIST', packageTypeList)
         }).catch(e => {
             console.log('get support package type failed')
@@ -274,11 +301,11 @@ export default {
         })
     },
     // 获取质量规则
-    getQualityRule (_, { type, id }) {
+    getQualityRule (_, { id }) {
         return Vue.prototype.$ajax.get(`/analyst/api/scan/quality/${id}`)
     },
     // 更新质量规则
-    saveQualityRule (_, { type, id, body }) {
+    saveQualityRule (_, { id, body }) {
         return Vue.prototype.$ajax.post(`/analyst/api/scan/quality/${id}`, body)
     },
     // 查询任务列表
@@ -342,37 +369,30 @@ export default {
             }
         )
     },
-    // 获取忽略规则
-    getIgnoreRules (_, { projectId, planId, current = 1, limit = 20 }) {
+    // 查询漏洞白名单
+    getCveWhiteList (_, { cveId, current = 1, limit = 20 }) {
         return Vue.prototype.$ajax.get(
-            `analyst/api/project/${projectId}/filter/rules`,
+            'analyst/api/cve_whitelist/page',
             {
                 params: {
-                    planId: planId,
+                    cveId,
                     pageNumber: current,
                     pageSize: limit
                 }
             }
         )
     },
-    // 更新或略规则
-    updateIgnoreRule (_, body) {
+    // 添加漏洞白名单
+    addCveWhite (_, { body }) {
         return Vue.prototype.$ajax.put(
-            `analyst/api/project/${body.projectId}/filter/rules/${body.id}`,
+            'analyst/api/cve_whitelist/batch',
             body
         )
     },
-    // 创建忽略规则
-    createIgnoreRule (_, body) {
-        return Vue.prototype.$ajax.post(
-            `analyst/api/project/${body.projectId}/filter/rules`,
-            body
-        )
-    },
-    // 删除忽略规则
-    deleteIgnoreRule (_, { projectId, ruleId }) {
+    // 删除漏洞白名单
+    deleteCveWhite (_, { cveId }) {
         return Vue.prototype.$ajax.delete(
-            `analyst/api/project/${projectId}/filter/rules/${ruleId}`
+            `analyst/api/cve_whitelist/${cveId}`
         )
     }
 }

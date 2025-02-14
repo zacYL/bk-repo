@@ -1,9 +1,7 @@
-
+import Vue from 'vue'
+import { mapState, mapMutations, mapActions } from 'vuex'
 import ConfirmDialog from '@repository/components/ConfirmDialog'
 import GlobalUploadViewport from '@repository/components/GlobalUploadViewport'
-import { routeBase } from '@repository/utils'
-import Vue from 'vue'
-import { mapMutations, mapState } from 'vuex'
 export default {
     name: 'App',
     components: { ConfirmDialog, GlobalUploadViewport },
@@ -11,11 +9,22 @@ export default {
         ...mapState(['userInfo', 'projectList']),
         projectId () {
             return this.$route.params.projectId
+        },
+        // 获取localStorage中存储的当前项目ID
+        currentStorageProjectId () {
+            return this.projectId || localStorage.getItem('projectId') || undefined
         }
     },
     watch: {
         '$route.fullPath' (val) { // 同步地址到蓝鲸Devops
-            this.$syncUrl?.(val)
+            this.$syncUrl?.(val.replace(/^\/[a-zA-Z0-9]+\//, '/'))
+        },
+        // 当选择的项目ID改变时需要重新调用后端接口获取当前用户在当前项目的操作权限
+        currentStorageProjectId: {
+            handler (value) {
+                value && this.getPermission(value)
+            },
+            immediate: true
         }
     },
     created () {
@@ -39,12 +48,19 @@ export default {
     },
     methods: {
         ...mapMutations(['SET_USER_INFO', 'SET_USER_LIST', 'SET_PROJECT_LIST']),
+        ...mapActions([
+            'getOperationPermission'
+        ]),
         goHome (projectId) {
             const params = projectId ? { projectId } : {}
             this.$router.replace({
-                name: 'repositories',
+                name: 'repoList',
                 params
             })
+        },
+        // 切换或者选择项目之后，需要加载后端权限的接口，用户控制相关操作权限
+        getPermission (projectId) {
+            this.getOperationPermission({ projectId })
         },
         loadDevopsUtils (src) {
             window.Vue = Vue
@@ -53,18 +69,21 @@ export default {
             script.src = src
             document.getElementsByTagName('head')[0].appendChild(script)
             script.onload = () => {
-                this.$syncUrl?.(this.$route.fullPath.replace(routeBase, '/'))
+                this.$syncUrl?.(this.$route.fullPath.replace(/^\/[a-zA-Z0-9]+\//, '/'))
                 this.$changeActiveRoutes?.(this.$route?.meta?.breadcrumb?.map(v => v.name) || [])
                 window.globalVue.$on('change::$currentProjectId', data => { // 蓝鲸Devops选择项目时切换
                     localStorage.setItem('projectId', data.currentProjectId)
+                    this.getPermission(data.currentProjectId)
                     if (this.projectId !== data.currentProjectId) {
                         this.goHome(data.currentProjectId)
                     }
                 })
 
                 window.globalVue.$on('change::$routePath', data => { // 蓝鲸Devops切换路径
-                    console.log('change::$routePath', data)
-                    this.$router.push({ name: data.routePath.englishName, path: data.routePath.path.replace(/^\/[a-z]+/i, routeBase) })
+                    // 制品库内部此时的这个iframe_url为以/ui/结尾的，如修改则需要修改此处判断
+                    if (/\/ui\/$/.test(data.routePath.iframe_url) || data.routePath.isFromGuide) {
+                        this.$router.push({ name: data.routePath.routeEnglishName, path: data.routePath.path.replace(/^\/[a-zA-Z]+/, '/ui') })
+                    }
                 })
 
                 window.globalVue.$on('order::backHome', data => { // 蓝鲸Devops选择项目时切换

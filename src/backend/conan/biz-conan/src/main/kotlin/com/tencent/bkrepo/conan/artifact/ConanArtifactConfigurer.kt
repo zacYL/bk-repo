@@ -29,6 +29,7 @@ package com.tencent.bkrepo.conan.artifact
 
 import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurerSupport
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurityCustomizer
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.artifact.repository.ConanLocalRepository
@@ -45,9 +46,16 @@ class ConanArtifactConfigurer : ArtifactConfigurerSupport() {
     override fun getLocalRepository() = SpringContextUtils.getBean<ConanLocalRepository>()
     override fun getRemoteRepository() = SpringContextUtils.getBean<ConanRemoteRepository>()
     override fun getVirtualRepository() = SpringContextUtils.getBean<ConanVirtualRepository>()
-    override fun getAuthSecurityCustomizer() = HttpAuthSecurityCustomizer { httpAuthSecurity ->
-        httpAuthSecurity.withPrefix("/conan")
-            .excludePattern("/**/v1/ping")
-            .excludePattern("/**/users/authenticate")
+    override fun getAuthSecurityCustomizer() = object : HttpAuthSecurityCustomizer {
+        override fun customize(httpAuthSecurity: HttpAuthSecurity) {
+            val authenticationManager = httpAuthSecurity.authenticationManager!!
+            val jwtAuthProperties = httpAuthSecurity.jwtAuthProperties!!
+            val authLoginHandler = ConanBasicAuthLoginHandler(authenticationManager, jwtAuthProperties)
+
+            httpAuthSecurity.addHttpAuthHandler(authLoginHandler)
+                .withPrefix("/conan")
+                .excludePattern("/**/v1/ping")
+                .excludePattern("/**/users/authenticate")
+        }
     }
 }

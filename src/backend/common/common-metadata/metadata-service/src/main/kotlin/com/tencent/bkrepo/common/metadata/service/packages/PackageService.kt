@@ -113,6 +113,18 @@ interface PackageService {
     ): Page<PackageSummary>
 
     /**
+     * 仓库清理 分页查询package
+     * @param limit 限制返回文档的数量
+     * @param lastPackageKey 上一页最后一个包的key
+     */
+    fun listPackagePage(
+        projectId: String,
+        repoName: String,
+        limit: Int,
+        lastPackageKey: String?
+    ): List<PackageSummary>
+
+    /**
      * 查询所有包名称
      *
      * @param projectId 项目id
@@ -149,6 +161,11 @@ interface PackageService {
         packageKey: String,
         option: VersionListOption
     ): List<PackageVersion>
+
+    /**
+     * 根据条件搜索package version
+     */
+    fun searchVersion(queryModel: QueryModel): Page<PackageVersion>
 
     /**
      * 创建包版本
@@ -201,6 +218,19 @@ interface PackageService {
     fun deleteAllPackage(projectId: String, repoName: String)
 
     /**
+     * 更新包版本的【最近使用时间】
+     * @param projectId 项目id
+     * @param repoName 项目id
+     * @param packageKey 包唯一标识
+     */
+    fun updateRecentlyUseDate(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        versionName: String
+    )
+
+    /**
      * 更新包
      *
      * @param request 包更新请求
@@ -250,4 +280,9 @@ interface PackageService {
      * 查询包数量
      */
     fun getPackageCount(projectId: String, repoName: String): Long
+
+    /**
+     * 查询仓库包版本数量
+     */
+    fun getVersionCount(projectId: String, repoName: String): Long
 }

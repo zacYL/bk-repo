@@ -44,4 +44,5 @@ data class CheckPermissionRequest(
     override var path: String? = null,
     val appId: String? = null,
     var requestSource: String? = null,
+	val department: String? = null
 ) : ResourceBaseRequest(resourceType, projectId, repoName, path)

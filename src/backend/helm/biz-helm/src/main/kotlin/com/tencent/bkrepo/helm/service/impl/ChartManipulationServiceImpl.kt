@@ -39,7 +39,7 @@ import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.helm.constants.CHART
 import com.tencent.bkrepo.helm.constants.FILE_TYPE
@@ -105,7 +105,7 @@ class ChartManipulationServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun deletePackage(userId: String, artifactInfo: HelmDeleteArtifactInfo) {
         logger.info("handling delete chart request: [$artifactInfo]")

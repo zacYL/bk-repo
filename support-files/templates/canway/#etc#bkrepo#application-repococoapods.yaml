@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Cocoapods Service
+  cloud:
+    stream:
+      function:
+        definition: artifactEvent
+      bindings:
+        artifactEvent-in-0:
+          group: cocoapods
+          destination: artifactEvent
+          binder: pulsar
+
+server:
+  port: __BK_REPO_COCOAPODS_PORT__
+logging:
+  level:
+    com.tencent.bkrepo.cocoapods.utils: DEBUG
+  path: ${logging.path-common}/${service.name}
+service:
+  name: cocoapods
+cocoapods:
+  domain: ${cluster.self.url}/cocoapods
+  gitPath: ${storage.filesystem.path}/cocoapods/git

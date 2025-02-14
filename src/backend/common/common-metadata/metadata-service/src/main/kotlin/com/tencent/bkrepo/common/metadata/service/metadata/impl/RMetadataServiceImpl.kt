@@ -34,8 +34,11 @@ package com.tencent.bkrepo.common.metadata.service.metadata.impl
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.path.PathUtils.normalizeFullPath
 import com.tencent.bkrepo.common.metadata.condition.ReactiveCondition
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
@@ -43,6 +46,7 @@ import com.tencent.bkrepo.common.metadata.dao.node.RNodeDao
 import com.tencent.bkrepo.common.metadata.model.TMetadata
 import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.common.metadata.service.metadata.RMetadataService
+import com.tencent.bkrepo.common.metadata.service.node.impl.NodeBaseService
 import com.tencent.bkrepo.common.metadata.util.ClusterUtils
 import com.tencent.bkrepo.common.metadata.util.MetadataUtils
 import com.tencent.bkrepo.common.metadata.util.NodeEventFactory.buildMetadataDeletedEvent
@@ -50,6 +54,8 @@ import com.tencent.bkrepo.common.metadata.util.NodeEventFactory.buildMetadataSav
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import org.slf4j.LoggerFactory
@@ -60,6 +66,7 @@ import org.springframework.data.mongodb.core.query.inValues
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 /**
  * 元数据服务实现类
@@ -69,6 +76,7 @@ import org.springframework.transaction.annotation.Transactional
 @Conditional(ReactiveCondition::class)
 class RMetadataServiceImpl(
     private val nodeDao: RNodeDao,
+    private val nodeBaseService: NodeBaseService,
     private val repositoryProperties: RepositoryProperties,
 ) : RMetadataService {
 
@@ -87,33 +95,49 @@ class RMetadataServiceImpl(
             val node = nodeDao.findNode(projectId, repoName, fullPath)
                 ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, fullPath)
             checkNodeCluster(node)
+            val systemMetadata = nodeMetadata?.filter { it.key in RESERVED_KEY }
+            if (systemMetadata.isNullOrEmpty() &&
+                (node.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true)
+            ) {
+                throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, node.fullPath)
+            }
             val oldMetadata = node.metadata ?: ArrayList()
             val newMetadata = MetadataUtils.compatibleConvertAndCheck(
                 metadata,
                 MetadataUtils.changeSystem(nodeMetadata, repositoryProperties.allowUserAddSystemMetadata)
             )
             checkIfUpdateSystemMetadata(oldMetadata, newMetadata)
+            MetadataUtils.checkEmptyAndLength(newMetadata)
             node.metadata = if (replace) {
                 newMetadata
             } else {
                 MetadataUtils.merge(oldMetadata, newMetadata)
             }
-
-            nodeDao.save(node)
+            if (newMetadata.all { it.key in RESERVED_KEY }) {
+                nodeDao.save(node)
+            } else {
+                val currentTime = LocalDateTime.now()
+                node.lastModifiedBy = operator
+                node.lastModifiedDate = currentTime
+                nodeDao.save(node)
+                // 更新父目录的修改时间
+                val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+                nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
+            }
             publishEvent(buildMetadataSavedEvent(request))
             logger.info("Save metadata[$newMetadata] on node[/$projectId/$repoName$fullPath] success.")
         }
     }
 
     @Transactional(rollbackFor = [Throwable::class])
-    override suspend fun addForbidMetadata(request: MetadataSaveRequest) {
+    override suspend fun addLimitMetadata(request: MetadataSaveRequest, limitType: LimitType) {
         with(request) {
-            val forbidMetadata = MetadataUtils.extractForbidMetadata(nodeMetadata!!)
-            if (forbidMetadata.isNullOrEmpty()) {
-                logger.info("forbidMetadata is empty, skip saving[$request]")
+            val limitMetadata = MetadataUtils.extractLimitMetadata(metadata = nodeMetadata!!, limitType = limitType)
+            if (limitMetadata.isNullOrEmpty()) {
+                logger.info("limitMetadata is empty, skip saving[$request]")
                 return
             }
-            saveMetadata(request.copy(metadata = null, nodeMetadata = forbidMetadata))
+            saveMetadata(request.copy(metadata = null, nodeMetadata = limitMetadata, operator = SYSTEM_USER))
         }
     }
 
@@ -134,13 +158,23 @@ class RMetadataServiceImpl(
                 if (it.key in keyList && it.system && !allowDeleteSystemMetadata) {
                     throw PermissionException("No permission to update system metadata[${it.key}]")
                 }
+                when {
+                    it.key == LOCK_STATUS && it.value == true -> {
+                        throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, fullPath)
+                    }
+                    it.key in keyList -> MetadataUtils.checkPermission(it, operator)
+                }
             }
 
+            val currentTime = LocalDateTime.now()
             val update = Update().pull(
                 TNode::metadata.name,
                 Query.query(where(TMetadata::key).inValues(keyList))
-            )
+            ).set(TNode::lastModifiedDate.name, currentTime).set(TNode::lastModifiedBy.name, operator)
             nodeDao.updateMulti(query, update)
+            // 更新父目录的修改时间
+            val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+            nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
             publishEvent(buildMetadataDeletedEvent(this))
             logger.info("Delete metadata[$keyList] on node[/$projectId/$repoName$fullPath] success.")
         }

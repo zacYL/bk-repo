@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.security.actuator.ActuatorAuthConfiguration
 import com.tencent.bkrepo.common.security.crypto.CryptoConfiguration
 import com.tencent.bkrepo.common.security.exception.SecurityExceptionHandler
 import com.tencent.bkrepo.common.security.http.HttpAuthConfiguration
+import com.tencent.bkrepo.common.security.interceptor.anonymous.AnonymousInterceptorConfiguration
 import com.tencent.bkrepo.common.security.interceptor.devx.DevXAccessInterceptor
 import com.tencent.bkrepo.common.security.interceptor.devx.DevXProperties
 import com.tencent.bkrepo.common.security.manager.AuthenticationManager
@@ -66,7 +67,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
     CryptoConfiguration::class,
     AuthenticationManager::class,
     CIPermissionManager::class,
-    PrincipalManager::class
+    PrincipalManager::class,
+    AnonymousInterceptorConfiguration::class
 )
 @EnableConfigurationProperties(DevXProperties::class, CIPermissionProperties::class)
 class SecurityAutoConfiguration {

@@ -34,10 +34,10 @@ package com.tencent.bkrepo.common.metadata.search.common
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
+import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import org.springframework.data.mongodb.core.query.Query
 
@@ -51,22 +51,59 @@ open class CommonQueryContext(
     private var projectId: String? = null
     var repoList: List<RepositoryInfo>? = null
 
-    fun findProjectId(): String {
-        if (projectId != null) {
-            return projectId!!
-        }
+    fun findProjectId(siblingRule: Rule.QueryRule? = null): String {
         val rule = queryModel.rule
+        if (projectId != null) return projectId!!
         if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) {
-            findProjectIdRule(rule.rules)?.let {
-                return it.value.toString().apply { projectId = this }
-            }
+            findRule(rule.rules, "projectId")?.let { return it.value.toString().apply { projectId = this } }
         }
+        if (siblingRule != null) (find("projectId", siblingRule) as? String)?.let { return it }
         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
     }
 
-    private fun findProjectIdRule(rules: List<Rule>): Rule.QueryRule? {
+    fun findRepoName(): List<String> {
+        val rule = queryModel.rule
+        if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) {
+            findRule(rule.rules, "repoName")?.let {
+                if (it.operation == OperationType.IN && it.value is List<*>) {
+                    return it.value as List<String>
+                } else {
+                    return listOf(it.value.toString())
+                }
+            }
+        }
+        return emptyList()
+    }
+
+    /**
+     * 寻找目标规则的值, 相邻规则不存在时将寻找最近的所在嵌入规则relation为AND的相同field规则
+     *
+     * @param siblingRule: 寻找目标规则时依赖的相邻规则
+     * @param from: 寻找目标规则时所在的嵌入规则
+     */
+    @Suppress("NestedBlockDepth")
+    protected fun find(field: String, siblingRule: Rule.QueryRule, from: Rule.NestedRule? = null): Any? {
+        val rule = from ?: queryModel.rule
+        if (rule !is Rule.NestedRule) return null
+
+        return if (rule.rules.any { it === siblingRule })
+            if (rule.relation == Rule.NestedRule.RelationType.AND)
+                findRule(rule.rules, field)?.value?.toString()
+            else null
+        else {
+            rule.rules.filterIsInstance<Rule.NestedRule>().forEach { subNestedRule ->
+                val result = find(field, siblingRule, subNestedRule)
+                if (result is String || result == null) return result
+                    ?: if (rule.relation == Rule.NestedRule.RelationType.AND)
+                        findRule(rule.rules, field)?.value?.toString()
+                    else null
+            }
+        }
+    }
+
+    protected fun findRule(rules: List<Rule>, field: String): Rule.QueryRule? {
         for (rule in rules) {
-            if (rule is Rule.QueryRule && rule.field == TNode::projectId.name) {
+            if (rule is Rule.QueryRule && rule.field == field) {
                 return rule
             }
         }

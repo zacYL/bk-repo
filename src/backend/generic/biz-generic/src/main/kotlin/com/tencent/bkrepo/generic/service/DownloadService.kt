@@ -105,11 +105,12 @@ class DownloadService(
         }
     }
 
-    fun batchDownload(artifactInfoList: List<GenericArtifactInfo>) {
+    fun batchDownload(artifactInfoList: List<GenericArtifactInfo>, filterAuth: Boolean = true) {
         val context = ArtifactDownloadContext(
+            repo = ArtifactContextHolder.getRepoDetail(),
             artifact = artifactInfoList.first(),
             artifacts = artifactInfoList,
-            repo = ArtifactContextHolder.getRepoDetail()
+            filterAuth = filterAuth
         )
         repository.download(context)
     }
@@ -124,7 +125,7 @@ class DownloadService(
         val context = ArtifactDownloadContext()
         val nodeDetail = nodeService.getNodeDetail(artifactInfo)
             ?: throw NodeNotFoundException(artifactInfo.getArtifactFullPath())
-        context.getInterceptors().forEach { it.intercept(nodeDetail.projectId, nodeDetail) }
+        context.getNodeInterceptors().forEach { it.intercept(nodeDetail.projectId, nodeDetail) }
         return true
     }
 

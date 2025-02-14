@@ -27,22 +27,23 @@
 
 package com.tencent.bkrepo.analyst.service
 
+import com.tencent.bkrepo.analyst.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.analyst.pojo.ScanTask
 import com.tencent.bkrepo.analyst.pojo.request.ArtifactVulnerabilityRequest
 import com.tencent.bkrepo.analyst.pojo.request.FileScanResultDetailRequest
 import com.tencent.bkrepo.analyst.pojo.request.FileScanResultOverviewRequest
-import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.analyst.pojo.request.ScanTaskQuery
 import com.tencent.bkrepo.analyst.pojo.request.SubtaskInfoRequest
 import com.tencent.bkrepo.analyst.pojo.request.scancodetoolkit.ArtifactLicensesDetailRequest
-import com.tencent.bkrepo.analyst.pojo.response.SubtaskResultOverview
 import com.tencent.bkrepo.analyst.pojo.response.ArtifactVulnerabilityInfo
 import com.tencent.bkrepo.analyst.pojo.response.FileLicensesResultDetail
 import com.tencent.bkrepo.analyst.pojo.response.FileLicensesResultOverview
 import com.tencent.bkrepo.analyst.pojo.response.FileScanResultDetail
 import com.tencent.bkrepo.analyst.pojo.response.FileScanResultOverview
 import com.tencent.bkrepo.analyst.pojo.response.SubtaskInfo
+import com.tencent.bkrepo.analyst.pojo.response.SubtaskResultOverview
+import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.query.model.PageLimit
 
 interface ScanTaskService {
     /**
@@ -56,6 +57,7 @@ interface ScanTaskService {
      * 分页获取扫描任务
      */
     fun tasks(scanTaskQuery: ScanTaskQuery, pageLimit: PageLimit): Page<ScanTask>
+
     /**
      * 获取属于某个扫描任务的扫描子任务结果预览
      *
@@ -69,6 +71,11 @@ interface ScanTaskService {
      * 分页获取扫描子任务
      */
     fun subtasks(request: SubtaskInfoRequest): Page<SubtaskInfo>
+
+    /**
+     * 获取使用指定扫描方案扫描过的制品
+     */
+    fun planArtifactSubtasks(projectId: String, planId: String): List<TPlanArtifactLatestSubScanTask>
 
     /**
      * 分页获取使用指定扫描方案扫描过的制品
@@ -131,6 +138,11 @@ interface ScanTaskService {
      * 获取文件扫描报告详情
      */
     fun resultDetail(request: ArtifactLicensesDetailRequest): Page<FileLicensesResultDetail>
+
+    /**
+     * 导出扫描结果详情
+     */
+    fun exportResultDetail(request: ArtifactLicensesDetailRequest)
 
     /**
      * 获取制品扫描结果预览

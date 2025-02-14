@@ -2,29 +2,29 @@
     <div class="scan-report-container">
         <report-overview
             v-if="scanPlan.id"
-            :scan-plan="scanPlan"
             class="mb10"
+            :scan-plan="scanPlan"
             @refreshData="refreshData"
             @refresh="refreshList">
         </report-overview>
         <div class="report-list-header flex-between-center">
-            <span class="report-title flex-align-center">{{ $t('scanHistory') }}</span>
+            <span class="report-title flex-align-center">{{$t('scanHistory')}}</span>
             <div class="flex-align-center">
                 <operation-list class="mr10"
                     :list="Object.keys(viewEnum).map(type => ({ clickEvent: () => viewType = type, label: viewEnum[type] }))">
                     <bk-button theme="default">{{ viewEnum[viewType] }}</bk-button>
                 </operation-list>
-                <bk-button class="ml10" :theme="isfiltering ? 'primary' : 'default'" @click="showFilterForm">{{ $t('filter') }}</bk-button>
+                <bk-button class="ml10" :theme="isfiltering ? 'primary' : 'default'" @click="showFilterForm">{{$t('filter')}}</bk-button>
             </div>
-            <filter-sideslider v-if="scanPlan.id" ref="filterSideslider" :scan-type="scanPlan.type" @filter="filterHandler"></filter-sideslider>
+            <filter-sideslider v-if="scanPlan.id" ref="filterSideslider" :scan-type="scanPlan.planType" @filter="filterHandler"></filter-sideslider>
         </div>
         <div class="report-list flex-align-center" v-bkloading="{ isLoading }">
             <div class="mr20 view-task" v-show="viewType === 'TASKVIEW'">
-                <div class="task-header flex-align-center">{{ $t('taskList') }}</div>
+                <div class="task-header flex-align-center">{{$t('taskList')}}</div>
                 <div class="p20">
                     <bk-input
                         v-model.trim="taskNameSearch"
-                        :placeholder="$t('keySearchPlaceHolder')"
+                        :placeholder="$t('keySearchPlaceholder')"
                         clearable
                         right-icon="bk-icon icon-search"
                         @enter="handlerTaskPaginationChange()"
@@ -50,7 +50,7 @@
                                     class="stop-task flex-align-center"
                                     @click.stop="stopTask(task)">
                                     <Icon class="mr5" name="icon-plus-stop" size="12" />
-                                    <span>{{ $t('suspend') }}</span>
+                                    <span>{{$t('suspend')}}</span>
                                 </span>
                             </div>
                         </div>
@@ -59,11 +59,11 @@
             </div>
             <div class="flex-1">
                 <div v-show="viewType === 'TASKVIEW'" class="mb20 task-overview flex-center">
-                    <div class="overview-key">{{ $t('startTime') }}</div>
+                    <div class="overview-key">{{$t('startTime')}}</div>
                     <div class="overview-value">{{ formatDate(taskSelected.startDateTime) }}</div>
-                    <div class="overview-key">{{ $t('endTime') }}</div>
+                    <div class="overview-key">{{$t('endTime')}}</div>
                     <div class="overview-value">{{ formatDate(taskSelected.finishedDateTime) }}</div>
-                    <div class="overview-key">{{ $t('scanArtifactNum') }}</div>
+                    <div class="overview-key">{{$t('scanArtifactNum')}}</div>
                     <div class="overview-value">{{ taskSelected.total }}</div>
                 </div>
                 <bk-table
@@ -79,7 +79,11 @@
                     <bk-table-column :label="$t('artifactName')" show-overflow-tooltip>
                         <template #default="{ row }">
                             <span v-if="row.groupId" class="mr5 repo-tag" :data-name="row.groupId"></span>
-                            <span class="hover-btn" :class="{ 'disabled': !['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(row.status) }" @click="showArtiReport(row)">{{ row.name }}</span>
+                            <span class="hover-btn"
+                                :class="{ 'disabled': !['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(row.status) }"
+                                @click="showArtiReport(row)">
+                                {{ row.name }}
+                            </span>
                         </template>
                     </bk-table-column>
                     <bk-table-column :label="$t('artifactVersion') + '/' + $t('storagePath')" show-overflow-tooltip>
@@ -91,13 +95,6 @@
                             <span class="ml5">{{replaceRepoName(row.repoName)}}</span>
                         </template>
                     </bk-table-column>
-                    <!-- <bk-table-column label="质量规则">
-                        <template #default="{ row }">
-                            <span v-if="row.qualityRedLine === true" class="repo-tag SUCCESS">通过</span>
-                            <span v-else-if="row.qualityRedLine === false" class="repo-tag FAILED">不通过</span>
-                            <span v-else>/</span>
-                        </template>
-                    </bk-table-column> -->
                     <bk-table-column v-if="scanPlan.scanTypes.includes(SCAN_TYPE_SECURITY)" :label="$t('riskLevel')">
                         <template #default="{ row }">
                             <div v-if="row.highestLeakLevel" class="status-sign" :class="row.highestLeakLevel"
@@ -111,7 +108,7 @@
                             <span class="repo-tag" :class="row.status">{{$t(`scanStatusEnum.${row.status}`)}}</span>
                         </template>
                     </bk-table-column>
-                    <bk-table-column :label="$t('scanCompletionTime')" width="150">
+                    <bk-table-column :label="$t('scanCompletionTime')" width="160">
                         <template #default="{ row }">{{formatDate(row.finishTime)}}</template>
                     </bk-table-column>
                     <bk-table-column :label="$t('operation')" width="100">
@@ -151,8 +148,7 @@
     import filterSideslider from './filterSideslider'
     import { mapActions } from 'vuex'
     import { formatDate, debounce } from '@repository/utils'
-    import { scanStatusEnum, leakLevelEnum } from '@repository/store/publicEnum'
-    import { SCAN_TYPE_SECURITY } from '../../../store/publicEnum'
+    import { scanStatusEnum, leakLevelEnum, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
     const filterParams = {
         name: '',
         repoName: '',
@@ -274,7 +270,10 @@
             },
             refreshScanPlan (projectId, planId) {
                 this.getScanConfig({ projectId: projectId, id: planId }).then(res => {
-                    this.scanPlan = res
+                    this.scanPlan = {
+                        ...res,
+                        planType: res.type
+                    }
                 })
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
@@ -313,10 +312,10 @@
                 this.$refs.filterSideslider.show()
             },
             filterHandler (filter) {
-                this.filter = filter
                 const flag = filter.flag
                 // 此时不需要将这个子组件告知父组件是够是第一次筛选的状态同步到浏览器的url
                 delete filter.flag
+                this.filter = filter
                 this.$router.replace({
                     query: {
                         ...this.$route.query,
@@ -349,7 +348,8 @@
                     name: 'artiReport',
                     params: {
                         ...this.$route.params,
-                        recordId
+                        recordId,
+                        preRouteName: this.$route.name
                     },
                     query: {
                         ...this.$route.query,
@@ -362,13 +362,10 @@
             },
             startScanSingleHandler ({ repoType, repoName, fullPath, packageKey, version }) {
                 this.startScanSingle({
-                    projectId: this.projectId,
                     id: this.planId,
-                    repoType,
+                    projectId: this.projectId,
                     repoName,
-                    fullPath,
-                    packageKey,
-                    version
+                    ...(repoType === 'GENERIC' ? { fullPath } : { packageKey, version })
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
@@ -419,7 +416,7 @@
                         }).then(() => {
                             this.$bkMessage({
                                 theme: 'success',
-                                message: this.$t('abortTask') + this.$t('success')
+                                message: this.$t('abortTask') + this.$t('space') + this.$t('success')
                             })
                             this.$set(task, 'status', 'STOPPED')
                             this.handlerPaginationChange()
@@ -511,7 +508,7 @@
                 border-right: 0 none;
             }
             .overview-key {
-                width: auto;
+                width: 115px;
                 color: var(--fontSubsidiaryColor);
                 background-color: var(--bgColor);
             }

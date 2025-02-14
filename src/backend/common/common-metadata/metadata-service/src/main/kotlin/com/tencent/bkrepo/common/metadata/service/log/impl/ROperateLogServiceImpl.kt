@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.common.metadata.service.log.impl
 
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.metadata.condition.ReactiveCondition
@@ -41,6 +42,8 @@ import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.buildList
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.buildLog
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.buildOperateLogPageQuery
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.convert
+import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.eventTypes
+import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.getEventList
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.match
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.transfer
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
@@ -128,6 +131,7 @@ class ROperateLogServiceImpl(
 
     override suspend fun page(
         type: String?,
+        eventType: List<String>?,
         projectId: String?,
         repoName: String?,
         operator: String?,
@@ -137,7 +141,17 @@ class ROperateLogServiceImpl(
         pageSize: Int
     ): Page<OperateLogResponse?> {
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
-        val query = buildOperateLogPageQuery(type, projectId, repoName, operator, startTime, endTime)
+        if (!eventType.isNullOrEmpty()) {
+            require(eventTypes.containsAll(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support")
+            }
+        }
+        if (type != null && !eventType.isNullOrEmpty()) {
+            require(getEventList(type).containsAll(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support for [$type]")
+            }
+        }
+        val query = buildOperateLogPageQuery(type, eventType, projectId, repoName, operator, startTime, endTime)
         val totalRecords = operateLogDao.count(query)
         val records = operateLogDao.find(query.with(pageRequest)).map { convert(it) }
         return Pages.ofResponse(pageRequest, totalRecords, records)

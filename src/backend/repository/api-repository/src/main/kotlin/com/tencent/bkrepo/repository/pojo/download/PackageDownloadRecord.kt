@@ -43,5 +43,7 @@ data class PackageDownloadRecord(
     @ApiModelProperty("包唯一key", required = true)
     val packageKey: String,
     @ApiModelProperty("包版本", required = true)
-    val packageVersion: String
+    val packageVersion: String,
+    @ApiModelProperty("用户id", required = true)
+    val userId: String
 )

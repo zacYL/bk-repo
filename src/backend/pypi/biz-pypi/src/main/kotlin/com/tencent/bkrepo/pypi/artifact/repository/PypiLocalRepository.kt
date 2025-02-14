@@ -34,7 +34,11 @@ import com.tencent.bk.audit.annotations.AuditInstanceRecord
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
+import com.tencent.bkrepo.common.artifact.audit.NODE_DELETE_ACTION
+import com.tencent.bkrepo.common.artifact.audit.NODE_RESOURCE
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -43,13 +47,10 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadConte
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.metadata.service.packages.StageService
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.metadata.util.version.SemVersion
 import com.tencent.bkrepo.common.metadata.util.version.SemVersionParser
-import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
-import com.tencent.bkrepo.common.artifact.audit.NODE_DELETE_ACTION
-import com.tencent.bkrepo.common.artifact.audit.NODE_RESOURCE
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
@@ -75,6 +76,7 @@ import com.tencent.bkrepo.pypi.constants.VERSION_INDEX_TITLE
 import com.tencent.bkrepo.pypi.exception.PypiSimpleNotFoundException
 import com.tencent.bkrepo.pypi.pojo.Basic
 import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
+import com.tencent.bkrepo.pypi.pojo.PypiPackagePojo
 import com.tencent.bkrepo.pypi.util.HtmlUtils
 import com.tencent.bkrepo.pypi.util.PypiVersionUtils.toPypiPackagePojo
 import com.tencent.bkrepo.pypi.util.XmlUtils
@@ -86,6 +88,7 @@ import com.tencent.bkrepo.repository.constant.NODE_METADATA
 import com.tencent.bkrepo.repository.constant.SHA256
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -97,6 +100,7 @@ import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.time.format.DateTimeFormatter
 
 @Component
 class PypiLocalRepository(
@@ -132,11 +136,24 @@ class PypiLocalRepository(
         )
     }
 
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        super.onUploadBefore(context)
+        // TODO: 需要抽象处理
+        // 不为空说明上传的是tgz文件
+        packageVersion(context, null)?.let { uploadIntercept(context, it) }
+    }
+
     override fun onUpload(context: ArtifactUploadContext) {
         val nodeCreateRequest = buildNodeCreateRequest(context)
         val artifactFile = context.getArtifactFile("content")
         val name: String = context.request.getParameter("name")
         val version: String = context.request.getParameter("version")
+        val author = context.request.getParameter("author")
+        val metadata = mutableListOf(
+            MetadataModel(key = "name", value = name, system = true, display = true),
+            MetadataModel(key = "version", value = version, system = true, display = true)
+        )
+        author?.let { metadata.add(MetadataModel(key = "author", value = it, system = true, display = true)) }
         packageService.createPackageVersion(
             PackageVersionCreateRequest(
                 projectId = context.projectId,
@@ -159,7 +176,7 @@ class PypiLocalRepository(
 
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         super.onDownloadBefore(context)
-        packageVersion(context)?.let { downloadIntercept(context, it) }
+        downloadIntercept(context, null)
     }
 
     private fun combineSameParamQuery(entry: Map.Entry<String, List<String>>): Rule.NestedRule {
@@ -327,12 +344,19 @@ class PypiLocalRepository(
                 projectId, repoName, packageKey, version
             )
             val count = packageVersion?.downloads ?: 0
+            val createdDate = packageVersion?.createdDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.createdDate
+            val lastModifiedDate = packageVersion?.lastModifiedDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.lastModifiedDate
             val pypiArtifactBasic = Basic(
                 name,
                 version,
-                jarNode.size, jarNode.fullPath,
-                jarNode.createdBy, jarNode.createdDate,
-                jarNode.lastModifiedBy, jarNode.lastModifiedDate,
+                jarNode.size,
+                jarNode.fullPath,
+                jarNode.createdBy,
+                createdDate,
+                jarNode.lastModifiedBy,
+                lastModifiedDate,
                 count,
                 jarNode.sha256,
                 jarNode.md5,
@@ -505,22 +529,23 @@ class PypiLocalRepository(
             val fullPath = context.artifactInfo.getArtifactFullPath()
             val pypiPackagePojo = fullPath.toPypiPackagePojo()
             val packageKey = PackageKeys.ofPypi(pypiPackagePojo.name)
-            return PackageDownloadRecord(
-                projectId, repoName,
-                packageKey, pypiPackagePojo.version
-            )
+            return PackageDownloadRecord(projectId, repoName, packageKey, pypiPackagePojo.version, userId)
         }
     }
 
-    private fun packageVersion(context: ArtifactDownloadContext): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
         with(context) {
-            val pypiPackagePojo = try {
-                artifactInfo.getArtifactFullPath().toPypiPackagePojo()
-            } catch (e: Exception) {
-                logger.info("parse path[${artifactInfo.getArtifactFullPath()}] to pypi package version failed: ", e)
-                null
-            } ?: return null
-
+            val pypiPackagePojo = if (context is ArtifactUploadContext) {
+                PypiPackagePojo(request.getParameter("name"), request.getParameter("version"))
+            } else {
+                try {
+                    artifactInfo.getArtifactFullPath().toPypiPackagePojo()
+                } catch (e: Exception) {
+                    logger.error("parse pypi package failed", e)
+                    null
+                } ?: return null
+            }
             val packageKey = PackageKeys.ofPypi(pypiPackagePojo.name)
             return packageService.findVersionByName(projectId, repoName, packageKey, pypiPackagePojo.version)
         }

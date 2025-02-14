@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.helm.artifact.repository
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -42,7 +44,7 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.util.FileNameParser
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.helm.constants.CHART
 import com.tencent.bkrepo.helm.constants.FILE_TYPE
@@ -181,13 +183,13 @@ class HelmLocalRepository(
             node.metadata[NAME]?.let { context.putAttribute(NAME, it) }
             node.metadata[VERSION]?.let { context.putAttribute(VERSION, it) }
             downloadIntercept(context, node)
-            packageVersion(context, node)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
         }
         val inputStream = storageManager.loadArtifactInputStream(node, context.storageCredentials)
         inputStream?.let {
             return ArtifactResource(
                 inputStream,
                 context.artifactInfo.getResponseName(),
+                RepositoryIdentify(context.projectId, context.repoName),
                 node,
                 ArtifactChannel.LOCAL,
                 context.useDisposition
@@ -252,13 +254,8 @@ class HelmLocalRepository(
         }
     }
 
-    private fun packageVersion(context: ArtifactDownloadContext, node: NodeDetail): PackageVersion? {
-        with(context) {
-            val packageName = node.metadata[NAME] ?: return null
-            val packageVersion = node.metadata[VERSION] ?: return null
-            val packageKey = PackageKeys.ofHelm(packageName.toString())
-            return packageService.findVersionByName(projectId, repoName, packageKey, packageVersion.toString())
-        }
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        return helmOperationService.packageVersion(context!!, node!!)
     }
 
     private fun parseMetaData(context: ArtifactUploadContext): Map<String, Any>? {

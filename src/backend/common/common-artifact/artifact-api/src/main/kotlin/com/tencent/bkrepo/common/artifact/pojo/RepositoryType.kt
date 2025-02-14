@@ -55,6 +55,10 @@ enum class RepositoryType(val supportPackage: Boolean) {
     S3(false),
     MEDIA(false),
     OHPM(true),
+    GO(true),
+    COCOAPODS(true),
+    GRADLE(true),
+    IVY(true)
     ;
 
     companion object {

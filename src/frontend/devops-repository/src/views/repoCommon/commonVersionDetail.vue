@@ -1,11 +1,9 @@
 <template>
-    <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
+    <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" @tab-change="tabChange" v-bkloading="{ isLoading }">
         <template #setting>
-            <bk-button
-                v-if="!metadataMap.forbidStatus && repoType !== 'docker'"
+            <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker'"
                 outline class="mr10" @click="$emit('download')">{{$t('download')}}</bk-button>
-            <operation-list
-                class="mr20"
+            <operation-list class="mr20"
                 :list="operationBtns">
                 <bk-button icon="ellipsis"></bk-button>
             </operation-list>
@@ -18,36 +16,44 @@
                         <span class="text-overflow" :title="packageName">{{ packageName }}</span>
                         <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
+                    <template v-if="storeType === 'virtual'">
+                        <label class="grid-store-source">{{$t('repositorySource')}}</label>
+                        <span class="flex-1 flex-align-center text-overflow">
+                            <span class="text-overflow" :title="sourceRepoName || repoName">{{ sourceRepoName || repoName }}</span>
+                        </span>
+                    </template>
                 </div>
-                <div v-if="detail.basic.platform" class="package-platform grid-item">
+                <div v-if="detail.basic.os" class="package-name grid-item">
                     <label>OS/ARCH</label>
-                    <span class="flex-1 text-overflow" :title="detail.basic.platform.join()">{{ detail.basic.platform.join() }}</span>
+                    <span class="flex-1 text-overflow" :title="detail.basic.os.join()">{{ detail.basic.os.join() }}</span>
                 </div>
-                <div
-                    class="grid-item"
-                    v-for="{ name, label, value } in detailInfoMap"
-                    :key="name">
-                    <label>{{ label }}</label>
-                    <span class="flex-1 flex-align-center text-overflow">
-                        <span class="text-overflow" :title="value">{{ value }}</span>
-                        <template v-if="name === 'version'">
-                            <span
-                                class="ml5 repo-tag"
-                                v-for="tag in detail.basic.stageTag"
-                                :key="tag">
-                                {{ tag }}
-                            </span>
-                            <scan-tag v-if="showRepoScan" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
-                            <forbid-tag
-                                class="ml10"
-                                v-if="metadataMap.forbidStatus"
-                                v-bind="metadataMap">
-                            </forbid-tag>
-                        </template>
-                    </span>
-                </div>
+                <template v-if="detail.basic.version">
+                    <div class="grid-item"
+                        v-for="{ name, label, value } in detailInfoMap"
+                        :key="name">
+                        <label>{{ label }}</label>
+                        <span class="flex-1 flex-align-center text-overflow">
+                            <span class="text-overflow" :title="value">{{ value }}</span>
+                            <template v-if="name === 'version'">
+                                <span class="ml5 repo-tag"
+                                    v-for="tag in detail.basic.stageTag"
+                                    :key="tag">
+                                    {{ tag }}
+                                </span>
+                                <scan-tag v-if="showRepoScan" class="ml5" :status="metadataMap.scanStatus"></scan-tag>
+                                <lock-tag v-if="metadataMap.lockStatus" :lock-user="metadataMap.lockUser" :lock-description="(detail.metadata.find(m => m.key === 'lockType') || {}).description"></lock-tag>
+                                <forbid-tag class="ml10"
+                                    v-if="metadataMap.forbidStatus"
+                                    :forbid-user="metadataMap.forbidUser"
+                                    :forbid-type="metadataMap.forbidType"
+                                    :forbid-description="forbidDescription">
+                                </forbid-tag>
+                            </template>
+                        </span>
+                    </div>
+                </template>
                 <div class="package-description grid-item">
-                    <label>{{ $t('description') }}</label>
+                    <label>{{$t('description')}}</label>
                     <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '' }}</span>
                 </div>
             </div>
@@ -72,9 +78,12 @@
             <div class="version-detail-readme" v-html="readmeContent"></div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
-            <div class="version-metadata display-block" :data-title="$t('metaData')">
+            <div class="display-block" :data-title="$t('metaData')">
+                <!-- 虚拟仓库及软件源模式下不支持更新元数据 -->
+                <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                 <bk-table
-                    :data="detail.metadata.filter(m => !m.system)"
+                    v-if="showMetadataTable"
+                    :data="metadataDataList"
                     :outer-border="false"
                     :row-border="false"
                     size="small">
@@ -89,11 +98,24 @@
                         </template>
                     </bk-table-column>
                     <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" width="70">
+                        <template #default="{ row }">
+                            <bk-popconfirm v-if="!row.system" trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
+                                <div slot="content">
+                                    <div class="flex-align-center pb10">
+                                        <i class="bk-icon icon-info-circle-shape pr5 content-icon"></i>
+                                        <div class="content-text">{{$t('deleteMetadataConfirm')}}</div>
+                                    </div>
+                                </div>
+                                <Icon class="hover-btn" size="24" name="icon-delete" />
+                            </bk-popconfirm>
+                        </template>
+                    </bk-table-column>
                 </bk-table>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.manifest" name="manifest" label="Manifest">
-            <div class="version-metadata display-block" data-title="Manifest">
+        <bk-tab-panel v-if="detail.manifest && !isEmpty(detail.manifest)" name="manifest" label="Manifest">
+            <div class="display-block" data-title="Manifest">
                 <bk-table
                     :data="Object.entries(detail.manifest)"
                     :outer-border="false"
@@ -107,7 +129,7 @@
                 </bk-table>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.layers" name="layers" label="Layers">
+        <bk-tab-panel v-if="detail.layers && !isEmpty(detail.layers)" name="layers" label="Layers">
             <div class="version-layers display-block" data-title="Layers">
                 <div class="block-header grid-item">
                     <label>ID</label>
@@ -119,11 +141,10 @@
                 </div>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.history" name="history" label="IMAGE HISTORY">
+        <bk-tab-panel v-if="detail.history && !isEmpty(detail.history)" name="history" label="IMAGE HISTORY">
             <div class="version-history">
                 <div class="version-history-left">
-                    <div
-                        class="version-history-code hover-btn"
+                    <div class="version-history-code hover-btn"
                         v-for="(code, index) in detail.history"
                         :key="index"
                         :class="{ select: selectedHistory.created_by === code.created_by }"
@@ -133,8 +154,7 @@
                 </div>
                 <div class="version-history-right">
                     <header class="version-history-header">Command</header>
-                    <code-area
-                        class="mt20"
+                    <code-area class="mt20"
                         :show-line-number="false"
                         :code-list="[selectedHistory.created_by]">
                     </code-area>
@@ -143,27 +163,23 @@
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.dependencyInfo" name="dependencyInfo" :label="$t('dependencies')">
             <article class="version-dependencies">
-                <section
-                    class="version-dependencies-main display-block"
+                <section class="version-dependencies-main display-block"
                     v-for="type in ['dependencies', 'devDependencies', 'dependents']"
                     :key="type"
                     :data-title="type">
                     <template v-if="detail.dependencyInfo[type].length">
                         <template
-                            v-if="type !== 'dependents'"
                             v-for="{ name, version } in detail.dependencyInfo[type]">
                             <div class="version-dependencies-key text-overflow" :key="name" :title="name">{{ name }}</div>
-                            <div class="version-dependencies-value text-overflow" :key="name + version" :title="version">{{ version }}</div>
-                        </template>
-                        <template
-                            v-else
-                            v-for="(item,index) in detail.dependencyInfo['dependents']">
-                            <div class="version-dependencies-key text-overflow" :key="index" :title="item">{{ item }}</div>
+                            <div v-if="type !== 'dependents'" class="version-dependencies-value text-overflow" :key="name + version" :title="version">{{ version }}</div>
                         </template>
                     </template>
                     <empty-data v-else class="version-dependencies-empty"></empty-data>
                 </section>
             </article>
+        </bk-tab-panel>
+        <bk-tab-panel v-if="detailType === 'maven'" name="rely" :label="$t('dependencies')">
+            <mavenDependencies></mavenDependencies>
         </bk-tab-panel>
     </bk-tab>
 </template>
@@ -173,17 +189,24 @@
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
     import metadataTag from '@repository/views/repoCommon/metadataTag'
+    import LockTag from '@repository/components/LockTag'
+    import mavenDependencies from '@repository/views/repoCommon/mavenDependencies'
+    import metadataDialog from '@repository/components/metadataDialog'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
+    import { isEmpty } from 'lodash'
     export default {
-        name: 'CommonVersionDetail',
+        name: 'commonVersionDetail',
         components: {
             CodeArea,
             OperationList,
             ScanTag,
             forbidTag,
-            metadataTag
+            metadataTag,
+            mavenDependencies,
+            metadataDialog,
+            LockTag
         },
         mixins: [repoGuideMixin],
         data () {
@@ -207,26 +230,29 @@
                     key: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('key'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('key'),
                             trigger: 'blur'
                         }
                     ],
                     value: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('value'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('value'),
                             trigger: 'blur'
                         }
                     ]
-                }
+                },
+                detailType: '', // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
+                isEmpty,
+                showMetadataTable: true // 用于控制元数据列表table是否显示
             }
         },
         computed: {
             ...mapState(['userList', 'permission', 'scannerSupportPackageType']),
             detailInfoMap () {
                 return [
+                    // { name: 'os', label: 'OS/ARCH' },
                     { name: 'version', label: this.$t('version') },
-                    { name: 'os', label: 'OS/ARCH' },
                     { name: 'fullPath', label: this.$t('path') },
                     { name: 'size', label: this.$t('size') },
                     { name: 'downloadCount', label: this.$t('downloads') },
@@ -244,9 +270,12 @@
                     return target
                 }, {})
             },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
+            },
             showRepoScan () {
-                const show = RELEASE_MODE !== 'community' || SHOW_ANALYST_MENU
-                return show && this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType)
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !this.whetherSoftware && !(this.storeType === 'virtual')
             },
             operationBtns () {
                 const basic = this.detail.basic
@@ -254,13 +283,28 @@
                 return [
                     ...(!metadataMap.forbidStatus
                         ? [
-                            this.permission.edit && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') },
-                            this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scanArtifact') }
+                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') },
+                            this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
                         ]
                         : []),
-                    { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('liftBan') : this.$t('forbiddenUse') },
-                    this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('relieve') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? this.$t('relieve') + this.$t('space') + this.$t('lock') : this.$t('lock') },
+                    (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
+            },
+            metadataDataList () {
+                // JavaScript中，true 被视为 1，false 被视为 0
+                return this.detail.metadata
+                    .filter(item => item.display) // 先过滤出 display 为 true 的对象
+                    .sort((a, b) => b.system - a.system) // 然后根据 system 排序， system 为 true 的对象排在前面
+            },
+            // 用户是否设置了锁定，当前制品版本处于锁定状态下时不允许添加及删除任何元数据
+            hasLockMetadata () {
+                return this.detail.metadata?.find((m) => m.key === 'lockStatus')?.value
+            },
+            // 获取元数据中的禁用原因
+            forbidDescription () {
+                return this.detail.metadata?.find((m) => m.key === 'forbidStatus')?.description
             }
         },
         watch: {
@@ -282,14 +326,18 @@
         methods: {
             convertFileSize,
             ...mapActions([
-                'getVersionDetail'
+                'getVersionDetail',
+                'addPackageMetadata',
+                'deletePackageMetadata'
             ]),
             getDetail () {
                 this.isLoading = true
+                // 在每次重新获取接口详情时都需要先将此tab页的类型置为空，否则不会重新加载依赖tab页组件，也就不会重新获取数据
+                this.detailType = ''
                 this.getVersionDetail({
                     projectId: this.projectId,
                     repoType: this.repoType,
-                    repoName: this.repoName,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey,
                     version: this.version
                 }).then(res => {
@@ -307,20 +355,61 @@
                         }
                     }
                     if (this.repoType === 'docker') {
-                        this.selectedHistory = res.history[0] || {}
+                        this.selectedHistory = (res?.history && res?.history[0]) || {}
                     }
-                    // rpm仓库因为版本详情页的使用指引，需要获取当前版本详情的fullPath，用于替换使用指引的变量值
-                    if (this.repoType === 'rpm') {
-                        this.$router.replace({
-                            query: {
-                                ...this.$route.query,
-                                packageFullPath: this.detail?.basic?.fullPath
-                            }
-                        })
-                    }
+                    // 此时不能在HTML中直接使用repoType，如果直接使用会导致该tab页提前被渲染，出现在其他tab页之前，不符合产品要求
+                    this.detailType = this.repoType
                 }).finally(() => {
                     this.isLoading = false
                 })
+            },
+            // 添加元数据
+            addMetadataHandler (item) {
+                const { key, value, description } = item
+                this.addPackageMetadata({
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: this.version,
+                        versionMetadata: [{ key, value, description, system: false }]
+                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('add') + this.$t('space') + this.$t('success')
+                    })
+                    // 此时添加成功，需要通过ref调用组件的关闭弹窗方法
+                    this.$refs.metadataDialogRef?.hiddenAddMetadata()
+                    this.getDetail()
+                })
+            },
+            // 删除元数据
+            deleteMetadataHandler (row) {
+                this.deletePackageMetadata({
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: this.version,
+                        keyList: [row.key]
+                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('delete') + this.$t('space') + this.$t('metadata') + this.$t('space') + this.$t('success')
+                    })
+                    this.getDetail()
+                })
+            },
+            tabChange () {
+                // 用于解决metadata在某些情况下列表错位，无法完整显示元数据列表内容
+                if (this.tabName === 'metadata') {
+                    this.showMetadataTable = false
+                    this.$nextTick(() => {
+                        this.showMetadataTable = true
+                    })
+                }
             }
         }
     }
@@ -343,7 +432,7 @@
             }
             > label {
                 line-height: 40px;
-                flex-basis: 130px;
+                flex-basis: 126px;
                 flex-shrink: 0;
                 background-color: var(--bgColor);
             }
@@ -362,7 +451,6 @@
                 }
             }
             .package-name,
-            .package-platform,
             .package-description {
                 grid-column: 1 / 3;
             }
@@ -376,31 +464,6 @@
             padding: 20px 10px;
             display: grid;
             background-color: var(--bgLighterColor);
-        }
-    }
-    .version-metadata {
-        .version-metadata-add {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            top: 0;
-            right: 25px;
-            width: 35px;
-            height: 40px;
-            z-index: 1;
-            .version-metadata-add-board {
-                position: absolute;
-                top: 42px;
-                right: -25px;
-                width: 300px;
-                overflow: hidden;
-                background: white;
-                border-radius: 2px;
-                box-shadow: 0 3px 6px rgba(51, 60, 72, 0.4);
-                will-change: height;
-                transition: all .3s;
-            }
         }
     }
     .version-layers {
@@ -419,6 +482,10 @@
         .block-header {
             border-bottom: 1px solid var(--borderWeightColor);
         }
+    }
+    .grid-store-source{
+        border-left: 1px solid var(--borderColor);;
+        margin:0 1px 0 0;
     }
     .version-history {
         height: 100%;
@@ -495,6 +562,9 @@
         }
     }
 }
+.content-icon {
+    color: var(--dangerColor);
+}
 </style>
 <style lang="scss">
 .version-detail-readme {
@@ -510,6 +580,7 @@
     }
 
     a {
+        cursor: default;
         color: var(--primaryColor);
         text-decoration: underline;
         &:hover {

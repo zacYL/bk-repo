@@ -1,14 +1,14 @@
 <template>
     <canway-dialog
         v-model="show"
-        width="380"
-        height-num="221"
+        width="420"
+        height-num="240"
         :title="$t('operationConfirmation')"
         @cancel="cancel">
         <div class="confirm-body">
             <div class="confirm-main">
                 <i :class="`bk-icon icon-${getIcon()}`"></i>
-                <span class="ml10 message-content">{{ message }}</span>
+                <span class="ml10">{{ message }}</span>
             </div>
             <span class="confirm-tip" :title="subMessage">{{ subMessage }}</span>
         </div>
@@ -80,6 +80,7 @@
         display: flex;
         font-size: 14px;
         font-weight: bold;
+        word-break: break-all;
     }
     .bk-icon {
         font-size: 26px;
@@ -93,12 +94,6 @@
         &.icon-close-circle-shape {
             color: var(--dangerColor);
         }
-    }
-    .message-content {
-        white-space: normal;
-        overflow: visible;
-        text-overflow: clip;
-        word-break: break-all;
     }
     .confirm-tip {
         font-size: 12px;

@@ -31,7 +31,7 @@ import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_TYPE
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.conan.constant.CHANNEL
 import com.tencent.bkrepo.conan.constant.DEFAULT_REVISION_V1
@@ -92,6 +92,13 @@ object ObjectBuildUtil {
                 overwrite = true
             )
         }
+    }
+
+    fun buildRefStr(artifactInfo: ConanArtifactInfo): String {
+        // conan key中的name由 实际name+username+channel组成
+        val conanFileReference = convertToConanFileReference(artifactInfo)
+        val refStr = PathUtils.buildReferenceWithoutVersion(conanFileReference)
+        return refStr
     }
 
     private fun addPackageMetadata(

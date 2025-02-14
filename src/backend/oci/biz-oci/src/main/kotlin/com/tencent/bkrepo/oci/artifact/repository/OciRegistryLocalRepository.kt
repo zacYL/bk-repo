@@ -37,7 +37,12 @@ import com.tencent.bk.audit.annotations.AuditEntry
 import com.tencent.bk.audit.annotations.AuditInstanceRecord
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
+import com.tencent.bkrepo.common.artifact.audit.NODE_CREATE_ACTION
+import com.tencent.bkrepo.common.artifact.audit.NODE_RESOURCE
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -47,10 +52,7 @@ import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
-import com.tencent.bkrepo.common.artifact.audit.NODE_RESOURCE
-import com.tencent.bkrepo.common.artifact.audit.NODE_CREATE_ACTION
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.innercos.http.HttpMethod
 import com.tencent.bkrepo.common.storage.message.StorageErrorException
@@ -61,10 +63,13 @@ import com.tencent.bkrepo.oci.constant.EMPTY_FILE_SHA256
 import com.tencent.bkrepo.oci.constant.FORCE
 import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.LAST_TAG
+import com.tencent.bkrepo.oci.constant.MANIFEST
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.N
 import com.tencent.bkrepo.oci.constant.OCI_IMAGE_MANIFEST_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.OCI_MANIFEST_LIST
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.OLD_DOCKER_VERSION
 import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.constant.PATCH
 import com.tencent.bkrepo.oci.constant.POST
@@ -89,7 +94,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.util.Locale
+import java.util.*
 
 @Component
 class OciRegistryLocalRepository(
@@ -377,13 +382,34 @@ class OciRegistryLocalRepository(
         if (context.request.method == HttpMethod.HEAD.name) {
             return null
         }
-        val version = artifactResource.node?.metadata?.get(IMAGE_VERSION)?.toString() ?: return null
+        val version = artifactResource.node?.metadata?.get(IMAGE_VERSION)?.toString() ?: run {
+            artifactResource.node?.metadata?.get(OLD_DOCKER_VERSION)?.toString() ?: return null
+        }
         return PackageDownloadRecord(
             projectId = context.projectId,
             repoName = context.repoName,
             packageKey = PackageKeys.ofName(context.repo.type, artifactInfo.packageName),
-            packageVersion = version
+            packageVersion = version,
+            userId = context.userId
         )
+    }
+
+    override fun getArtifactFullPaths(
+        projectId: String,
+        repoName: String,
+        key: String,
+        version: String,
+        manifestPath: String?,
+        artifactPath: String?
+    ): List<String> {
+        require(manifestPath != null)
+        if (manifestPath.substringAfterLast("/") == OCI_MANIFEST_LIST) return listOf(manifestPath)
+        val name = PackageKeys.resolveName(key)
+        return if (manifestPath == OciLocationUtils.buildManifestPath(name, version)) {
+            listOf(manifestPath, OciLocationUtils.buildBlobsFolderPath(name) + version)
+        } else if (manifestPath == "/$name/$version/$MANIFEST") {
+            listOf("/$name/$version")
+        } else throw ParameterInvalidException("manifestPath of [$projectId/$repoName/$name/$version]")
     }
 
     /**
@@ -392,10 +418,11 @@ class OciRegistryLocalRepository(
     private fun downloadArtifact(context: ArtifactDownloadContext, fullPath: String?): ArtifactResource? {
         if (fullPath == null) return null
         val node = getNodeDetail(context.artifactInfo as OciArtifactInfo, fullPath)
-        // 拦截制品下载
-        node?.let {
-            downloadIntercept(context, it)
-            packageVersion(context, it)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
+            ?.also { downloadIntercept(context, it) }
+        with(context) {
+            if (artifactInfo is OciManifestArtifactInfo) {
+                getFullPathInterceptors().forEach { it.intercept(projectId, fullPath) }
+            }
         }
         logger.info(
             "Starting to download $fullPath " +
@@ -416,7 +443,7 @@ class OciRegistryLocalRepository(
         }
 
         logger.info(
-            "The mediaType of Artifact $fullPath is $mediaType and it's contentType is $contentType" +
+            "The mediaType of Artifact ${node.fullPath} is $mediaType and it's contentType is $contentType" +
                 "in repo: ${context.artifactInfo.getRepoIdentify()}"
         )
         OciResponseUtils.buildDownloadResponse(
@@ -428,6 +455,7 @@ class OciRegistryLocalRepository(
         val resource = ArtifactResource(
             inputStream = inputStream,
             artifactName = context.artifactInfo.getResponseName(),
+            srcRepo = RepositoryIdentify(context.projectId, context.repoName),
             node = node,
             channel = ArtifactChannel.LOCAL,
             useDisposition = context.useDisposition
@@ -438,12 +466,21 @@ class OciRegistryLocalRepository(
 
     private fun getNodeDetail(artifactInfo: OciArtifactInfo, fullPath: String): NodeDetail? {
         artifactInfo.setArtifactMappingUri(fullPath)
-        return ArtifactContextHolder.getNodeDetail(artifactInfo) ?: run {
+        val nodeDetail = ArtifactContextHolder.getNodeDetail(artifactInfo) ?: run {
             val oldDockerPath = ociOperationService.getDockerNode(artifactInfo)
                 ?: return null
             artifactInfo.setArtifactMappingUri(oldDockerPath)
-            ArtifactContextHolder.getNodeDetail(artifactInfo)
+            ArtifactContextHolder.getNodeDetail(artifactInfo) ?: run {
+                if (artifactInfo !is OciManifestArtifactInfo) return null
+                // 兼容 list.manifest.json
+                val manifestListPath = OciLocationUtils.buildManifestListPath(
+                    artifactInfo.packageName, artifactInfo.reference
+                )
+                artifactInfo.setArtifactMappingUri(manifestListPath)
+                ArtifactContextHolder.getNodeDetail(artifactInfo)
+            }
         }
+        return nodeDetail
     }
 
     /**
@@ -485,10 +522,14 @@ class OciRegistryLocalRepository(
     }
 
     private fun packageVersion(context: ArtifactDownloadContext, node: NodeDetail): PackageVersion? {
-        with(context) {
+        requireNotNull(context)
+        requireNotNull(node)
+        with(context as ArtifactDownloadContext) {
             val artifactInfo = context.artifactInfo as OciArtifactInfo
             val packageKey = PackageKeys.ofName(repo.type, artifactInfo.packageName)
-            val version = node.metadata[IMAGE_VERSION]?.toString() ?: return null
+            val version = node.metadata[IMAGE_VERSION]?.toString() ?: run {
+                node.metadata[OLD_DOCKER_VERSION]?.toString() ?: return null
+            }
             return packageService.findVersionByName(projectId, repoName, packageKey, version)
         }
     }

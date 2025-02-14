@@ -54,6 +54,7 @@ import com.tencent.bkrepo.replication.constant.MD5
 import com.tencent.bkrepo.replication.constant.NODE_FULL_PATH
 import com.tencent.bkrepo.replication.constant.SIZE
 import com.tencent.bkrepo.repository.constant.SHARDING_COUNT
+import com.tencent.bkrepo.repository.pojo.config.ConfigType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -70,6 +71,7 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.stereotype.Component
+import org.springframework.util.unit.DataSize
 import java.io.InputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -249,6 +251,13 @@ class LocalDataManager(
     }
 
     /**
+     * 根据多个路径获取文件节点总数
+     */
+    fun countFileNode(projectId: String, repoName: String, pathList: List<String> = listOf(PathUtils.ROOT)): Long {
+        return nodeService.countFileNodeByList(projectId, repoName, pathList) ?: 0
+    }
+
+    /**
      * 分页查询包
      */
     fun listPackagePage(projectId: String, repoName: String, option: PackageListOption): List<PackageSummary> {
@@ -258,6 +267,13 @@ class LocalDataManager(
             option = option
         ).records
         return packages
+    }
+
+    /**
+     * 查询仓库包版本数量
+     */
+    fun getVersionCount(projectId: String, repoName: String): Long {
+        return packageService.getVersionCount(projectId, repoName) ?: 0
     }
 
     /**
@@ -330,6 +346,16 @@ class LocalDataManager(
         findRepoByName(projectId, repoName)
         val projectMetrics = projectService.getProjectMetricsInfo(projectId) ?: return 0
         return projectMetrics.repoMetrics.firstOrNull { it.repoName == repoName }?.size ?: 0
+    }
+
+    /**
+     * 获取分发速率配置
+     */
+    fun getRateLimit(): DataSize {
+        globalConfigClient.getConfig(ConfigType.REPLICATION_NETWORK_RATE).data?.let {
+            return DataSize.ofMegabytes(it.configuration.toLong())
+        }
+        return DataSize.ofBytes(-1)
     }
 
     data class Node(

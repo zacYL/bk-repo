@@ -39,5 +39,5 @@ class ArtifactDownloadForbiddenException(
 ) : ErrorCodeException(
     ArtifactMessageCode.ARTIFACT_DOWNLOAD_FORBIDDEN,
     projectId,
-    status = HttpStatus.FORBIDDEN
+    status = HttpStatus.LOCKED
 )

@@ -16,7 +16,7 @@
                             <bk-radio :disabled="Boolean(uploadProgress)" class="ml20" :value="false">{{ $t('notAllow') }}</bk-radio>
                         </bk-radio-group>
                     </bk-form-item>
-                    <!-- <bk-form-item :label="$t('express')" :required="true" :property="'expires'">
+                    <!-- <bk-form-item :label="$t('expire')" :required="true" :property="'expires'">
                         <bk-input :disabled="Boolean(uploadProgress)" :placeholder="$t('uploadExpiresPlaceholder')" v-model="file.expires"></bk-input>
                     </bk-form-item> -->
                 </bk-form>

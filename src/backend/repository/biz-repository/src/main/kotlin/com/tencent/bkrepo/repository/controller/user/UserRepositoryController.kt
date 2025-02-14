@@ -47,11 +47,15 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.packages.PackageStatisticsService
 import com.tencent.bkrepo.common.metadata.service.repo.QuotaService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.repo.ArchiveInfo
+import com.tencent.bkrepo.repository.pojo.repo.ConnectionStatusInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
@@ -59,8 +63,10 @@ import com.tencent.bkrepo.repository.pojo.repo.RepoQuotaInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
+import com.tencent.bkrepo.repository.pojo.repo.RemoteUrlRequest
 import com.tencent.bkrepo.repository.pojo.repo.UserRepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.UserRepoUpdateRequest
+import com.tencent.bkrepo.repository.service.repo.RemoteRepositoryTestService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -81,7 +87,9 @@ class UserRepositoryController(
     private val permissionManager: PermissionManager,
     private val repositoryService: RepositoryService,
     private val quotaService: QuotaService,
-    private val nodeService: NodeService
+    private val nodeService: NodeService,
+    private val packageStatisticsService: PackageStatisticsService,
+    private val remoteRepositoryTestService: RemoteRepositoryTestService,
 ) {
 
     @AuditEntry(
@@ -174,6 +182,7 @@ class UserRepositoryController(
                 quota = quota,
                 pluginRequest = pluginRequest,
                 display = display,
+                coverStrategy = coverStrategy
             )
         }
         ActionAuditContext.current().setInstance(createRequest)
@@ -208,6 +217,19 @@ class UserRepositoryController(
         return ResponseBuilder.success(repositoryService.listPermissionRepo(userId, projectId, repoListOption))
     }
 
+    @ApiOperation("查询有权限的依赖仓库列表")
+    @GetMapping("/list/package/{projectId}")
+    fun listUserPackageRepo(
+        @RequestAttribute userId: String,
+        @ApiParam(value = "项目id", required = true)
+        @PathVariable projectId: String,
+        repoListOption: RepoListOption
+    ): Response<List<RepositoryInfo>> {
+        return ResponseBuilder.success(
+            repositoryService.listPermissionPackageRepo(userId, projectId, repoListOption)
+        )
+    }
+
     @AuditEntry(
         actionId = PROJECT_VIEW_ACTION
     )
@@ -238,8 +260,17 @@ class UserRepositoryController(
         @PathVariable
         pageSize: Int,
         repoListOption: RepoListOption,
+        @ApiParam("仓库使用信息", required = false)
+        @RequestParam usedInfo: Boolean? = false
     ): Response<Page<RepositoryInfo>> {
         val page = repositoryService.listPermissionRepoPage(userId, projectId, pageNumber, pageSize, repoListOption)
+        if (usedInfo == true) {
+            page.records.map {
+                // 加载权限信息
+                it.permission = permissionManager.getRepoPermission(it.projectId, it.name)?.name
+                it.artifacts = packageStatisticsService.packageTotal(it.projectId, it.name)
+            }
+        }
         return ResponseBuilder.success(page)
     }
 
@@ -386,8 +417,9 @@ class UserRepositoryController(
             public = request.public,
             description = request.description,
             configuration = request.configuration,
-            operator = userId,
-            display = request.display
+            coverStrategy = request.coverStrategy,
+            display = request.display,
+            operator = userId
         )
         ActionAuditContext.current().setInstance(repoUpdateRequest)
         repositoryService.updateRepo(repoUpdateRequest)
@@ -436,5 +468,20 @@ class UserRepositoryController(
             available = nodeService.getArchivableSize(projectId, repoName, days, size),
         )
         return ResponseBuilder.success(archiveInfo)
+    }
+
+    @ApiOperation("仓库清理策略数据迁移接口-将全局的保留时间迁移至具体每条目录清理条件中")
+    @Principal(PrincipalType.ADMIN)
+    @GetMapping("/migrate/cleanStrategy")
+    fun migrateCleanStrategy(): Response<List<String>> {
+        return ResponseBuilder.success(repositoryService.migrateCleanStrategy())
+    }
+
+    @ApiOperation("测试远程仓库URL")
+    @PostMapping("/testremote")
+    fun testRemoteUrl(
+        @RequestBody remoteUrlRequest: RemoteUrlRequest
+    ): Response<ConnectionStatusInfo> {
+        return ResponseBuilder.success(remoteRepositoryTestService.testRemoteUrl(remoteUrlRequest))
     }
 }

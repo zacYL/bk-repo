@@ -95,6 +95,18 @@ class SpringContextUtils : ApplicationContextAware {
         }
 
         /**
+         * 根据类型获取对应的实例Map
+         * @param clazz 类名
+         * @param <T> Bean
+         * @return 实例Map
+         * @throws BeansException 异常
+         */
+        @Throws(BeansException::class)
+        fun <T> getBeansOfType(clazz: Class<T>): Map<String,T> {
+            return applicationContext.getBeansOfType(clazz)
+        }
+
+        /**
          * 发送事件
          * @param event – the event to publish
          */

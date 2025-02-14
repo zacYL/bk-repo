@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.security.http
 
 import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
+import com.tencent.bkrepo.common.security.http.devops.AccessTokenAuthConfiguration
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.http.login.LoginConfiguration
 import com.tencent.bkrepo.common.security.http.mirrors.MirrorsAuthConfiguration
@@ -50,6 +51,7 @@ import org.springframework.context.annotation.Import
 @Import(
     LoginConfiguration::class,
     HttpAuthSecurityConfiguration::class,
-    MirrorsAuthConfiguration::class
+    MirrorsAuthConfiguration::class,
+    AccessTokenAuthConfiguration::class
 )
 class HttpAuthConfiguration

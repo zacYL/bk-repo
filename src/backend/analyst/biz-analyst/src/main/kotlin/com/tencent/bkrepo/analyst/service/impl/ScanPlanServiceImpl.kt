@@ -33,6 +33,7 @@ import com.tencent.bkrepo.analyst.dao.ScanPlanDao
 import com.tencent.bkrepo.analyst.dao.ScanTaskDao
 import com.tencent.bkrepo.analyst.dao.ScannerDao
 import com.tencent.bkrepo.analyst.dao.SubScanTaskDao
+import com.tencent.bkrepo.analyst.event.DelScanPlanEvent
 import com.tencent.bkrepo.analyst.message.ScannerMessageCode
 import com.tencent.bkrepo.analyst.model.TScanPlan
 import com.tencent.bkrepo.analyst.pojo.ScanPlan
@@ -45,6 +46,7 @@ import com.tencent.bkrepo.analyst.pojo.response.ArtifactPlanRelations
 import com.tencent.bkrepo.analyst.pojo.response.ScanLicensePlanInfo
 import com.tencent.bkrepo.analyst.pojo.response.ScanPlanInfo
 import com.tencent.bkrepo.analyst.service.ScanPlanService
+import com.tencent.bkrepo.analyst.service.ScanTaskService
 import com.tencent.bkrepo.analyst.service.ScannerService
 import com.tencent.bkrepo.analyst.utils.RuleConverter
 import com.tencent.bkrepo.analyst.utils.RuleUtil
@@ -64,7 +66,9 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Service
@@ -76,7 +80,9 @@ class ScanPlanServiceImpl(
     private val scannerService: ScannerService,
     private val planArtifactLatestSubScanTaskDao: PlanArtifactLatestSubScanTaskDao,
     private val permissionCheckHandler: ScannerPermissionCheckHandler,
-    private val subScanTaskDao: SubScanTaskDao
+    private val publisher: ApplicationEventPublisher,
+    private val scanTaskService: ScanTaskService,
+    private val subScanTaskDao: SubScanTaskDao,
 ) : ScanPlanService {
     override fun create(request: ScanPlan): ScanPlan {
         val operator = SecurityUtils.getUserId()
@@ -186,7 +192,8 @@ class ScanPlanServiceImpl(
             val scanner = scannerDao.findByName(defaultScanPlan.scanner)
             require(scanner != null)
             if (!defaultScanPlan.scanTypes.containsAll(scanner.supportScanTypes) ||
-                !scanner.supportPackageTypes.containsAll(defaultScanPlan.scanTypes)) {
+                !scanner.supportPackageTypes.containsAll(defaultScanPlan.scanTypes)
+            ) {
                 defaultScanPlan = defaultScanPlan.copy(
                     scanTypes = scanner.supportScanTypes,
                     lastModifiedDate = LocalDateTime.now(),
@@ -200,6 +207,7 @@ class ScanPlanServiceImpl(
         return createDefaultScanPlan(projectId, type, scannerName)
     }
 
+    @Transactional(rollbackFor = [Throwable::class])
     override fun delete(projectId: String, id: String) {
         logger.info("deleteScanPlan userId:${SecurityUtils.getUserId()}, projectId:$projectId, planId:$id")
 
@@ -213,6 +221,11 @@ class ScanPlanServiceImpl(
         // 方案正在使用，不能删除
         checkRunning(id)
         scanPlanDao.delete(projectId, id)
+        val planArtifactSubtasks = scanTaskService.planArtifactSubtasks(projectId, id)
+        planArtifactLatestSubScanTaskDao.deleteByPlanId(id)
+        scanTaskDao.deleteByPlanId(id)
+        // 发送删除方案事件
+        publisher.publishEvent(DelScanPlanEvent(planArtifactSubtasks))
     }
 
     override fun update(request: UpdateScanPlanRequest): ScanPlan {
@@ -271,9 +284,9 @@ class ScanPlanServiceImpl(
         }
     }
 
-    private fun artifactPlanRelation(
+    override fun artifactPlanRelation(
         request: ArtifactPlanRelationRequest,
-        checkPermission: Boolean = true
+        checkPermission: Boolean
     ): List<ArtifactPlanRelation> {
         with(request) {
             ScanParamUtil.checkParam(

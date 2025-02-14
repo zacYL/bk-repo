@@ -86,7 +86,6 @@ interface ProjectService {
      */
     fun createProject(request: ProjectCreateRequest): ProjectInfo
 
-
     fun updateProject(name: String, request: ProjectUpdateRequest): Boolean
 
     /**
@@ -105,4 +104,10 @@ interface ProjectService {
      * 项目是否启用
      */
     fun isProjectEnabled(name: String): Boolean
+
+    /**
+     * 删除项目
+     * @param confirmName 确认项目id
+     */
+    fun deleteProject(userId: String, name: String, confirmName: String)
 }

@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_version_list_{projectId}_{repoName}_repo-repository",
+  "name" : "查询指定包的所有版本",
+  "desc" : "查询指定包的所有版本",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-repository/api/version/list/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "reporepository",
+  "targetPath" : "/api/version/list/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询指定包的所有版本_c2abca4e.md"
+}

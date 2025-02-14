@@ -1,7 +1,6 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -36,14 +35,19 @@ const val NAME = "name"
 const val VERSION = "version"
 const val SUMMARY = "summary"
 
+const val ARTIFACT_LIST = "artifactList"
 const val REQUIRES_PYTHON = "requires_python"
+const val HTML_EXTENSION = ".html"
 
 const val LINE_BREAK = "<br />"
+const val PSEUDO_MATCH_REGEX = ":matchesOwn(%s)"
+const val SELECTOR_ANCHOR = "a"
 const val INDENT = "    "
 const val HTML_ENCODED_LESS_THAN = "&lt;"
 const val HTML_ENCODED_GREATER_THAN = "&gt;"
 const val REQUIRES_PYTHON_ATTR = "data-requires-python"
 
+const val FILE_NAME_REGEX = ".+\\.(tar|tar\\.gz|tgz|zip|whl)$"
 const val NON_ALPHANUMERIC_SEQ_REGEX = "[-_.]+"
 
 const val PACKAGE_INDEX_TITLE = "Simple Index"
@@ -63,5 +67,7 @@ const val SIMPLE_PAGE_CONTENT =
 
 const val REMOTE_HTML_CACHE_FULL_PATH = "remoteHtml.html"
 const val FLUSH_CACHE_EXPIRE = 60 * 24
+const val PACKAGE_INDEX_CACHE_NAME_HTML = "PACKAGE_INDEX$HTML_EXTENSION"
+const val PYPI_SIMPLE_CACHE_PATH = "/.pypi"
 const val XML_RPC_URI = "RPC2"
 const val XML_RPC_OPERATION_OR = "or"

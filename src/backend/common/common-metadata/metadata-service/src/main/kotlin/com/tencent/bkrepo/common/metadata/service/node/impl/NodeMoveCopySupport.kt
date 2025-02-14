@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.common.metadata.service.node.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.path.PathUtils.combineFullPath
@@ -45,6 +47,7 @@ import com.tencent.bkrepo.common.metadata.model.TRepository
 import com.tencent.bkrepo.common.metadata.service.node.NodeMoveCopyOperation
 import com.tencent.bkrepo.common.metadata.service.repo.QuotaService
 import com.tencent.bkrepo.common.metadata.service.repo.StorageCredentialService
+import com.tencent.bkrepo.common.metadata.util.MetadataUtils.buildExpiredDeletedNodeMetadata
 import com.tencent.bkrepo.common.metadata.util.NodeBaseServiceHelper.convertToDetail
 import com.tencent.bkrepo.common.metadata.util.NodeEventFactory
 import com.tencent.bkrepo.common.metadata.util.NodeMoveCopyHelper
@@ -53,6 +56,7 @@ import com.tencent.bkrepo.common.metadata.util.NodeMoveCopyHelper.buildDstNode
 import com.tencent.bkrepo.common.metadata.util.NodeMoveCopyHelper.canIgnore
 import com.tencent.bkrepo.common.metadata.util.NodeMoveCopyHelper.preCheck
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper
+import com.tencent.bkrepo.common.mongo.constant.ID
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.repository.constant.DEFAULT_STORAGE_CREDENTIALS_KEY
@@ -61,6 +65,9 @@ import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
+import java.time.LocalDateTime
 
 /**
  * 节点移动/拷贝接口实现
@@ -104,10 +111,16 @@ open class NodeMoveCopySupport(
             if (srcNode.folder) {
                 moveCopyFolder(this)
             } else {
+                if (move && srcNode.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true) {
+                    throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, srcNode.fullPath)
+                }
                 moveCopyFile(this)
             }
             if (move) {
                 publishEvent(NodeEventFactory.buildMovedEvent(request))
+                // 更新源节点父目录的最后修改信息
+                val srcParentFullPath = PathUtils.toFullPath(resolveParent(srcNode.fullPath))
+                nodeBaseService.updateModifiedInfo(srcRepo.projectId, srcRepo.name, srcParentFullPath, operator)
             } else {
                 publishEvent(NodeEventFactory.buildCopiedEvent(request))
             }
@@ -156,7 +169,9 @@ open class NodeMoveCopySupport(
             // 因为分表所以不能直接更新src节点，必须创建新的并删除旧的
             if (move) {
                 val query = NodeQueryHelper.nodeQuery(node.projectId, node.repoName, node.fullPath)
-                val update = NodeQueryHelper.nodeDeleteUpdate(operator)
+                val update = NodeQueryHelper.nodeDeleteUpdate(operator).push(
+                    TNode::metadata.name, buildExpiredDeletedNodeMetadata()
+                )
                 if (!node.folder) {
                     quotaService.decreaseUsedVolume(node.projectId, node.repoName, node.size)
                 }
@@ -185,7 +200,46 @@ open class NodeMoveCopySupport(
                     existNode.projectId, existNode.repoName, existNode.fullPath, operator
                 )
                 quotaService.decreaseUsedVolume(existNode.projectId, existNode.repoName, existNode.size)
+                val query = Query(
+                    where(TNode::projectId).isEqualTo(existNode.projectId).and(ID).isEqualTo(existNode.id!!)
+                )
+                val update = NodeQueryHelper.nodeDeleteUpdate(operator).push(
+                    TNode::metadata.name, buildExpiredDeletedNodeMetadata()
+                )
+                nodeDao.updateFirst(query, update)
             }
+        }
+    }
+
+    private fun buildDstNode(
+        context: MoveCopyContext,
+        node: TNode,
+        dstPath: String,
+        dstName: String,
+        dstFullPath: String
+    ): TNode {
+        with(context) {
+            val dstNode = node.copy(
+                id = null,
+                projectId = dstProjectId,
+                repoName = dstRepoName,
+                path = dstPath,
+                name = dstName,
+                fullPath = dstFullPath,
+                lastModifiedBy = operator,
+                lastModifiedDate = LocalDateTime.now()
+            )
+            // 移除扫描、禁用相关的元数据
+            dstNode.metadata?.let { metadata ->
+                dstNode.metadata = metadata.filter { !RESERVED_KEY.contains(it.key) }.toMutableList()
+            }
+            // move操作，create信息保留
+            if (!move) {
+                dstNode.createdBy = operator
+                dstNode.createdDate = LocalDateTime.now()
+            }
+
+            return dstNode
         }
     }
 
@@ -233,6 +287,21 @@ open class NodeMoveCopySupport(
      */
     private fun moveCopyFolder(context: MoveCopyContext) {
         with(context) {
+            // 判断是否存在锁定文件
+            val nodeTreeCriteria = NodeQueryHelper.nodeTreeCriteria(
+                projectId = srcNode.projectId,
+                repoName = srcNode.repoName,
+                fullPath = srcNode.fullPath
+            )
+            val nodeList = nodeDao.find(Query(nodeTreeCriteria))
+            if (move && nodeList.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
+                val errorCode = if (nodeList.size == 1) {
+                    ArtifactMessageCode.NODE_LOCK
+                } else {
+                    ArtifactMessageCode.NODE_CHILD_LOCK
+                }
+                throw ErrorCodeException(errorCode, toPath(PathUtils.normalizeFullPath(srcNode.fullPath)))
+            }
             // 目录 -> 文件: error
             if (dstNode?.folder == false) {
                 throw ErrorCodeException(ArtifactMessageCode.NODE_CONFLICT, dstFullPath)
@@ -252,6 +321,8 @@ open class NodeMoveCopySupport(
                 val name = srcNode.name
                 // 操作节点
                 doMoveCopy(this, srcNode, path, name)
+                // 更新dst目录的修改信息
+                nodeBaseService.updateModifiedInfo(dstProjectId, dstRepoName, dstNode.fullPath, operator)
                 PathUtils.combinePath(path, name)
             }
             val srcRootNodePath = toPath(srcNode.fullPath)

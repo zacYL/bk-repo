@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -31,20 +31,29 @@ import com.tencent.bkrepo.auth.api.ServiceBkiamV3ResourceClient
 import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.constant.TOTAL_RECORDS_INFINITY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.artifact.constant.PAAS_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.devops.DEPLOY_CPACK
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.dao.project.ProjectDao
 import com.tencent.bkrepo.common.metadata.dao.project.ProjectMetricsDao
 import com.tencent.bkrepo.common.metadata.listener.ResourcePermissionListener
 import com.tencent.bkrepo.common.metadata.model.TProject
+import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.service.project.ProjectService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.metadata.service.repo.StorageCredentialService
 import com.tencent.bkrepo.common.metadata.util.ProjectEventFactory.buildCreatedEvent
+import com.tencent.bkrepo.common.metadata.util.ProjectEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.common.metadata.util.ProjectServiceHelper
 import com.tencent.bkrepo.common.metadata.util.ProjectServiceHelper.DISPLAY_NAME_LENGTH_MAX
 import com.tencent.bkrepo.common.metadata.util.ProjectServiceHelper.DISPLAY_NAME_LENGTH_MIN
@@ -57,6 +66,8 @@ import com.tencent.bkrepo.common.metadata.util.ProjectServiceHelper.convert
 import com.tencent.bkrepo.common.metadata.util.ProjectServiceHelper.validate
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.service.cluster.condition.DefaultCondition
+import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
+import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
 import com.tencent.bkrepo.repository.pojo.project.ProjectListOption
@@ -64,14 +75,19 @@ import com.tencent.bkrepo.repository.pojo.project.ProjectMetricsInfo
 import com.tencent.bkrepo.repository.pojo.project.ProjectRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectSearchOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectUpdateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Lazy
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.nin
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
 /**
@@ -87,6 +103,16 @@ class ProjectServiceImpl(
     private val storageCredentialService: StorageCredentialService,
     private val repositoryProperties: RepositoryProperties,
 ) : ProjectService {
+    @Autowired
+    @Lazy
+    private lateinit var repositoryService: RepositoryService
+
+    @Autowired
+    @Lazy
+    private lateinit var packageService: PackageService
+
+    @Value("\${auth.realm:}")
+    private var authRealm: String = StringPool.EMPTY
 
     @Autowired
     @Lazy
@@ -102,7 +128,7 @@ class ProjectServiceImpl(
 
     override fun listProject(): List<ProjectInfo> {
         val query = buildListQuery()
-        return projectDao.find(query).map { convert(it)!! }
+        return projectDao.find(Query().addCriteria(excludeCri)).map { convert(it)!! }
     }
 
     override fun searchProject(option: ProjectSearchOption): Page<ProjectInfo> {
@@ -145,7 +171,7 @@ class ProjectServiceImpl(
     override fun rangeQuery(request: ProjectRangeQueryRequest): Page<ProjectInfo?> {
         val limit = request.limit
         val skip = request.offset
-        val query = buildRangeQuery(request)
+        val query = buildRangeQuery(request).addCriteria(excludeCri)
         val totalCount = projectDao.count(query)
         val records = projectDao.find(query.limit(limit).skip(skip)).map { convert(it) }
         return Page(0, limit, totalCount, records)
@@ -193,6 +219,26 @@ class ProjectServiceImpl(
         return convert(metrics)
     }
 
+    @Transactional(rollbackFor = [Throwable::class])
+    override fun deleteProject(userId: String, name: String, confirmName: String) {
+        if (name != confirmName) throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, confirmName)
+        if (!checkExist(name)) throw ErrorCodeException(ArtifactMessageCode.PROJECT_NOT_FOUND, name)
+        if (authRealm == DEPLOY_CPACK && projectDao.count(Query().addCriteria(excludeCri)) == 1L) {
+            throw ErrorCodeException(CommonMessageCode.SYSTEM_ERROR)
+        }
+        var repoPage = repositoryService.listRepoPage(name, DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE, RepoListOption())
+        while (repoPage.records.isNotEmpty()) {
+            repoPage.records.forEach { repo ->
+                if (repo.type != RepositoryType.GENERIC) deletePackage(name, repo.name)
+                repositoryService.deleteRepo(RepoDeleteRequest(name, repo.name, true, userId))
+            }
+            repoPage = repositoryService.listRepoPage(name, DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE, RepoListOption())
+        }
+        projectDao.deleteById(name)
+        publishEvent(buildDeletedEvent(userId, name))
+        logger.info("delete project:[$name] success by [$userId].")
+    }
+
     override fun updateProject(name: String, request: ProjectUpdateRequest): Boolean {
         if (!checkExist(name)) {
             throw ErrorCodeException(ArtifactMessageCode.PROJECT_NOT_FOUND, name)
@@ -226,7 +272,19 @@ class ProjectServiceImpl(
         storageCredentialService.findByKey(key) ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, key)
     }
 
+    private fun deletePackage(projectId: String, repoName: String) {
+        var packagePage = packageService.listPackagePage(projectId, repoName, PackageListOption())
+        while (packagePage.records.isNotEmpty()) {
+            packagePage.records.forEach { pkg ->
+                packageService.deletePackage(projectId, repoName, pkg.key)
+            }
+            packagePage = packageService.listPackagePage(projectId, repoName, PackageListOption())
+        }
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(ProjectServiceImpl::class.java)
+        private val excludeCri = TProject::name.nin(listOf(PUBLIC_GLOBAL_PROJECT, PAAS_PROJECT, PUBLIC_PROXY_PROJECT))
+
     }
 }

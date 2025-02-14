@@ -37,6 +37,8 @@ import com.tencent.bkrepo.common.service.feign.FeignClientFactory
 import com.tencent.bkrepo.repository.api.cluster.ClusterMetadataClient
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
+import com.tencent.bkrepo.common.metadata.service.node.impl.NodeBaseService
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import org.springframework.context.annotation.Conditional
@@ -46,11 +48,13 @@ import org.springframework.stereotype.Service
 @Conditional(SyncCondition::class, CommitEdgeEdgeCondition::class)
 class EdgeMetadataServiceImpl(
     nodeDao: NodeDao,
+    nodeBaseService: NodeBaseService,
     repositoryProperties: RepositoryProperties,
     clusterProperties: ClusterProperties,
     ciPermissionManager: CIPermissionManager
 ) : MetadataServiceImpl(
     nodeDao,
+    nodeBaseService,
     repositoryProperties,
     ciPermissionManager
 ) {
@@ -85,14 +89,14 @@ class EdgeMetadataServiceImpl(
         super.deleteMetadata(request, allowDeleteSystemMetadata)
     }
 
-    override fun addForbidMetadata(request: MetadataSaveRequest) {
+    override fun addLimitMetadata(request: MetadataSaveRequest, limitType: LimitType) {
         ignoreException(
             projectId = request.projectId,
             repoName = request.repoName,
             messageCodes = nodeLevelNotFoundError
         ) {
-            centerMetadataClient.addForbidMetadata(request)
+            centerMetadataClient.addLimitMetadata(request, limitType)
         }
-        super.addForbidMetadata(request)
+        super.addLimitMetadata(request, limitType)
     }
 }

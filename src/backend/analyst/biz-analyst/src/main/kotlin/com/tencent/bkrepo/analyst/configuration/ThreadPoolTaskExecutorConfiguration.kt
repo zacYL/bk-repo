@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.analyst.configuration
 
+import com.tencent.bkrepo.common.service.condition.ConditionalOnUndertow
 import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration
 import org.springframework.boot.task.TaskExecutorBuilder
 import org.springframework.context.annotation.Bean
@@ -37,6 +38,7 @@ import org.springframework.scheduling.annotation.AsyncAnnotationBeanPostProcesso
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 
 @Configuration(proxyBeanMethods = false)
+@ConditionalOnUndertow
 class ThreadPoolTaskExecutorConfiguration {
     @Lazy
     @Bean(

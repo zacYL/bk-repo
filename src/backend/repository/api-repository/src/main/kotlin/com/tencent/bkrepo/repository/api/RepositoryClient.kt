@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.constant.REPOSITORY_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
@@ -91,6 +92,21 @@ interface RepositoryClient {
         @ApiParam("仓库名称", required = false)
         @RequestParam name: String? = null,
         @ApiParam("仓库类型", required = false)
+        @RequestParam type: String? = null,
+        @ApiParam("仓库类别", required = false)
+        @RequestParam category: List<String>? = null
+    ): Response<List<RepositoryInfo>>
+
+    @ApiOperation("查询有权限的仓库列表")
+    @GetMapping("/list/{projectId}/{userId}")
+    fun listUserRepo(
+        @ApiParam(value = "项目id", required = true)
+        @PathVariable projectId: String,
+        @ApiParam(value = "用户", required = true)
+        @PathVariable userId: String,
+        @ApiParam("仓库名称", required = false)
+        @RequestParam name: String? = null,
+        @ApiParam("仓库类型", required = false)
         @RequestParam type: String? = null
     ): Response<List<RepositoryInfo>>
 
@@ -128,6 +144,14 @@ interface RepositoryClient {
         @PathVariable projectId: String,
         @RequestBody option: RepoListOption
     ): Response<List<RepositoryInfo>>
+
+    @ApiOperation("返回符合条件所有仓库")
+    @GetMapping("/all")
+    fun allRepos(
+        @RequestParam projectId: String? = null,
+        @RequestParam repoName: String? = null,
+        @RequestParam repoType: RepositoryType? = null
+    ): Response<List<RepositoryInfo?>>
 
     @ApiOperation("查询仓库大小信息")
     @GetMapping("/stat/{projectId}/{repoName}")

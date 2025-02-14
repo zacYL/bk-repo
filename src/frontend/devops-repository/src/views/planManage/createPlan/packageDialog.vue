@@ -32,8 +32,6 @@
                                 size="small"
                                 searchable
                                 multiple
-                                show-select-all
-                                ext-popover-cls="show-select-all"
                                 display-tag
                                 :value="checkedVersions[row.fid]"
                                 @change="versions => selectVersions(row, versions)">
@@ -127,7 +125,12 @@
                     repoName: pkg.repoName,
                     packageKey: pkg.key,
                     current: 1,
-                    limit: 1000
+                    limit: 1000,
+                    ...['GO'].includes(pkg.type)
+                        ? {
+                            sortProperty: 'ordinal'
+                        }
+                        : {}
                 }).then(({ records }) => {
                     this.$set(this.versionStorage, pkg.fid, records)
                 })
@@ -142,7 +145,7 @@
                 } else {
                     this.$bkMessage({
                         theme: 'error',
-                        message: '请选择制品版本'
+                        message: this.$t('pleaseSelect') + this.$t('space') + this.$t('artifactVersion')
                     })
                 }
             }

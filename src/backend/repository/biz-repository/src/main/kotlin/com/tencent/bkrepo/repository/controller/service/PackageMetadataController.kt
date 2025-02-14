@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.controller.service
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.PackageMetadataClient
+import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import com.tencent.bkrepo.common.metadata.service.metadata.PackageMetadataService
 import org.springframework.web.bind.annotation.RestController
@@ -46,9 +47,22 @@ class PackageMetadataController(
     private val packageMetadataService: PackageMetadataService
 ) : PackageMetadataClient {
 
+    override fun listMetadata(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): Response<Map<String, Any>> {
+        return ResponseBuilder.success(packageMetadataService.listMetadata(projectId, repoName, packageKey, version))
+    }
+
     override fun saveMetadata(request: PackageMetadataSaveRequest): Response<Void> {
         packageMetadataService.saveMetadata(request)
         return ResponseBuilder.success()
     }
 
+    override fun deleteMetadata(request: PackageMetadataDeleteRequest): Response<Void> {
+        packageMetadataService.deleteMetadata(request)
+        return ResponseBuilder.success()
+    }
 }

@@ -33,6 +33,7 @@ import com.tencent.bkrepo.job.pojo.JobDetail
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 
 @Primary
@@ -54,4 +55,7 @@ interface JobClient {
 
     @GetMapping("/activeUsers")
     fun activeUsers(): Response<Set<String>>
+
+    @PostMapping("/fileReferenceClean")
+    fun fileReferenceClean(): Response<Boolean>
 }

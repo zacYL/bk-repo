@@ -29,6 +29,7 @@ package com.tencent.bkrepo.repository.api.cluster
 
 import com.tencent.bkrepo.common.api.constant.REPOSITORY_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import io.swagger.annotations.Api
@@ -55,4 +56,8 @@ interface ClusterMetadataClient {
     @ApiOperation("添加禁用元数据")
     @PostMapping("/forbid")
     fun addForbidMetadata(@RequestBody request: MetadataSaveRequest): Response<Void>
+
+    @ApiOperation("添加禁用元数据")
+    @PostMapping("/limit")
+    fun addLimitMetadata(@RequestBody request: MetadataSaveRequest, limitType: LimitType): Response<Void>
 }

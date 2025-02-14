@@ -30,12 +30,12 @@
 package com.tencent.bkrepo.analyst.utils
 
 import com.tencent.bkrepo.analyst.message.ScannerMessageCode
+import com.tencent.bkrepo.analyst.model.ExportContent
 import com.tencent.bkrepo.analyst.model.LeakDetailExport
 import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
 import com.tencent.bkrepo.analyst.model.TProjectScanConfiguration
 import com.tencent.bkrepo.analyst.model.TScanPlan
 import com.tencent.bkrepo.analyst.model.TScanTask
-import com.tencent.bkrepo.analyst.pojo.LeakType
 import com.tencent.bkrepo.analyst.pojo.ProjectScanConfiguration
 import com.tencent.bkrepo.analyst.pojo.ScanTask
 import com.tencent.bkrepo.analyst.pojo.ScanTriggerType
@@ -128,12 +128,15 @@ object Converter {
         }
     }
 
-    private fun convertToLeakLevel(level: String): String = when (level) {
-        Level.CRITICAL.name -> LeakType.CRITICAL.value
-        Level.HIGH.name -> LeakType.HIGH.value
-        Level.MEDIUM.name -> LeakType.MEDIUM.value
-        Level.LOW.name -> LeakType.LOW.value
-        else -> "/"
+    private fun convertToLeakLevel(level: String): String {
+        val msgKey = when (level) {
+            Level.CRITICAL.name -> ExportContent.LEAK_DETAIL_SEVERITY_CRITICAL.msgKey
+            Level.HIGH.name -> ExportContent.LEAK_DETAIL_SEVERITY_HIGH.msgKey
+            Level.MEDIUM.name -> ExportContent.LEAK_DETAIL_SEVERITY_MEDIUM.msgKey
+            Level.LOW.name -> ExportContent.LEAK_DETAIL_SEVERITY_LOW.msgKey
+            else -> "/"
+        }
+        return LocaleMessageUtils.getLocalizedMessage(msgKey)
     }
 
     fun convertToDetailExport(artifactVulnerabilityInfo: ArtifactVulnerabilityInfo): LeakDetailExport {
@@ -175,6 +178,7 @@ object Converter {
                 high = high,
                 medium = medium,
                 low = low,
+                white = subScanTask.cveWhite?.size?.toLong() ?: 0L,
                 total = critical + high + medium + low,
                 finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME),
                 qualityRedLine = qualityRedLine,

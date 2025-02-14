@@ -1,47 +1,64 @@
 <template>
     <div class="package-card-container flex-align-center">
-        <Icon class="mr20 card-icon" size="70" :name="cardData.type ? cardData.type.toLowerCase() : getIconName(cardData.name)" />
+        <Icon class="mr20 card-icon" size="70" :name="cardData.type ? (isSbt ? 'sbt' : cardData.type.toLowerCase()) : getIconName(cardData.name)" />
         <div class="mr20 package-card-main flex-column">
             <div class="flex-align-center">
                 <span class="card-name text-overflow" :title="cardData.name">{{ cardData.name }}</span>
-                <span class="ml10 repo-tag" v-if="['MAVEN'].includes(cardData.type)">{{ cardData.key.replace(/^.*\/\/(.+):.*$/, '$1') }}</span>
+                <span class="ml10 repo-tag" v-if="['MAVEN', 'GO', 'CONAN'].includes(cardData.type)" v-bk-overflow-tips>{{ repoTag(cardData.key, cardData.type) }}</span>
                 <scan-tag class="ml10"
-                    v-if="showRepoScan"
+                    v-if="isEnterprise && !cardData.type && genericScanFileTypes.includes(cardData.name.replace(/^.+\.([^.]+)$/, '$1'))"
                     :status="(cardData.metadata || {}).scanStatus"
                     readonly>
                 </scan-tag>
+                <!-- generic 仓库才需要显示禁用的相关具体信息(禁用人、禁用原因等) -->
                 <forbid-tag class="ml10"
-                    v-if="!cardData.type && (cardData.metadata || {}).forbidStatus"
-                    v-bind="cardData.metadata">
+                    v-if="((cardData.metadata || {}).forbidStatus || cardData.forbidStatus)"
+                    :forbid-user="(cardData.metadata || {}).forbidUser"
+                    :forbid-type="(cardData.metadata || {}).forbidType"
+                    :forbid-description="cardData.type ? '' : forbidDescription">
                 </forbid-tag>
+                <Icon v-if="isSbt" class="ml10" size="12" :name="cardData.type.toLowerCase()" />
             </div>
             <span class="package-card-description text-overflow" :title="cardData.description">{{ cardData.description }}</span>
-            <div class="package-card-data" v-if="cardData.type">
-                <template>
-                    <div class="card-metadata" :title="$t('latestVersion') + ':' + `${cardData.latest}`"></div>
-                    <div class="card-metadata" :title="$t('lastModified') + ':' + `${formatDate(cardData.lastModifiedDate)}`"></div>
-                    <div class="card-metadata" :title="$t('versions') + ':' + `${cardData.versions}`"></div>
-                    <div class="card-metadata" :title="$t('downloadStats') + ':' + `${cardData.downloads}`"></div>
+            <div class="package-card-data" :style="dynamicStyle">
+                <!-- 依赖源仓库 -->
+                <template v-if="cardData.type">
+                    <div class="card-metadata">
+                        <div class="flex-align-center">
+                            <span class="card-metadata-special" :title="$t('latestVersion') + ` : ${cardData.latest}`"></span>
+                            <scan-tag
+                                class="ml5"
+                                v-if="isEnterprise && showRepoScan"
+                                :status="cardData.scanStatus"
+                                readonly>
+                            </scan-tag>
+                        </div>
+                    </div>
+                    <div class="card-metadata" :title="$t('lastModifiedDate') + ` : ${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div class="card-metadata" :title="$t('createdDate') + ` : ${formatDate(cardData.createdDate)}`"></div>
+                    <div v-if="whetherRepoSearch" class="card-metadata" :title="$t('repo') + ` : ${cardData.repoName}`"></div>
+                    <div v-if="whetherRepoVirtual" class="card-metadata" :title="$t('repositorySource') + ` : ${cardData.repoName}`"></div>
+                    <div v-if="!whetherRepoSearch" class="card-metadata" :title="$t('versions') + ` : ${cardData.versions}`"></div>
+                    <div class="card-metadata" :title="$t('downloadStats') + ` : ${cardData.downloads}`"></div>
+                    <div v-if="showRepoSearchVersion" class="card-metadata" :title="$t('searchVersionResultInfo') + ` : ${cardData.matchedVersions.length}`"></div>
                 </template>
-            </div>
-            <div class="package-card-data-more" v-else>
-                <template>
-                    <div class="card-metadata" :title="$t('repo') + ':' + `${cardData.repoName}`"></div>
-                    <div class="card-metadata" :title="$t('filePath') + ':' + `${cardData.fullPath}`"></div>
-                    <div class="card-metadata" :title="$t('fileSize') + ':' + `${convertFileSize(cardData.size)}`"></div>
-                    <div class="card-metadata" :title="$t('lastModified') + ':' + `${formatDate(cardData.lastModifiedDate)}`"></div>
-                    <div class="card-metadata" :title="$t('created') + ':' + `${formatDate(cardData.createdDate)}`"></div>
+                <!-- generic 仓库 -->
+                <template v-else>
+                    <div class="card-metadata" :title="$t('repo') + ` : ${cardData.repoName}`"></div>
+                    <div class="card-metadata" :title="$t('fileSize') + ` : ${convertFileSize(cardData.size)}`"></div>
+                    <div class="card-metadata" :title="$t('lastModifiedDate') + ` : ${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div class="card-metadata" :title="$t('createdDate') + ` : ${formatDate(cardData.createdDate)}`"></div>
                 </template>
             </div>
         </div>
         <div class="card-operation flex-center">
-            <Icon class="hover-btn" v-if="!readonly" size="24" name="icon-delete" @click.native.stop="deleteCard" />
+            <Icon class="hover-btn" v-if="!readonly && !whetherRepoVirtual" size="24" name="icon-delete" @click.native.stop="deleteCard" />
             <operation-list
-                v-if="!cardData.type"
+                v-if="!cardData.type && !readonly"
                 :list="[
                     { label: $t('detail'), clickEvent: () => detail() },
                     !(cardData.metadata || {}).forbidStatus && { label: $t('download'), clickEvent: () => download() },
-                    !community && !(cardData.metadata || {}).forbidStatus && { label: $t('share'), clickEvent: () => share() }
+                    !(cardData.metadata || {}).forbidStatus && { label: $t('share'), clickEvent: () => share() }
                 ]"></operation-list>
         </div>
     </div>
@@ -52,11 +69,15 @@
     import forbidTag from '@repository/components/ForbidTag'
     import { mapGetters } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
-    import { getIconName } from '@repository/store/publicEnum'
+    import { getIconName, scanTypeEnum, genericScanFileTypes } from '@repository/store/publicEnum'
     export default {
         name: 'packageCard',
         components: { OperationList, ScanTag, forbidTag },
         props: {
+            isSbt: {
+                type: Boolean,
+                default: false
+            },
             cardData: {
                 type: Object,
                 default: {}
@@ -64,22 +85,82 @@
             readonly: {
                 type: Boolean,
                 default: false
+            },
+            // 是否需要展示版本相关信息，展示搜索结果
+            showSearchVersionList: {
+                type: Boolean,
+                default: false
+            }
+        },
+        data () {
+            return {
+                genericScanFileTypes
             }
         },
         computed: {
             ...mapGetters(['isEnterprise']),
-            community () {
-                return RELEASE_MODE === 'community'
-            },
             showRepoScan () {
-                const show = this.isEnterprise && !this.community && !this.cardData.type && /\.(ipa)|(apk)|(jar)$/.test(this.cardData.name)
-                return show || SHOW_ANALYST_MENU
+                return Object.keys(scanTypeEnum).join(',').includes(this.cardData.type)
+            },
+            // 当前仓库类型
+            storeType () {
+                return this.$route.query.storeType || ''
+            },
+            // 是否是搜索状态，即是否需要显示搜索结果等字段
+            showRepoSearchVersion () {
+                return this.showSearchVersionList && (this.cardData.matchedVersions || []).length > 0
+            },
+            // 是否是制品搜索页面
+            whetherRepoSearch () {
+                return this.$route.path.endsWith('repoSearch')
+            },
+            // 是否是虚拟仓库
+            whetherRepoVirtual () {
+                return this.storeType === 'virtual'
+            },
+            // grid 布局根据依赖源、搜索、虚拟仓库等 需要拆分为 几部分
+            dynamicStyle () {
+                let style = '1fr 1fr 1fr 1fr'
+                if (this.whetherRepoSearch) {
+                    // 在制品搜索页面时
+                    if (this.cardData.type) {
+                        // 依赖源仓库，添加了所属仓库，所以默认值为 5 + 1 = 6
+                        // 搜索条件有值的状态下，因为添加了搜索结果字段，需要加 1
+                        style = this.showRepoSearchVersion ? '2fr 2fr 2fr 2fr 1fr 1fr' : '2fr 2fr 2fr 2fr 1fr '
+                    } else {
+                        // generic 仓库
+                        style = '1fr 1fr 1fr 1fr'
+                    }
+                } else {
+                    // 非搜索页面，因为generic仓库没有使用到此组件，只有依赖源仓库在用，所以最小为 5
+                    // 虚拟仓库，因为添加了仓库来源，需要加 1
+                    style = this.whetherRepoVirtual ? '2fr 2fr 2fr 2fr 1fr 1fr' : '2fr 2fr 2fr 1fr 1fr '
+                }
+                return { 'grid-template-columns': `${style}` }
+            },
+            // 获取元数据中的禁用原因
+            forbidDescription () {
+                return this.cardData?.nodeMetadata?.find((m) => m.key === 'forbidStatus')?.description
             }
         },
         methods: {
             convertFileSize,
             formatDate,
             getIconName,
+            repoTag (value, type) {
+                const regex = {
+                    MAVEN: (val) => {
+                        return val.replace(/^.*\/\/(.+):.*$/, '$1')
+                    },
+                    GO: (val) => {
+                        return val.match(/\/\/(.*)/)?.[1]
+                    },
+                    CONAN: (val) => {
+                        return val.match(/\/\/(.*)/)?.[1]
+                    }
+                }
+                return regex[type](value)
+            },
             deleteCard () {
                 this.$emit('delete-card')
             },
@@ -87,14 +168,14 @@
                 this.$emit('show-detail', this.cardData)
             },
             download () {
-                const url = `/generic/${this.cardData.projectId}/${this.cardData.repoName}/${this.cardData.fullPath}?download=true`
+                const url = `/generic/${this.cardData.projectId}/${this.cardData.repoName}/${encodeURIComponent(this.cardData.fullPath)}?download=true`
                 this.$ajax.head(url).then(() => {
                     window.open(
                         '/web' + url,
                         '_self'
                     )
                 }).catch(e => {
-                    const message = e.status === 403 ? this.$t('fileDownloadError', [this.$route.params.projectId]) : this.$t('fileError')
+                    const message = e.status === 423 ? this.$t('fileDownloadError') : this.$t('fileError')
                     this.$bkMessage({
                         theme: 'error',
                         message
@@ -140,29 +221,27 @@
         }
         .package-card-data {
             display: grid;
-            grid-template: auto / repeat(4, 1fr);
+            // grid-template: auto / repeat(6, 1fr);
             .card-metadata {
-                padding: 0 5px;
+                display: block;
+                padding-right: 10px;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                &:after {
+                &:before {
                     content: attr(title);
                     color: var(--fontSubsidiaryColor);
                 }
-            }
-        }
-        .package-card-data-more {
-            display: grid;
-            grid-template: auto / repeat(5, 1fr);
-            .card-metadata {
-                padding: 0 5px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                &:after {
-                    content: attr(title);
-                    color: var(--fontSubsidiaryColor);
+                 &-special {
+                    max-width: calc(100% - 20px);
+                    display: block;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    &:before {
+                        content: attr(title);
+                        color: var(--fontSubsidiaryColor);
+                    }
                 }
             }
         }

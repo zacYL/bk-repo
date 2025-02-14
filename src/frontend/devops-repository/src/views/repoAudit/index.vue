@@ -5,7 +5,7 @@
                 v-model="query.projectId"
                 class="mr10 w250"
                 searchable
-                :placeholder="$t('viewProjectLogPlaceHolder')"
+                :placeholder="$t('viewProjectLogPlaceholder')"
                 @change="handlerPaginationChange()"
                 :enable-virtual-scroll="projectList && projectList.length > 3000"
                 :list="projectList">
@@ -20,22 +20,42 @@
                 class="mr10 w250"
                 :shortcuts="shortcuts"
                 type="daterange"
-                :placeholder="$t('selectDatePlaceHolder')"
+                :placeholder="$t('selectDatePlaceholder')"
                 @change="handlerPaginationChange()">
             </bk-date-picker>
-            <bk-tag-input
+            <bk-select
                 class="mr10 w250"
                 v-model="query.user"
-                :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
-                :search-key="['id', 'name']"
-                :placeholder="$t('userInputPlaceHolder')"
-                :max-data="1"
-                trigger="focus"
-                allow-create
-                @click.native.capture="query.user = []"
-                @select="handlerPaginationChange()"
-                @removeAll="handlerPaginationChange()">
-            </bk-tag-input>
+                clearable
+                searchable
+                :placeholder="$t('selectUserMsg')"
+                @change="handlerPaginationChange()"
+                :enable-virtual-scroll="Object.values(userList).length > 3000"
+                :list="Object.values(userList).filter(user => user.id !== 'anonymous')">
+                <bk-option v-for="option in Object.values(userList).filter(user => user.id !== 'anonymous')"
+                    :key="option.id"
+                    :id="option.id"
+                    :name="option.name">
+                </bk-option>
+            </bk-select>
+            <bk-select
+                class="mr10 w250"
+                v-model="query.eventTypes"
+                clearable
+                searchable
+                multiple
+                show-select-all
+                :placeholder="$t('selectOperationEvent')"
+                @change="handlerPaginationChange()"
+                :list="logEventTypeList">
+                <bk-option
+                    v-for="(item, index) in logEventTypeList"
+                    :key="index"
+                    :id="item[0]"
+                    :name="item[1]"
+                >
+                </bk-option>
+            </bk-select>
         </div>
         <bk-table
             class="mt10"
@@ -70,8 +90,8 @@
                     <span>{{ row.content.des }}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('client') + 'IP'" prop="clientAddress"></bk-table-column>
-            <bk-table-column :label="$t('result')" width="80">
+            <bk-table-column :label="$t('client') + $t('space') + 'IP'" prop="clientAddress" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('result')" width="110">
                 <template #default="{ row }">
                     <span class="repo-tag" :class="[row.result ? 'SUCCESS' : 'FAILED']">{{ row.result ? $t('success') : $t('fail') }}</span>
                 </template>
@@ -94,9 +114,9 @@
 <script>
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
-    import moment from 'moment'
-    import { before, zeroTime } from '@repository/utils/date'
-    const nowTime = moment()
+    const nowTime = new Date(
+        `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`
+    ).getTime() + 3600 * 1000 * 24
     export default {
         name: 'audit',
         data () {
@@ -104,9 +124,11 @@
                 isLoading: false,
                 query: {
                     projectId: this.$route.params.projectId,
-                    user: [],
-                    time: [zeroTime(before(7)), nowTime.toDate()]
+                    user: '',
+                    time: [new Date(nowTime - 3600 * 1000 * 24 * 7), new Date(nowTime)],
+                    eventTypes: []
                 },
+                logEventTypeList: [],
                 auditList: [],
                 pagination: {
                     count: 0,
@@ -119,19 +141,19 @@
                     {
                         text: this.$t('lastSevenDays'),
                         value () {
-                            return [zeroTime(before(7)), nowTime.toDate()]
+                            return [new Date(nowTime - 3600 * 1000 * 24 * 7), new Date(nowTime)]
                         }
                     },
                     {
                         text: this.$t('lastFifteenDays'),
                         value () {
-                            return [zeroTime(before(15)), nowTime.toDate()]
+                            return [new Date(nowTime - 3600 * 1000 * 24 * 15), new Date(nowTime)]
                         }
                     },
                     {
                         text: this.$t('lastThirtyDays'),
                         value () {
-                            return [zeroTime(before(30)), nowTime.toDate()]
+                            return [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)]
                         }
                     }
                 ]
@@ -147,14 +169,15 @@
         created () {
             const { startTime, endTime, user, projectId } = this.$route.query
             startTime && endTime && (this.query.time = [new Date(startTime), new Date(endTime)])
-            user && this.query.user.push(user)
+            user && (this.query.user = user)
             projectId && (this.query.projectId = projectId)
             this.handlerPaginationChange()
         },
         methods: {
             formatDate,
             ...mapActions([
-                'getAuditList'
+                'getAuditList',
+                'getLogEventType'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -166,7 +189,8 @@
                     projectId: this.query.projectId || undefined,
                     startTime,
                     endTime,
-                    user: this.query.user[0] || undefined
+                    user: this.query.user || undefined,
+                    eventType: this.query.eventTypes.join(',')
                 }
                 this.$router.replace({
                     query: {
@@ -187,6 +211,11 @@
                     this.pagination.count = totalRecords
                 }).finally(() => {
                     this.isLoading = false
+                })
+                
+                // 获取审计日志事件类型列表
+                this.getLogEventType().then(data => {
+                    this.logEventTypeList = Object.entries(data)
                 })
             },
             getProjectName (id) {

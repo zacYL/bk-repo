@@ -47,6 +47,9 @@ import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.service.packages.PackageStatisticsService
 import com.tencent.bkrepo.repository.service.packages.PackageDownloadService
 import io.swagger.annotations.ApiOperation
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -55,6 +58,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.net.URLEncoder
 
 /**
  * 包管理接口
@@ -117,7 +122,7 @@ class UserPackageController(
     }
 
     @ApiOperation("删除包")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     @DeleteMapping("/package/delete/{projectId}/{repoName}")
     fun deletePackage(
         @PathVariable projectId: String,
@@ -129,7 +134,7 @@ class UserPackageController(
     }
 
     @ApiOperation("删除版本")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     @DeleteMapping("/version/delete/{projectId}/{repoName}")
     fun deleteVersion(
         @PathVariable projectId: String,
@@ -148,6 +153,20 @@ class UserPackageController(
         @RequestBody queryModel: QueryModel
     ): Response<Page<MutableMap<*, *>>> {
         return ResponseBuilder.success(packageService.searchPackage(queryModel))
+    }
+
+    @ApiOperation("导出包信息")
+    @PostMapping("/package/export")
+    fun exportPackage(
+        @RequestBody
+        queryModel: QueryModel
+    ): ResponseEntity<StreamingResponseBody> {
+        val headers = HttpHeaders().apply {
+            val name = URLEncoder.encode("制品包信息.xlsx", "UTF-8")
+            add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=${name}")
+        }
+        val body = packageDownloadService.exportPackage(queryModel)
+        return ResponseEntity(body, headers, HttpStatus.OK)
     }
 
     @ApiOperation("下载版本")

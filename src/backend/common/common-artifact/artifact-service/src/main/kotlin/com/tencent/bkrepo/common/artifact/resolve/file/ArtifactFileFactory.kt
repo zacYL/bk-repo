@@ -133,6 +133,27 @@ class ArtifactFileFactory(
          * 通过输入流构造artifact file，服务内部输入流转换成文件使用
          * @param inputStream 输入流
          */
+        fun build(inputStream: InputStream): ArtifactFile {
+            return StreamArtifactFile(inputStream, getMonitor(), properties, getStorageCredentials()).apply {
+                track(this)
+            }
+        }
+
+        /**
+         * 通过输入流构造artifact file，指定凭证
+         * @param inputStream 输入流
+         */
+        fun build(inputStream: InputStream, storageCredentials: StorageCredentials?): ArtifactFile {
+            val credentials = storageCredentials ?: properties.defaultStorageCredentials()
+            return StreamArtifactFile(inputStream, getMonitor(credentials), properties, credentials).apply {
+                track(this)
+            }
+        }
+
+        /**
+         * 通过输入流构造artifact file
+         * @param inputStream 输入流
+         */
         fun build(inputStream: InputStream, contentLength: Long? = null): ArtifactFile {
             return StreamArtifactFile(
                 inputStream, getMonitor(), properties, getStorageCredentials(), contentLength

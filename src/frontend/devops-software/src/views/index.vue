@@ -1,29 +1,26 @@
 <template>
     <div class="bkrepo-view flex-align-center">
-        <div class="nav-submain-list" :class="{ 'hidden-menu': hiddenMenu }">
-            <router-link
-                class="nav-submain-item flex-align-center"
-                :class="{ 'active-link': $route.meta.breadcrumb.find(route => route.name === name) }"
+        <div class="repo-header pl30 pr20">
+            <div
                 v-for="name in menuList.project"
                 :key="name"
-                :to="{ name }">
-                <bk-popover class="menu-icon" :content="$t(name)" placement="right" :disabled="!hiddenMenu">
-                    <Icon :name="name" size="14" />
-                </bk-popover>
-                <span v-if="!hiddenMenu" class="menu-name text-overflow">{{ $t(name) }}</span>
-            </router-link>
-            <Icon class="hidden-menu-btn"
-                @click.native="hiddenMenu = !hiddenMenu"
-                :size="14" :name="hiddenMenu ? 'dedent' : 'indent'" />
+                style="margin-right: 30px;"
+                @click="menuTo(name)">
+                <a
+                    class="nav-submain-item f14 flex-align-center"
+                    :title="$t(name)"
+                    :class="{ 'active-route': $route.meta.breadcrumb.find(route => route.name === name) }"
+                    onclick="return false"
+                    :href="name">
+                    <span class="text-overflow">
+                        {{$t(name)}}
+                    </span>
+                </a>
+            </div>
         </div>
-        <div class="m10 bkrepo-view-main flex-column flex-1">
-            <breadcrumb class="mb10 repo-breadcrumb">
-                <bk-breadcrumb-item :to="{ name: 'repoList' }">
-                    <svg width="48" height="16" style="vertical-align:-3px">
-                        <use xlink:href="#vpack" />
-                    </svg>
-                </bk-breadcrumb-item>
-            </breadcrumb>
+        <breadcrumb v-if="breadcrumb.length > 1" class="pl10 repo-breadcrumb">
+        </breadcrumb>
+        <div class="m6 bkrepo-view-main flex-column flex-1">
             <router-view class="flex-1"></router-view>
         </div>
     </div>
@@ -33,9 +30,7 @@
     export default {
         components: { Breadcrumb },
         data () {
-            return {
-                hiddenMenu: false
-            }
+            return {}
         },
         computed: {
             menuList () {
@@ -45,6 +40,21 @@
                         'repoSearch'
                     ]
                 }
+            },
+            breadcrumb () {
+                return this.$route.meta.breadcrumb || []
+            },
+            // 当前面包屑跳转的路由名，当面包屑没有值时跳转到项目首页，当面包屑有值时点击CPack图标跳转到二级菜单的首页
+            breadcrumbName () {
+                return (this.breadcrumb?.length || 0) > 0 ? this.breadcrumb[0]?.name || 'repoList' : 'repoList'
+            }
+        },
+        methods: {
+            menuTo (name) {
+                this.$router.push({ name })
+            },
+            createRoute (name) {
+                
             }
         }
     }
@@ -52,55 +62,53 @@
 <style lang="scss" scoped>
 .bkrepo-view {
     height: 100%;
-    .nav-submain-list {
-        position: relative;
-        width: 180px;
-        height: 100%;
-        overflow-y: auto;
-        padding-top: 12px;
-        font-size: 14px;
-        background-color: var(--deepBgColor);
-        will-change: width;
-        transition: width .3s;
-        &.hidden-menu {
-           width: 46px;
+    flex-direction: column;
+    .repo-header {
+        min-height: 60px;
+        background-color: #fff;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        &::after {
+            content: '';
+            height: 1px;
+            width: 100%;
+            position: absolute;
+            top: 59px;
+            left: 0;
+            z-index: 1;
+            background-color: #E5EAF0;
         }
         .nav-submain-item {
-            height: 44px;
-            margin-bottom: 4px;
-            padding: 0 16px;
-            color: rgba(255, 255, 255, 0.8);
+            height: 60px;
+            color: #081E40;
             &:hover {
-                color: white;
-                background-color: #407BE0;
+                color: #016BFF;
             }
-            &.router-link-active,
-            &.active-link {
-                color: var(--primaryColor);
-                background-color: white;
-            }
-            .menu-icon {
-                ::v-deep .bk-tooltip-ref {
-                    display: flex;
+            &.active-route {
+                font-weight: 600;
+                color: #016BFF;
+                position: relative;
+                &::before {
+                    content: "";
+                    width: 100%;
+                    height: 2px;
+                    background: #016BFF;
+                    position: absolute;
+                    top: 58px;
+                    z-index: 2;
                 }
             }
-            .menu-name {
-                margin-left: 8px;
-            }
         }
-        .hidden-menu-btn {
-            position: absolute;
-            left: 16px;
-            bottom: 24px;
-            color: white;
-            cursor: pointer;
-        }
+    }
+    .repo-breadcrumb {
+        height: 42px;
+        width: 100%;
+        background: #fff;
     }
     .bkrepo-view-main {
         height: calc(100% - 20px); // margin
-        .repo-breadcrumb {
-            height: 20px;
-        }
+        width: calc(100% - 12px);
     }
 }
 </style>

@@ -13,14 +13,15 @@ export default {
     actions: {
         // 分页查询仓库列表
         // override
-        getRepoList (_, { projectId, current, limit, name, type }) {
+        getRepoList (_, { projectId, current, limit, name, type, category }) {
             return Vue.prototype.$ajax.get(
                 `repository/api/software/repo/page/${current}/${limit}`,
                 {
                     params: {
                         projectId: projectId || undefined,
                         name: name || undefined,
-                        type: type || undefined
+                        type: type || undefined,
+                        category: category || undefined
                     }
                 }
             )
@@ -42,7 +43,7 @@ export default {
         },
         // 跨仓库搜索
         // override
-        searchPackageList (_, { projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20 }) {
+        searchPackageList (_, { projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20, version = '', metadataList = [], sha256 = '', md5 = '', projectList = [] }) {
             const isGeneric = repoType === 'generic'
             return Vue.prototype.$ajax.post(
                 `repository/api/software/${isGeneric ? 'node/search' : 'package/search'}`,
@@ -64,6 +65,15 @@ export default {
                                     operation: 'EQ'
                                 }]
                                 : []),
+                            ...(projectList.length > 0
+                                ? [
+                                    {
+                                        field: 'projectId',
+                                        value: projectList,
+                                        operation: 'IN'
+                                    }
+                                ]
+                                : []),
                             ...(repoType
                                 ? [{
                                     field: 'repoType',
@@ -82,7 +92,42 @@ export default {
                                 ? [{
                                     field: 'name',
                                     value: `*${packageName}*`,
-                                    operation: 'MATCH'
+                                    operation: 'MATCH_I'
+                                }]
+                                : []),
+                            ...(version
+                                ? [{
+                                    field: 'version',
+                                    value: `${version}`,
+                                    operation: 'EQ'
+                                }]
+                                : []),
+                            ...(metadataList
+                                ? metadataList?.map((item) => {
+                                    // 不做下面的判断会导致接口传参添加了field: 'metadata.' 的对象，会导致搜索结果为空
+                                    if (item.key && item.value) {
+                                        return {
+                                            field: `metadata.${item.key}`,
+                                            value: item.value,
+                                            operation: 'EQ'
+                                        }
+                                    } else {
+                                        return ''
+                                    }
+                                }).filter(Boolean)
+                                : []),
+                            ...(md5
+                                ? [{
+                                    field: 'md5',
+                                    value: `${md5}`,
+                                    operation: 'EQ'
+                                }]
+                                : []),
+                            ...(sha256
+                                ? [{
+                                    field: 'sha256',
+                                    value: `${sha256}`,
+                                    operation: 'EQ'
                                 }]
                                 : []),
                             ...(isGeneric
@@ -97,6 +142,19 @@ export default {
                         relation: 'AND'
                     }
                 }
+            )
+        },
+        // 查询仓库列表，不分页
+        getRepoListAll ({ commit }, { type }) {
+            return Vue.prototype.$ajax.get(
+                'repository/api/software/repo/list',
+                type
+                    ? {
+                        params: {
+                            type: type || ''
+                        }
+                    }
+                    : undefined
             )
         }
     }

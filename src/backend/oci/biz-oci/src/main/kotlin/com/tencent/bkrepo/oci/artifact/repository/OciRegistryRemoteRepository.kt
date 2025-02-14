@@ -34,20 +34,23 @@ package com.tencent.bkrepo.oci.artifact.repository
 import com.google.common.cache.CacheBuilder
 import com.tencent.bkrepo.common.api.constant.BEARER_AUTH_PREFIX
 import com.tencent.bkrepo.common.api.constant.CharPool
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.ACCEPT
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_TYPE
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.WWW_AUTHENTICATE
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.api.constant.ensureSuffix
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.AuthenticationUtil
 import com.tencent.bkrepo.common.api.util.BasicAuthUtils
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.toJsonString
-import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -58,17 +61,26 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
+import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.common.storage.innercos.http.HttpMethod
 import com.tencent.bkrepo.oci.constant.CATALOG_REQUEST
-import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_V2
+import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
 import com.tencent.bkrepo.oci.constant.DOCKER_LINK
+import com.tencent.bkrepo.oci.constant.IMAGE_INDEX_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.LAST_TAG
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.N
+import com.tencent.bkrepo.oci.constant.OCI_DEFAULT_NAMESPACE
 import com.tencent.bkrepo.oci.constant.OCI_FILTER_ENDPOINT
 import com.tencent.bkrepo.oci.constant.OCI_IMAGE_MANIFEST_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.OLD_DOCKER_VERSION
 import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.constant.PROXY_URL
 import com.tencent.bkrepo.oci.constant.TAG_LIST_REQUEST
+import com.tencent.bkrepo.oci.exception.OciBadRequestException
 import com.tencent.bkrepo.oci.exception.OciForbiddenRequestException
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.DOCKER_CATALOG_SUFFIX
@@ -85,7 +97,9 @@ import com.tencent.bkrepo.oci.pojo.tags.TagsInfo
 import com.tencent.bkrepo.oci.service.OciOperationService
 import com.tencent.bkrepo.oci.util.OciLocationUtils
 import com.tencent.bkrepo.oci.util.OciResponseUtils
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -122,12 +136,29 @@ class OciRegistryRemoteRepository(
      */
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return if (context.artifactInfo is OciManifestArtifactInfo) {
+            with(context) {
+                getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+            }
+            downloadIntercept(context, null)
             // 同一镜像tag可能被覆盖更新，对于manifest.json文件每次都去远端拉取
             doRequest(context) as ArtifactResource?
         } else {
             getCacheArtifactResource(context) ?: run {
                 doRequest(context) as ArtifactResource?
             }
+        }
+    }
+
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        with(context.artifactInfo as OciManifestArtifactInfo) {
+            val version = if (isValidDigest) OciDigest(reference).fileName() else reference
+            val dockerPackageKey = PackageKeys.ofDocker(packageName)
+            return packageClient.findVersionByName(projectId, repoName, dockerPackageKey, version).data
+                ?: run {
+                    val ociPackageKey = PackageKeys.ofOci(packageName)
+                    packageClient.findVersionByName(projectId, repoName, ociPackageKey, version).data
+                }
         }
     }
 
@@ -143,7 +174,7 @@ class OciRegistryRemoteRepository(
     /**
      * 注意：针对oci仓库配置的username/password鉴权方式请求返回401，需要额外去获取token
      */
-    private fun doRequest(context: ArtifactContext): Any? {
+    override fun doRequest(context: ArtifactContext): Any? {
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = clientCache.getIfPresent(remoteConfiguration) ?: run {
             clientCache.put(remoteConfiguration, createHttpClient(remoteConfiguration, false))
@@ -159,8 +190,8 @@ class OciRegistryRemoteRepository(
         try {
             httpClient!!.newCall(request).execute().use {
                 if (it.isSuccessful) return onResponse(context, it)
-                if (it.code != HttpStatus.UNAUTHORIZED.value) {
-                    logger.warn("response code is ${it.code} for url $downloadUrl")
+                if (it.code() != HttpStatus.UNAUTHORIZED.value) {
+                    logger.warn("response code is ${it.code()} for url $downloadUrl")
                     return null
                 }
                 return doRequestWithToken(
@@ -172,6 +203,8 @@ class OciRegistryRemoteRepository(
                     downloadUrl = downloadUrl
                 )
             }
+        } catch (e: OciBadRequestException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Error occurred while sending request $downloadUrl", e)
             throw NodeNotFoundException(downloadUrl)
@@ -234,7 +267,12 @@ class OciRegistryRemoteRepository(
         }
         // 拉取第三方仓库时，默认会返回v1版本的镜像格式
         if (url.contains("/manifests/")) {
-            requestBuilder.header(HttpHeaders.ACCEPT, DOCKER_DISTRIBUTION_MANIFEST_V2)
+            HttpContextHolder.getRequest().getHeaders(ACCEPT).iterator().forEach {
+                if (!it.isNullOrBlank()) {
+                    requestBuilder.addHeader(ACCEPT, it)
+                    logger.info("ACCEPT header added: $it")
+                }
+            }
         }
         return requestBuilder.build()
     }
@@ -270,7 +308,13 @@ class OciRegistryRemoteRepository(
      */
     private fun getRemoteRequestProperty(context: ArtifactContext): RemoteRequestProperty {
         val configuration = context.getRemoteConfiguration()
-        val url = UrlFormatter.addProtocol(configuration.url).toString()
+        var url = UrlFormatter.addProtocol(configuration.url).toString()
+        val defaultNamespace = configuration.getStringSetting(OCI_DEFAULT_NAMESPACE)?.trim()?.trim(SLASH)
+            ?.ifBlank { null }
+        val packageName = (context.artifactInfo as OciArtifactInfo).packageName
+        if (defaultNamespace != null && !packageName.contains(SLASH)) {
+            url = url.trimEnd(SLASH).ensureSuffix("/$defaultNamespace")
+        }
         context.putAttribute(PROXY_URL, url)
         return when (context.artifactInfo) {
             is OciBlobArtifactInfo -> {
@@ -397,7 +441,6 @@ class OciRegistryRemoteRepository(
                     "Could not get token from auth service, please check your remote configuration!"
                 )
             }
-        }
     }
 
     private fun getScope(remoteUrl: String, imageName: String): String {
@@ -431,13 +474,15 @@ class OciRegistryRemoteRepository(
      */
     override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
         logger.info("Remote download response will be processed")
-        val artifactFile = createTempFile(response.body!!)
+        response.header(CONTENT_TYPE)?.let { context.putAttribute(CONTENT_TYPE, it) }
+        val artifactFile = createTempFile(response.body()!!)
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
         val node = cacheArtifact(context, artifactFile)
         val artifactResource = ArtifactResource(
             inputStream = artifactStream,
             artifactName = context.artifactInfo.getResponseName(),
+            srcRepo = RepositoryIdentify(context.projectId, context.repoName),
             node = node,
             channel = ArtifactChannel.PROXY
         )
@@ -453,7 +498,7 @@ class OciRegistryRemoteRepository(
     /**
      * 尝试获取缓存的远程构件节点
      */
-    override fun findCacheNodeDetail(context: ArtifactDownloadContext): NodeDetail? {
+    override fun findCacheNodeDetail(context: ArtifactContext): NodeDetail? {
         with(context) {
             val fullPath = ociOperationService.getNodeFullPath(context.artifactInfo as OciArtifactInfo) ?: return null
             return nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, fullPath))
@@ -463,7 +508,7 @@ class OciRegistryRemoteRepository(
     /**
      * 加载要返回的资源: oci协议需要返回特定的请求头和资源类型
      */
-    override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactDownloadContext): ArtifactResource? {
+    override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactContext): ArtifactResource? {
         return storageManager.loadArtifactInputStream(cacheNode, context.storageCredentials)?.run {
             if (logger.isDebugEnabled) {
                 logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
@@ -471,6 +516,7 @@ class OciRegistryRemoteRepository(
             val artifactResource = ArtifactResource(
                 inputStream = this,
                 artifactName = context.artifactInfo.getResponseName(),
+                srcRepo = RepositoryIdentify(context.projectId, context.repoName),
                 node = cacheNode,
                 channel = ArtifactChannel.PROXY
             )
@@ -484,7 +530,7 @@ class OciRegistryRemoteRepository(
 
     private fun buildResponse(
         cacheNode: NodeDetail?,
-        context: ArtifactDownloadContext,
+        context: ArtifactContext,
         artifactResource: ArtifactResource,
         sha256: String? = null,
         size: Long? = null
@@ -516,6 +562,16 @@ class OciRegistryRemoteRepository(
         val configuration = context.getRemoteConfiguration()
         if (!configuration.cache.enabled) return null
         val ociArtifactInfo = context.artifactInfo as OciArtifactInfo
+        val contentType = context.getStringAttribute(CONTENT_TYPE)
+        if (
+            ociArtifactInfo is OciManifestArtifactInfo &&
+            (
+                contentType?.startsWith(DOCKER_DISTRIBUTION_MANIFEST_LIST_V2) == true ||
+                contentType?.startsWith(IMAGE_INDEX_MEDIA_TYPE) == true
+            )
+        ) {
+            ociArtifactInfo.isFat = true
+        }
         val fullPath = ociOperationService.getNodeFullPath(ociArtifactInfo)
         // 针对manifest文件获取会通过tag或manifest获取，避免重复创建
         fullPath?.let {
@@ -572,6 +628,27 @@ class OciRegistryRemoteRepository(
         } else {
             artifactStream
         }
+    }
+
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource
+    ): PackageDownloadRecord? {
+        val artifactInfo = context.artifactInfo as OciArtifactInfo
+        if (context.artifactInfo !is OciManifestArtifactInfo) return null
+        if (context.request.method == HttpMethod.HEAD.name) {
+            return null
+        }
+        val version = artifactResource.node?.metadata?.get(IMAGE_VERSION)?.toString() ?: run {
+            artifactResource.node?.metadata?.get(OLD_DOCKER_VERSION)?.toString() ?: return null
+        }
+        return PackageDownloadRecord(
+            projectId = context.projectId,
+            repoName = context.repoName,
+            packageKey = PackageKeys.ofName(context.repo.type, artifactInfo.packageName),
+            packageVersion = version,
+            userId = context.userId
+        )
     }
 
     // 获取tag列表

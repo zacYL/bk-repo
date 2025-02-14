@@ -12,7 +12,7 @@
 </template>
 <script>
     import User from './user'
-    import Role from '@repository/views/userGroup/index'
+    import Role from './role'
     export default {
         name: 'userManage',
         components: { User, Role },

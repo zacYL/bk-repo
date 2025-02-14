@@ -31,14 +31,14 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.oci.constant.BLOB_PATH_REFRESHED_KEY
 import com.tencent.bkrepo.oci.constant.DIGEST_LIST
 import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
-import com.tencent.bkrepo.oci.pojo.user.BasicInfo
+import com.tencent.bkrepo.oci.pojo.user.OciBasicInfo
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
@@ -49,6 +49,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
+import java.time.format.DateTimeFormatter
 
 object ObjectBuildUtils {
 
@@ -135,7 +136,7 @@ object ObjectBuildUtils {
         userId: String,
         metadata: Map<String, Any>? = null
     ): PackageMetadataSaveRequest {
-        val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = true) }
+        val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = it.key != SOURCE_TYPE) }
         return PackageMetadataSaveRequest(
             projectId = projectId,
             repoName = repoName,
@@ -212,9 +213,9 @@ object ObjectBuildUtils {
         )
     }
 
-    fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion): BasicInfo {
+    fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion, platform: List<String>): OciBasicInfo {
         with(nodeDetail) {
-            return BasicInfo(
+            return OciBasicInfo(
                 version = packageVersion.name,
                 fullPath = fullPath,
                 size = packageVersion.size,
@@ -224,10 +225,11 @@ object ObjectBuildUtils {
                 projectId = projectId,
                 repoName = repoName,
                 downloadCount = packageVersion.downloads,
-                createdBy = createdBy,
-                createdDate = createdDate,
-                lastModifiedBy = lastModifiedBy,
-                lastModifiedDate = lastModifiedDate
+                createdBy = packageVersion.createdBy,
+                createdDate = packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                lastModifiedBy = packageVersion.lastModifiedBy,
+                lastModifiedDate = packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                platform = platform,
             )
         }
     }

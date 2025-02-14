@@ -29,6 +29,16 @@ body {
     }
 }
 
+.bk-picker-confirm a.confirm {
+    background-color: #016bff;
+    color: #fff !important;
+}
+.bk-picker-confirm a.clear {
+    margin-left: auto;
+    background-color: rgba(203, 213, 224, .2);
+    color: #081e40 !important;
+}
+
 .hover-btn {
     user-select: none;
     cursor: pointer;
@@ -151,13 +161,13 @@ body {
         background-color: var(--warningBgColor);
     }
     &.QUALITY_UNPASS,
-    &.FAILED{
+    &.FAILED {
         color: var(--dangerColor);
         background-color: #FFDDDD;
     }
     &.UN_QUALITY,
     &.INIT
-    &.CANCEL  {
+    &.CANCEL {
         color: var(--fontSubsidiaryColor);
         background-color: #EFF2F6; // 30% CBD5E0
     }
@@ -184,6 +194,9 @@ body {
     }
     &.LOW {
         --signColor: var(--fontSubsidiaryColor);
+    }
+    &.WHITE {
+        --signColor: var(--successColor);
     }
     &:before {
         content: '';
@@ -236,7 +249,7 @@ body {
     .operation-list {
         .operation-item {
             position: relative;
-            width: auto;
+            min-width: 90px;
             padding: 0 14px;
             height: 40px;
             line-height: 40px;

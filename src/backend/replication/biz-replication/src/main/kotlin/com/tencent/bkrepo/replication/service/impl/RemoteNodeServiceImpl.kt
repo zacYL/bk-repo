@@ -33,7 +33,7 @@ import com.tencent.bkrepo.common.api.pojo.ClusterNodeType
 import com.tencent.bkrepo.common.api.util.UrlFormatter.addProtocol
 import com.tencent.bkrepo.common.artifact.event.packages.VersionCreatedEvent
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.otel.util.AsyncUtils.trace
 import com.tencent.bkrepo.replication.api.ReplicaTaskOperationClient
@@ -123,7 +123,7 @@ class RemoteNodeServiceImpl(
                 clusterNodeService.getByClusterId(clusterId!!)
                     ?: throw ErrorCodeException(ReplicationMessageCode.CLUSTER_NODE_NOT_FOUND, clusterId!!)
             }
-            replicaTaskService.getByTaskName(NAME.format(projectId, repoName, name))
+            replicaTaskService.getByTaskName(NAME.format(projectId, repoName, name), projectId)
                 ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, name)
             createOrUpdateTask(
                 request = convertUpdateToCreate(name, request),
@@ -145,7 +145,7 @@ class RemoteNodeServiceImpl(
         } else {
             val realName = NAME.format(projectId, repoName, name)
             clusterNodeService.getByClusterName(realName) ?: return emptyList()
-            val task = replicaTaskService.getByTaskName(realName) ?: return emptyList()
+            val task = replicaTaskService.getByTaskName(realName, projectId) ?: return emptyList()
             listOf(replicaTaskService.getDetailByTaskKey(task.key))
         }
         val result = mutableListOf<RemoteInfo>()
@@ -163,7 +163,7 @@ class RemoteNodeServiceImpl(
 
     override fun toggleStatus(projectId: String, repoName: String, name: String) {
         localDataManager.findRepoByName(projectId, repoName)
-        val task = replicaTaskService.getByTaskName(NAME.format(projectId, repoName, name))
+        val task = replicaTaskService.getByTaskName(NAME.format(projectId, repoName, name), projectId)
             ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, name)
         replicaTaskService.toggleStatus(task.key)
     }
@@ -174,7 +174,7 @@ class RemoteNodeServiceImpl(
         clusterNodeService.getByClusterName(realName)?.let {
             clusterNodeService.deleteById(it.id!!)
         }
-        val task = replicaTaskService.getByTaskName(realName)
+        val task = replicaTaskService.getByTaskName(realName, projectId)
             ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, name)
         replicaTaskService.deleteByTaskKey(task.key)
     }
@@ -506,7 +506,7 @@ class RemoteNodeServiceImpl(
         name: String
     ): ReplicaTaskInfo {
         val realName = NAME.format(projectId, repoName, name)
-        return replicaTaskService.getByTaskName(realName)
+        return replicaTaskService.getByTaskName(realName, projectId)
             ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, name)
     }
 

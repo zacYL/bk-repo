@@ -37,6 +37,7 @@ import com.tencent.bkrepo.analyst.pojo.response.ArtifactVulnerabilityInfo
 import com.tencent.bkrepo.analyst.pojo.response.FileLicensesResultDetail
 import com.tencent.bkrepo.analyst.pojo.response.filter.MergedFilterRule
 import com.tencent.bkrepo.analyst.service.SpdxLicenseService
+import com.tencent.bkrepo.analyst.service.VulRuleService
 import com.tencent.bkrepo.analyst.utils.ScanPlanConverter
 import com.tencent.bkrepo.common.analysis.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.analysis.pojo.scanner.Level
@@ -45,6 +46,7 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.LicenseOverviewKey
 import com.tencent.bkrepo.common.analysis.pojo.scanner.LicenseOverviewKey.TOTAL
 import com.tencent.bkrepo.common.analysis.pojo.scanner.ScanExecutorResult
 import com.tencent.bkrepo.common.analysis.pojo.scanner.ScanType
+import com.tencent.bkrepo.common.analysis.pojo.scanner.VulRuleMatchOverviewKey
 import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.LicenseResult
 import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.SecurityResult
 import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.SensitiveResult
@@ -53,11 +55,15 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.StandardScanner
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.util.Locale
+import java.util.*
 
 @Component("${StandardScanner.TYPE}Converter")
-class StandardConverter(private val licenseService: SpdxLicenseService) : ScannerConverter {
+class StandardConverter(
+    private val licenseService: SpdxLicenseService,
+    private val vulRuleService: VulRuleService
+) : ScannerConverter {
     @Suppress("UNCHECKED_CAST")
     override fun convertLicenseResult(result: Any): Page<FileLicensesResultDetail> {
         result as Page<LicenseResult>
@@ -88,6 +94,7 @@ class StandardConverter(private val licenseService: SpdxLicenseService) : Scanne
     override fun convertCveResult(result: Any): Page<ArtifactVulnerabilityInfo> {
         result as Page<SecurityResult>
         val pageRequest = Pages.ofRequest(result.pageNumber, result.pageSize)
+        val vulRules = vulRuleService.getVulList()
         val reports = result.records.mapTo(LinkedHashSet(result.records.size)) {
             ArtifactVulnerabilityInfo(
                 vulId = it.vulId,
@@ -101,7 +108,8 @@ class StandardConverter(private val licenseService: SpdxLicenseService) : Scanne
                 officialSolution = it.solution ?: "",
                 reference = it.references,
                 path = it.path,
-                versionsPaths = it.versionsPaths
+                versionsPaths = it.versionsPaths,
+                pass = vulRules.find { rule -> rule.vulId == it.vulId }?.pass
             )
         }.toList()
         return Pages.ofResponse(pageRequest, result.totalRecords, reports)
@@ -191,5 +199,25 @@ class StandardConverter(private val licenseService: SpdxLicenseService) : Scanne
             }
         }
         return overview
+    }
+
+    override fun convertVulRuleMatchOverview(scanExecutorResult: ScanExecutorResult): Map<String, Any?> {
+        scanExecutorResult as StandardScanExecutorResult
+        val overview = HashMap<String, Long>()
+        val vulRules = vulRuleService.getVulList()
+        val matchResult = mutableListOf<String>()
+        scanExecutorResult.output?.result?.securityResults?.forEach { securityResult ->
+            vulRules.find { securityResult.cveId == it.vulId }?.let {
+                matchResult.add("${it.vulId}/${if (it.pass) "W" else "B"}")
+                val key = VulRuleMatchOverviewKey.overviewKeyOf(it.pass, securityResult.severity)
+                overview[key] = overview.getOrDefault(key, 0L) + 1
+            }
+        }
+        logger.info("vulRule match result: $matchResult")
+        return overview
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(StandardConverter::class.java)
     }
 }

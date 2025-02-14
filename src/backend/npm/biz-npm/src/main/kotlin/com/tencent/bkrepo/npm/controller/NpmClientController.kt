@@ -45,9 +45,9 @@ import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
 import com.tencent.bkrepo.common.artifact.audit.NODE_DOWNLOAD_ACTION
 import com.tencent.bkrepo.common.artifact.audit.NODE_RESOURCE
 import com.tencent.bkrepo.common.security.permission.Permission
-import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
+import com.tencent.bkrepo.npm.artifact.NpmTarballArtifactInfo
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.pojo.NpmDeleteResponse
@@ -57,10 +57,8 @@ import com.tencent.bkrepo.npm.pojo.OhpmResponse
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
 import com.tencent.bkrepo.npm.pojo.metadata.disttags.DistTags
 import com.tencent.bkrepo.npm.pojo.user.OhpmUnpublishRequest
-import com.tencent.bkrepo.npm.pojo.user.request.PackageVersionDeleteRequest
 import com.tencent.bkrepo.npm.service.NpmClientService
-import com.tencent.bkrepo.npm.service.NpmWebService
-import com.tencent.bkrepo.npm.utils.NpmUtils
+import com.tencent.bkrepo.npm.service.impl.NpmWebService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -76,13 +74,15 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * npm 客户端操作指令
  */
+@Suppress("MVCPathVariableInspection")
+@RequestMapping("/{projectId}/{repoName}")
 @RestController
 class NpmClientController(
     private val npmClientService: NpmClientService,
     private val npmWebService: NpmWebService,
 ) {
 
-    @GetMapping("/{projectId}/{repoName}/-/ping")
+    @GetMapping("/-/ping")
     fun ping(): OhpmResponse {
         return OhpmResponse.success()
     }
@@ -90,7 +90,8 @@ class NpmClientController(
     /**
      * npm service info
      */
-    @GetMapping("/{projectId}/{repoName}")
+    @GetMapping
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun repoInfo(): ResponseEntity<Void> {
         return ResponseEntity.ok().build<Void>()
     }
@@ -98,7 +99,8 @@ class NpmClientController(
     /**
      * npm publish or update package
      */
-    @PutMapping("/{projectId}/{repoName}/{name}")
+    @PutMapping("/{name}")
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun publishOrUpdatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -107,7 +109,8 @@ class NpmClientController(
         return npmClientService.publishOrUpdatePackage(userId, artifactInfo, name)
     }
 
-    @PutMapping("/{projectId}/{repoName}/@{scope}/{name}")
+    @PutMapping("/@{scope}/{name}")
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun publishOrUpdatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -118,10 +121,8 @@ class NpmClientController(
         return npmClientService.publishOrUpdatePackage(userId, artifactInfo, pkgName)
     }
 
-    @PostMapping(
-        "/{projectId}/{repoName}/stream/{name}",
-        "/{projectId}/{repoName}/stream/@{scope}/{name}"
-    )
+    @PostMapping("/stream/{name}", "/stream/@{scope}/{name}")
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun ohpmStreamPublishOrUpdatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -143,28 +144,19 @@ class NpmClientController(
     /**
      * query package.json info
      */
-    @GetMapping("/{projectId}/{repoName}/{name}", produces = [MediaTypes.APPLICATION_JSON])
+    @GetMapping("/{name}", "/@{scope}/{name}")
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun packageInfo(
-        @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @PathVariable name: String
-    ): NpmPackageMetaData {
-        return npmClientService.packageInfo(artifactInfo, name)
-    }
-
-    @GetMapping("/{projectId}/{repoName}/@{scope}/{name}", produces = [MediaTypes.APPLICATION_JSON])
-    fun packageInfo(
-        @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @PathVariable scope: String,
-        @PathVariable name: String
-    ): NpmPackageMetaData {
-        val pkgName = String.format("@%s/%s", scope, name)
-        return npmClientService.packageInfo(artifactInfo, pkgName)
+        @ArtifactPathVariable artifactInfo: NpmArtifactInfo
+    ) {
+        npmClientService.packageInfo(artifactInfo)
     }
 
     /**
      * query package-version.json info
      */
-    @GetMapping("/{projectId}/{repoName}/{name}/{version}", produces = [MediaTypes.APPLICATION_JSON])
+    @GetMapping("/{name}/{version}", produces = [MediaTypes.APPLICATION_JSON])
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun packageVersion(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable name: String,
@@ -173,9 +165,8 @@ class NpmClientController(
         return npmClientService.packageVersionInfo(artifactInfo, name, version)
     }
 
-    @GetMapping(
-        "/{projectId}/{repoName}/@{scope}/{name}/{version}", produces = [MediaTypes.APPLICATION_JSON]
-    )
+    @GetMapping("/@{scope}/{name}/{version}", produces = [MediaTypes.APPLICATION_JSON])
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun packageVersion(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable scope: String,
@@ -186,15 +177,18 @@ class NpmClientController(
         return npmClientService.packageVersionInfo(artifactInfo, pkgName, version)
     }
 
-    @RequestMapping(value = ["/{projectId}/{repoName}/**/*.{tgz,har,hsp}"], method = [RequestMethod.HEAD])
-    fun downloadHead(
-        @ArtifactPathVariable artifactInfo: NpmArtifactInfo
-    ) {
-        this.download(artifactInfo)
-    }
-
     /**
      * download tgz file
+     *
+     * 1. 本地仓库:
+     *      /name/-/name-1.0.0.tgz
+     *      /@scope/name/-/@scope/name-1.0.0.tgz
+     * 2. 远程仓库:
+     *      /name/-/name-1.0.0.tgz
+     *      /@scope/name/-/name-1.0.0.tgz
+     * 3. 远程仓库(cnpmjs.org):
+     *      /name/download/name-1.0.0.tgz
+     *      /@scope/name/download/@scope/name-1.0.0.tgz
      */
     @AuditEntry(
         actionId = NODE_DOWNLOAD_ACTION
@@ -213,9 +207,14 @@ class NpmClientController(
         scopeId = "#artifactInfo?.projectId",
         content = ActionAuditContent.NODE_DOWNLOAD_CONTENT
     )
-    @GetMapping("/{projectId}/{repoName}/**/*.{tgz,har,hsp,md}")
+    @GetMapping(
+        "/{name}/{delimiter:-|download}/{fileName}",
+        "/@{scope}/{name}/{delimiter:-}/{fileName}",
+        "/@{scope}/{name}/{delimiter:-|download}/@{repeatedScope}/{fileName}"
+    )
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun download(
-        @ArtifactPathVariable artifactInfo: NpmArtifactInfo
+        @ArtifactPathVariable artifactInfo: NpmTarballArtifactInfo
     ) {
         npmClientService.download(artifactInfo)
     }
@@ -223,7 +222,8 @@ class NpmClientController(
     /**
      * npm search
      */
-    @GetMapping("/{projectId}/{repoName}/-/v1/search")
+    @GetMapping("/-/v1/search")
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun search(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         searchRequest: MetadataSearchRequest
@@ -235,9 +235,10 @@ class NpmClientController(
      * npm get dist-tag ls
      */
     @GetMapping(
-        "/{projectId}/{repoName}/-/package/{name}/dist-tags",
-        "/{projectId}/{repoName}/-/package/@{scope}/{name}/dist-tags"
+        "/-/package/{name}/dist-tags",
+        "/-/package/@{scope}/{name}/dist-tags"
     )
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun getDistTags(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable scope: String?,
@@ -253,10 +254,11 @@ class NpmClientController(
     @RequestMapping(
         method = [RequestMethod.POST, RequestMethod.PUT],
         path = [
-            "/{projectId}/{repoName}/-/package/{name}/dist-tags/{tag}",
-            "/{projectId}/{repoName}/-/package/@{scope}/{name}/dist-tags/{tag}"
+            "/-/package/{name}/dist-tags/{tag}",
+            "/-/package/@{scope}/{name}/dist-tags/{tag}"
         ]
     )
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun addDistTags(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -273,9 +275,10 @@ class NpmClientController(
      * npm dist-tag rm
      */
     @DeleteMapping(
-        "/{projectId}/{repoName}/-/package/{name}/dist-tags/{tag}",
-        "/{projectId}/{repoName}/-/package/@{scope}/{name}/dist-tags/{tag}"
+        "/-/package/{name}/dist-tags/{tag}",
+        "/-/package/@{scope}/{name}/dist-tags/{tag}"
     )
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun deleteDistTags(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -290,7 +293,8 @@ class NpmClientController(
     /**
      * delete the version triggers the request
      */
-    @PutMapping("/{projectId}/{repoName}/{name}/-rev/{rev}", "/{projectId}/{repoName}/@{scope}/{name}/-rev/{rev}")
+    @PutMapping("/{name}/-rev/{rev}", "/@{scope}/{name}/-rev/{rev}")
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun updatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -307,47 +311,36 @@ class NpmClientController(
      * npm unpublish package@1.0.0
      */
     @DeleteMapping(
-        "/**/{projectId}/{repoName}/{name}/{separator:-|download}/{filename}/-rev/{rev}",
-        "/**/{projectId}/{repoName}/@{scope}/{name}/{separator:-|download}/@{scope}/{filename}/-rev/{rev}"
+        "/{name}/{delimiter:-|download}/{fileName}/-rev/{rev}",
+        "/@{scope}/{name}/{delimiter:-}/{fileName}/-rev/{rev}",
+        "/@{scope}/{name}/{delimiter:-|download}/@{repeatedScope}/{fileName}/-rev/{rev}"
     )
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     fun deleteVersion(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @PathVariable scope: String?,
-        @PathVariable name: String,
-        @PathVariable separator: String,
-        @PathVariable filename: String,
         @PathVariable rev: String
     ): NpmDeleteResponse {
-        val pkgName = if (scope.isNullOrBlank()) name else String.format("@%s/%s", scope, name)
-        val tgzPath = HttpContextHolder.getRequest().requestURI.substringAfterLast(artifactInfo.getRepoIdentify())
-            .substringBeforeLast("/-rev")
-        val version = NpmUtils.analyseVersionFromPackageName(filename, name)
-        npmClientService.deleteVersion(artifactInfo, pkgName, version, tgzPath)
-        return NpmDeleteResponse(true, pkgName, rev)
+        npmClientService.deleteVersion(artifactInfo)
+        return NpmDeleteResponse(true, artifactInfo.packageName, rev)
     }
 
     /**
      * npm unpublish package
      */
-    @DeleteMapping("/{projectId}/{repoName}/{name}/-rev/{rev}", "/{projectId}/{repoName}/@{scope}/{name}/-rev/{rev}")
+    @DeleteMapping("/{name}/-rev/{rev}", "/@{scope}/{name}/-rev/{rev}")
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     fun deletePackage(
-        @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @PathVariable scope: String?,
-        @PathVariable name: String,
         @PathVariable rev: String
     ): NpmDeleteResponse {
-        val pkgName = if (scope.isNullOrBlank()) name else String.format("@%s/%s", scope, name)
-        npmClientService.deletePackage(userId, artifactInfo, pkgName)
-        return NpmDeleteResponse(true, pkgName, rev)
+        npmClientService.deletePackage(artifactInfo)
+        return NpmDeleteResponse(true, artifactInfo.packageName, rev)
     }
 
     /**
      * ohpm unpublish package or package version
      */
-    @DeleteMapping(
-        "/{projectId}/{repoName}/{name}", "/{projectId}/{repoName}/@{scope}/{name}"
-    )
+    @DeleteMapping("/{name}", "/@{scope}/{name}")
     @Permission(ResourceType.REPO, PermissionAction.DELETE)
     fun ohpmDeletePackage(
         @RequestAttribute userId: String,
@@ -356,22 +349,11 @@ class NpmClientController(
         @PathVariable name: String,
         @RequestBody unpublishRequest: OhpmUnpublishRequest,
     ) {
-        val pkgName = if (scope.isNullOrBlank()) name else String.format("@%s/%s", scope, name)
         if (unpublishRequest.version.isEmpty()) {
-            npmClientService.deletePackage(userId, artifactInfo, pkgName)
+            npmClientService.deletePackage(artifactInfo)
         } else {
-            val deleteRequest = PackageVersionDeleteRequest(
-                artifactInfo.projectId, artifactInfo.repoName, pkgName, unpublishRequest.version, userId
-            )
             // 删除json/har/hsp文件，移除package-version记录,更新package.json文件
-            npmWebService.deleteVersion(artifactInfo, deleteRequest)
-        }
-    }
-
-    companion object {
-        fun isFullMetadata(): Boolean {
-            val referer = HeaderUtils.getHeader("referer")
-            return referer == null || referer.isEmpty() || !referer.startsWith("install ")
+            npmWebService.deleteVersion(userId, artifactInfo)
         }
     }
 }

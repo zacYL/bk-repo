@@ -1,13 +1,13 @@
 <template>
     <div class="scan-config-container" v-bkloading="{ isLoading }">
         <bk-tab class="scan-config-tab page-tab" type="unborder-card" :active.sync="tabName">
-            <bk-tab-panel name="baseInfo" :label="$t('baseSetting')" v-if="!scanBaseInfo.readOnly">
-                <bk-form :label-width="120">
+            <bk-tab-panel name="baseInfo" :label="$t('baseSetting')">
+                <bk-form :label-width="140">
                     <bk-form-item :label="$t('schemeName')">
                         <bk-input class="w250" v-model.trim="scanBaseInfo.name" maxlength="32" show-word-limit></bk-input>
                     </bk-form-item>
                     <bk-form-item :label="$t('schemeType')">{{ $t(`scanTypeEnum.${scanBaseInfo.type}`) }}</bk-form-item>
-                    <bk-form-item :label="$t('scanner')">{{ scanBaseInfo.scanner }}</bk-form-item>
+                    <bk-form-item :label="$t('scanner')">{{ $t(scannerLabel) }}</bk-form-item>
                     <bk-form-item :label="$t('description')">
                         <bk-input type="textarea"
                             class="w480"
@@ -21,16 +21,12 @@
                     </bk-form-item>
                 </bk-form>
             </bk-tab-panel>
-            <bk-tab-panel render-directive="if" name="autoConfig" :label="$t('monitorSettings')" v-if="!scanBaseInfo.readOnly">
+            <bk-tab-panel v-if="showMonitor" render-directive="if" name="autoConfig" :label="$t('monitorSettings')">
                 <auto-scan-config :data="scanBaseInfo" @save="ajaxSaveConfig"></auto-scan-config>
             </bk-tab-panel>
             <bk-tab-panel render-directive="if" name="qualityRule" :label="$t('qualityRules')">
                 <scan-quality-rule :project-id="projectId" :plan-id="planId" :scan-types="scanBaseInfo.scanTypes">
                 </scan-quality-rule>
-            </bk-tab-panel>
-            <bk-tab-panel render-directive="if" name="ignoreRules" :label="$t('ignoreRules')">
-                <ignore-rule :project-id="projectId" :plan-id="planId">
-                </ignore-rule>
             </bk-tab-panel>
         </bk-tab>
     </div>
@@ -39,17 +35,13 @@
     import autoScanConfig from './autoScanConfig'
     import scanQualityRule from './scanQualityRule'
     import { mapActions } from 'vuex'
-    import { scanTypeEnum } from '@repository/store/publicEnum'
-    import IgnoreRule from './ignoreRule'
+    import { scanTypeEnum, scannerTypes } from '@repository/store/publicEnum'
     export default {
         name: 'scanConfig',
-        components: {
-            IgnoreRule,
-            autoScanConfig,
-            scanQualityRule
-        },
+        components: { autoScanConfig, scanQualityRule },
         data () {
             return {
+                isLoading: false,
                 scanTypeEnum,
                 tabName: 'baseInfo',
                 scanBaseInfo: {
@@ -62,7 +54,9 @@
                     rule: {
                         rules: []
                     }
-                }
+                },
+                showMonitor: false,
+                scannerTypes
             }
         },
         computed: {
@@ -71,7 +65,19 @@
             },
             planId () {
                 return this.$route.params.planId
+            },
+            // 扫描器显示需要修改文案，不需要用户知道具体的扫描器是什么
+            scannerLabel () {
+                return (this.scannerTypes?.find(item => item.name === this.scanBaseInfo.scanner)?.label) || this.scanBaseInfo.scanner
             }
+        },
+        watch: {
+            'scanBaseInfo.type': {
+                handler (val) {
+                    this.showMonitor = !['DOCKER', 'PYPI'].includes(val)
+                }
+            }
+
         },
         created () {
             this.ajaxScanConfig()
@@ -88,14 +94,18 @@
                 })
             },
             ajaxScanConfig () {
+                this.isLoading = true
                 this.getScanConfig({
                     projectId: this.projectId,
                     id: this.planId
                 }).then(res => {
                     this.scanBaseInfo = res
+                }).finally(() => {
+                    this.isLoading = false
                 })
             },
             ajaxSaveConfig (body) {
+                this.isLoading = true
                 this.saveScanConfig({
                     id: this.planId,
                     projectId: this.projectId,
@@ -103,9 +113,11 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('save') + this.$t('success')
+                        message: this.$t('save') + this.$t('space') + this.$t('success')
                     })
                     this.ajaxScanConfig()
+                }).finally(() => {
+                    this.isLoading = false
                 })
             }
         }

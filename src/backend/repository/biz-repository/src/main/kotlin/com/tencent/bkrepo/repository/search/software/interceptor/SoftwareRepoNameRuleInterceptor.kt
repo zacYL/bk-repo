@@ -31,21 +31,29 @@
 
 package com.tencent.bkrepo.repository.search.software.interceptor
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.common.artifact.util.PipelineRepoUtils
+import com.tencent.bkrepo.common.metadata.permission.PermissionManager
+import com.tencent.bkrepo.common.metadata.search.common.CommonQueryContext
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.security.exception.PermissionException
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
-import com.tencent.bkrepo.common.metadata.search.common.CommonQueryContext
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Component
 
 /**
- * 仓库名称规则拦截器
- * 在 service 层只加载系统级仓库，这里不再做权限校验
+ * 仓库类型规则拦截器
+ *
+ * 条件构造器中传入条件是`repoName`，过滤无权限的仓库
  */
 @Component
-class SoftwareRepoNameRuleInterceptor : QueryRuleInterceptor {
+class SoftwareRepoNameRuleInterceptor(
+    private val permissionManager: PermissionManager
+) : QueryRuleInterceptor {
 
     override fun match(rule: Rule): Boolean {
         return rule is Rule.QueryRule && rule.field == NodeInfo::repoName.name
@@ -70,6 +78,56 @@ class SoftwareRepoNameRuleInterceptor : QueryRuleInterceptor {
                 else -> throw IllegalArgumentException("RepoName only support EQ and IN operation type.")
             }.toFixed()
             return context.interpreter.resolveRule(queryRule, context)
+        }
+    }
+
+    private fun handleRepoNameEq(
+        projectId: String,
+        value: String
+    ): Rule.QueryRule {
+        if (!hasRepoPermission(projectId, value)) {
+            throw PermissionException()
+        }
+        return Rule.QueryRule(NodeInfo::repoName.name, value, OperationType.EQ)
+    }
+
+    private fun handleRepoNameIn(
+        projectId: String,
+        value: List<*>,
+        context: CommonQueryContext? = null
+    ): Rule.QueryRule {
+        val repoNameList = if (context?.repoList != null) {
+            context.repoList!!.filter { hasRepoPermission(projectId, it.name, it.public) }.map { it.name }
+        } else {
+            value.filter { hasRepoPermission(projectId, it.toString()) }.map { it.toString() }
+        }
+        return if (repoNameList.size == 1) {
+            Rule.QueryRule(NodeInfo::repoName.name, repoNameList.first(), OperationType.EQ)
+        } else {
+            Rule.QueryRule(NodeInfo::repoName.name, repoNameList, OperationType.IN)
+        }
+    }
+
+    private fun hasRepoPermission(
+        projectId: String,
+        repoName: String,
+        repoPublic: Boolean? = null
+    ): Boolean {
+        // 禁止查询pipeline仓库
+        if (SecurityUtils.isServiceRequest()) {
+            return true
+        }
+        PipelineRepoUtils.forbidPipeline(repoName)
+        return try {
+            permissionManager.checkRepoPermission(
+                action = PermissionAction.READ,
+                projectId = projectId,
+                repoName = repoName,
+                public = repoPublic
+            )
+            true
+        } catch (ignored: PermissionException) {
+            false
         }
     }
 }

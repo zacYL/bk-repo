@@ -1,0 +1,166 @@
+# 根据sha256分页查询文件
+
+功能描述：根据sha256分页查询文件
+
+
+
+## 请求
+
+#### 接口方法
+
+`GET`
+
+#### 接口地址
+
+`/api/open/CPack/repo-repository/api/node/page`
+
+#### 请求头
+
+| 字段                  | 类型   | 必填 | 描述               |
+| --------------------- | ------ | ---- | ------------------ |
+| X-DEVOPS-ACCESS-TOKEN | String | 是   | Devops用户访问令牌 |
+
+#### 路径参数
+
+无
+
+#### 查询参数
+
+| 字段              | 类型      | 必填  | 描述                          |
+|-----------------|---------|-----|-----------------------------|
+| sha256          | String  | 是   | sha256                      |
+| pageNumber      | Int     | 否   | 当前页(默认第1页)                  |
+| pageSize        | Int     | 否   | 分页大小(默认20)                  |
+| includeFolder   | Boolean | 否   | 是否包含目录                      |
+| includeMetadata | Boolean | 否   | 是否包含元数据                     |
+| deep            | Boolean | 否   | 是否深度查询文件(最大深度为64)           |
+| sort            | Boolean | 否   | 是否排序, 目录在前, 文件在后, 并按照文件名称排序 |
+| sortProperty    | List    | 否   | 排序字段(id, createdBy...)      |
+| direction       | List    | 否   | 排序方向(ASC, DESC)             |
+
+#### 请求体
+
+无
+
+#### 请求示例
+
+```bash
+curl -H 'X-DEVOPS-ACCESS-TOKEN: <your_access_token>' \
+    'https://devops.example.com/api/open/CPack/repo-repository/api/node/page?sha256=c627c797b05ea52fd866fbbb2c6c53a35bc1fbed9fb0ba653bddfbf0356aca84'
+```
+
+
+
+## 响应
+
+#### 响应示例
+
+```json
+{
+  "code": 0,
+  "message": null,
+  "data": {
+    "pageNumber": 1,
+    "pageSize": 20,
+    "totalRecords": 4,
+    "totalPages": 1,
+    "records": [
+      {
+        "createdBy": "admin",
+        "createdDate": "2023-05-22T11:19:46.233",
+        "lastModifiedBy": "admin",
+        "lastModifiedDate": "2023-06-13T17:56:55.808",
+        "recentlyUseDate": null,
+        "lastAccessDate": null,
+        "folder": true,
+        "path": "/",
+        "name": "bkrepo-dependency-check",
+        "fullPath": "/bkrepo-dependency-check",
+        "size": 0,
+        "sha256": null,
+        "md5": null,
+        "metadata": {},
+        "nodeMetadata": [],
+        "projectId": "p1",
+        "repoName": "scan_tool",
+        "copyFromCredentialsKey": null,
+        "copyIntoCredentialsKey": null
+      },
+      {
+        "createdBy": "admin",
+        "createdDate": "2023-05-26T14:01:51.685",
+        "lastModifiedBy": "admin",
+        "lastModifiedDate": "2023-05-26T14:01:51.685",
+        "recentlyUseDate": null,
+        "lastAccessDate": null,
+        "folder": true,
+        "path": "/",
+        "name": "bkrepo-trivy",
+        "fullPath": "/bkrepo-trivy",
+        "size": 0,
+        "sha256": null,
+        "md5": null,
+        "metadata": {},
+        "nodeMetadata": [],
+        "projectId": "p1",
+        "repoName": "scan_tool",
+        "copyFromCredentialsKey": null,
+        "copyIntoCredentialsKey": null
+      }
+    ],
+    "count": 4,
+    "page": 1
+  },
+  "traceId": ""
+}
+```
+
+#### 响应体
+
+| 字段    | 说明       |
+| ------- | ---------- |
+| code    | 返回码     |
+| message | 错误信息   |
+| data    | 数据       |
+| traceId | 链路追踪id |
+
+##### data 字段说明
+
+分页信息
+
+| 字段           | 说明                     |
+|--------------|------------------------|
+| pageNumber   | 页码(从1页开始)              |
+| pageSize     | 每页多少条                  |
+| totalRecords | 总记录条数                  |
+| totalPages   | 总页数                    |
+| records      | **数据列表**               |
+| count        | 已废弃, 由`totalRecords`代替 |
+| page         | 已废弃, 由`pageNumber`代替   |
+
+##### records 字段说明
+
+节点信息
+
+| 字段                     | 说明           |
+|------------------------|--------------|
+| createdBy              | 创建者          |
+| createdDate            | 创建时间         |
+| lastModifiedBy         | 修改者          |
+| lastModifiedDate       | 修改时间         |
+| recentlyUseDate        | 最近使用时间时间     |
+| lastAccessDate         | 访问时间         |
+| folder                 | 是否为文件夹       |
+| path                   | 路径           |
+| name                   | 资源名称         |
+| fullPath               | 完整路径         |
+| size                   | 文件大小, 单位byte |
+| sha256                 | 文件sha256     |
+| md5                    | 文件md5        |
+| metadata               | 元数据          |
+| nodeMetadata           | 节点元数据(推荐使用)  |
+| projectId              | 所属项目id       |
+| repoName               | 所属仓库名称       |
+| copyFromCredentialsKey | 拷贝的源存储key    |
+| copyIntoCredentialsKey | 拷贝的目标存储key   |
+| deleted                | 删除时间(存在时才返回) |

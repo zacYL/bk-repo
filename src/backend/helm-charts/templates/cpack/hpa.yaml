@@ -1,0 +1,38 @@
+# cpack hpa
+{{ if .Values.cpack.enabled -}}
+{{ if .Values.cpack.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "common.names.fullname" . }}-cpack
+  labels: {{- include "bkci.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: cpack
+    app.kubernetes.io/component: microservice
+    {{- if .Values.commonLabels }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" (dict "value" .Values.commonAnnotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+    kind: Deployment
+    name: {{ include "common.names.fullname" . }}-cpack
+  minReplicas: {{ .Values.cpack.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.cpack.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.cpack.autoscaling.targetCPU }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.cpack.autoscaling.targetCPU }}
+    {{- end }}
+    {{- if .Values.cpack.autoscaling.targetMemory }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.cpack.autoscaling.targetMemory  }}
+    {{- end }}
+{{- end }}
+{{- end -}}

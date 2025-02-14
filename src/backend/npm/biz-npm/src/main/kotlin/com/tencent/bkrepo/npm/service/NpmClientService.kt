@@ -40,6 +40,7 @@ import com.tencent.bkrepo.npm.pojo.NpmSuccessResponse
 import com.tencent.bkrepo.npm.pojo.OhpmResponse
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
 import com.tencent.bkrepo.npm.pojo.metadata.disttags.DistTags
+import org.springframework.web.multipart.MultipartFile
 
 interface NpmClientService {
     /**
@@ -60,7 +61,7 @@ interface NpmClientService {
     /**
      * 查询npm包的package.json元数据信息
      */
-    fun packageInfo(artifactInfo: NpmArtifactInfo, name: String): NpmPackageMetaData
+    fun packageInfo(artifactInfo: NpmArtifactInfo)
 
     /**
      * 查询npm包的版本对应元数据信息
@@ -100,12 +101,14 @@ interface NpmClientService {
     /**
      * delete package version
      */
-    fun deleteVersion(artifactInfo: NpmArtifactInfo, name: String, version: String, tarballPath: String)
+    fun deleteVersion(artifactInfo: NpmArtifactInfo)
 
     /**
      * delete package
      */
-    fun deletePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String)
+    fun deletePackage(artifactInfo: NpmArtifactInfo)
+
+    fun upload(projectId: String, repoName: String, file: MultipartFile)
 
     /**
      * 目标制品为OHPM类型且被依赖时，将标记指定版本为废弃并抛出异常，否则什么都不处理

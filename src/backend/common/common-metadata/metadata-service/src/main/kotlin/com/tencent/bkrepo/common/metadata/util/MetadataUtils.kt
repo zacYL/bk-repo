@@ -31,18 +31,31 @@
 
 package com.tencent.bkrepo.common.metadata.util
 
+import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.artifact.constant.EXPIRED_DELETED_NODE
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
 import com.tencent.bkrepo.common.artifact.constant.FORBID_USER
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.constant.LOCK_TYPE
+import com.tencent.bkrepo.common.artifact.constant.LOCK_USER
 import com.tencent.bkrepo.common.artifact.constant.METADATA_KEY_LINK_FULL_PATH
 import com.tencent.bkrepo.common.artifact.constant.METADATA_KEY_LINK_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.METADATA_KEY_LINK_REPO
+import com.tencent.bkrepo.common.artifact.constant.ROOT_DELETED_NODE
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.message.RepositoryMessageCode
 import com.tencent.bkrepo.common.metadata.model.TMetadata
+import com.tencent.bkrepo.common.security.exception.PermissionException
+import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.ForbidType
+import com.tencent.bkrepo.repository.pojo.metadata.LimitData
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
+import com.tencent.bkrepo.repository.pojo.metadata.LockType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 
 /**
@@ -87,7 +100,8 @@ object MetadataUtils {
                 value = it.value,
                 system = it.system,
                 description = it.description,
-                link = it.link
+                link = it.link,
+                display = it.display
             )
         }.orEmpty()
     }
@@ -104,19 +118,39 @@ object MetadataUtils {
         return metadataMap.values.toMutableList()
     }
 
-    fun extractForbidMetadata(
+    fun extractLimitMetadata(
         metadata: List<MetadataModel>,
-        operator: String = SecurityUtils.getUserId()
+        operator: String = SecurityUtils.getUserId(),
+        limitType: LimitType? = LimitType.FORBID
     ): MutableList<MetadataModel>? {
-        val forbidMetadata = metadata.firstOrNull {
-            it.key == FORBID_STATUS && it.value is Boolean
+        val limitData = when (limitType) {
+            LimitType.FORBID -> LimitData(FORBID_STATUS, FORBID_USER, FORBID_TYPE, ForbidType.MANUAL.name)
+            LimitType.LOCK -> LimitData(LOCK_STATUS, LOCK_USER, LOCK_TYPE, LockType.MANUAL.name)
+            else -> { LimitData(EMPTY, EMPTY, EMPTY, EMPTY) }
+        }
+        val limitMetadata = metadata.firstOrNull {
+            it.key == limitData.limitStatus && it.value is Boolean
         } ?: return null
         val result = ArrayList<MetadataModel>(3)
-
-        result.add(forbidMetadata.copy(system = true))
+        result.add(limitMetadata.copy(system = true, display = false))
         // 添加禁用操作用户和类型
-        result.add(MetadataModel(key = FORBID_USER, value = operator, system = true))
-        result.add(MetadataModel(key = FORBID_TYPE, value = ForbidType.MANUAL.name, system = true))
+        result.add(
+            MetadataModel(
+                key = limitData.limitUser,
+                value = operator,
+                system = true,
+                display = false
+            )
+        )
+        result.add(
+            MetadataModel(
+                key = limitData.limitActionType,
+                value = limitData.limitAction,
+                system = true,
+                display = false,
+                description = limitMetadata.description
+            )
+        )
 
         return result
     }
@@ -138,6 +172,12 @@ object MetadataUtils {
             }
     }
 
+    fun checkPermission(metadata: TMetadata?, operator: String) {
+        if (metadata?.system == true && (operator != SYSTEM_USER && !SecurityUtils.isServiceRequest())) {
+            throw PermissionException(LocaleMessageUtils.getLocalizedMessage(CommonMessageCode.METADATA_REQUEST_DENIED))
+        }
+    }
+
     fun convertAndCheck(metadata: MetadataModel): TMetadata {
         with(metadata) {
             val tMetadata = TMetadata(
@@ -145,7 +185,8 @@ object MetadataUtils {
                 value = value,
                 system = system,
                 description = description,
-                link = link
+                link = link,
+                display = display,
             )
             checkReservedKey(key, system)
             return tMetadata
@@ -174,6 +215,32 @@ object MetadataUtils {
                 tMetadata
             }
             .toMutableList()
+    }
+
+    fun checkEmptyAndLength(metadataList: List<TMetadata>) {
+        if (metadataList.any {
+                it.key.trim() == EMPTY || (
+                    it.value is String && it.value.toString()
+                    .trim() == EMPTY
+                )
+            }
+        ) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, metadataList)
+        }
+        if (metadataList.any { it.key.length > 30 || (it.value is String && it.value.toString().length > 500) }) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, metadataList)
+        }
+    }
+
+    fun buildRecycleBinMetadata() = TMetadata(key = ROOT_DELETED_NODE, value = true, system = true, display = false)
+
+    fun buildExpiredDeletedNodeMetadata() =
+        TMetadata(key = EXPIRED_DELETED_NODE, value = true, system = true, display = false)
+
+    private fun checkReservedKey(key: String, operator: String) {
+        if (key in RESERVED_KEY && operator != SYSTEM_USER) {
+            throw ErrorCodeException(RepositoryMessageCode.METADATA_KEY_RESERVED, key)
+        }
     }
 
     private fun checkReservedKey(key: String, system: Boolean = false) {

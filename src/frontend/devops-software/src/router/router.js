@@ -2,15 +2,12 @@ const repoHome = () => import('@/views')
 
 const repoList = () => import('@/views/repoList')
 
-const repoGeneric = () => import('@repository/views/repoGeneric')
+const repoGeneric = () => import('@repositoryci/views/repoGeneric')
 
 const commonPackageList = () => import('@repository/views/repoCommon/commonPackageList')
-const commonPackageDetail = () => import('@repository/views/repoCommon/commonPackageDetail')
+const commonPackageDetail = () => import('@repositoryci/views/repoCommon/commonPackageDetail')
 
 const repoSearch = () => import('@/views/repoSearch')
-
-const userCenter = () => import('@repository/views/userCenter')
-const repoToken = () => import('@repository/views/repoToken')
 
 const routes = [
     {
@@ -24,7 +21,7 @@ const routes = [
                 component: repoList,
                 meta: {
                     breadcrumb: [
-                        { name: 'repoList', label: '仓库列表' }
+                        { name: 'repoList', label: 'repoList' }
                     ]
                 }
             },
@@ -34,7 +31,7 @@ const routes = [
                 component: repoSearch,
                 meta: {
                     breadcrumb: [
-                        { name: 'repoSearch', label: '制品搜索' }
+                        { name: 'repoSearch', label: 'repoSearch' }
                     ]
                 }
             },
@@ -44,8 +41,8 @@ const routes = [
                 component: repoGeneric,
                 meta: {
                     breadcrumb: [
-                        { name: 'repoList', label: '仓库列表' },
-                        { name: 'repoGeneric', label: '{repoName}', template: '二进制仓库' }
+                        { name: 'repoList', label: 'repoList' },
+                        { name: 'repoGeneric', label: '{repoName}', template: 'repoGeneric' }
                     ]
                 }
             },
@@ -55,8 +52,8 @@ const routes = [
                 component: commonPackageList,
                 meta: {
                     breadcrumb: [
-                        { name: 'repoList', label: '仓库列表' },
-                        { name: 'commonList', label: '{repoName}', template: '依赖仓库' }
+                        { name: 'repoList', label: 'repoList' },
+                        { name: 'commonList', label: '{repoName}', template: 'commonList' }
                     ]
                 }
             },
@@ -66,29 +63,9 @@ const routes = [
                 component: commonPackageDetail,
                 meta: {
                     breadcrumb: [
-                        { name: 'repoList', label: '仓库列表' },
-                        { name: 'commonList', label: '{repoName}', template: '依赖仓库' },
-                        { name: 'commonPackage', label: '{packageKey}', template: '制品详情' }
-                    ]
-                }
-            },
-            {
-                path: 'repoToken',
-                name: 'repoToken',
-                component: repoToken,
-                meta: {
-                    breadcrumb: [
-                        { name: 'repoToken', label: '访问令牌' }
-                    ]
-                }
-            },
-            {
-                path: 'userCenter',
-                name: 'userCenter',
-                component: userCenter,
-                meta: {
-                    breadcrumb: [
-                        { name: 'userCenter', label: '个人中心' }
+                        { name: 'repoList', label: 'repoList' },
+                        { name: 'commonList', label: '{repoName}', template: 'commonList' },
+                        { name: 'commonPackage', label: '{packageKey}', template: 'commonPackage' }
                     ]
                 }
             }

@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-pypi",
+  "name" : "删除PyPI包的指定版本",
+  "desc" : "删除PyPI包的指定版本",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-pypi/ext/version/delete/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repopypi",
+  "targetPath" : "/ext/version/delete/{projectId}/{repoName}",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除PyPI包的指定版本_859314d3.md"
+}

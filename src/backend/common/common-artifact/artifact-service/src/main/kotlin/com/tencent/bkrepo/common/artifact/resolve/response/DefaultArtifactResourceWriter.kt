@@ -36,7 +36,6 @@ import com.tencent.bkrepo.common.artifact.constant.X_CHECKSUM_MD5
 import com.tencent.bkrepo.common.artifact.constant.X_CHECKSUM_SHA256
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.metrics.RecordAbleInputStream
-import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.closeQuietly
@@ -58,7 +57,7 @@ import java.io.IOException
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Locale
+import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import javax.servlet.http.HttpServletRequest
@@ -150,11 +149,7 @@ open class DefaultArtifactResourceWriter(
      * 响应多个构件时解析构件名称
      */
     private fun resolveMultiArtifactName(resource: ArtifactResource): String {
-        val baseName = when {
-            resource.node == null -> System.currentTimeMillis().toString()
-            PathUtils.isRoot(resource.node.name) -> resource.node.projectId + "-" + resource.node.repoName
-            else -> resource.node.name
-        }
+        val baseName = getBaseName(resource)
         return "$baseName.zip"
     }
 
@@ -261,6 +256,12 @@ open class DefaultArtifactResourceWriter(
 
     companion object {
         private val logger = LoggerFactory.getLogger(DefaultArtifactResourceWriter::class.java)
-        private val binaryMediaTypes = setOf(MediaTypes.APPLICATION_APK)
+        private val binaryMediaTypes = setOf(
+            MediaTypes.APPLICATION_APK,
+            MediaTypes.APPLICATION_OCI_INDEX_V1,
+            MediaTypes.APPLICATION_OCI_MANIFEST_V1,
+            MediaTypes.APPLICATION_DOCKER_MANIFEST_LIST_V2,
+            MediaTypes.APPLICATION_DOCKER_MANIFEST_V2
+        )
     }
 }

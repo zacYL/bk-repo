@@ -1,5 +1,5 @@
 <template>
-    <div class="base-info flex-column">
+    <div class="base-info flex-column" v-if="!isEmpty(subtaskOverview)">
         <div class="pt20 pb20 flex-align-center">
             <Icon class="mr10" size="40" :name="(subtaskOverview.repoType || '').toLowerCase()" />
             <span class="arti-name text-overflow" :title="subtaskOverview.name">{{ subtaskOverview.name }}</span>
@@ -10,21 +10,22 @@
                 <span class="ml20">{{ item.value }}</span>
             </div>
         </div>
-        <div v-if="subtaskOverview.qualityRedLine !== null" class="arti-quality">
+        <div class="arti-quality">
             <div class="flex-align-center">
-                <span class="mr20" style="color:var(--fontSubsidiaryColor);">{{ $t('qualityRules')}}</span>
-                <span v-if="subtaskOverview.qualityRedLine" class="repo-tag SUCCESS">{{$t('pass')}}</span>
+                <span class="mr20" style="color:var(--fontSubsidiaryColor);">{{$t('qualityRules')}}</span>
+                <span v-if="subtaskOverview.qualityRedLine === null" class="repo-tag INIT">{{$t('noSet')}}</span>
+                <span v-else-if="subtaskOverview.qualityRedLine" class="repo-tag SUCCESS">{{$t('pass')}}</span>
                 <span v-else class="repo-tag FAILED">{{$t('notPass')}}</span>
             </div>
             <div v-for="item in qualityRules" :key="item">{{ item }}</div>
         </div>
         <div class="arti-leak" v-if="scanTypes.includes(SCAN_TYPE_SECURITY)">
-            <div style="color:var(--fontSubsidiaryColor);">{{$t('vulnerabilityStatistics')}}</div><div></div>
+            <div style="color:var(--fontSubsidiaryColor);">{{$t('vulnerabilityStatistics')}}</div>
             <div class="status-sign"
                 :class="id"
                 v-for="[id] in Object.entries(leakLevelEnum)"
                 :key="id"
-                :data-name="$t(`leakLevelEnum.${id}`) + $t('space') + $t('vulnerability') + `:${segmentNumberThree(subtaskOverview[id.toLowerCase()])}`">
+                :data-name=" $t(`leakLevelEnum.${id}`) + $t('space') + $t('vulnerability') + `: ${segmentNumberThree(subtaskOverview[id.toLowerCase()])}`">
             </div>
         </div>
     </div>
@@ -32,8 +33,9 @@
 
 <script>
     import { mapActions } from 'vuex'
-    import { leakLevelEnum, SCAN_TYPE_SECURITY } from '../../../store/publicEnum'
-    import { segmentNumberThree } from '../../../utils'
+    import { leakLevelEnum, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
+    import { segmentNumberThree } from '@repository/utils'
+    import { isEmpty } from 'lodash'
 
     export default {
         name: 'artifactInfo',
@@ -44,7 +46,8 @@
         data () {
             return {
                 SCAN_TYPE_SECURITY: SCAN_TYPE_SECURITY,
-                leakLevelEnum: leakLevelEnum
+                leakLevelEnum: leakLevelEnum,
+                isEmpty
             }
         },
         computed: {

@@ -34,6 +34,7 @@ import com.tencent.bkrepo.common.service.cluster.condition.CommitEdgeCenterCondi
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
 import com.tencent.bkrepo.common.metadata.model.TNode
+import com.tencent.bkrepo.common.metadata.service.node.impl.NodeBaseService
 import org.springframework.context.annotation.Conditional
 import org.springframework.stereotype.Service
 
@@ -41,10 +42,12 @@ import org.springframework.stereotype.Service
 @Conditional(SyncCondition::class, CommitEdgeCenterCondition::class)
 class CenterMetadataServiceImpl(
     nodeDao: NodeDao,
+    nodeBaseService: NodeBaseService,
     repositoryProperties: RepositoryProperties,
     ciPermissionManager: CIPermissionManager
 ) : MetadataServiceImpl(
     nodeDao,
+    nodeBaseService,
     repositoryProperties,
     ciPermissionManager
 ) {

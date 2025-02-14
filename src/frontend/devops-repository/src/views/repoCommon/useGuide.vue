@@ -1,3 +1,5 @@
+
+<!-- sbt 无法选择，也不能pull -->
 <template>
     <canway-dialog
         v-model="useGuideData.show"
@@ -8,15 +10,16 @@
         @cancel="cancel">
         <template #header>
             <div class="guide-dialog-header flex-align-center">
-                <icon class="mr5" :name="repoType" size="32"></icon>
+                <icon class="mr5" :name="isSbt ? 'sbt' : repoType" size="32"></icon>
                 <span>{{ repoName + $t('space') + title }}</span>
+                <icon v-if="isSbt" class="ml5" :name="repoType" size="12"></icon>
             </div>
         </template>
         <div class="guide-container">
             <!-- 左侧tab标签页 -->
             <div class="guide-side w160">
                 <bk-select
-                    v-if="repoType === 'maven' || repoType === 'npm'"
+                    v-if="['maven', 'npm', 'gradle'].includes(repoType) && !isSbt"
                     class="w160"
                     :clearable="false"
                     v-model="activeDependType">
@@ -41,7 +44,7 @@
 <script>
     import repoGuide from '@repository/views/repoCommon/repoGuide'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
-    import { mapMutations } from 'vuex'
+    import { mapMutations, mapActions } from 'vuex'
 
     export default {
         name: 'useGuide',
@@ -62,29 +65,44 @@
                     loading: false
                 },
                 activeTab: 'setCredentials',
-                activeDependType: ''
+                activeDependType: '',
+                repoInfo: {}
             }
         },
         computed: {
             // 使用指引的可用操作，需要根据仓库类型及制品类型等修改
             guideOption () {
-                const basicOption = [
+                let basicOption = [
                     { name: 'setCredentials', label: this.$t('setCredentials') },
                     { name: 'pull', label: this.$t('pull') }
                 ]
+                // go远程仓库，且为http协议的情况下
+                if (this.repoType === 'go' && this.storeType === 'remote' && this.removeProtocolFromUrl(this.repoUrl, true) === 'http') {
+                    basicOption = basicOption.filter(item => item.name !== 'setCredentials')
+                }
+                
+                // ivy仓库不支持pull操作
+                if (this.repoType === 'ivy' || this.isSbt) {
+                    basicOption = basicOption.filter(item => item.name !== 'pull')
+                }
                 if (!this.noShowOption) {
                     basicOption.push({ name: 'push', label: this.$t('push') })
                 }
                 if (this.repoType === 'nuget' && this.storeType !== 'virtual' && !this.whetherSoftware) {
-                    basicOption.push({ name: 'delete', label: this.$t('delete') })
+                    basicOption.push({ name: 'delete', label: this.$t('deleteArtifact') })
                 }
                 return basicOption
             },
             // 构建工具的下拉选择项，目前只有maven及npm仓库才支持
             dependTypes () {
                 let types = []
-                if (this.repoType === 'maven') {
-                    types = ['Apache Maven', 'Gradle Groovy DSL', 'Gradle Kotlin DSL']
+                if (['maven', 'gradle'].includes(this.repoType)) {
+                    types = ['Gradle Groovy DSL', 'Gradle Kotlin DSL']
+                    if (this.repoType === 'gradle') {
+                        types.push('Apache Maven')
+                    } else if (this.repoType === 'maven') {
+                        types.unshift('Apache Maven')
+                    }
                 } else if (this.repoType === 'npm') {
                     types = ['npm', 'yarn']
                 }
@@ -92,8 +110,36 @@
                 return types
             }
         },
+        watch: {
+            'useGuideData.show': {
+                handler (val) {
+                    if (val) {
+                        this.$nextTick(() => {
+                            if (this.guideOption.find(item => item.name !== 'setCredentials')) {
+                                this.activeTab = this.guideOption[0].name
+                            }
+                            if (this.repoType === 'ivy') {
+                                this.getRepoDetail()
+                            }
+                        })
+                    }
+                },
+                deep: true,
+                immediate: true
+            }
+        },
         methods: {
             ...mapMutations(['SET_DEPEND_ACCESS_TOKEN_VALUE']),
+            ...mapActions(['getRepoInfo']),
+            getRepoDetail () {
+                this.getRepoInfo({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    repoType: this.repoType
+                }).then(res => {
+                    this.repoInfo = res
+                })
+            },
             setData (data) {
                 this.useGuideData = {
                     ...this.useGuideData,
@@ -105,6 +151,7 @@
                 // 关闭弹窗时将操作重新切换为设置凭证
                 this.activeTab = 'setCredentials'
                 this.SET_DEPEND_ACCESS_TOKEN_VALUE('')
+                this.$refs.repoGuideRefs.resetInputValue()
             },
             onChangeOption (name) {
                 this.activeTab = name

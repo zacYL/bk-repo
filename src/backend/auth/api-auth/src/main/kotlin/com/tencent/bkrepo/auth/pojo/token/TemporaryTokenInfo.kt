@@ -30,10 +30,8 @@
  */
 
 package com.tencent.bkrepo.auth.pojo.token
-
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
-
 @ApiModel("临时token信息")
 data class TemporaryTokenInfo(
     @ApiModelProperty("项目")
@@ -57,3 +55,4 @@ data class TemporaryTokenInfo(
     @ApiModelProperty("创建者")
     val createdBy: String
 )
+

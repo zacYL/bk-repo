@@ -27,8 +27,10 @@
 
 package com.tencent.bkrepo.analyst.statemachine.task.action
 
+import com.tencent.bkrepo.analyst.dao.ScanPlanDao
 import com.tencent.bkrepo.analyst.dao.ScanTaskDao
 import com.tencent.bkrepo.analyst.dao.SubScanTaskDao
+import com.tencent.bkrepo.analyst.event.ScanTaskNotifyEvent
 import com.tencent.bkrepo.analyst.metrics.ScannerMetrics
 import com.tencent.bkrepo.analyst.pojo.ScanTaskStatus
 import com.tencent.bkrepo.analyst.statemachine.Action
@@ -43,15 +45,19 @@ import com.tencent.bkrepo.statemachine.StateMachine
 import com.tencent.bkrepo.statemachine.TransitResult
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Lazy
+import java.time.LocalDateTime
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @Action
 class StopAction(
+    private val scanPlanDao: ScanPlanDao,
     private val scanTaskDao: ScanTaskDao,
     private val scannerMetrics: ScannerMetrics,
     private val subScanTaskDao: SubScanTaskDao,
+    private val publisher: ApplicationEventPublisher
 ) : TaskAction {
 
     @Autowired
@@ -74,7 +80,11 @@ class StopAction(
             scanTaskDao.updateStatus(context.task.id, ScanTaskStatus.STOPPED)
             scannerMetrics.taskStatusChange(ScanTaskStatus.STOPPING, ScanTaskStatus.STOPPED)
         }
+        val scanPlan = context.task.planId?.let { scanPlanDao.findById(it) }
         scheduler.schedule(command, STOP_TASK_DELAY_SECONDS, TimeUnit.SECONDS)
+        publisher.publishEvent(
+            ScanTaskNotifyEvent(ScanTaskStatus.STOPPED, context.task, scanPlan, LocalDateTime.now(), userId)
+        )
         return TransitResult(source)
     }
 

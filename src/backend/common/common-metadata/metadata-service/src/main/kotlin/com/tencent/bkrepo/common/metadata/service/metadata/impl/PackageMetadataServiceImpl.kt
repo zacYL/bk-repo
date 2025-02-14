@@ -33,16 +33,30 @@ package com.tencent.bkrepo.common.metadata.service.metadata.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.dao.packages.PackageDao
 import com.tencent.bkrepo.common.metadata.dao.packages.PackageVersionDao
+import com.tencent.bkrepo.common.metadata.model.TMetadata
 import com.tencent.bkrepo.common.metadata.model.TPackage
 import com.tencent.bkrepo.common.metadata.model.TPackageVersion
+import com.tencent.bkrepo.common.metadata.service.metadata.MetadataService
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import com.tencent.bkrepo.common.metadata.service.metadata.PackageMetadataService
 import com.tencent.bkrepo.common.metadata.util.MetadataUtils
+import com.tencent.bkrepo.common.metadata.util.PackageQueryHelper
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
+import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataDeleteRequest
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Conditional
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -53,20 +67,38 @@ import org.springframework.transaction.annotation.Transactional
 @Conditional(SyncCondition::class)
 class PackageMetadataServiceImpl(
     private val packageDao: PackageDao,
-    private val packageVersionDao: PackageVersionDao
+    private val packageVersionDao: PackageVersionDao,
+    private val metadataService: MetadataService,
 ) : PackageMetadataService {
+
+    override fun listMetadata(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): Map<String, Any> {
+        val tPackage = getPackage(projectId, repoName, packageKey)
+        return MetadataUtils.toMap(packageVersionDao.findByName(tPackage.id!!, version)?.metadata)
+    }
 
     @Transactional(rollbackFor = [Throwable::class])
     override fun saveMetadata(request: PackageMetadataSaveRequest) {
         with(request) {
-            if (versionMetadata.isNullOrEmpty()) {
-                logger.info("Metadata key list is empty, skip saving[$this]")
+            if (metadata.isNullOrEmpty() && versionMetadata.isNullOrEmpty()) {
+                logger.error("Metadata key list is empty, skip saving[$this]")
                 return
             }
             val tPackage = getPackage(projectId, repoName, packageKey)
             val tPackageVersion = getPackageVersion(tPackage.id!!, version)
+            val systemMetadata = versionMetadata?.filter { it.key in RESERVED_KEY }
+            if (systemMetadata.isNullOrEmpty() &&
+                tPackageVersion.metadata.any { it.key == LOCK_STATUS && it.value == true }
+            ) {
+                throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
+            }
             val oldMetadata = tPackageVersion.metadata
-            val newMetadata = versionMetadata!!.map { MetadataUtils.convertAndCheck(it) }
+            val newMetadata = MetadataUtils.compatibleConvertAndCheck(metadata, versionMetadata)
+            MetadataUtils.checkEmptyAndLength(newMetadata)
             tPackageVersion.metadata = MetadataUtils.merge(oldMetadata, newMetadata)
             packageVersionDao.save(tPackageVersion)
             logger.info("Save package metadata [$this] success.")
@@ -74,14 +106,55 @@ class PackageMetadataServiceImpl(
     }
 
     @Transactional(rollbackFor = [Throwable::class])
-    override fun addForbidMetadata(request: PackageMetadataSaveRequest) {
+    override fun addLimitMetadata(request: PackageMetadataSaveRequest, limitType: LimitType) {
         with(request) {
-            val forbidMetadata = MetadataUtils.extractForbidMetadata(versionMetadata!!)
-            if (forbidMetadata.isNullOrEmpty()) {
-                logger.info("forbidMetadata is empty, skip saving[$this]")
+            val limitMetadata = MetadataUtils.extractLimitMetadata(metadata = versionMetadata!!, limitType = limitType)
+            if (limitMetadata.isNullOrEmpty()) {
+                logger.info("[$limitType]limitMetadata is empty, skip saving[$this]")
                 return
             }
-            saveMetadata(request.copy(versionMetadata = forbidMetadata))
+            saveMetadata(request.copy(versionMetadata = limitMetadata, operator = SYSTEM_USER))
+            val tPackage = getPackage(projectId, repoName, packageKey)
+            val tPackageVersion = getPackageVersion(tPackage.id!!, version)
+            val artifactInfo = DefaultArtifactInfo(projectId, repoName, tPackageVersion.artifactPath!!)
+            metadataService.addLimitMetadata(
+                MetadataSaveRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    fullPath = artifactInfo.getArtifactFullPath(),
+                    metadata = metadata,
+                    nodeMetadata = versionMetadata
+                ),
+                limitType
+            )
+        }
+    }
+
+    @Transactional(rollbackFor = [Throwable::class])
+    override fun deleteMetadata(request: PackageMetadataDeleteRequest) {
+        if (request.keyList.isEmpty()) {
+            logger.info("Metadata key list is empty, skip deleting[$this]")
+            return
+        }
+
+        request.apply {
+            val tPackage = getPackage(projectId, repoName, packageKey)
+            val query = PackageQueryHelper.versionQuery(tPackage.id!!, version)
+            getPackageVersion(tPackage.id!!, version).metadata.forEach {
+                when {
+                    it.key == LOCK_STATUS && it.value == true -> {
+                        throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
+                    }
+                    it.key in keyList -> MetadataUtils.checkPermission(it, operator)
+                }
+            }
+            val update = Update().pull(
+                TPackageVersion::metadata.name,
+                Query.query(Criteria.where(TMetadata::key.name).`in`(keyList))
+            )
+            packageVersionDao.updateMulti(query, update)
+        }.also {
+            logger.info("Delete metadata [$it] success.")
         }
     }
 

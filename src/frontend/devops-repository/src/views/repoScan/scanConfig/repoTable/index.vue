@@ -1,11 +1,10 @@
 <template>
     <div class="repository-table-container">
         <bk-radio-group v-model="showAddBtn">
-            <bk-radio :disabled="disabled" :value="false">{{ $t('allRepo') }}</bk-radio>
+            <bk-radio :disabled="disabled" :value="false">{{$t('allRepo')}}</bk-radio>
             <bk-radio :disabled="disabled" class="mt10" :value="true">
-                <span>{{ $t('specifiedRepo') }}</span>
-                <bk-button v-show="showAddBtn && !disabled" class="ml10" icon="plus" @click="showAddDialog = true">
-                    {{ $t('addRepo') }}</bk-button>
+                <span>{{$t('specifiedRepo')}}</span>
+                <bk-button v-show="showAddBtn && !disabled" class="ml10" icon="plus" @click="showAddDialog = true">{{$t('addRepo')}}</bk-button>
             </bk-radio>
         </bk-radio-group>
         <div v-show="showAddBtn && defaultRepos.length" class="mt10 repo-list">
@@ -60,7 +59,7 @@
             repoListLimit () {
                 const repoTypeLimit = [this.scanType.replace(/^([A-Z]+).*$/, '$1')]
                 return this.repoListAll
-                    .filter(r => repoTypeLimit.includes(r.type))
+                    .filter(r => repoTypeLimit.includes(r.type) && r.category !== 'VIRTUAL')
                     .sort((a, b) => {
                         return Boolean(a.type > b.type) || -1
                     })

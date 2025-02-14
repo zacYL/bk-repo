@@ -30,6 +30,7 @@
  */
 
 dependencies {
+    api(project(":auth:api-auth"))
     api(project(":common:common-api"))
     api(project(":common:common-artifact:artifact-api"))
     api(project(":common:common-query:query-api"))

@@ -28,6 +28,8 @@
 package com.tencent.bkrepo.replication.pojo.record.request
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
+import com.tencent.bkrepo.replication.pojo.request.ActionType
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
 import com.tencent.bkrepo.replication.pojo.task.objects.PathConstraint
 import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy
@@ -57,5 +59,11 @@ data class RecordDetailInitialRequest(
     @ApiModelProperty("制品大小")
     var size: Long? = null,
     @ApiModelProperty("制品sha256值")
-    var sha256: String? = null
+    var sha256: String? = null,
+    @ApiModelProperty("动作类型")
+    var actionType: ActionType? = null,
+    @ApiModelProperty("当前状态")
+    var status: ExecutionStatus = ExecutionStatus.RUNNING,
+    @ApiModelProperty("错误原因")
+    var errorReason: String? = null
 )

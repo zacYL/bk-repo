@@ -28,6 +28,9 @@
 package com.tencent.bkrepo.common.metadata.service.repo
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCleanStrategy
+import com.tencent.bkrepo.common.metadata.model.TRepository
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
@@ -68,6 +71,7 @@ interface RepositoryService {
         name: String? = null,
         type: String? = null,
         display: Boolean? = null,
+        category: List<String>? = null
     ): List<RepositoryInfo>
 
     /**
@@ -76,15 +80,13 @@ interface RepositoryService {
      * @param projectId 项目id
      * @param pageNumber 当前页
      * @param pageSize 分页数量
-     * @param name 仓库名称
-     * @param type 仓库类型
+     * @param option 仓库查询选项
      */
     fun listRepoPage(
         projectId: String,
         pageNumber: Int,
         pageSize: Int,
-        name: String? = null,
-        type: String? = null,
+        option: RepoListOption
     ): Page<RepositoryInfo>
 
     /**
@@ -101,6 +103,19 @@ interface RepositoryService {
     ): List<RepositoryInfo>
 
     /**
+     * 查询项目下的有权限的依赖仓库列表
+     *
+     * @param userId 用户id
+     * @param projectId 项目id
+     * @param option 仓库查询选项
+     */
+    fun listPermissionPackageRepo(
+        userId: String,
+        projectId: String,
+        option: RepoListOption
+    ): List<RepositoryInfo>
+
+    /**
      * 分页查询项目下的有权限的仓库列表
      *
      * @param userId 用户id
@@ -113,6 +128,14 @@ interface RepositoryService {
         pageSize: Int,
         option: RepoListOption,
     ): Page<RepositoryInfo>
+
+    /**
+     * 根据多个仓库类型查询项目下的仓库列表
+     *
+     * @param projectId 项目ID
+     * @param types 仓库类型
+     */
+    fun listRepoByTypes(projectId: String, types: List<String>): List<RepositoryInfo>
 
     /**
      * 根据类型分页查询仓库列表
@@ -167,4 +190,31 @@ interface RepositoryService {
     fun deleteRepo(repoDeleteRequest: RepoDeleteRequest)
 
     fun statRepo(projectId: String, repoName: String): NodeSizeInfo
+
+    /**
+     * 获取仓库清理策略
+     */
+    fun getRepoCleanStrategy(projectId: String, repoName: String): RepositoryCleanStrategy?
+
+    /**
+     * 更新仓库清理策略中的清理任务状态
+     * WAITING--->RUNNING
+     */
+    fun updateCleanStatusRunning(projectId: String, repoName: String)
+
+    /**
+     * 更新仓库清理策略中的清理任务状态
+     * RUNNING--->WAITING
+     */
+    fun updateCleanStatusWaiting(projectId: String, repoName: String)
+
+    /**
+     * 分页查询所有【组合仓库】、【本地仓库】
+     * 默认分页大小
+     * 仓库清理使用
+     */
+    fun allRepoPage(skip: Long): List<TRepository>
+
+    fun allRepos(projectId: String?, repoName: String?, repoType: RepositoryType?): List<RepositoryInfo?>
+    fun migrateCleanStrategy(): List<String>
 }

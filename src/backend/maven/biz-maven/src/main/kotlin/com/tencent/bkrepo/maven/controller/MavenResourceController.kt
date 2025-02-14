@@ -38,13 +38,20 @@ import com.tencent.bkrepo.common.artifact.audit.NODE_DELETE_ACTION
 import com.tencent.bkrepo.common.artifact.audit.NODE_DOWNLOAD_ACTION
 import com.tencent.bkrepo.common.artifact.audit.NODE_RESOURCE
 import com.tencent.bkrepo.common.artifact.audit.NODE_CREATE_ACTION
+import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
+import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
 import com.tencent.bkrepo.maven.service.MavenService
+import com.tencent.bkrepo.maven.util.DeployUtils.validate
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 class MavenResourceController(
@@ -93,6 +100,15 @@ class MavenResourceController(
         scopeId = "#mavenArtifactInfo?.projectId",
         content = ActionAuditContent.NODE_DOWNLOAD_CONTENT
     )
+    @PostMapping("/deploy/{projectId}/{repoName}")
+    fun verifyDeploy(
+        mavenArtifactInfo: MavenArtifactInfo,
+        @RequestBody request: MavenWebDeployRequest,
+    ) {
+        request.validate()
+        mavenService.verifyDeploy(mavenArtifactInfo, request)
+    }
+
     @GetMapping(MavenArtifactInfo.MAVEN_MAPPING_URI, produces = [MediaType.APPLICATION_JSON_VALUE])
     fun dependency(@ArtifactPathVariable mavenArtifactInfo: MavenArtifactInfo) {
         mavenService.dependency(mavenArtifactInfo)
@@ -119,4 +135,10 @@ class MavenResourceController(
     fun deleteDependency(@ArtifactPathVariable mavenArtifactInfo: MavenArtifactInfo) {
         mavenService.deleteDependency(mavenArtifactInfo)
     }
+
+    @PostMapping("/pom_gav", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun extractGavFromPom(@RequestPart(value = "file") file: MultipartFile) = ResponseBuilder.success(mavenService.extractGavFromPom(file))
+
+    @PostMapping("/jar_gav", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun extractGavFromJar(@RequestPart(value = "file") file: MultipartFile) = ResponseBuilder.success(mavenService.extractGavFromJar(file))
 }

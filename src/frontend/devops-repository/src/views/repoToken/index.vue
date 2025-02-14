@@ -1,6 +1,6 @@
 <template>
     <div class="repo-token-container" v-bkloading="{ isLoading }">
-        <bk-button class="ml20 mt10" icon="plus" theme="primary" @click="createToken">{{ $t('newToken') }}</bk-button>
+        <bk-button class="ml20 mt10" icon="plus" theme="primary" @click="createToken">{{ $t('create') }}</bk-button>
         <bk-table
             class="mt10"
             :data="tokenList"
@@ -45,7 +45,7 @@
             ...mapState(['userInfo'])
         },
         watch: {
-            userInfo () {
+            'userInfo.username' () {
                 this.getToken()
             }
         },
@@ -66,9 +66,7 @@
             },
             getToken () {
                 this.isLoading = true
-                this.getTokenList({
-                    username: this.userInfo.username
-                }).then(list => {
+                this.getTokenList().then(list => {
                     this.tokenList = list
                 }).finally(() => {
                     this.isLoading = false
@@ -80,20 +78,18 @@
                     message: this.$t('deleteTokenTitle', { name }),
                     confirmFn: () => {
                         return this.deleteToken({
-                            username: this.userInfo.username,
                             name
                         }).then(() => {
                             this.getToken()
                             this.$bkMessage({
                                 theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
+                                message: this.$t('delete') + this.$t('space') + this.$t('success')
                             })
                         })
                     }
                 })
             },
             createToken () {
-                this.$refs.createToken.userName = this.userInfo.username
                 this.$refs.createToken.showDialogHandler()
             }
         }

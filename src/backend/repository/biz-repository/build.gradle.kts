@@ -31,6 +31,7 @@
 
 dependencies {
     api(project(":repository:api-repository"))
+    api(project(":job:api-job"))
     api(project(":common:common-job"))
     api(project(":common:common-mongo"))
     api(project(":analyst:api-analyst"))
@@ -39,6 +40,8 @@ dependencies {
     implementation(project(":common:common-redis"))
     implementation(project(":common:common-artifact:artifact-cache"))
     testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
+    implementation("org.quartz-scheduler:quartz")
+    implementation("com.alibaba:easyexcel:${Versions.Easyexcel}")
     testImplementation("org.mockito.kotlin:mockito-kotlin")
     testImplementation("io.mockk:mockk")
     implementation("com.tencent.bk.sdk:bk-notice-java-sdk:${Versions.Notice}")

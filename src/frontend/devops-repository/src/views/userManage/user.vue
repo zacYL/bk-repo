@@ -3,17 +3,17 @@
         <div class="mt10 flex-between-center">
             <div class="ml20 flex-align-center">
                 <bk-button icon="plus" theme="primary" @click="showCreateUser">{{ $t('create') }}</bk-button>
-                <!-- <bk-button class="ml10" @click="downloadTemplate">下载模板</bk-button>
+                <bk-button class="ml10" @click="downloadTemplate">{{$t('downloadTemplate')}}</bk-button>
                 <bk-button class="ml10">
-                    <span>批量导入</span>
+                    <span>{{$t('batchImport')}}</span>
                     <input type="file" accept=".xlsx" @change="importUsersHandler" title="" placeholder="">
-                </bk-button> -->
+                </bk-button>
             </div>
             <div class="mr20 flex-align-center">
                 <bk-input
                     v-model.trim="userInput"
                     class="w250"
-                    :placeholder="$t('userPlaceHolder')"
+                    :placeholder="$t('userPlaceholder')"
                     clearable
                     @enter="handlerPaginationChange()"
                     @clear="handlerPaginationChange()"
@@ -40,23 +40,21 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(isSearching)"></empty-data>
             </template>
-            <bk-table-column :label="$t('account')" prop="userId"></bk-table-column>
-            <bk-table-column :label="$t('chineseName')" prop="name"></bk-table-column>
-            <bk-table-column :label="$t('email')" prop="email">
-                <template #default="{ row }">{{ transEmail(row.email) }}</template>
+            <bk-table-column :label="$t('account')" prop="userId" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('chineseName')" prop="name" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('email')" prop="email" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('telephone')" prop="phone" show-overflow-tooltip>
+                <template #default="{ row }">{{row.phone || '/'}}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('telephone')" prop="phone">
-                <template #default="{ row }">{{ transPhone(row.phone) }}</template>
+            <bk-table-column :label="$t('createdDate')" show-overflow-tooltip>
+                <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdDate')">
-                <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>
-            </bk-table-column>
-            <bk-table-column :label="$t('administrator')">
+            <bk-table-column :label="$t('administrator')" width="90">
                 <template #default="{ row }">
                     <bk-switcher class="m5" v-model="row.admin" size="small" theme="primary" @change="changeAdminStatus(row)"></bk-switcher>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('activateAccount')">
+            <bk-table-column :label="$t('activateAccount')" width="80">
                 <template #default="{ row }">
                     <bk-switcher class="m5" :value="!row.locked" size="small" theme="primary" @change="changeUserStatus(row)"></bk-switcher>
                 </template>
@@ -67,7 +65,6 @@
                         :list="[
                             { label: $t('edit'), clickEvent: () => showEditUser(row) },
                             { label: $t('resetPassword'), clickEvent: () => resetUserPwd(row) },
-                            { label: $t('createAccessToken'), clickEvent: () => createAccessToken(row) },
                             { label: $t('delete'), clickEvent: () => deleteUserHandler(row) }
                         ]"></operation-list>
                 </template>
@@ -89,20 +86,14 @@
             v-model="editUserDialog.show"
             :title="editUserDialog.add ? $t('createUser') : $t('editUser')"
             width="500"
-            height-num="400"
+            height-num="350"
             @cancel="editUserDialog.show = false">
             <bk-form class="mr30" :label-width="90" :model="editUserDialog" :rules="rules" ref="editUserDialog">
-                <bk-form-item :label="$t('type')" :required="true">
-                    <bk-radio-group v-model="editUserDialog.group">
-                        <bk-radio :value="false" :disabled="!editUserDialog.add">{{ $t('entityUser')}}</bk-radio>
-                        <bk-radio class="ml20" :value="true" :disabled="!editUserDialog.add">{{ $t('virtualUser')}}</bk-radio>
-                    </bk-radio-group>
-                </bk-form-item>
                 <bk-form-item :label="$t('account')" :required="true" property="userId" error-display-type="normal">
                     <bk-input v-model.trim="editUserDialog.userId"
                         :disabled="!editUserDialog.add"
                         maxlength="32" show-word-limit
-                        :placeholder="$t('userIdPlaceHolder')">
+                        :placeholder="$t('userIdPlaceholder')">
                     </bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('chineseName')" :required="true" property="name" error-display-type="normal">
@@ -114,33 +105,21 @@
                 <bk-form-item :label="$t('telephone')">
                     <bk-input v-model.trim="editUserDialog.phone"></bk-input>
                 </bk-form-item>
-                <bk-form-item v-if="editUserDialog.group" :required="true" property="asstUsers" :label="$t('associatedUser')">
-                    <bk-tag-input
-                        v-model="editUserDialog.asstUsers"
-                        :placeholder="$t('enterPlaceHolder')"
-                        trigger="focus"
-                        :create-tag-validator="tag => validateUser(tag)"
-                        allow-create>
-                    </bk-tag-input>
-                </bk-form-item>
             </bk-form>
             <template #footer>
                 <bk-button theme="default" @click.stop="editUserDialog.show = false">{{$t('cancel')}}</bk-button>
                 <bk-button class="ml10" :loading="editUserDialog.loading" theme="primary" @click="confirm">{{$t('confirm')}}</bk-button>
             </template>
         </canway-dialog>
-        <create-token-dialog ref="createToken"></create-token-dialog>
     </div>
 </template>
 <script>
     import OperationList from '@repository/components/OperationList'
-    import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
-    import { transformEmail, transformPhone } from '@repository/utils/privacy'
     export default {
         name: 'user',
-        components: { OperationList, createTokenDialog },
+        components: { OperationList },
         data () {
             return {
                 isLoading: false,
@@ -160,9 +139,7 @@
                     userId: '',
                     name: '',
                     email: '',
-                    phone: '',
-                    group: false,
-                    asstUsers: []
+                    phone: ''
                 },
                 rules: {
                     userId: [
@@ -172,8 +149,8 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z][a-zA-Z0-9_-|@]{1,31}$/,
-                            message: this.$t('account') + this.$t('space') + this.$t('include') + this.$t('space') + this.$t('userIdPlaceHolder'),
+                            regex: /^[a-zA-Z][a-zA-Z0-9_-]{1,31}$/,
+                            message: this.$t('account') + this.$t('space') + this.$t('include') + this.$t('space') + this.$t('userIdPlaceholder'),
                             trigger: 'blur'
                         },
                         {
@@ -198,13 +175,6 @@
                         {
                             regex: /^\w[-_.\w]*@\w[-_\w]*\.\w[-_.\w]*$/,
                             message: this.$t('pleaseInput') + this.$t('space') + this.$t('legit') + this.$t('space') + this.$t('email'),
-                            trigger: 'blur'
-                        }
-                    ],
-                    asstUsers: [
-                        {
-                            required: true,
-                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('associated user'),
                             trigger: 'blur'
                         }
                     ]
@@ -235,8 +205,7 @@
                 'resetPwd',
                 'checkUserId',
                 'getUserInfo',
-                'importUsers',
-                'validateEntityUser'
+                'importUsers'
             ]),
             asynCheckUserId () {
                 return !this.editUserDialog.add || !(this.editUserDialog.userId in this.userList)
@@ -279,9 +248,7 @@
                     userId: '',
                     name: '',
                     email: '',
-                    phone: '',
-                    group: false,
-                    asstUsers: []
+                    phone: ''
                 }
             },
             importUsersHandler (e) {
@@ -344,7 +311,7 @@
                     return this.importUsers({ body: data }).then(() => {
                         this.$bkMessage({
                             theme: 'success',
-                            message: this.$t('userImport') + this.$t('success')
+                            message: this.$t('userImport') + this.$t('space') + this.$t('success')
                         })
                         this.getRepoUserList()
                         this.handlerPaginationChange()
@@ -359,16 +326,14 @@
             async confirm () {
                 await this.$refs.editUserDialog.validate()
                 this.editUserDialog.loading = true
-                const { userId, name, email, phone, group, asstUsers } = this.editUserDialog
+                const { userId, name, email, phone } = this.editUserDialog
                 const fn = this.editUserDialog.add ? this.createUser : this.editUser
                 fn({
                     body: {
                         userId,
                         name,
                         email,
-                        phone,
-                        group,
-                        asstUsers
+                        phone
                     }
                 }).then(res => {
                     this.$bkMessage({
@@ -389,12 +354,6 @@
                     show: true,
                     loading: false,
                     add: false,
-                    userId: '',
-                    name: '',
-                    email: '',
-                    phone: '',
-                    group: false,
-                    asstUsers: [],
                     ...row
                 }
             },
@@ -417,7 +376,7 @@
             resetUserPwd (row) {
                 this.$confirm({
                     theme: 'danger',
-                    message: this.$t('resetUserMsg', { 0: row.name }),
+                    message: this.$t('resetUserMsg', [row.name]),
                     confirmFn: () => {
                         return this.resetPwd(row.userId).then(() => {
                             this.$bkMessage({
@@ -452,29 +411,11 @@
                 }).then(res => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('set') + this.$t('space') + `${admin ? this.$t('administrator') : this.$t('normalUser')}`
+                        message: this.$t('set') + this.$t('space') + `${admin ? this.$t('administrator') : this.$t('normalUser')}` + this.$t('space') + this.$t('success')
                     })
                 }).finally(() => {
                     this.getUserListHandler()
                 })
-            },
-            async validateUser (tag) {
-                const res = await this.validateEntityUser(tag)
-                if (!res) {
-                    this.editUserDialog.asstUsers.splice(this.editUserDialog.asstUsers.indexOf(tag), 1)
-                }
-            },
-            transEmail (email) {
-                if (email === null) return email
-                return transformEmail(email)
-            },
-            transPhone (phone) {
-                if (phone === null || phone === '') return '/'
-                return transformPhone(phone)
-            },
-            createAccessToken (row) {
-                this.$refs.createToken.userName = row.userId
-                this.$refs.createToken.showDialogHandler()
             }
         }
     }

@@ -38,17 +38,22 @@ import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HeaderUtils
+import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.FILE_SUFFIX
 import com.tencent.bkrepo.npm.constants.HAR_FILE_EXT
 import com.tencent.bkrepo.npm.constants.HSP_FILE_EXT
+import com.tencent.bkrepo.npm.constants.DELIMITER_DOWNLOAD
+import com.tencent.bkrepo.npm.constants.DELIMITER_HYPHEN
 import com.tencent.bkrepo.npm.constants.LATEST
+import com.tencent.bkrepo.npm.constants.NPM_METADATA_ROOT
 import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_TGZ_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_TGZ_WITH_DOWNLOAD_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_VERSION_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
+import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH_FORMAT
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
@@ -58,6 +63,12 @@ import java.io.InputStream
 object NpmUtils {
 
     private val logger = LoggerFactory.getLogger(NpmUtils::class.java)
+
+    fun formatPackageName(name: String, scope: String? = null): String {
+        val builder = StringBuilder()
+        scope?.let { builder.append(StringPool.AT).append(it).append(StringPool.SLASH) }
+        return builder.append(name).toString()
+    }
 
     fun getPackageMetadataPath(packageName: String): String {
         return NPM_PKG_METADATA_FULL_PATH.format(packageName)
@@ -75,6 +86,20 @@ object NpmUtils {
         }
     }
 
+    fun getTarballFullPath(
+        name: String,
+        version: String,
+        delimiter: String = DELIMITER_HYPHEN,
+        repeatedScope: Boolean = true,
+        ext: String = FILE_SUFFIX,
+    ) = TARBALL_FULL_PATH_FORMAT.format(
+        name,
+        delimiter,
+        if (repeatedScope) name else name.substringAfterLast("/"),
+        version,
+        ext
+    )
+
     fun analyseVersionFromPackageName(filename: String, name: String): String {
         val unscopedName = name.substringAfterLast("/")
         val ext = if (filename.endsWith(".har")) {
@@ -83,6 +108,10 @@ object NpmUtils {
             ".tgz"
         }
         return filename.substringBeforeLast(ext).substringAfter("$unscopedName-")
+    }
+
+    fun analyseVersionFromVersionMetadataName(filename: String, name: String): String {
+        return filename.substringBeforeLast(".json").substringAfter("$name-")
     }
 
     /**
@@ -105,10 +134,6 @@ object NpmUtils {
     }
 
     fun getLatestVersionFormDistTags(distTags: NpmPackageMetaData.DistTags): String {
-        val iterator = distTags.getMap().iterator()
-        if (iterator.hasNext()) {
-            return iterator.next().value
-        }
         return distTags.getMap()[LATEST]!!
     }
 
@@ -133,7 +158,7 @@ object NpmUtils {
         return Pair(name, version)
     }
 
-    private fun isScopeName(name: String): Boolean {
+    fun isScopeName(name: String): Boolean {
         return name.startsWith('@') && name.indexOf('/') != -1
     }
 
@@ -141,13 +166,9 @@ object NpmUtils {
      * name with scope tarball like this: http://domain/@scope/demo/-/demo-1.0.0.tgz
      * name without scope tarball like this: http://domain/demo/-/demo-1.0.0.tgz
      */
-    private fun getTgzSuffix(oldTarball: String, name: String): String {
-        return if (isScopeName(name)) {
-            name + oldTarball.substringAfter(name)
-        } else {
-            val list = oldTarball.split(name).map { it.trim() }
-            name + list[list.lastIndex - 1] + name + list.last()
-        }
+    private fun getTgzSuffix(oldTarball: String, name: String): String{
+        val firstNameIndex = oldTarball.indexOfAny(listOf("/$name/$DELIMITER_HYPHEN/", "/$name/$DELIMITER_DOWNLOAD/"))
+        return oldTarball.substring(firstNameIndex + 1)
     }
 
     /**
@@ -215,11 +236,12 @@ object NpmUtils {
     fun getTarballPathByRepoType(
         name: String,
         version: String,
-        pathWithDash: Boolean = true,
+        delimiter: String = DELIMITER_HYPHEN,
+        repeatedScope: Boolean = true,
         repoType: RepositoryType = ArtifactContextHolder.getRepoDetail()!!.type
     ): String {
         val ext = getContentFileExt(repoType == RepositoryType.OHPM)
-        return getTgzPath(name, version, pathWithDash, ext)
+        return getTarballFullPath(name, version, delimiter, repeatedScope, ext)
     }
 
     /**
@@ -275,5 +297,32 @@ object NpmUtils {
      */
     fun getReadmeDirFromTarballPath(tarballPath: String): String {
         return tarballPath.substring(0, tarballPath.length - 4)
+    }
+
+    /**
+     * 获取NPM所有制品待删除文件路径
+     * [npmArtifactInfo]的version为null时删除所有包，不为null时仅删除对应版本的文件
+     */
+    fun getContentPathsToDelete(
+        npmArtifactInfo: NpmArtifactInfo,
+        tarballPath: String?,
+        repoType: RepositoryType
+    ): List<String> {
+        val fullPaths = ArrayList<String>()
+        if (npmArtifactInfo.version == null) {
+            fullPaths.add("$NPM_METADATA_ROOT/${npmArtifactInfo.packageName}")
+            fullPaths.add("/${npmArtifactInfo.packageName}")
+        } else {
+            require(tarballPath != null)
+            fullPaths.add(tarballPath)
+            fullPaths.add(
+                getVersionPackageMetadataPath(npmArtifactInfo.packageName, npmArtifactInfo.version!!)
+            )
+            if (repoType == RepositoryType.OHPM) {
+                fullPaths.add(harPathToHspPath(tarballPath))
+                fullPaths.add(getReadmeDirFromTarballPath(tarballPath))
+            }
+        }
+        return fullPaths
     }
 }

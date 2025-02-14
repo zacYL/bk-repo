@@ -96,7 +96,12 @@ abstract class CommonScanExecutor : ScanExecutor {
         // 加载待扫描文件，Arrowhead依赖文件名后缀判断文件类型进行解析，所以需要加上文件名后缀
         scannerInputFile.parentFile.mkdirs()
         Files.move(task.file.toPath(), scannerInputFile.toPath())
-        logger.info(CommonUtils.buildLogMsg(task, "move file to task work directory success"))
+        logger.info(
+            CommonUtils.buildLogMsg(
+                task,
+                "move file[${task.file.toPath()}] to[${scannerInputFile.toPath()}] task work directory success"
+            )
+        )
         return task.sha256
     }
 

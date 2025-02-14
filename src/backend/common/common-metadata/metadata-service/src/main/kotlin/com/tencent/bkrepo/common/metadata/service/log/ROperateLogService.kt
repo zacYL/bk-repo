@@ -56,6 +56,7 @@ interface ROperateLogService {
 
     suspend fun page(
         type: String?,
+        eventType: List<String>?,
         projectId: String?,
         repoName: String?,
         operator: String?,

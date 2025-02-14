@@ -38,10 +38,11 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.util.FileNameParser
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.repository.constant.NAME
 import com.tencent.bkrepo.repository.constant.PROXY_DOWNLOAD_URL
 import com.tencent.bkrepo.repository.constant.VERSION
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import org.slf4j.Logger
@@ -124,6 +125,10 @@ class CommonRemoteRepository : RemoteRepository() {
         }
         logger.info("remote chart download url is $downloadUrl")
         return downloadUrl
+    }
+
+    override fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
+        return findCacheNodeDetail(context)?.takeIf { !it.folder }?.let { loadArtifactResource(it, context) }
     }
 
     /**

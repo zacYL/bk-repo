@@ -109,6 +109,11 @@ interface ReplicaRecordService {
     fun listRecordsPage(key: String, option: ReplicaRecordListOption): Page<ReplicaRecordInfo>
 
     /**
+     * 删除时间段内的分发记录
+     */
+    fun deleteRecord(key: String, startTime: String, endTime: String): Long
+
+    /**
      * 根据[recordId]查询执行详情列表
      * 返回结果按照开始时间倒排，最后执行的在最前
      * @param recordId 执行记录id
@@ -179,4 +184,11 @@ interface ReplicaRecordService {
      * 更新ReplicaRecord的replicaOverview
      */
     fun updateRecordReplicaOverview(recordId: String, replicaOverview: ReplicaOverview)
+
+    /**
+     * 查询执行日志详情总览
+     *
+     * @param recordId 日志id
+     */
+    fun recordDetailOverview(recordId: String): RecordOverview
 }

@@ -6,7 +6,7 @@
   - [项目接口](/apidoc/repo/project.md)
   - [仓库接口](/apidoc/repo/repository.md)
   - [代理源接口](/apidoc/repo/proxy-channel.md)
-  - [仓库同步接口](/apidoc/repo/replication.md)
+  - [仓库同步接口](/apidoc/replication/replication.md)
 - **节点**
   - [节点操作接口](/apidoc/node/node.md)
   - [分享链接接口](/apidoc/node/share.md)

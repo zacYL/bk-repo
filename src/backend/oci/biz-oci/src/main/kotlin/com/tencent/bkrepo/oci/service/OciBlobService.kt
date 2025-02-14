@@ -32,7 +32,9 @@
 package com.tencent.bkrepo.oci.service
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
+import org.springframework.web.multipart.MultipartFile
 
 interface OciBlobService {
     /**
@@ -57,4 +59,9 @@ interface OciBlobService {
      * 根据[artifactInfo]的信息下载blob文件
      */
     fun deleteBlob(artifactInfo: OciBlobArtifactInfo)
+
+    /**
+     * 页面上传镜像包
+     */
+    fun uploadImage(artifactInfo: OciArtifactInfo, file: MultipartFile)
 }

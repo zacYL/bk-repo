@@ -10,7 +10,7 @@
                     :placeholder="$t('nodeName')"
                     right-icon="bk-icon icon-search">
                 </bk-input>
-                <bk-select
+                <!-- <bk-select
                     class="ml10 w250"
                     v-model="search.type"
                     :placeholder="$t('nodeType')">
@@ -18,9 +18,9 @@
                         v-for="(label, type) in nodeTypeEnum"
                         :key="type"
                         :id="type"
-                        :name="$t(`nodeTypeEnum.${type}`)">
+                        :name="label">
                     </bk-option>
-                </bk-select>
+                </bk-select> -->
             </div>
         </div>
         <bk-table
@@ -33,22 +33,22 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(search.name || search.type)"></empty-data>
             </template>
-            <bk-table-column :label="$t('status')" width="100">
+            <bk-table-column :label="$t('status')" width="110">
                 <template #default="{ row }">
                     <div class="status-sign" :class="row.status" :data-name="row.status === 'HEALTHY' ? $t('normal') : $t('abnormal')"></div>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('nodeName')" prop="name" width="250" show-overflow-tooltip></bk-table-column>
-            <bk-table-column :label="$t('nodeType')" width="120">
+            <bk-table-column :label="$t('nodeName')" prop="name" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('nodeType')" width="110" show-overflow-tooltip>
                 <template #default="{ row }">{{ $t(`nodeTypeEnum.${row.type}`) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('address')">
+            <bk-table-column :label="$t('address')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <a class="hover-btn" :href="row.url" target="_blank">{{ row.url }}</a>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('account')" prop="username" width="120" show-overflow-tooltip></bk-table-column>
-            <bk-table-column :label="$t('createdDate')" width="200">
+            <bk-table-column :label="$t('nodeAccount')" prop="username" width="120" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('createdDate')" width="150" show-overflow-tooltip>
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="100">
@@ -56,7 +56,7 @@
                     <operation-list
                         v-if="row.type !== 'CENTER'"
                         :list="[
-                            { label: $t('edit'), clickEvent: () => showEditNode(row) },
+                            // { label: $t('edit'), clickEvent: () => showEditNode(row) },
                             { label: $t('delete'), clickEvent: () => deleteClusterHandler(row) }
                         ]">
                     </operation-list>
@@ -82,45 +82,23 @@
             height-num="402"
             @cancel="editNodeDialog.show = false">
             <bk-form class="mr50" :label-width="110" :model="editNodeDialog" :rules="rules" ref="editNodeDialog">
-                <bk-form-item :label="$t('type')" property="type">
+                <!-- <bk-form-item :label="$t('type')" property="type">
                     <bk-radio-group v-model="editNodeDialog.type">
-                        <bk-radio class="mr20" value="STANDALONE" :disabled="!editNodeDialog.add && editNodeDialog.type !== 'STANDALONE'">{{ $t('nodeTypeEnum.STANDALONE') }}</bk-radio>
-                        <bk-radio class="mr20" value="EDGE" :disabled="!editNodeDialog.add && editNodeDialog.type !== 'EDGE'">{{ $t('nodeTypeEnum.EDGE') }}</bk-radio>
-                        <bk-radio class="mr20" value="REMOTE" :disabled="!editNodeDialog.add && editNodeDialog.type !== 'REMOTE'">{{ $t('nodeTypeEnum.REMOTE') }}</bk-radio>
+                        <bk-radio class="mr20" value="STANDALONE">{{$t('nodeTypeEnum.STANDALONE')}}</bk-radio>
+                        <bk-radio class="mr20" value="EDGE">{{$t('nodeTypeEnum.EDGE')}}</bk-radio>
                     </bk-radio-group>
-                </bk-form-item>
+                </bk-form-item> -->
                 <bk-form-item :label="$t('name')" :required="true" property="name" error-display-type="normal">
                     <bk-input v-model.trim="editNodeDialog.name" :disabled="!editNodeDialog.add" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
-                    <bk-input v-model.trim="editNodeDialog.url"></bk-input>
+                    <bk-input v-model.trim="editNodeDialog.url" :disabled="!editNodeDialog.add"></bk-input>
                 </bk-form-item>
-                <bk-form-item :label="$t('Certificate')" property="certificate" error-display-type="normal">
-                    <bk-input type="textarea" v-model.trim="editNodeDialog.certificate"></bk-input>
-                </bk-form-item>
-                <bk-form-item :label="$t('udpPort')" property="udpPort" error-display-type="normal" v-if="editNodeDialog.type !== 'REMOTE'">
-                    <bk-input type="number" :max="65535" :min="1" v-model.trim="editNodeDialog.udpPort"></bk-input>
-                </bk-form-item>
-                <bk-form-item :label="$t('verificationMethod')">
-                    <bk-radio-group v-model="createType" :change="changeValidateType()">
-                        <bk-radio class="mr20" value="user">{{ $t('username') + '/' + $t('password') }}</bk-radio>
-                        <bk-radio class="mr20" value="appId">AppID/AK/SK</bk-radio>
-                    </bk-radio-group>
-                </bk-form-item>
-                <bk-form-item v-if="createType === 'user'" :label="$t('account')" :required="true" property="username" error-display-type="normal">
+                <bk-form-item :label="$t('account')" :required="true" property="username" error-display-type="normal">
                     <bk-input v-model.trim="editNodeDialog.username"></bk-input>
                 </bk-form-item>
-                <bk-form-item v-if="createType === 'user'" :label="$t('password')" :required="true" property="password" error-display-type="normal">
+                <bk-form-item :label="$t('password')" :required="true" property="password" error-display-type="normal">
                     <bk-input v-model.trim="editNodeDialog.password" type="password"></bk-input>
-                </bk-form-item>
-                <bk-form-item v-if="createType === 'appId'" label="appId" :required="true" property="appId" error-display-type="normal">
-                    <bk-input v-model.trim="editNodeDialog.appId"></bk-input>
-                </bk-form-item>
-                <bk-form-item v-if="createType === 'appId'" label="accessKey" :required="true" property="accessKey" error-display-type="normal">
-                    <bk-input v-model.trim="editNodeDialog.accessKey"></bk-input>
-                </bk-form-item>
-                <bk-form-item v-if="createType === 'appId'" label="secretKey" :required="true" property="secretKey" error-display-type="normal">
-                    <bk-input v-model.trim="editNodeDialog.secretKey"></bk-input>
                 </bk-form-item>
             </bk-form>
             <template #footer>
@@ -146,7 +124,6 @@
                     name: '',
                     type: ''
                 },
-                createType: 'user',
                 editNodeDialog: {
                     show: false,
                     loading: false,
@@ -155,13 +132,8 @@
                     type: 'STANDALONE',
                     name: '',
                     url: '',
-                    username: null,
-                    password: null,
-                    appId: null,
-                    accessKey: null,
-                    secretKey: null,
-                    certificate: null,
-                    udpPort: null
+                    username: '',
+                    password: ''
                 },
                 rules: {
                     name: [
@@ -176,13 +148,6 @@
                             trigger: 'blur'
                         }
                     ],
-                    udpPort: [
-                        {
-                            validator: this.asynCheckUdpPort,
-                            message: this.$t('portTip'),
-                            trigger: 'blur'
-                        }
-                    ],
                     url: [
                         {
                             required: true,
@@ -190,7 +155,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^https?:\/\//,
+                            regex: /^https?:\/\/[^/]+$/,
                             message: this.$t('pleaseInput') + this.$t('space') + this.$t('legit') + this.$t('space') + this.$t('address'),
                             trigger: 'blur'
                         }
@@ -206,27 +171,6 @@
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + this.$t('password'),
-                            trigger: 'blur'
-                        }
-                    ],
-                    appId: [
-                        {
-                            required: true,
-                            message: this.$t('pleaseInput') + this.$t('space') + 'appId',
-                            trigger: 'blur'
-                        }
-                    ],
-                    accessKey: [
-                        {
-                            required: true,
-                            message: this.$t('pleaseInput') + this.$t('space') + 'accessKey',
-                            trigger: 'blur'
-                        }
-                    ],
-                    secretKey: [
-                        {
-                            required: true,
-                            message: this.$t('pleaseInput') + this.$t('space') + 'secretKey',
                             trigger: 'blur'
                         }
                     ]
@@ -257,20 +201,12 @@
                 'getClusterList',
                 'checkNodeName',
                 'createCluster',
-                'deleteCluster',
-                'updateCluster'
+                'deleteCluster'
             ]),
             asynCheckNodeName () {
-                if (this.editNodeDialog.add) {
-                    return this.checkNodeName({
-                        name: this.editNodeDialog.name
-                    }).then(res => !res)
-                } else {
-                    return true
-                }
-            },
-            asynCheckUdpPort () {
-                return !isNaN(this.editNodeDialog.udpPort)
+                return this.checkNodeName({
+                    name: this.editNodeDialog.name
+                }).then(res => !res)
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -291,13 +227,8 @@
                     type: 'STANDALONE',
                     name: '',
                     url: '',
-                    username: null,
-                    password: null,
-                    appId: null,
-                    accessKey: null,
-                    secretKey: null,
-                    certificate: null,
-                    udpPort: null
+                    username: '',
+                    password: ''
                 }
             },
             showEditNode (row) {
@@ -313,78 +244,30 @@
             async confirm () {
                 await this.$refs.editNodeDialog.validate()
                 this.editNodeDialog.loading = true
-                if (this.createType === 'user') {
-                    this.editNodeDialog.appId = null
-                    this.editNodeDialog.accessKey = null
-                    this.editNodeDialog.secretKey = null
-                }
-                if (this.createType === 'appId') {
-                    this.editNodeDialog.username = null
-                    this.editNodeDialog.password = null
-                }
-                if (this.editNodeDialog.certificate === '') {
-                    this.editNodeDialog.certificate = null
-                }
-                if (this.editNodeDialog.udpPort === '') {
-                    this.editNodeDialog.udpPort = null
-                }
-                const { type, name, url, username, password, appId, accessKey, secretKey, certificate, udpPort } = this.editNodeDialog
-                if (this.editNodeDialog.add) {
-                    this.createCluster({
-                        body: {
-                            type,
-                            name,
-                            url,
-                            username,
-                            password,
-                            appId,
-                            accessKey,
-                            secretKey,
-                            certificate,
-                            udpPort
-                        }
-                    }).then(() => {
-                        this.$bkMessage({
-                            theme: 'success',
-                            message: this.$t('createNode') + this.$t('space') + this.$t('success')
-                        })
-                        this.editNodeDialog.show = false
-                        this.createType = 'user'
-                        this.getClusterListHandler()
-                    }).finally(() => {
-                        this.editNodeDialog.loading = false
+                const { type, name, url, username, password } = this.editNodeDialog
+                this.createCluster({
+                    body: {
+                        type,
+                        name,
+                        url: `${url}/replication`,
+                        username,
+                        password
+                    }
+                }).then(res => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: (this.editNodeDialog.add ? this.$t('createNode') : this.$t('editNode')) + this.$t('space') + this.$t('success')
                     })
-                } else {
-                    this.updateCluster({
-                        body: {
-                            type,
-                            name,
-                            url,
-                            username,
-                            password,
-                            appId,
-                            accessKey,
-                            secretKey,
-                            certificate,
-                            udpPort
-                        }
-                    }).then(() => {
-                        this.$bkMessage({
-                            theme: 'success',
-                            message: this.$t('editNode') + this.$t('space') + this.$t('success')
-                        })
-                        this.editNodeDialog.show = false
-                        this.createType = 'user'
-                        this.getClusterListHandler()
-                    }).finally(() => {
-                        this.editNodeDialog.loading = false
-                    })
-                }
+                    this.editNodeDialog.show = false
+                    this.getClusterListHandler()
+                }).finally(() => {
+                    this.editNodeDialog.loading = false
+                })
             },
             deleteClusterHandler (row) {
                 this.$confirm({
                     theme: 'danger',
-                    message: this.$t('deleteNodeMsg', { 0: row.name }),
+                    message: this.$t('deleteNodeMsg', [row.name]),
                     confirmFn: () => {
                         return this.deleteCluster({
                             id: row.id
@@ -397,11 +280,6 @@
                         })
                     }
                 })
-            },
-            changeValidateType () {
-                if (this.editNodeDialog.show) {
-                    this.$refs.editNodeDialog.clearError()
-                }
             }
         }
     }

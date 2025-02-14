@@ -1,9 +1,9 @@
 <template>
     <div class="arti-table-container">
         <bk-radio-group v-model="showAddBtn">
-            <bk-radio :disabled="disabled" :value="false">{{ $t('satisfyVersionBtn') }}</bk-radio>
+            <bk-radio :disabled="disabled" :value="false">{{$t('satisfyVersionBtn')}}</bk-radio>
             <bk-radio :disabled="disabled" class="mt10" :value="true">
-                <span>{{ $t('satisfyRuleBtn')}}</span>
+                <span>{{$t('satisfyRuleBtn')}}</span>
                 <bk-button v-show="showAddBtn && !disabled" class="ml10" icon="plus" @click="addRule()">{{ $t('addRule') }}</bk-button>
             </bk-radio>
         </bk-radio-group>
@@ -54,7 +54,7 @@
         watch: {
             initData: {
                 handler (data) {
-                    this.defaultRules = data.filter(r => r.rules).map(r => {
+                    this.defaultRules = data.map(r => {
                         return r.rules?.reduce((target, item) => {
                             target[item.field] = {
                                 ...item,
@@ -63,7 +63,7 @@
                             return target
                         }, {})
                     })
-                    this.showAddBtn = Boolean(this.defaultRules.length)
+                    this.showAddBtn = Boolean(data.length)
                 },
                 immediate: true,
                 deep: true
@@ -72,19 +72,8 @@
         methods: {
             getConfig () {
                 return new Promise((resolve, reject) => {
-                    const generic = this.scanType.includes('GENERIC')
-                    if (!this.showAddBtn && !generic) {
-                        // package
-                        resolve([
-                            {
-                                field: 'latestVersion',
-                                value: true,
-                                operation: 'EQ'
-                            }
-                        ])
-                    } else if (!this.showAddBtn && generic) {
-                        resolve([])
-                    } else {
+                    if (!this.showAddBtn) resolve([])
+                    else {
                         const rules = this.defaultRules
                             .map(rs => {
                                 return {

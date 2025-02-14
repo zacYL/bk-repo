@@ -28,13 +28,17 @@
 package com.tencent.bkrepo.replication.service.impl
 
 import com.mongodb.DuplicateKeyException
+import com.tencent.bkrepo.common.api.constant.CharPool
+import com.tencent.bkrepo.common.api.constant.StringPool.SCHEME_SEPARATOR
 import com.tencent.bkrepo.common.api.constant.StringPool.uniqueId
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.ClusterNodeType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
+import com.tencent.bkrepo.common.artifact.constant.PIPELINE
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.replication.dao.ReplicaObjectDao
@@ -94,12 +98,16 @@ class ReplicaTaskServiceImpl(
     private val localDataManager: LocalDataManager,
     private val edgePullReplicaExecutor: ObjectProvider<EdgePullReplicaExecutor>
 ) : ReplicaTaskService {
+
+    @Value("\${cluster.self.url:#{null}}")
+    val selfUrl: String? = null
+
     override fun getByTaskId(taskId: String): ReplicaTaskInfo? {
         return replicaTaskDao.findById(taskId)?.let { convert(it) }
     }
 
-    override fun getByTaskName(name: String): ReplicaTaskInfo? {
-        return replicaTaskDao.findByName(name)?.let { convert(it) }
+    override fun getByTaskName(name: String, projectId: String): ReplicaTaskInfo? {
+        return replicaTaskDao.findByName(name, projectId)?.let { convert(it) }
     }
 
     override fun getByTaskKey(key: String): ReplicaTaskInfo {
@@ -179,7 +187,11 @@ class ReplicaTaskServiceImpl(
             val key = uniqueId()
             val userId = SecurityUtils.getUserId()
             // 查询集群节点信息
-            val clusterNodeSet = getClusterNodeSet(this)
+            val clusterNodes = remoteClusterIds.map {
+                clusterNodeService.getByClusterId(it)
+                    ?: throw ErrorCodeException(ReplicationMessageCode.CLUSTER_NODE_NOT_FOUND, it)
+            }.onEach { clusterNodeService.tryConnect(it.name) }
+            checkCircularReplica(this, clusterNodes.map { it.url })
             val task = TReplicaTask(
                 key = key,
                 name = name,
@@ -187,7 +199,7 @@ class ReplicaTaskServiceImpl(
                 replicaObjectType = replicaObjectType,
                 replicaType = replicaType,
                 setting = setting,
-                remoteClusters = clusterNodeSet,
+                remoteClusters = clusterNodes.map { ClusterNodeName(id = it.id, name = it.name) }.toSet(),
                 status = when (replicaType) {
                     ReplicaType.SCHEDULED, ReplicaType.EDGE_PULL -> ReplicaStatus.WAITING
                     else -> ReplicaStatus.REPLICATING
@@ -208,6 +220,7 @@ class ReplicaTaskServiceImpl(
                 executionTimes = 0L,
                 enabled = enabled,
                 record = record,
+                notRecord = notRecord,
                 recordReserveDays = recordReserveDays,
                 createdBy = userId,
                 createdDate = LocalDateTime.now(),
@@ -310,7 +323,7 @@ class ReplicaTaskServiceImpl(
     private fun validateRequest(request: ReplicaTaskCreateRequest) {
         with(request) {
             // 验证任务是否存在
-            replicaTaskDao.findByName(name)?.let {
+            replicaTaskDao.findByName(name, localProjectId)?.let {
                 throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, name)
             }
             Preconditions.checkNotBlank(name, this::name.name)
@@ -319,6 +332,7 @@ class ReplicaTaskServiceImpl(
             if (replicaType != ReplicaType.EDGE_PULL) {
                 Preconditions.checkNotBlank(remoteClusterIds, this::remoteClusterIds.name)
             }
+            Preconditions.checkNotBlank(remoteClusterIds, this::remoteClusterIds.name)
             Preconditions.checkArgument(
                 recordReserveDays in RECORD_RESERVE_DAYS_MIN..RECORD_RESERVE_DAYS_MAX,
                 "recordReserveDays"
@@ -328,7 +342,7 @@ class ReplicaTaskServiceImpl(
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, request::name.name)
             }
             // 校验同步策略，按仓库同步可以选择多个仓库，按包或者节点同步只能在单个仓库下进行操作
-            validateReplicaObject(this)
+            validateReplicaObject(replicaObjectType, replicaTaskObjects)
             // 执行计划验证
             validateExecutionPlan(this)
         }
@@ -356,20 +370,27 @@ class ReplicaTaskServiceImpl(
         }
     }
 
-    private fun validateReplicaObject(request: ReplicaTaskCreateRequest) {
-        when (request.replicaObjectType) {
+    @Suppress("ThrowsCount")
+    private fun validateReplicaObject(
+        replicaObjectType: ReplicaObjectType,
+        replicaTaskObjects: List<ReplicaObjectInfo>
+    ) {
+        when (replicaObjectType) {
             ReplicaObjectType.REPOSITORY -> {
-                request.replicaTaskObjects.forEach {
+                replicaTaskObjects.forEach {
                     if (!it.packageConstraints.isNullOrEmpty() || !it.pathConstraints.isNullOrEmpty()) {
                         throw ErrorCodeException(CommonMessageCode.REQUEST_CONTENT_INVALID)
+                    }
+                    if (it.localRepoName == PIPELINE) {
+                        throw ErrorCodeException(ReplicationMessageCode.PIPELINE_REPO_NOT_ALLOWED)
                     }
                 }
             }
             ReplicaObjectType.PACKAGE -> {
-                if (request.replicaTaskObjects.size != 1) {
+                if (replicaTaskObjects.size != 1) {
                     throw ErrorCodeException(CommonMessageCode.REQUEST_CONTENT_INVALID)
                 }
-                val packageConstraints = request.replicaTaskObjects.first().packageConstraints
+                val packageConstraints = replicaTaskObjects.first().packageConstraints
                 Preconditions.checkNotBlank(packageConstraints, "packageConstraints")
                 packageConstraints?.forEach { pkg ->
                     Preconditions.checkNotBlank(pkg.packageKey, pkg::packageKey.name)
@@ -377,14 +398,35 @@ class ReplicaTaskServiceImpl(
                 }
             }
             ReplicaObjectType.PATH -> {
-                if (request.replicaTaskObjects.size != 1) {
+                if (replicaTaskObjects.size != 1) {
                     throw ErrorCodeException(CommonMessageCode.REQUEST_CONTENT_INVALID)
                 }
-                val pathConstraints = request.replicaTaskObjects.first().pathConstraints
+                val pathConstraints = replicaTaskObjects.first().pathConstraints
                 Preconditions.checkNotBlank(pathConstraints, "pathConstraints")
                 pathConstraints?.forEach { pathConstraint ->
                     PathUtils.normalizeFullPath(pathConstraint.path!!)
                 }
+            }
+        }
+    }
+
+    private fun checkCircularReplica(request: ReplicaTaskCreateRequest, urlList: List<String>) {
+        with(request) {
+            val selfDomain = selfUrl?.trimEnd(CharPool.SLASH)?.substringAfter(SCHEME_SEPARATOR)
+            if (
+                selfDomain == null ||
+                urlList.none {
+                    it.trimEnd(CharPool.SLASH).removeSuffix("/replication").substringAfter(SCHEME_SEPARATOR) ==
+                            selfDomain
+                }
+            ) return
+            replicaTaskObjects.forEach {
+                if (it.remoteProjectId == localProjectId && it.localRepoName == it.remoteRepoName)
+                    throw ErrorCodeException(
+                        ReplicationMessageCode.SELF_REPLICA_NOT_ALLOWED,
+                        localProjectId,
+                        it.localRepoName
+                    )
             }
         }
     }
@@ -399,11 +441,23 @@ class ReplicaTaskServiceImpl(
         logger.info("delete task [$key] success.")
     }
 
+    override fun deleteByProjectId(name: String) {
+        replicaTaskDao.find(Query(TReplicaTask::projectId.isEqualTo(name))).forEach {
+            deleteByTaskKey(it.key)
+        }
+        logger.info("delete task by projectId[$name] success")
+    }
+
     override fun toggleStatus(key: String) {
         val task = replicaTaskDao.findByKey(key)
             ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, key)
         if (task.replicaType == ReplicaType.REAL_TIME) {
-            task.status = if (task.enabled) ReplicaStatus.WAITING else ReplicaStatus.REPLICATING
+            if (task.enabled) {
+                task.status = ReplicaStatus.WAITING
+            } else {
+                task.lastExecutionStatus = ExecutionStatus.RUNNING
+                task.status = ReplicaStatus.REPLICATING
+            }
         }
         task.enabled = !task.enabled
         task.lastModifiedBy = SecurityUtils.getUserId()
@@ -413,13 +467,13 @@ class ReplicaTaskServiceImpl(
 
     override fun copy(request: ReplicaTaskCopyRequest) {
         with(request) {
-            // 校验同名任务冲突
-            replicaTaskDao.findByName(name)?.let {
-                throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, name)
-            }
             // 获取任务
             val tReplicaTask = replicaTaskDao.findByKey(key)
                 ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, key)
+            // 校验同名任务冲突
+            replicaTaskDao.findByName(name, tReplicaTask.projectId)?.let {
+                throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, name)
+            }
             // 初始化任务状态设置
             val copyKey = uniqueId()
             val userId = SecurityUtils.getUserId()
@@ -427,11 +481,19 @@ class ReplicaTaskServiceImpl(
                 id = null,
                 key = copyKey,
                 name = name,
-                status = ReplicaStatus.WAITING,
-                lastExecutionStatus = null,
+                status = when (tReplicaTask.replicaType) {
+                    ReplicaType.REAL_TIME -> ReplicaStatus.REPLICATING
+                    ReplicaType.SCHEDULED -> ReplicaStatus.WAITING
+                },
+                lastExecutionStatus = when (tReplicaTask.replicaType) {
+                    ReplicaType.REAL_TIME -> ExecutionStatus.RUNNING
+                    ReplicaType.SCHEDULED -> null
+                },
                 lastExecutionTime = null,
                 nextExecutionTime = null,
                 executionTimes = 0L,
+                createdBy = userId,
+                createdDate = LocalDateTime.now(),
                 lastModifiedBy = userId,
                 lastModifiedDate = LocalDateTime.now(),
                 enabled = false,
@@ -467,6 +529,8 @@ class ReplicaTaskServiceImpl(
                 recordReserveDays in RECORD_RESERVE_DAYS_MIN..RECORD_RESERVE_DAYS_MAX,
                 "recordReserveDays"
             )
+            // 校验同步对象
+            validateReplicaObject(replicaObjectType, replicaTaskObjects)
             // 更新任务
             val userId = SecurityUtils.getUserId()
             // 查询集群节点信息
@@ -497,6 +561,7 @@ class ReplicaTaskServiceImpl(
                 lastModifiedBy = userId,
                 lastModifiedDate = LocalDateTime.now(),
                 record = record,
+                notRecord = notRecord,
                 recordReserveDays = recordReserveDays
             )
             // 创建replicaObject
@@ -569,10 +634,37 @@ class ReplicaTaskServiceImpl(
         }
     }
 
+    override fun countArtifactToReplica(taskDetail: ReplicaTaskDetail): Long {
+        val projectId = taskDetail.task.projectId
+        return when (taskDetail.task.replicaObjectType) {
+            ReplicaObjectType.REPOSITORY -> {
+                var count = 0L
+                taskDetail.objects.forEach {
+                    count += if (it.repoType == RepositoryType.GENERIC) {
+                        localDataManager.countFileNode(projectId, it.localRepoName)
+                    } else {
+                        localDataManager.getVersionCount(projectId, it.localRepoName)
+                    }
+                }
+                count
+            }
+            // 同步对象类型不为仓库时，只会有一个同步对象
+            ReplicaObjectType.PACKAGE ->
+                taskDetail.objects.first().packageConstraints?.sumOf { it.versions?.size?.toLong() ?: 0 } ?: 0
+            ReplicaObjectType.PATH -> {
+                val pathConstraints = taskDetail.objects.first().pathConstraints
+                if (!pathConstraints.isNullOrEmpty()) {
+                    val pathList = pathConstraints.mapNotNull { it.path }
+                    localDataManager.countFileNode(projectId, taskDetail.objects.first().localRepoName, pathList)
+                } else 0
+            }
+        }
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(ReplicaTaskServiceImpl::class.java)
         private const val TASK_NAME_LENGTH_MIN = 2
-        private const val TASK_NAME_LENGTH_MAX = 256
+        private const val TASK_NAME_LENGTH_MAX = 64
         private const val RECORD_RESERVE_DAYS_MIN = 1
         private const val RECORD_RESERVE_DAYS_MAX = 60
 
@@ -597,11 +689,14 @@ class ReplicaTaskServiceImpl(
                     executionTimes = it.executionTimes,
                     enabled = it.enabled,
                     record = it.record,
+                    notRecord = it.notRecord,
                     recordReserveDays = it.recordReserveDays,
                     createdBy = it.createdBy,
                     createdDate = it.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy = it.lastModifiedBy,
-                    lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
+                    lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                    currentProgress = ReplicaExecutionContext.getCurrentProgress(it.key),
+                    artifactCount = ReplicaExecutionContext.getArtifactCount(it.key)
                 )
             }
         }

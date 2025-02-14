@@ -31,8 +31,12 @@
 
 package com.tencent.bkrepo.common.artifact.repository.remote
 
+import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -44,6 +48,8 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
+import com.tencent.bkrepo.common.metadata.util.WhitelistUtils
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import okhttp3.OkHttpClient
@@ -51,9 +57,11 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import org.slf4j.LoggerFactory
+import java.net.UnknownHostException
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 /**
  * 远程仓库抽象逻辑
@@ -62,16 +70,55 @@ import java.time.format.DateTimeFormatter
 abstract class RemoteRepository : AbstractArtifactRepository() {
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
-        return getCacheArtifactResource(context) ?: run {
-            val remoteConfiguration = context.getRemoteConfiguration()
-            val httpClient = createHttpClient(remoteConfiguration)
-            val downloadUrl = createRemoteDownloadUrl(context)
-            val request = Request.Builder().url(downloadUrl).build()
-            val response = httpClient.newCall(request).execute()
-            return if (checkResponse(response)) {
-                onDownloadResponse(context, response)
-            } else null
+        whitelistInterceptor(context)
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
         }
+        return getCacheArtifactResource(context) ?: doRequest(context) as ArtifactResource?
+    }
+
+    @Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
+    fun downloadRetry(request: Request, okHttpClient: OkHttpClient): Response? {
+        var response: Response? = null
+        outer@ for (i in 1..downloadRetryLimit) {
+            try {
+                val startTime = System.currentTimeMillis()
+                response = okHttpClient.newCall(request).execute()
+                val endTime = System.currentTimeMillis()
+                logger.info(
+                    "Remote download: download retry: $i, url: ${request.url}," +
+                        " cost: ${endTime - startTime}ms, code: ${response.code}"
+                )
+                if (checkRetry(response)) { break@outer }
+            } catch (unKnownHostException: UnknownHostException) {
+                logger.error(
+                    "Remote download: download retry: $i, url: ${request.url}, " +
+                        "error: ${unKnownHostException.message}"
+                )
+                break@outer
+            } catch (ie: IllegalArgumentException) {
+                logger.error("Remote download: download retry: $i, url: ${request.url}, error: ${ie.message}")
+                break@outer
+            } catch (e: Exception) {
+                logger.error("Remote download: request failed: $request", e)
+            }
+        }
+        return response
+    }
+
+    /**
+     * 校验远程请求是否具有重试的价值
+     * 200、201、202
+     */
+    open fun checkRetry(response: Response): Boolean {
+        if (response.isSuccessful) {
+            return true
+        }
+        logger.warn(
+            "Remote download: download failed: ${response.code}, " +
+                "url: ${response.request.url}, body: ${response.body?.string()}"
+        )
+        return false
     }
 
     override fun search(context: ArtifactSearchContext): List<Any> {
@@ -82,55 +129,91 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val response = httpClient.newCall(request).execute()
         return if (checkResponse(response)) {
             onSearchResponse(context, response)
-        } else emptyList()
+        } else {
+            emptyList()
+        }
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
+        return doRequest(context)
+    }
+
+    protected open fun doRequest(context: ArtifactContext): Any? {
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = createHttpClient(remoteConfiguration)
-        val downloadUri = createRemoteDownloadUrl(context)
-        val request = Request.Builder().url(downloadUri).build()
-        return try {
-            val response = httpClient.newCall(request).execute()
-            if (checkQueryResponse(response)) {
-                onQueryResponse(context, response)
-            } else null
+        val url = createRemoteDownloadUrl(context)
+        val request = Request.Builder().url(url).build()
+        val repoId = context.artifactInfo.getRepoIdentify()
+        logger.info("[$repoId]Request url: $url, network config: ${remoteConfiguration.network}")
+        val response = try {
+            httpClient.newCall(request).execute()
         } catch (e: Exception) {
-            logger.warn("Failed to request or resolve response: ${e.message}")
+            logger.error("An error occurred while sending request $url", e)
             null
+        }
+        return response?.let {
+            when (context) {
+                is ArtifactDownloadContext -> if (checkResponse(it)) onDownloadResponse(context, it) else null
+                is ArtifactQueryContext -> if (checkQueryResponse(it)) onQueryResponse(context, it) else null
+                is ArtifactSearchContext -> if (checkResponse(it)) onSearchResponse(context, it) else emptyList()
+                else -> MethodNotAllowedException()
+            }
+        }
+    }
+
+    /**
+     *  根据远程仓库配置获取响应
+     */
+    fun getResponse(remoteConfiguration: RemoteConfiguration): Response {
+        with(remoteConfiguration) {
+            val httpClient = createHttpClient(remoteConfiguration)
+            val request = Request.Builder().url(url)
+                .removeHeader("User-Agent")
+                .addHeader("User-Agent", "${UUID.randomUUID()}")
+                .build()
+            return httpClient.newCall(request).execute()
         }
     }
 
     /**
      * 尝试读取缓存的远程构件
      */
-    fun getCacheArtifactResource(context: ArtifactDownloadContext): ArtifactResource? {
+    open fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
+        return getCacheInfo(context)?.takeIf { !it.second }?.let { loadArtifactResource(it.first, context) }
+    }
+
+    /**
+     * 获取缓存的远程构件节点及过期状态
+     */
+    protected fun getCacheInfo(context: ArtifactContext): Pair<NodeDetail, Boolean>? {
         val configuration = context.getRemoteConfiguration()
         if (!configuration.cache.enabled) return null
 
         val cacheNode = findCacheNodeDetail(context)
-        if (cacheNode == null || cacheNode.folder) return null
-        return if (!isExpired(cacheNode, configuration.cache.expiration)) {
-            loadArtifactResource(cacheNode, context)
-        } else null
+        return if (cacheNode == null || cacheNode.folder) null else {
+            Pair(cacheNode, isExpired(cacheNode, configuration.cache.expiration))
+        }
     }
 
     /**
      * 加载要返回的资源
      */
-    open fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactDownloadContext): ArtifactResource? {
+    open fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactContext): ArtifactResource? {
         return storageManager.loadFullArtifactInputStream(cacheNode, context.storageCredentials)?.run {
             if (logger.isDebugEnabled) {
                 logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
             }
-            ArtifactResource(this, context.artifactInfo.getResponseName(), cacheNode, ArtifactChannel.PROXY)
+            val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+            val responseName = context.artifactInfo.getResponseName()
+            val useDisposition = if (context is ArtifactDownloadContext) context.useDisposition else false
+            ArtifactResource(this, responseName, srcRepo, cacheNode, ArtifactChannel.PROXY, useDisposition)
         }
     }
 
     /**
      * 判断缓存节点[cacheNode]是否过期，[expiration]表示有效期，单位分钟
      */
-    protected fun isExpired(cacheNode: NodeDetail, expiration: Long): Boolean {
+    protected open fun isExpired(cacheNode: NodeDetail, expiration: Long): Boolean {
         if (expiration <= 0) {
             return false
         }
@@ -141,7 +224,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     /**
      * 尝试获取缓存的远程构件节点
      */
-    open fun findCacheNodeDetail(context: ArtifactDownloadContext): NodeDetail? {
+    open fun findCacheNodeDetail(context: ArtifactContext): NodeDetail? {
         with(context) {
             return nodeService.getNodeDetail(artifactInfo)
         }
@@ -155,7 +238,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         return if (configuration.cache.enabled) {
             val nodeCreateRequest = buildCacheNodeCreateRequest(context, artifactFile)
             storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, context.storageCredentials)
-        } else null
+        } else {
+            null
+        }
     }
 
     /**
@@ -166,7 +251,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
         val node = cacheArtifactFile(context, artifactFile)
-        return ArtifactResource(artifactStream, context.artifactInfo.getResponseName(), node, ArtifactChannel.LOCAL)
+        val responseName = context.artifactInfo.getResponseName()
+        val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+        return ArtifactResource(artifactStream, responseName, srcRepo, node, ArtifactChannel.PROXY)
     }
 
     /**
@@ -187,6 +274,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
      * 获取缓存节点创建请求
      */
     open fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {
+        val nodeMetadata = if (WhitelistUtils.optionalType().contains(context.repositoryDetail.type)) {
+            listOf(MetadataModel(SOURCE_TYPE, ArtifactChannel.PROXY))
+        } else { null }
         return NodeCreateRequest(
             projectId = context.repositoryDetail.projectId,
             repoName = context.repositoryDetail.name,
@@ -196,7 +286,8 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             sha256 = artifactFile.getFileSha256(),
             md5 = artifactFile.getFileMd5(),
             overwrite = true,
-            operator = context.userId
+            operator = context.userId,
+            nodeMetadata = nodeMetadata
         )
     }
 
@@ -248,5 +339,16 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
 
     companion object {
         private val logger = LoggerFactory.getLogger(RemoteRepository::class.java)
+        private val resourceNotReach = intArrayOf(
+            HttpStatus.NOT_FOUND.value,
+            HttpStatus.UNAUTHORIZED.value,
+            HttpStatus.PAYMENT_REQUIRED.value,
+            HttpStatus.FORBIDDEN.value
+        )
+        private val serverStatusError = intArrayOf(
+            HttpStatus.BAD_GATEWAY.value,
+            HttpStatus.INTERNAL_SERVER_ERROR.value
+        )
+        const val downloadRetryLimit = 4
     }
 }

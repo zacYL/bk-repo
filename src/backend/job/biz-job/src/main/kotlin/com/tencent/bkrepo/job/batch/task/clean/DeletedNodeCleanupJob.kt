@@ -33,6 +33,7 @@ import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.UncheckedExecutionException
 import com.mongodb.client.result.DeleteResult
 import com.tencent.bkrepo.common.api.constant.CharPool
+import com.tencent.bkrepo.common.artifact.constant.EXPIRED_DELETED_NODE
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.metadata.constant.FAKE_SHA256
 import com.tencent.bkrepo.common.metadata.service.repo.StorageCredentialService
@@ -51,17 +52,22 @@ import com.tencent.bkrepo.job.batch.utils.TimeUtils
 import com.tencent.bkrepo.job.config.properties.DeletedNodeCleanupJobProperties
 import com.tencent.bkrepo.job.config.properties.MigrateRepoStorageJobProperties
 import com.tencent.bkrepo.job.migrate.MigrateRepoStorageService
+import com.tencent.bkrepo.repository.api.GlobalConfigClient
+import com.tencent.bkrepo.repository.pojo.config.ConfigType
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.data.mongodb.core.findOne
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Component
 import java.time.Duration
 import java.time.LocalDateTime
-import java.util.Optional
+import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 
@@ -76,6 +82,7 @@ class DeletedNodeCleanupJob(
     private val clusterProperties: ClusterProperties,
     private val migrateRepoStorageService: MigrateRepoStorageService,
     private val storageCredentialService: StorageCredentialService,
+    private val globalConfigClient: GlobalConfigClient
 ) : DefaultContextMongoDbJob<DeletedNodeCleanupJob.Node>(properties) {
 
     data class Node(
@@ -85,7 +92,8 @@ class DeletedNodeCleanupJob(
         val folder: Boolean,
         val sha256: String?,
         val deleted: LocalDateTime?,
-        val clusterNames: List<String>?
+        val clusterNames: List<String>?,
+        val metadata: List<MetadataModel>?,
     )
 
     data class FileReference(
@@ -112,10 +120,18 @@ class DeletedNodeCleanupJob(
     }
 
     override fun buildQuery(): Query {
-        val expireDate = LocalDateTime.now().minusDays(properties.deletedNodeReserveDays)
-        return Query(Criteria.where(Node::deleted.name).lt(expireDate))
+        val reserveDays = getDeletedNodeReserveDays() ?: properties.deletedNodeReserveDays
+        val expireDate = LocalDateTime.now().minusDays(reserveDays)
+        val criteria = Criteria().orOperator(
+            where(Node::deleted).lt(expireDate),
+            where(Node::metadata).elemMatch(
+                where(MetadataModel::key).isEqualTo(EXPIRED_DELETED_NODE).and(MetadataModel::value).isEqualTo(true)
+            )
+        )
+        return Query(criteria)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun mapToEntity(row: Map<String, Any?>): Node {
         return Node(
             id = row[ID].toString(),
@@ -124,7 +140,8 @@ class DeletedNodeCleanupJob(
             folder = row[Node::folder.name] as Boolean,
             sha256 = row[Node::sha256.name] as String?,
             deleted = TimeUtils.parseMongoDateTimeStr(row[DELETED_DATE].toString()),
-            clusterNames = row[Node::clusterNames.name] as List<String>?
+            clusterNames = row[Node::clusterNames.name] as List<String>?,
+            metadata = row[Node::metadata.name] as List<MetadataModel>?,
         )
     }
 
@@ -269,6 +286,11 @@ class DeletedNodeCleanupJob(
             // StorageReconcileJob中会为缺少引用的存储文件补偿创建引用
             decrementFileReferences(sha256, it, false)
         }
+    }
+
+    fun getDeletedNodeReserveDays(): Long? {
+        return globalConfigClient.getConfig(ConfigType.DELETED_NODE_RESERVE_DAYS).data?.configuration
+            ?.takeIf { it.isNotBlank() }?.toLong()
     }
 
     data class RepositoryId(val projectId: String, val repoName: String) {

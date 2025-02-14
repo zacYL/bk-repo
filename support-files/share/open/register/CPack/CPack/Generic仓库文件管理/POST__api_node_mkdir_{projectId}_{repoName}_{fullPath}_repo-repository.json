@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_node_mkdir_{projectId}_{repoName}_{fullPath}_repo-repository",
+  "name" : "创建目录",
+  "desc" : "创建目录",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/repo-repository/api/node/mkdir/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "reporepository",
+  "targetPath" : "/api/node/mkdir/{projectId}/{repoName}/**",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "创建目录_acb72115.md"
+}

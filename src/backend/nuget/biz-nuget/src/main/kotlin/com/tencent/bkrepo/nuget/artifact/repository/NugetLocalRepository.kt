@@ -38,6 +38,8 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -48,7 +50,7 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
 import com.tencent.bkrepo.nuget.constant.MANIFEST
@@ -66,11 +68,13 @@ import com.tencent.bkrepo.nuget.pojo.v3.metadata.feed.Feed
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.index.RegistrationIndex
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.leaf.RegistrationLeaf
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.page.RegistrationPage
+import com.tencent.bkrepo.nuget.service.NugetOperationService
 import com.tencent.bkrepo.nuget.util.DecompressUtil.resolverNuspecMetadata
 import com.tencent.bkrepo.nuget.util.NugetUtils
 import com.tencent.bkrepo.nuget.util.NugetV3RegistrationUtils
 import com.tencent.bkrepo.nuget.util.NugetVersionUtils
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
@@ -82,11 +86,12 @@ import kotlin.streams.toList
 @Suppress("TooManyFunctions")
 @Component
 class NugetLocalRepository(
-    private val nugetPackageHandler: NugetPackageHandler
+    private val nugetPackageHandler: NugetPackageHandler,
+    private val nugetOperationService: NugetOperationService
 ) : LocalRepository() {
 
     override fun query(context: ArtifactQueryContext): Any? {
-        return when(context.getAttribute<NugetQueryType>(QUERY_TYPE)!!) {
+        return when (context.getAttribute<NugetQueryType>(QUERY_TYPE)!!) {
             NugetQueryType.PACKAGE_VERSIONS -> enumerateVersions(context, context.getStringAttribute(PACKAGE_NAME)!!)
             NugetQueryType.SERVICE_INDEX -> feed(context.artifactInfo as NugetArtifactInfo)
             NugetQueryType.REGISTRATION_INDEX -> registrationIndex(context)
@@ -121,7 +126,9 @@ class NugetLocalRepository(
             }.toList()
             try {
                 val v3RegistrationUrl = NugetUtils.getV3Url(artifactInfo) + '/' + registrationPath
-                return NugetV3RegistrationUtils.metadataToRegistrationIndex(sortedVersionList, v3RegistrationUrl)
+                val registrationIndex = NugetV3RegistrationUtils.metadataToRegistrationIndex(sortedVersionList, v3RegistrationUrl)
+                registrationIndex.items.forEach { it.sourceType = ArtifactChannel.LOCAL }
+                return registrationIndex
             } catch (ignored: JsonProcessingException) {
                 logger.error("failed to deserialize metadata to registration index json")
                 throw ignored
@@ -193,7 +200,7 @@ class NugetLocalRepository(
     override fun onUpload(context: ArtifactUploadContext) {
         with(context.artifactInfo as NugetPublishArtifactInfo) {
             uploadNupkg(context)
-            nugetPackageHandler.createPackageVersion(context)
+            nugetPackageHandler.createPackageVersion(context.userId, this, nuspecPackage.metadata, size)
             context.response.status = HttpStatus.CREATED.value
             context.response.writer.write("Successfully published NuPkg to: ${getArtifactFullPath()}")
         }
@@ -207,8 +214,16 @@ class NugetLocalRepository(
         storageManager.storeArtifactFile(request, context.getArtifactFile(), context.storageCredentials)
     }
 
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        downloadIntercept(context, null)
+    }
+
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         // download package manifest
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+        }
         val nugetArtifactInfo = context.artifactInfo as NugetDownloadArtifactInfo
         return if (nugetArtifactInfo.type == MANIFEST) {
             onDownloadManifest(context)
@@ -223,7 +238,7 @@ class NugetLocalRepository(
     ): PackageDownloadRecord? {
         with(context.artifactInfo as NugetDownloadArtifactInfo) {
             return if (type != MANIFEST) {
-                PackageDownloadRecord(projectId, repoName, PackageKeys.ofNuget(packageName), version)
+                PackageDownloadRecord(projectId, repoName, PackageKeys.ofNuget(packageName), version, context.userId)
             } else null
         }
     }
@@ -285,14 +300,20 @@ class NugetLocalRepository(
             val artifactFile = ArtifactFileFactory.build(inputStream)
             val size = artifactFile.getSize()
             val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
+            val srcRepo = RepositoryIdentify(projectId, repoName)
             val artifactResource = ArtifactResource(
-                artifactStream, responseName, nuspecNode, ArtifactChannel.LOCAL, useDisposition
+                artifactStream, responseName, srcRepo, nuspecNode, ArtifactChannel.LOCAL, useDisposition
             )
             // 临时文件删除
             artifactFile.delete()
             artifactResource.contentType = MediaTypes.APPLICATION_XML
             return artifactResource
         }
+    }
+
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        return nugetOperationService.packageVersion(context)
     }
 
     companion object {

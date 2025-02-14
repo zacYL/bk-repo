@@ -1,9 +1,16 @@
+<!--
+ * @Author: xiaoshanwen
+ * @Date: 2024-08-16 17:30:26
+ * @LastEditTime: 2024-12-24 18:52:33
+ * @Description:
+ * @FilePath: /artifact/src/frontend/devops-repository/src/views/planManage/createPlan/repoDialog.vue
+-->
 <template>
     <canway-dialog
         :value="show"
         width="800"
         height-num="561"
-        :title="title"
+        :title="$t('addRepo')"
         @cancel="$emit('cancel')"
         @confirm="confirmPackageData">
         <bk-transfer
@@ -38,20 +45,30 @@
         name: 'repoDialog',
         props: {
             show: Boolean,
-            replicaTaskObjects: Array
+            replicaTaskObjects: Array,
+            insertFilterRepoList: {
+                type: Array,
+                default: () => []
+            }
         },
         data () {
             return {
-                checkedRepository: [],
-                title: this.$t('addRepo')
+                checkedRepository: []
             }
         },
         computed: {
-            ...mapState(['repoListAll']),
+            ...mapState(['repoReadListAll']),
             repoList () {
-                return this.repoListAll
+                return this.repoReadListAll
                     .filter(r => {
-                        return ['DOCKER', 'MAVEN', 'NPM', 'GENERIC'].includes(r.type)
+                        return (this.insertFilterRepoList.length
+                            ? this.insertFilterRepoList
+                            : ['DOCKER', 'MAVEN', 'NPM', 'GENERIC', 'GO', 'GRADLE', 'COCOAPODS'])
+                            .includes(r.type)
+                            && r.name !== 'pipeline'
+                            && r.name !== 'report'
+                            && r.category !== 'REMOTE'
+                            && r.category !== 'VIRTUAL'
                     })
                     .map(repo => ({ ...repo, fid: repo.projectId + repo.name }))
                     .sort((a, b) => {

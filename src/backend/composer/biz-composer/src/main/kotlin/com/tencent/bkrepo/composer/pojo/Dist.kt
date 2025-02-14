@@ -37,6 +37,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 data class Dist(
     val type: String,
     val url: String,
-    val reference: String,
-    val shasum: String
+    val reference: String?,
+    val shasum: String?
 )

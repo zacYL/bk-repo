@@ -1,52 +1,90 @@
 <template>
     <div class="user-info-container">
-        <bk-tab class="user-manage-tab page-tab" type="unborder-card" :active.sync="tabName">
-            <bk-tab-panel name="user" :label="$t('baseInfo')" v-if="!ciMode">
-                <bk-form class="mt50" :label-width="180">
-                    <bk-form-item v-for="item in formItem" :key="item.key" :label="item.label">
-                        <div v-if="!editItem.key || editItem.key !== item.key" class="flex-align-center">
-                            <span>{{ transPrivacy(userInfo[item.key], item.label)}}</span>
-                            <bk-button class="ml20 flex-align-center"
-                                v-if="!editItem.key"
-                                text
-                                @click="editUserInfo(item)">
-                                {{$t('modify')}}
-                            </bk-button>
-                        </div>
-                        <div v-else class="flex-align-center">
-                            <bk-input class="w250" v-focus v-model.trim="editItem.value" maxlength="32" show-word-limit></bk-input>
-                            <bk-button class="ml10" theme="default" @click="cancelEdit">{{$t('cancel')}}</bk-button>
-                            <bk-button class="ml10" theme="primary" @click="confirmEdit">{{$t('confirm')}}</bk-button>
-                        </div>
-                    </bk-form-item>
-                    <bk-form-item :label="$t('password') + '：'">
-                        <div class="flex-align-center">
-                            <span>******</span>
-                            <bk-button class="ml20 flex-align-center"
-                                v-if="!editItem.key"
-                                text
-                                @click="showModifyPwd()">
-                                {{$t('modify')}}
-                            </bk-button>
-                        </div>
-                    </bk-form-item>
-                </bk-form>
-                <modify-password-dialog ref="modifyPassword"></modify-password-dialog>
-            </bk-tab-panel>
-            <bk-tab-panel render-directive="if" name="userRelated" :label="$t('relatedUsers')" v-if="userInfo.manage">
-                <userRelated />
-            </bk-tab-panel>
-        </bk-tab>
+        <bk-form class="mt50" :label-width="180">
+            <bk-form-item v-for="item in formItem" :key="item.key" :label="item.label">
+                <div v-if="!editItem.key || editItem.key !== item.key" class="flex-align-center">
+                    <span>{{userInfo[item.key] || '/'}}</span>
+                    <bk-button class="ml20 flex-align-center"
+                        v-if="!editItem.key"
+                        text
+                        @click="editUserInfo(item)">
+                        {{$t('modify')}}
+                    </bk-button>
+                </div>
+                <div v-else class="flex-align-center">
+                    <bk-input class="w250" v-focus v-model.trim="editItem.value" maxlength="32" show-word-limit></bk-input>
+                    <bk-button class="ml10" theme="default" @click="cancelEdit">{{$t('cancel')}}</bk-button>
+                    <bk-button class="ml10" theme="primary" @click="confirmEdit">{{$t('confirm')}}</bk-button>
+                </div>
+            </bk-form-item>
+            <bk-form-item :label="$t('password') + ': '">
+                <div class="flex-align-center">
+                    <span>********</span>
+                    <bk-button class="ml20 flex-align-center"
+                        v-if="!editItem.key"
+                        text
+                        @click="showModifyPwd()">
+                        {{$t('modify')}}
+                    </bk-button>
+                </div>
+            </bk-form-item>
+        </bk-form>
+        <canway-dialog
+            v-model="pwdDialog.show"
+            :title="$t('modifyPassword')"
+            width="600"
+            height-num="297"
+            @cancel="pwdDialog.show = false">
+            <bk-form class="mr20" :label-width="140" :model="pwdDialog" :rules="rules" ref="modifyPwdForm">
+                <bk-form-item :label="$t('currentPassword')" :required="true" property="oldPwd">
+                    <bk-input
+                        class="login-input"
+                        v-model.trim="pwdDialog.oldPwd"
+                        type="password"
+                        maxlength="32"
+                        :native-attributes="{
+                            autocomplete: 'current-password'
+                        }"
+                        left-icon="bk-icon icon-lock">
+                    </bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('newPassword')" :required="true" property="newPwd">
+                    <bk-input
+                        class="login-input"
+                        v-model.trim="pwdDialog.newPwd"
+                        type="password"
+                        maxlength="32"
+                        :native-attributes="{
+                            autocomplete: 'new-password'
+                        }"
+                        :placeholder="$t('pwdPlaceholder')"
+                        left-icon="bk-icon icon-lock">
+                    </bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('confirmPassword')" :required="true" property="check">
+                    <bk-input
+                        class="login-input"
+                        v-model.trim="pwdDialog.check"
+                        type="password"
+                        maxlength="32"
+                        :native-attributes="{
+                            autocomplete: 'new-password'
+                        }"
+                        left-icon="bk-icon icon-lock">
+                    </bk-input>
+                </bk-form-item>
+            </bk-form>
+            <template #footer>
+                <bk-button theme="default" @click.stop="pwdDialog.show = false">{{$t('cancel')}}</bk-button>
+                <bk-button class="ml10" :loading="pwdDialog.loading" theme="primary" @click="confirmModifyPwd">{{$t('confirm')}}</bk-button>
+            </template>
+        </canway-dialog>
     </div>
 </template>
 <script>
-    import { transformEmail, transformPhone } from '@repository/utils/privacy'
-    import modifyPasswordDialog from '@repository/views/userCenter/modifyPasswordDialog'
-    import { mapActions, mapState } from 'vuex'
-    import userRelated from './userRelated'
+    import { mapState, mapActions } from 'vuex'
     export default {
         name: 'userInfo',
-        components: { userRelated, modifyPasswordDialog },
         directives: {
             focus: {
                 inserted (el) {
@@ -65,8 +103,53 @@
                     key: '',
                     value: ''
                 },
-                tabName: 'user',
-                ciMode: MODE_CONFIG === 'ci'
+                pwdDialog: {
+                    show: false,
+                    loading: false,
+                    oldPwd: '',
+                    newPwd: '',
+                    check: ''
+                },
+                rules: {
+                    oldPwd: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('password'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    newPwd: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('password'),
+                            trigger: 'blur'
+                        },
+                        {
+                            min: 8,
+                            message: this.$t('pwdPlaceholder'),
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: str => {
+                                return str.search(/ /) === -1 && [/[0-9]/, /[a-z]/, /[A-Z]/, /[\W_]/].map(reg => str.search(reg)).every(v => v !== -1)
+                            },
+                            message: this.$t('pwdPlaceholder'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    check: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('password'),
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: () => this.pwdDialog.newPwd === this.pwdDialog.check,
+                            message: this.$t('passwordWrongMsg'),
+                            trigger: 'blur'
+                        }
+                    ]
+                }
             }
         },
         computed: {
@@ -76,7 +159,9 @@
             ...mapActions([
                 'logout',
                 'editUser',
-                'getUserInfo'
+                'getUserInfo',
+                'getRSAKey',
+                'modifyPwd'
             ]),
             editUserInfo (item) {
                 this.editItem = {
@@ -93,7 +178,7 @@
                 }).then(res => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('edit') + this.$t('success')
+                        message: this.$t('edit') + this.$t('space') + this.$t('success')
                     })
                     this.cancelEdit()
                     this.getUserInfo({
@@ -108,18 +193,37 @@
                 }
             },
             showModifyPwd () {
-                this.$refs.modifyPassword.userId = this.userInfo.username
-                this.$refs.modifyPassword.showDialogHandler()
-            },
-            transPrivacy (key, label) {
-                if (key === null || key === '') return '/'
-                if (label.toString() === this.$t('email')) {
-                    return transformEmail(key)
-                } else if (label.toString() === this.$t('telephone')) {
-                    return transformPhone(key)
-                } else {
-                    return key
+                this.$refs.modifyPwdForm && this.$refs.modifyPwdForm.clearError()
+                this.pwdDialog = {
+                    show: true,
+                    loading: false,
+                    oldPwd: '',
+                    newPwd: '',
+                    check: ''
                 }
+            },
+            async confirmModifyPwd () {
+                await this.$refs.modifyPwdForm.validate()
+                const formData = new FormData()
+                const encrypt = new window.JSEncrypt()
+                const rsaKey = await this.getRSAKey()
+                encrypt.setPublicKey(rsaKey)
+                formData.append('oldPwd', encrypt.encrypt(this.pwdDialog.oldPwd))
+                formData.append('newPwd', encrypt.encrypt(this.pwdDialog.newPwd))
+                this.pwdDialog.loading = true
+                this.modifyPwd({
+                    userId: this.userInfo.username,
+                    formData
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('modifyPassword') + this.$t('space') + this.$t('success') + this.$t('space') + ', ' + this.$t('loginAgainMsg')
+                    })
+                    this.pwdDialog.show = false
+                    setTimeout(this.logout, 3000)
+                }).finally(() => {
+                    this.pwdDialog.loading = false
+                })
             }
         }
     }
@@ -127,16 +231,5 @@
 <style lang="scss" scoped>
 .user-info-container {
     background-color: white;
-    .user-manage-tab {
-        height: 100%;
-        ::v-deep .bk-tab-section {
-            height: calc(100% - 60px);
-            padding: 0;
-            .bk-tab-content {
-                height: 100%;
-                overflow: hidden;
-            }
-        }
-    }
 }
 </style>

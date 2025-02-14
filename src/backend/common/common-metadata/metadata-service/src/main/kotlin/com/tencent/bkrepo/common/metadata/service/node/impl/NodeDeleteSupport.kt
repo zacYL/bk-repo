@@ -30,27 +30,31 @@ package com.tencent.bkrepo.common.metadata.service.node.impl
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.HumanReadable
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.properties.RouterControllerProperties
-import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
 import com.tencent.bkrepo.common.metadata.model.TNode
-import com.tencent.bkrepo.repository.pojo.node.NodeDeleteResult
-import com.tencent.bkrepo.repository.pojo.node.NodeListOption
-import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.common.metadata.service.node.NodeDeleteOperation
 import com.tencent.bkrepo.common.metadata.service.repo.QuotaService
+import com.tencent.bkrepo.common.metadata.util.MetadataUtils
 import com.tencent.bkrepo.common.metadata.util.NodeDeleteHelper.buildCriteria
 import com.tencent.bkrepo.common.metadata.util.NodeEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.common.metadata.util.NodeEventFactory.buildNodeCleanEvent
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper
 import com.tencent.bkrepo.common.mongo.constant.ID
+import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
+import com.tencent.bkrepo.repository.pojo.node.NodeDeleteResult
+import com.tencent.bkrepo.repository.pojo.node.NodeListOption
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.router.api.RouterControllerClient
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.inValues
 import org.springframework.data.mongodb.core.query.isEqualTo
@@ -135,6 +139,11 @@ open class NodeDeleteSupport(
     ): NodeDeleteResult {
         val criteria = buildCriteria(projectId, repoName, fullPath)
         val query = Query(criteria)
+        val node = nodeDao.find(query)
+        if (node.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
+            val errorCode = if (node.size == 1) ArtifactMessageCode.NODE_LOCK else ArtifactMessageCode.NODE_CHILD_LOCK
+            throw ErrorCodeException(errorCode, fullPath)
+        }
         return delete(query, operator, criteria, projectId, repoName, listOf(fullPath))
     }
 
@@ -240,6 +249,14 @@ open class NodeDeleteSupport(
             if (deletedNum == 0L) {
                 return NodeDeleteResult(deletedNum, deletedSize, deleteTime)
             }
+            // show in recycle bin
+            nodeDao.updateFirst(
+                Query(
+                    where(TNode::projectId).isEqualTo(projectId).and(TNode::repoName).isEqualTo(repoName)
+                        .and(TNode::fullPath).inValues(fullPaths).and(TNode::deleted).isEqualTo(deleteTime)
+                ),
+                Update().push(TNode::metadata.name, MetadataUtils.buildRecycleBinMetadata())
+            )
             if (decreaseVolume) {
                 var deletedCriteria = criteria.and(TNode::deleted).isEqualTo(deleteTime)
                 fullPaths?.let {
@@ -253,6 +270,10 @@ open class NodeDeleteSupport(
             fullPaths?.forEach { fullPath ->
                 if (routerControllerProperties.enabled) {
                     routerControllerClient.removeNodes(projectId, repoName, fullPath)
+                }
+                val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+                if (!PathUtils.isRoot(parentFullPath)) {
+                    nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, deleteTime)
                 }
                 publishEvent(buildDeletedEvent(projectId, repoName, fullPath, operator))
             }

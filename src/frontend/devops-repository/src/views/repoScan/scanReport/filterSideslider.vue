@@ -39,17 +39,10 @@
                             <bk-option v-for="[id] in Object.entries(scanStatusEnum)" :key="id" :id="id" :name="$t(`scanStatusEnum.${id}`)"></bk-option>
                         </bk-select>
                     </bk-form-item>
-                    <!-- <bk-form-item label="质量规则状态">
-                        <bk-select
-                            v-model="filter.qualityRedLine">
-                            <bk-option :id="true" name="通过"></bk-option>
-                            <bk-option :id="false" name="不通过"></bk-option>
-                        </bk-select>
-                    </bk-form-item> -->
                 </bk-form>
                 <div class="pr30 sideslider-footer flex-end-center">
-                    <bk-button class="mr10" theme="default" @click="reset">{{ $t('reset') }}</bk-button>
-                    <bk-button theme="primary" @click="filterHandler">{{ $t('filter') }}</bk-button>
+                    <bk-button class="mr10" theme="default" @click="reset">{{$t('reset')}}</bk-button>
+                    <bk-button theme="primary" @click="filterHandler">{{$t('filter')}}</bk-button>
                 </div>
             </div>
         </template>
@@ -68,11 +61,10 @@
                 scanStatusEnum,
                 leakLevelEnum,
                 filter: {
-                    name: this.$route.query?.name || '',
-                    repoName: this.$route.query?.repoName || '',
-                    highestLeakLevel: this.$route.query?.highestLeakLevel || '',
-                    status: this.$route.query?.status || '',
-                    qualityRedLine: ''
+                    name: '',
+                    repoName: '',
+                    highestLeakLevel: '',
+                    status: ''
                 }
             }
         },
@@ -81,7 +73,7 @@
             repoGroupList () {
                 const repoTypeLimit = [this.scanType.replace(/^([A-Z]+).*$/, '$1')]
                 return this.repoListAll
-                    .filter(r => repoTypeLimit.includes(r.type))
+                    .filter(r => repoTypeLimit.includes(r.type) && r.category !== 'VIRTUAL')
                     .reduce((target, repo) => {
                         if (!target[repo.type]) target[repo.type] = []
                         target[repo.type].push(repo)
@@ -90,6 +82,14 @@
             }
         },
         created () {
+            // 需要根据VueRouter中的参数设置筛选框的默认值
+            this.filter = {
+                name: this.$route.query?.name || '',
+                repoName: this.$route.query?.repoName || '',
+                highestLeakLevel: this.$route.query?.highestLeakLevel || '',
+                status: this.$route.query?.status || ''
+            }
+            // 设置了默认值后需要将参数同步父组件，否则会导致面包屑回退后筛选参数会是之前设置的值
             // 初始化设置筛选状态时需要告知父组件，让父组件保留扫描记录列表的页码及每页大小等参数
             this.filterHandler('initFlag')
             this.getRepoListAll({ projectId: this.$route.params.projectId })
@@ -118,8 +118,7 @@
                     name: '',
                     repoName: '',
                     highestLeakLevel: '',
-                    status: '',
-                    qualityRedLine: ''
+                    status: ''
                 }
                 this.showSideslider = false
                 // 此时只能向父组件返回一个空对象，不能将上面的属性值都为空的对象返回，会导致关闭弹窗后请求携带了这些空值的参数，导致返回数据为空数组

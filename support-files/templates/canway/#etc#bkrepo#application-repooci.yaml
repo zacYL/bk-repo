@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Oci Service
+  cloud:
+    stream:
+      function:
+        definition: artifactEvent
+      bindings:
+        artifactEvent-in-0:
+          group: oci
+          destination: artifactEvent
+          binder: pulsar
+server:
+  port: __BK_REPO_OCI_PORT__
+logging:
+  #level:
+    #com.tencent.bkrepo.docker: DEBUG
+  path: ${logging.path-common}/${service.name}
+oci:
+  domain: __BK_REPO_DOCKER_DOMAIN__
+  authUrl: __BK_HTTP_SCHEMA__://${oci.domain}/v2/auth
+  https: false
+service:
+  name: oci

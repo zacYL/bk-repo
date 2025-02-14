@@ -110,4 +110,8 @@ interface ClusterNodeClient {
     @ApiOperation("恢复节点")
     @PostMapping("/restore")
     fun restoreNode(@RequestBody nodeRestoreRequest: NodeRestoreRequest): Response<NodeRestoreResult>
+
+    @ApiOperation("恢复节点")
+    @PostMapping("/update/usedate")
+    fun updateRecentlyUseDate(projectId: String, repoName: String, fullPath: String): Response<Void>
 }

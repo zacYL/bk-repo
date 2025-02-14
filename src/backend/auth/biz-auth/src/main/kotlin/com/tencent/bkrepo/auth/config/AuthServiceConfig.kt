@@ -43,7 +43,6 @@ import com.tencent.bkrepo.auth.dao.repository.OauthTokenRepository
 import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.service.AccountService
 import com.tencent.bkrepo.auth.service.PermissionService
-import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.bkdevops.DevopsPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.bkdevops.DevopsPipelineService
@@ -161,7 +160,7 @@ class AuthServiceConfig {
     }
 
     @Bean
-    @ConditionalOnMissingBean(RoleService::class)
+    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "local", matchIfMissing = true)
     fun roleService(
         roleRepository: RoleRepository,
         userService: UserService,
@@ -169,7 +168,7 @@ class AuthServiceConfig {
     ) = RoleServiceImpl(roleRepository, userService, userDao)
 
     @Bean
-    @ConditionalOnMissingBean(UserService::class)
+    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "local", matchIfMissing = true)
     fun userService(
         roleRepository: RoleRepository,
         userDao: UserDao

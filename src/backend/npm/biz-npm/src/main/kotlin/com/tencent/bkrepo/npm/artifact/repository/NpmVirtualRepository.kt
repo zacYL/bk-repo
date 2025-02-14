@@ -31,13 +31,21 @@
 
 package com.tencent.bkrepo.npm.artifact.repository
 
+import com.github.zafarkhaja.semver.Version
+import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toCompactJsonString
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.core.AbstractArtifactRepository
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
+import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
+import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
+import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
+import com.tencent.bkrepo.npm.utils.NpmStreamUtils.toArtifactStream
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -57,7 +65,7 @@ class NpmVirtualRepository : VirtualRepository() {
             }
             traversedList.add(repoIdentify)
             try {
-                val subRepoInfo = repositoryService.getRepoDetail(repoIdentify.projectId, repoIdentify.name)!!
+                val subRepoInfo = repositoryService.getRepoDetail(context.projectId, repoIdentify.name)!!
                 val repository = ArtifactContextHolder.getRepository(subRepoInfo.category) as AbstractArtifactRepository
                 val subContext = context.copy(repositoryDetail = subRepoInfo) as ArtifactSearchContext
                 repository.search(subContext).let { map ->
@@ -71,6 +79,37 @@ class NpmVirtualRepository : VirtualRepository() {
             }
         }
         return list.subList(0, searchRequest.size)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
+        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!
+        context.getFullPathInterceptors().forEach { it.intercept(context.projectId, fullPath) }
+        val result = (super.query(context) as List<ArtifactInputStream>).ifEmpty { return null }
+        return if (result.size == 1) result.first() else {
+            // 聚合多个仓库的包级别元数据
+            result.foldIndexed(result.first().readJsonString<NpmPackageMetaData>()) { index, acc, element ->
+                if (index == 0) return@foldIndexed acc
+                aggregateMetadata(acc, element.readJsonString<NpmPackageMetaData>())
+            }.toCompactJsonString().toArtifactStream()
+        }
+    }
+
+    private fun aggregateMetadata(
+        originMetadata: NpmPackageMetaData,
+        newMetadata: NpmPackageMetaData
+    ): NpmPackageMetaData {
+        return originMetadata.apply {
+            for ((version, metadata) in newMetadata.versions.map) {
+                versions.map.putIfAbsent(version, metadata)
+            }
+            for ((tag, newVersion) in newMetadata.distTags.getMap()) {
+                val originVersion = distTags.getMap()[tag]
+                if (originVersion.isNullOrEmpty() || Version.valueOf(originVersion) < Version.valueOf(newVersion)) {
+                    distTags.set(tag, newVersion)
+                }
+            }
+        }
     }
 
     companion object {

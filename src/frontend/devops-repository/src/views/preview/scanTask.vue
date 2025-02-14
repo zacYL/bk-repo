@@ -1,7 +1,7 @@
 <template>
     <div class="p20 scan-task-container">
         <div class="mb10 flex-end-center">
-            <bk-button :theme="isfiltering ? 'primary' : 'default'" @click="showFilterForm">筛选</bk-button>
+            <bk-button :theme="isfiltering ? 'primary' : 'default'" @click="showFilterForm">{{$t('filter')}}</bk-button>
         </div>
         <bk-table
             height="calc(100% - 80px)"
@@ -13,48 +13,40 @@
             <template #empty>
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
-            <bk-table-column label="制品名称" show-overflow-tooltip>
+            <bk-table-column :label="$t('artifactName')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <span v-if="row.groupId" class="mr5 repo-tag" :data-name="row.groupId"></span>
-                    <span class="hover-btn" :class="{ 'disabled': !['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(row.status) }" @click="showArtiReport(row)">{{ row.name }}</span>
+                    <span class="hover-btn"
+                        :class="{ 'disabled': !['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(row.status) }"
+                        @click="showArtiReport(row)">
+                        {{ row.name }}
+                    </span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="制品版本/存储路径" show-overflow-tooltip>
+            <bk-table-column :label="$t('artifactVersion') + '/' + $t('storagePath')" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.version || row.fullPath }}</template>
             </bk-table-column>
-            <bk-table-column label="所属仓库" show-overflow-tooltip>
+            <bk-table-column :label="$t('repo')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <Icon class="table-svg" size="16" :name="row.repoType.toLowerCase()" />
                     <span class="ml5">{{replaceRepoName(row.repoName)}}</span>
                 </template>
             </bk-table-column>
-            <!-- <bk-table-column label="质量规则">
-                <template #default="{ row }">
-                    <span v-if="row.qualityRedLine === true" class="repo-tag SUCCESS">通过</span>
-                    <span v-else-if="row.qualityRedLine === false" class="repo-tag FAILED">不通过</span>
-                    <span v-else>/</span>
-                </template>
-            </bk-table-column> -->
-            <bk-table-column v-if="!baseInfo.planType.includes('LICENSE')" label="风险等级">
+            <bk-table-column v-if="!baseInfo.planType.includes('LICENSE')" :label="$t('riskLevel')">
                 <template #default="{ row }">
                     <div v-if="row.highestLeakLevel" class="status-sign" :class="row.highestLeakLevel"
-                        :data-name="leakLevelEnum[row.highestLeakLevel]">
+                        :data-name="$t(`leakLevelEnum.${row.highestLeakLevel}`)">
                     </div>
                     <span v-else>/</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="扫描状态">
+            <bk-table-column :label="$t('scanStatus')">
                 <template #default="{ row }">
-                    <span class="repo-tag" :class="row.status">{{scanStatusEnum[row.status]}}</span>
+                    <span class="repo-tag" :class="row.status">{{$t(`scanStatusEnum.${row.status}`)}}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="扫描完成时间" width="150">
+            <bk-table-column :label="$t('scanCompletionTime')" width="150">
                 <template #default="{ row }">{{formatDate(row.finishTime)}}</template>
-            </bk-table-column>
-            <bk-table-column label="操作" width="100">
-                <template #default="{ row }">
-                    <bk-button text title="primary" :disabled="!['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(row.status)" @click="showArtiReport(row)">查看</bk-button>
-                </template>
             </bk-table-column>
         </bk-table>
         <bk-pagination
@@ -111,9 +103,6 @@
                 return this.$route.params.taskId
             },
             isfiltering () {
-                if (this.filter.flag === 'initFlag') {
-                    delete this.filter.flag
-                }
                 return Boolean(Object.values(this.filter).join(''))
             }
         },

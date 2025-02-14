@@ -1,6 +1,6 @@
 <template>
     <div class="rule-item flex-align-center" :data-suffix="$t('shortOr')">
-        <span>{{ $t('genericRule') }}</span>
+        <span>{{$t('genericRule')}}</span>
         <select-input
             class="ml5"
             :select="name.operation"

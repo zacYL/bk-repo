@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_node_page_{projectId}_{repoName}_{fullPath}_repo-repository",
+  "name" : "分页查询指定路径下的文件",
+  "desc" : "分页查询指定路径下的文件",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-repository/api/node/page/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "reporepository",
+  "targetPath" : "/api/node/page/{projectId}/{repoName}/**",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "分页查询指定路径下的文件_20e84199.md"
+}

@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.common.artifact.repository.context
 
 import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurer
@@ -39,6 +41,8 @@ import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_CONFIGURER
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.constant.NODE_DETAIL_KEY
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.constant.REPO_NAME
 import com.tencent.bkrepo.common.artifact.constant.REPO_RATE_LIMIT_KEY
@@ -53,6 +57,9 @@ import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.config.RateLimitProperties
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.util.unit.DataSize
@@ -96,8 +103,9 @@ class ArtifactContextHolder(
         private val artifactConfigurerMap = mutableMapOf<RepositoryType, ArtifactConfigurer>()
         private val repositoryDetailCache = CacheBuilder.newBuilder()
             .maximumSize(1000)
-            .expireAfterWrite(60, TimeUnit.SECONDS)
-            .build<RepositoryId, RepositoryDetail>()
+            .refreshAfterWrite(30L, TimeUnit.SECONDS)
+            .expireAfterWrite(60L, TimeUnit.SECONDS)
+            .build(CacheLoader.from<RepositoryId, RepositoryDetail> { queryRepoDetail(it) })
         private val regex = Regex("""com\.tencent\.bkrepo\.(\w+)\..*""")
 
         /**
@@ -170,9 +178,7 @@ class ArtifactContextHolder(
                 return repositoryAttribute
             }
             val repositoryId = getRepositoryId(request)
-            val repoDetail = repositoryDetailCache.getIfPresent(repositoryId) ?: run {
-                queryRepoDetail(repositoryId).apply { repositoryDetailCache.put(repositoryId, this) }
-            }
+            val repoDetail = getRepoDetail(repositoryId)
             request.setAttribute(REPO_KEY, repoDetail)
             return repoDetail
         }
@@ -193,8 +199,10 @@ class ArtifactContextHolder(
          * 在非http的上下文获取仓库信息
          * */
         fun getRepoDetail(repositoryId: RepositoryId): RepositoryDetail {
-            return repositoryDetailCache.get(repositoryId) {
-                queryRepoDetail(repositoryId)
+            return try {
+                repositoryDetailCache.get(repositoryId)
+            } catch (e: UncheckedExecutionException) {
+                throw e.cause ?: e
             }
         }
 
@@ -242,6 +250,7 @@ class ArtifactContextHolder(
         private fun queryRepoDetail(repositoryId: RepositoryId): RepositoryDetail {
             with(repositoryId) {
                 val repoType = getCurrentArtifactConfigurer().getRepositoryType().name
+                publicGlobalRepoHandler(projectId, repoName, repoType)
                 return artifactClient.getRepositoryDetailOrNull(projectId, repoName, repoType)
                     ?: queryRepoDetailFormExtraRepoType(projectId, repoName)
             }
@@ -262,6 +271,62 @@ class ArtifactContextHolder(
                 }
             }
             return otherRepo ?: throw RepoNotFoundException(repoName)
+        }
+
+        /**
+         * 如果[PUBLIC_GLOBAL_PROJECT]项目下[PUBLIC_VULDB_REPO]仓库不存在则创建相应的项目和仓库
+         */
+        private fun publicGlobalRepoHandler(projectId: String, repoName: String, repoType: String) {
+            if (projectId == PUBLIC_GLOBAL_PROJECT &&
+                repoName == PUBLIC_VULDB_REPO &&
+                repoType == RepositoryType.GENERIC.name
+            ) {
+                checkProjectExists(projectId)
+                checkRepoExists(projectId, repoName, repoType)
+            }
+        }
+
+        private fun checkProjectExists(projectId: String) {
+            artifactClient.projectService.getProjectInfo(projectId) ?: artifactClient.projectService.createProject(
+                ProjectCreateRequest(
+                    name = PUBLIC_GLOBAL_PROJECT,
+                    displayName = PUBLIC_GLOBAL_PROJECT,
+                    description = PUBLIC_GLOBAL_PROJECT
+                )
+            )
+        }
+
+        private fun checkRepoExists(projectId: String, repoName: String, repoType: String) {
+            val repoDetail = artifactClient.repositoryService.getRepoDetail(projectId, repoName, repoType)
+            if (repoDetail == null) {
+                artifactClient.repositoryService.createRepo(
+                    RepoCreateRequest(
+                        projectId = projectId,
+                        name = repoName,
+                        type = RepositoryType.valueOf(repoType),
+                        category = RepositoryCategory.LOCAL,
+                        public = true,
+                        description = repoName
+                    )
+                )
+            } else if (!repoDetail.public) {
+                artifactClient.repositoryService.updateRepo(
+                    RepoUpdateRequest(
+                        projectId = repoDetail.projectId,
+                        name = repoDetail.name,
+                        public = true,
+                        description = repoDetail.description,
+                        configuration = repoDetail.configuration,
+                        quota = repoDetail.quota,
+                        coverStrategy = repoDetail.coverStrategy,
+                        operator = repoDetail.lastModifiedBy
+                    )
+                )
+            }
+        }
+
+        fun setRepoDetail(repoDetail:RepositoryDetail) {
+            HttpContextHolder.getRequestOrNull()?.setAttribute(REPO_KEY, repoDetail)
         }
 
         fun getNodeDetail(artifactInfo: ArtifactInfo): NodeDetail? {

@@ -1,5 +1,4 @@
 const path = require('path')
-const ESLintPlugin = require('eslint-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const { VueLoaderPlugin } = require('vue-loader')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
@@ -28,12 +27,12 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
             rules: [
                 {
                     test: /\.vue$/,
-                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve('src')],
+                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve(__dirname, 'devops-repository-ci/src'), path.resolve('src')],
                     loader: 'vue-loader'
                 },
                 {
                     test: /\.js$/,
-                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve('src')],
+                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve(__dirname, 'devops-repository-ci/src'), path.resolve('src')],
                     use: [
                         {
                             loader: 'babel-loader'
@@ -41,7 +40,7 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                     ]
                 },
                 {
-                    test: /\.scss$/,
+                    test: /\.(scss|css)$/,
                     use: [
                         MiniCssExtractPlugin.loader,
                         {
@@ -54,6 +53,17 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                         },
                         'sass-loader'
                     ]
+                },
+                {
+                    test: /\.(js|vue)$/,
+                    loader: 'eslint-loader',
+                    enforce: 'pre',
+                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve(__dirname, 'devops-repository-ci/src'), path.resolve('src')],
+                    exclude: [/node_modules/],
+                    options: {
+                        fix: true,
+                        formatter: require('eslint-friendly-formatter')
+                    }
                 }
             ]
         },
@@ -65,28 +75,8 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                 ignoreOrder: true
             }),
             new CopyWebpackPlugin({
-                patterns: [{ from: path.join(__dirname, 'locale'), to: buildDist }],
+                patterns: [{ from: path.join(__dirname, 'locale', dist), to: buildDist }],
                 options: { concurrency: 100 }
-            }),
-            new ESLintPlugin({
-                // 指定要检查的文件扩展名
-                extensions: ['js', 'vue'],
-                // 指定要检查的目录
-                context: path.resolve(__dirname, 'devops-repository/src'), // 主要上下文目录
-                // 其他选项
-                fix: true, // 自动修复问题
-                formatter: require('eslint-friendly-formatter'), // 使用友好的格式化程序
-                // 你可以添加更多选项，例如：
-                emitWarning: true, // 如果有 ESLint 警告，是否在控制台中显示
-                failOnError: false, // 如果有错误，是否使构建失败
-                failOnWarning: false, // 如果有警告，是否使构建失败
-                // 使用 include 选项来指定多个路径
-                files: [
-                    path.resolve(__dirname, 'devops-repository/src/**/*.js'),
-                    path.resolve(__dirname, 'devops-repository/src/**/*.vue'),
-                    path.resolve(__dirname, 'src/**/*.js'),
-                    path.resolve(__dirname, 'src/**/*.vue')
-                ]
             })
         ],
         optimization: {
@@ -105,6 +95,7 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
             alias: {
                 '@': path.resolve('src'),
                 '@repository': path.resolve(__dirname, 'devops-repository/src'),
+                '@repositoryci': path.resolve(__dirname, 'devops-repository-ci/src'),
                 '@locale': path.resolve(__dirname, 'locale')
             }
         },

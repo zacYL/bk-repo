@@ -31,12 +31,17 @@
 
 package com.tencent.bkrepo.auth.pojo.enums
 
-enum class ResourceType {
-    SYSTEM,
-    PROJECT,
-    REPO,
-    NODE,
-    ENDPOINT;
+enum class ResourceType(val nick: String) {
+    SYSTEM("系统"),
+    PROJECT("项目"),
+    REPO("仓库"),
+    NODE("节点"),
+    METADATA("元数据"),
+    PACKAGE("包"),
+    USER("用户"),
+    ADMIN("管理员"),
+    REPLICATION("分发计划");
+
 
     fun id() = this.name.toLowerCase()
 

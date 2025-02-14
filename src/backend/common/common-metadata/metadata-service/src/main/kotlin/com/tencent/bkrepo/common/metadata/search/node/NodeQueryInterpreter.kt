@@ -33,14 +33,15 @@ package com.tencent.bkrepo.common.metadata.search.node
 
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.permission.PermissionManager
-import com.tencent.bkrepo.common.query.interceptor.QueryContext
-import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.metadata.search.common.CommonQueryInterpreter
 import com.tencent.bkrepo.common.metadata.search.common.LocalDatetimeRuleInterceptor
 import com.tencent.bkrepo.common.metadata.search.common.MetadataRuleInterceptor
+import com.tencent.bkrepo.common.metadata.search.common.ProjectIdRuleInterceptor
 import com.tencent.bkrepo.common.metadata.search.common.RepoNameRuleInterceptor
 import com.tencent.bkrepo.common.metadata.search.common.RepoTypeRuleInterceptor
 import com.tencent.bkrepo.common.metadata.search.common.SelectFieldInterceptor
+import com.tencent.bkrepo.common.query.interceptor.QueryContext
+import com.tencent.bkrepo.common.query.model.QueryModel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Lazy
@@ -54,7 +55,9 @@ class NodeQueryInterpreter @Autowired @Lazy constructor(
     private val permissionManager: PermissionManager,
     private val repoNameRuleInterceptor: RepoNameRuleInterceptor,
     private val repoTypeRuleInterceptor: RepoTypeRuleInterceptor,
-    private val localDatetimeRuleInterceptor: LocalDatetimeRuleInterceptor
+    private val metadataRuleInterceptor: MetadataRuleInterceptor,
+    private val localDatetimeRuleInterceptor: LocalDatetimeRuleInterceptor,
+    private val projectIdRuleInterceptor: ProjectIdRuleInterceptor,
 ) : CommonQueryInterpreter(permissionManager) {
 
     @PostConstruct
@@ -63,8 +66,9 @@ class NodeQueryInterpreter @Autowired @Lazy constructor(
         addModelInterceptor(SelectFieldInterceptor())
         addRuleInterceptor(repoTypeRuleInterceptor)
         addRuleInterceptor(repoNameRuleInterceptor)
-        addRuleInterceptor(MetadataRuleInterceptor())
+        addRuleInterceptor(metadataRuleInterceptor)
         addRuleInterceptor(localDatetimeRuleInterceptor)
+        addRuleInterceptor(projectIdRuleInterceptor)
     }
 
     override fun initContext(queryModel: QueryModel, mongoQuery: Query): QueryContext {

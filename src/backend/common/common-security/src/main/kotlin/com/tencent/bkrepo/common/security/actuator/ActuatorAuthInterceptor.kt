@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.manager.AuthenticationManager
 import com.tencent.bkrepo.common.security.manager.PrincipalManager
 import com.tencent.bkrepo.common.security.permission.PrincipalType
+import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter
 import java.util.Base64
@@ -47,14 +48,18 @@ import javax.servlet.http.HttpServletResponse
 
 class ActuatorAuthInterceptor(
     private val authenticationManager: AuthenticationManager,
-    private val principalManager: PrincipalManager
+    private val principalManager: PrincipalManager,
+    private val webEndpointProperties: WebEndpointProperties
 ) : HandlerInterceptorAdapter() {
 
     private val antPathMatcher = AntPathMatcher()
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val uri = request.requestURI
-        if (antPathMatcher.match(HEALTH_ENDPOINT, uri) || antPathMatcher.match(INFO_ENDPOINT, uri)) {
+        if (
+            antPathMatcher.match(webEndpointProperties.basePath + HEALTH_ENDPOINT, uri) ||
+            antPathMatcher.match(webEndpointProperties.basePath + INFO_ENDPOINT, uri)
+        ) {
             return true
         }
         val authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION)
@@ -77,7 +82,7 @@ class ActuatorAuthInterceptor(
     }
 
     companion object {
-        private const val HEALTH_ENDPOINT = "/actuator/health/**"
-        private const val INFO_ENDPOINT = "/actuator/info/**"
+        private const val HEALTH_ENDPOINT = "/health/**"
+        private const val INFO_ENDPOINT = "/info/**"
     }
 }

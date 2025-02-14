@@ -57,4 +57,9 @@ interface NpmFixToolService {
      * 校正索引文件与包数据不一致
      */
     fun inconsistentCorrectionData(artifactInfo: NpmArtifactInfo, name: String)
+
+    /**
+     * 修复package.json缺失包版本元数据的问题
+     */
+    fun completePackageInfo(artifactInfo: NpmArtifactInfo, name: String, version: String): Boolean
 }

@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.conan.pojo.response.ConanErrorResponse
@@ -51,8 +52,19 @@ class ConanExceptionHandler {
     @ExceptionHandler(ConanFileNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handlerConanFileNotFoundException(exception: ConanFileNotFoundException) {
+        val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
         val responseObject = ConanResponse.errorResponse(
-            ConanErrorResponse(exception.message, HttpStatus.NOT_FOUND.value())
+            ConanErrorResponse(errorMessage, HttpStatus.NOT_FOUND.value())
+        )
+        conanResponse(responseObject, exception)
+    }
+
+    @ExceptionHandler(ArtifactDownloadForbiddenException::class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    fun handlerConanFileNotFoundException(exception: ArtifactDownloadForbiddenException) {
+        val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
+        val responseObject = ConanResponse.errorResponse(
+            ConanErrorResponse(errorMessage, HttpStatus.NOT_FOUND.value())
         )
         conanResponse(responseObject, exception)
     }
@@ -60,8 +72,9 @@ class ConanExceptionHandler {
     @ExceptionHandler(ConanRecipeNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handlerConanRecipeNotFoundException(exception: ConanRecipeNotFoundException) {
+        val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
         val responseObject = ConanResponse.errorResponse(
-            ConanErrorResponse(exception.message, HttpStatus.NOT_FOUND.value())
+            ConanErrorResponse(errorMessage, HttpStatus.NOT_FOUND.value())
         )
         conanResponse(responseObject, exception)
     }
@@ -69,9 +82,14 @@ class ConanExceptionHandler {
     @ExceptionHandler(ConanSearchNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handlerConanRecipeNotFoundException(exception: ConanSearchNotFoundException) {
-        conanResponse(exception.message!!, exception)
+        conanResponse(exception)
     }
 
+    @ExceptionHandler(ConanParameterInvalidException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleConanParameterInvalidException(exception: ConanParameterInvalidException) {
+        conanResponse(exception.message!!, exception)
+    }
 
     private fun conanResponse(exception: ErrorCodeException) {
         val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
@@ -83,7 +101,7 @@ class ConanExceptionHandler {
 
     private fun conanResponse(
         responseObject: Any,
-        exception: Exception
+        exception: Exception,
     ) {
         logConanException(exception)
         val responseString = JsonUtils.objectMapper.writeValueAsString(responseObject)

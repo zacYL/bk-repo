@@ -34,6 +34,7 @@ package com.tencent.bkrepo.common.metadata.permission
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.api.ServiceExternalPermissionClient
 import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.auth.api.ServiceUserClient
@@ -68,6 +69,7 @@ import com.tencent.bkrepo.repository.constant.NODE_DETAIL_LIST_KEY
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
+import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -92,6 +94,7 @@ open class PermissionManager(
     private val httpAuthProperties: HttpAuthProperties,
     private val principalManager: PrincipalManager
 ) {
+    private val permissionList = arrayOf(PermissionAction.WRITE, PermissionAction.READ)
 
     private val httpClient =
         OkHttpClient.Builder().connectTimeout(10L, TimeUnit.SECONDS).readTimeout(10L, TimeUnit.SECONDS).build()
@@ -113,6 +116,12 @@ open class PermissionManager(
         }
         CacheBuilder.newBuilder().maximumSize(1).expireAfterWrite(2, TimeUnit.MINUTES).build(cacheLoader)
     }
+
+    private val userAuthPathCache = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .refreshAfterWrite(30L, TimeUnit.SECONDS)
+        .expireAfterWrite(60L, TimeUnit.SECONDS)
+        .build(CacheLoader.from<UserAuthPathOption, Map<String, List<String>>> { getUserAuthPath(it) })
 
     /**
      * 校验项目权限
@@ -168,6 +177,33 @@ open class PermissionManager(
     }
 
     /**
+     * 返回用户作为使用者(不包含仓库管理权限)在该仓库的最高权限，约定：WRITE >> READ
+     * @param projectId 项目id
+     * @param repoName 仓库名称
+     */
+    @Suppress("SwallowedException")
+    open fun getRepoPermission(
+        projectId: String,
+        repoName: String
+    ): PermissionAction? {
+        var permission: PermissionAction? = null
+        for (permissionAction in permissionList) {
+            if (permission != null) continue
+            permission = try {
+                checkRepoPermission(
+                    action = permissionAction,
+                    projectId = projectId,
+                    repoName = repoName
+                )
+                permissionAction
+            } catch (e: PermissionException) {
+                null
+            }
+        }
+        return permission
+    }
+
+    /**
      * 校验节点权限
      * @param action 动作
      * @param projectId 项目id
@@ -175,6 +211,7 @@ open class PermissionManager(
      * @param path 节点路径
      * @param public 仓库是否为public
      * @param anonymous 是否允许匿名
+     * @see !!! merge info by weaving !!!  cpack没有节点权限概念，节点权限转为仓库权限
      */
     open fun checkNodePermission(
         action: PermissionAction,
@@ -206,6 +243,24 @@ open class PermissionManager(
             paths = path.toList(),
             anonymous = anonymous,
             userId = userId,
+        )
+    }
+
+    /**
+     * 校验分发计划权限
+     * @param action 动作
+     * @param projectId 项目id
+     */
+    open fun checkReplicationPermission(
+        action: PermissionAction,
+        projectId: String,
+        userId: String = SecurityUtils.getUserId()
+    ) {
+        checkPermission(
+            type = ResourceType.REPLICATION,
+            action = action,
+            projectId = projectId,
+            userId = userId
         )
     }
 
@@ -503,14 +558,14 @@ open class PermissionManager(
                 }
                 logger.info(
                     "check external permission error, url[${request.url}], project[$projectId], repo[$repoName]," +
-                        " nodes$paths, code[${it.code}], response[$content]"
+                            " nodes$paths, code[${it.code}], response[$content]"
                 )
                 throw PermissionException(errorMsg)
             }
         } catch (e: IOException) {
             logger.error(
                 "check external permission error," + "url[${request.url}], project[$projectId], " +
-                    "repo[$repoName], nodes$paths, $e"
+                        "repo[$repoName], nodes$paths, $e"
             )
             throw PermissionException(errorMsg)
         }
@@ -579,6 +634,20 @@ open class PermissionManager(
         }
     }
 
+
+    fun getUserAuthPathCache(option: UserAuthPathOption): Map<String, List<String>> {
+        return try {
+            userAuthPathCache.get(option)
+        } catch (e: UncheckedExecutionException) {
+            throw e.cause ?: e
+        }
+    }
+
+    private fun getUserAuthPath(option: UserAuthPathOption): Map<String, List<String>> {
+        with(option) {
+            return permissionResource.getAuthRepoPaths(userId, projectId, repoNames, action).data ?: emptyMap()
+        }
+    }
 
     companion object {
 

@@ -24,13 +24,10 @@ module.exports = (env, argv) => {
             filename: isProd ? `${dist}/frontend#ui#index.html` : `${dist}/index.html`,
             template: 'index.html',
             inject: true,
-            title: '制品库 | 腾讯蓝鲸智云'
+            title: '制品管理CPack'
         }),
         new CopyWebpackPlugin({
-            patterns: [
-                { from: path.join(__dirname, './static'), to: dist },
-                { from: path.join(__dirname, '../../../versionLogs'), to: `${dist}/versionLogs` }
-            ]
+            patterns: [{ from: path.join(__dirname, './static'), to: dist }]
         })
     ]
 

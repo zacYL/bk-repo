@@ -32,11 +32,15 @@
 package com.tencent.bkrepo.npm.handler
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
+import com.tencent.bkrepo.npm.constants.DELIMITER_DOWNLOAD
+import com.tencent.bkrepo.npm.constants.DELIMITER_HYPHEN
 import com.tencent.bkrepo.npm.constants.SIZE
+import com.tencent.bkrepo.npm.constants.TGZ_FULL_PATH_WITH_DASH_SEPARATOR
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.model.properties.PackageProperties
@@ -81,7 +85,7 @@ class NpmPackageHandler {
                 // tgz包不存在，补全包版本数据失败
                 if (!tgzNodeInfoMap.containsKey(version)) {
                     val message = "the version [$version] for package [$name] with tgz file not found " +
-                        "in repo [${nodeInfo.projectId}/${nodeInfo.repoName}]."
+                            "in repo [${nodeInfo.projectId}/${nodeInfo.repoName}]."
                     logger.warn(message)
                     val failVersionDetail = FailVersionDetail(version, message)
                     failPackageDetail.failedVersionSet.add(failVersionDetail)
@@ -95,7 +99,8 @@ class NpmPackageHandler {
                     dist.any()[SIZE].toString().toLong()
                 }
                 with(tgzNodeInfo) {
-                    val metadata = buildProperties(next.value).map { MetadataModel(key = it.key, value = it.value) }
+                    val metadata =
+                        buildProperties(next.value).map { MetadataModel(key = it.key, value = it.value ?: "null") }
                     val populatedPackageVersion = PopulatedPackageVersion(
                         createdBy = createdBy,
                         createdDate = LocalDateTime.parse(createdDate),
@@ -136,7 +141,7 @@ class NpmPackageHandler {
      */
     fun createVersion(
         userId: String,
-        artifactInfo: NpmArtifactInfo,
+        artifactInfo: ArtifactInfo,
         versionMetaData: NpmVersionMetadata,
         size: Long,
         ohpm: Boolean
@@ -146,7 +151,13 @@ class NpmPackageHandler {
             val description = this.description
             val version = this.version!!
             val manifestPath = getManifestPath(name, version)
-            val contentPath = NpmUtils.getContentPath(name, version, ohpm)
+            val tarball = versionMetaData.dist?.tarball
+            val hyphenDelimiter = tarball?.substringAfter(name)?.contains(TGZ_FULL_PATH_WITH_DASH_SEPARATOR) ?: true
+            val delimiter = if (hyphenDelimiter) DELIMITER_HYPHEN else DELIMITER_DOWNLOAD
+            val repeatedScope =
+                NpmUtils.isScopeName(name) && tarball?.substringAfter("/$delimiter/")?.contains(name) == true
+            val ext = NpmUtils.getContentFileExt(ohpm)
+            val contentPath = NpmUtils.getTarballFullPath(name, version, delimiter, repeatedScope, ext)
             val metadata = buildProperties(this)
             with(artifactInfo) {
                 val packageVersionCreateRequest = PackageVersionCreateRequest(
@@ -161,7 +172,9 @@ class NpmPackageHandler {
                     manifestPath = manifestPath,
                     artifactPath = contentPath,
                     stageTag = null,
-                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) },
+                    packageMetadata = metadata.mapNotNull { (key, value) ->
+                        value?.let { MetadataModel(key = key, value = it, system = true) }
+                    },
                     overwrite = true,
                     createdBy = userId
                 )

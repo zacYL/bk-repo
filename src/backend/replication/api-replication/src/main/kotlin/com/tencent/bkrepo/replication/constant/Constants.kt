@@ -39,9 +39,11 @@ const val CERTIFICATE = "certificate"
 const val DOCKER_MANIFEST_JSON_FULL_PATH = "/%s/%s/manifest.json"
 const val DOCKER_LAYER_FULL_PATH = "/%s/%s/%s"
 const val OCI_MANIFEST_JSON_FULL_PATH = "/%s/manifest/%s/manifest.json"
-const val OCI_LAYER_FULL_PATH = "/%s/blobs/%s"
 const val OCI_LAYER_FULL_PATH_V1 = "/%s/blobs/%s/%s"
 const val BLOB_PATH_REFRESHED_KEY = "blobPathRefreshed"
+const val OCI_LIST_MANIFEST_JSON_FULL_PATH = "/%s/manifest/%s/list.manifest.json"
+const val OCI_MANIFEST_LIST = "list.manifest.json"
+const val OCI_LAYER_FULL_PATH = "/%s/blobs/%s/%s"
 const val NODE_FULL_PATH = "fullPath"
 const val SIZE = "size"
 const val REPOSITORY_INFO = "repo"
@@ -58,6 +60,10 @@ const val NAME = "name"
 
 const val RETRY_COUNT = 2
 const val DELAY_IN_SECONDS: Long = 1
+
+const val PUSH_WITH_CHUNKED = "CHUNKED"
+const val PUSH_WITH_DEFAULT = "DEFAULT"
+
 
 /**
  * metrics

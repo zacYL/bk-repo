@@ -1,13 +1,13 @@
 <template>
     <div class="plan-container" v-bkloading="{ isLoading }">
-        <div class="ml20 mr20 mt10 flex-between-center">
-            <bk-button icon="plus" theme="primary" @click="handleClickCreatePlan">{{ $t('create') }}</bk-button>
+        <div class="ml20 mr20 mt10" :class="createPlanPermission ? 'flex-between-center' : 'flex-end-center' ">
+            <bk-button v-if="createPlanPermission" icon="plus" theme="primary" @click="handleClickCreatePlan">{{ $t('create') }}</bk-button>
             <div class="flex-align-center">
                 <bk-input
                     class="w250"
                     v-model.trim="planInput"
                     clearable
-                    :placeholder="$t('planPlaceHolder')"
+                    :placeholder="$t('planPlaceholder')"
                     right-icon="bk-icon icon-search"
                     @enter="handlerPaginationChange()"
                     @clear="handlerPaginationChange()">
@@ -60,20 +60,25 @@
             <bk-table-column :label="$t('lastExecutionTime')" prop="LAST_EXECUTION_TIME" width="170" sortable="custom">
                 <template #default="{ row }">{{formatDate(row.lastExecutionTime)}}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('lastExecutionStatus')" width="100">
+            <bk-table-column :label="$t('lastExecutionStatus')" width="110">
                 <template #default="{ row }">
-                    <span class="repo-tag" :class="row.lastExecutionStatus">{{row.lastExecutionStatus ? $t(`asyncPlanStatusEnum.${row.lastExecutionStatus}`) : $t('notExecuted')}}</span>
+                    <span v-if="row.lastExecutionStatus === 'RUNNING' && row.artifactCount">
+                        {{row.currentProgress}}/{{row.artifactCount}}
+                    </span>
+                    <span v-else class="repo-tag" :class="row.lastExecutionStatus">
+                        {{row.lastExecutionStatus ? $t(`asyncPlanStatusEnum.${row.lastExecutionStatus}`) : $t('notExecuted')}}
+                    </span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('enablePlan')" width="100">
+            <bk-table-column v-if="enablePlanPermission" :render-header="renderHeader" :label="$t('enablePlan')" width="100">
                 <template #default="{ row }">
                     <bk-switcher class="m5" v-model="row.enabled" size="small" theme="primary" @change="changeEnabledHandler(row)"></bk-switcher>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('execute')" width="80">
+            <bk-table-column v-if="executePlanPermission" :label="$t('execute')" width="80">
                 <template #default="{ row }">
                     <i class="devops-icon icon-play3 hover-btn inline-block"
-                        :class="{ 'disabled': row.lastExecutionStatus === 'RUNNING' || row.replicaType === 'REAL_TIME' }"
+                        :class="{ 'disabled': row.lastExecutionStatus === 'RUNNING' }"
                         @click.stop="executePlanHandler(row)">
                     </i>
                 </template>
@@ -82,14 +87,16 @@
                 <template #default="{ row }">
                     <operation-list
                         :list="[
-                            { label: $t('edit'), clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) || row.replicaType === 'REAL_TIME' },
-                            { label: $t('copy'), clickEvent: () => copyPlanHandler(row) },
-                            { label: $t('delete'), clickEvent: () => deletePlanHandler(row) },
+                            updatePlanPermission && { label: $t('edit'), clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) },
+                            copyPlanPermission && { label: $t('copyPlan'), clickEvent: () => copyPlanHandler(row) },
+                            copyPlanPermission && { label: $t('copyUrl'), clickEvent: () => copyUrlHandler(row) },
+                            deletePlanPermission && { label: $t('delete'), clickEvent: () => deletePlanHandler(row), disabled: Boolean(row.enabled) },
                             { label: $t('log'), clickEvent: () => showPlanLogHandler(row) }
                         ]"></operation-list>
                 </template>
             </bk-table-column>
         </bk-table>
+
         <bk-pagination
             class="p10"
             size="small"
@@ -104,7 +111,7 @@
         </bk-pagination>
         <plan-log v-model="planLog.show" :plan-data="planLog.planData"></plan-log>
         <plan-copy-dialog v-bind="planCopy" @cancel="planCopy.show = false" @refresh="handlerPaginationChange()"></plan-copy-dialog>
-        <bk-sideslider :is-show.sync="drawerSlider.isShow" :quick-close="true" :width="currentLanguage === 'zh-cn' ? 704 : 972">
+        <bk-sideslider :is-show.sync="drawerSlider.isShow" :quick-close="true" :width="currentLanguage === 'zh-cn' ? 724 : 992">
             <div slot="header">{{ drawerSlider.title }}</div>
             <div slot="content" class="plan-side-content">
                 <create-plan :rows-data="drawerSlider.rowsData" @close="handleClickCloseDrawer" @confirm="handlerPaginationChange" />
@@ -117,15 +124,15 @@
     import planLog from './planLog'
     import planCopyDialog from './planCopyDialog'
     import { mapState, mapActions } from 'vuex'
-    import { formatDate } from '@repository/utils'
+    import { formatDate, copyToClipboard } from '@repository/utils'
     import { asyncPlanStatusEnum } from '@repository/store/publicEnum'
     import createPlan from '@repository/views/planManage/createPlan'
-    import cookies from 'js-cookie'
     export default {
         name: 'plan',
         components: { planLog, planCopyDialog, OperationList, createPlan },
         data () {
             return {
+                ciMode: MODE_CONFIG === 'ci',
                 drawerSlider: {
                     isShow: false,
                     title: '',
@@ -158,9 +165,37 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
-            currentLanguage () {
-                return cookies.get('blueking_language') || 'zh-cn'
+            ...mapState(['userList', 'operationPermission']),
+            projectId () {
+                return this.$route.params.projectId
+            },
+            // 获取制品分发的全部操作权限
+            planOperationPermission () {
+                return this.operationPermission?.find((item) => item.resourceCode === 'v_pack_replica')?.actionCodes || []
+            },
+            // 是否有创建权限
+            createPlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有编辑权限
+            updatePlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有启用分发计划的权限
+            enablePlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有执行分发计划权限
+            executePlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有复制计划及复制URL权限
+            copyPlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有删除计划权限
+            deletePlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('delete')
             }
         },
         created () {
@@ -172,8 +207,29 @@
                 'getPlanList',
                 'changeEnabled',
                 'executePlan',
-                'deletePlan'
+                'deletePlan',
+                'getPlanOperationPermission'
             ]),
+            renderHeader (h, data) {
+                const directive = {
+                    name: 'bkTooltips',
+                    content: this.$t('planStartedWarning'),
+                    placement: 'right'
+                }
+                return h(
+                    'span', // 标签名
+                    {
+                        style: { borderBottom: '1px dashed' },
+                        directives: [ // 指令
+                            {
+                                name: 'bk-tooltips',
+                                value: directive
+                            }
+                        ]
+                    },
+                    this.$t('enablePlan') // 子节点（文本）
+                )
+            },
             getExecutionStrategy ({ replicaType, setting: { executionStrategy } }) {
                 return replicaType === 'REAL_TIME'
                     ? this.$t('realTimeSync')
@@ -206,13 +262,14 @@
                     this.isLoading = false
                 })
             },
-            executePlanHandler ({ key, name, lastExecutionStatus, replicaType }) {
-                if (lastExecutionStatus === 'RUNNING' || replicaType === 'REAL_TIME') return
+            executePlanHandler ({ key, name, lastExecutionStatus }) {
+                if (lastExecutionStatus === 'RUNNING') return
                 this.$confirm({
                     theme: 'warning',
                     message: this.$t('planConfirmExecuteMsg', [name]),
                     confirmFn: () => {
                         return this.executePlan({
+                            projectId: this.projectId,
                             key
                         }).then(() => {
                             this.getPlanListHandler()
@@ -223,11 +280,6 @@
                         })
                     }
                 })
-            },
-            handleSortChange ({ prop, order }) {
-                this.sortType = order ? prop : 'CREATED_TIME'
-                this.sortDirection = order === 'ascending' ? 'ASC' : 'DESC'
-                this.handlerPaginationChange()
             },
             handleClickCloseDrawer () {
                 this.drawerSlider.isShow = false
@@ -242,8 +294,13 @@
                     }
                 }
             },
-            editPlanHandler ({ name, key, lastExecutionStatus, replicaType }) {
-                if (lastExecutionStatus || replicaType === 'REAL_TIME') return
+            handleSortChange ({ prop, order }) {
+                this.sortType = order ? prop : 'CREATED_TIME'
+                this.sortDirection = order === 'ascending' ? 'ASC' : 'DESC'
+                this.getPlanListHandler()
+            },
+            editPlanHandler ({ name, key, lastExecutionStatus }) {
+                if (lastExecutionStatus) return
                 this.drawerSlider = {
                     isShow: true,
                     title: this.$t('editPlan'),
@@ -254,6 +311,16 @@
                         routeName: 'editPlan'
                     }
                 }
+                // this.$router.push({
+                //     name: 'editPlan',
+                //     params: {
+                //         ...this.$route.params,
+                //         planId: key
+                //     },
+                //     query: {
+                //         planName: name
+                //     }
+                // })
             },
             copyPlanHandler ({ name, key, description }) {
                 this.planCopy = {
@@ -269,6 +336,7 @@
                     message: this.$t('planConfirmDeleteMsg', [name]),
                     confirmFn: () => {
                         return this.deletePlan({
+                            projectId: this.projectId,
                             key
                         }).then(() => {
                             this.handlerPaginationChange()
@@ -280,8 +348,23 @@
                     }
                 })
             },
+            copyUrlHandler ({ key }) {
+                const url = window.location.origin + `/replication/api/task/execute/${this.projectId}/${key}`
+                copyToClipboard(url).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('copyUrlSuccessTip')
+                    })
+                }).catch(() => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('copy') + this.$t('space') + this.$t('fail')
+                    })
+                })
+            },
             changeEnabledHandler ({ key, enabled }) {
                 this.changeEnabled({
+                    projectId: this.projectId,
                     key
                 }).then(res => {
                     this.$bkMessage({
@@ -302,6 +385,13 @@
                         routeName: 'planDetail'
                     }
                 }
+                // this.$router.push({
+                //     name: 'planDetail',
+                //     params: {
+                //         ...this.$route.params,
+                //         planId: key
+                //     }
+                // })
             },
             showPlanLogHandler (row) {
                 this.planLog.show = true

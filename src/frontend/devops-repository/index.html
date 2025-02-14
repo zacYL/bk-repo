@@ -9,8 +9,8 @@
     <script src="/ui/libs/vuex.min.js"></script>
     <script src="/ui/libs/vue-router.min.js"></script>
     <script src="/ui/libs/jsencrypt.min.js"></script>
-    <link rel='preload' as='script' href="/ui/libs/bk-magic-vue/bk-magic-vue.min.js" />
     <link href="/ui/libs/bk-magic-vue/bk-magic-vue.min.css" rel="stylesheet">
+    <link href="/ui/libs/cherry-markdown/cherry-markdown.min.css" rel="stylesheet">
     <link href="/ui/iconfont.css" rel="stylesheet">
     <title><%= htmlWebpackPlugin.options.title %></title>
 </head>
@@ -50,6 +50,7 @@
     <script>
         var PAAS_SERVICE_URL = '__BK_HTTP_SCHEMA__://__BK_REPO_PAAS_FQDN__'
         var DEVOPS_SITE_URL = '__BK_HTTP_SCHEMA__://__BK_CI_FQDN__'
+
         var LOGIN_SERVICE_URL = /^https?/.test(PAAS_SERVICE_URL)
             ? PAAS_SERVICE_URL + '/login/'
             : '__BK_REPO_PAAS_LOGIN_URL__'
@@ -57,25 +58,8 @@
         // ci: ci模式接入devops平台
         // saas: saas模式接入蓝鲸底座
         var MODE_CONFIG = '__BK_REPO_DEPLOY_MODE__' || 'standalone'
-        // 是否显示项目设置菜单
-        var SHOW_PROJECT_CONFIG_MENU = MODE_CONFIG !== 'ci'
-        // 是否显示制品分析菜单
-        var SHOW_ANALYST_MENU = '__BK_REPO_SHOW_ANALYST_MENU__' || 'false'
-        SHOW_ANALYST_MENU = SHOW_ANALYST_MENU === 'true'
-        var ADD_FROM_LOGOUT = '__IS_FROM_LOGOUT__' || 'not'
-        // 区分社区版与内部版  community -> 社区   tencent -> 内部
-        var RELEASE_MODE = '__BK_REPO_RELEASE_MODE__' || 'community'
-        // 存放文档中心的url
-        var DOC_URL = '__BK_REPO_DOCS_FQDN__'|| 'https://bk.tencent.com/docs'
-
     </script>
     <script>
-        const inIframe = self !== top
-        // iframe内使用ci模式
-        if (MODE_CONFIG === 'saas' && inIframe) {
-            MODE_CONFIG = 'ci'
-        }
-
         window.getLoginUrl = function (cUrl = location.href) {
             if (/\{+curl\}+/i.test(LOGIN_SERVICE_URL)) {
                 return LOGIN_SERVICE_URL.replace(/\{+curl\}+/i, encodeURIComponent(cUrl))
@@ -91,7 +75,7 @@
                 }
             }
         }
-
+        
         const search = new URL(location.href).searchParams // redirect/token/download/?preview
         const redirect = search.get('redirect')
         if (redirect) {
@@ -106,8 +90,15 @@
                     redirectUrl.searchParams.set(key, val)
                 })
             }
+            console.log(MODE_CONFIG);
+            
 
             const xhr = new XMLHttpRequest()
+            const cookies = document.cookie.split('; ').reduce((target, str) => {
+                const [key, value] = str.split('=')
+                target[key] = value
+                return target
+            }, {})
             xhr.onreadystatechange = function (e) {
                 const { readyState, status } = e.currentTarget
                 // 已登录
@@ -118,10 +109,18 @@
                     } else if (status === 401) {
                         if (MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') {
                             // ci登录逻辑
-                            location.href = window.getLoginUrl()
+                            fetchSsoStatus().then(data => {
+                                if (data.loginUrl) {
+                                    LOGIN_SERVICE_URL = data.loginType === 'SSO' ?
+                                        data.loginUrl + `${data.loginUrl.indexOf('?') === -1 ? '?' : '&'}secretKey=` + data.secretKey + '&callback_url=' + data.callback_url :
+                                        data.loginUrl
+                                }
+                                window.loginType = data.loginType
+                                location.href = window.getLoginUrl()
+                            }).catch(e => {
+                                location.href = window.getLoginUrl()
+                            })
                         } else {
-                            // 保存操作链接，登陆后调用
-                            sessionStorage.setItem('afterLogin', redirectUrl.href)
                             window.login = true
                             mountApp()
                         }
@@ -129,13 +128,16 @@
                         let message
                         switch (status) {
                             case 403:
-                                message = '未获得文件访问权限或链接已失效'
+                                message = cookies['blueking_language'] === 'en' ? 'File access not granted or link expired': '未获得文件访问权限或链接已失效'
                                 break
                             case 404:
-                                message = '文件不存在'
+                                message = cookies['blueking_language'] === 'en' ? 'File does not exist': '文件不存在'
+                                break
+                            case 423:
+                                message = cookies['blueking_language'] === 'en' ? 'The artifact does not comply with the download rules and is prohibited from downloading.': '制品不符合下载规则, 禁止下载'
                                 break
                             default:
-                                message = '服务异常，请稍后重试'
+                                message = cookies['blueking_language'] === 'en' ? 'Service exception, please try again later': '服务异常，请稍后重试'
                         }
                         printError(status, message)
                     }
@@ -143,6 +145,7 @@
             }
             xhr.withCredentials = true
             xhr.open('HEAD', redirectUrl.href)
+            xhr.setRequestHeader('X-CSRFToken', cookies[(MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') ? 'bk_token' : 'bkrepo_ticket'])
             xhr.send()
         } else {
             mountApp()
@@ -152,7 +155,36 @@
             const app = document.createElement('div')
             app.setAttribute('id', 'app')
             document.body.append(app)
-            if (window.repositoryVue) window.repositoryVue.$mount('#app')
+            if (window.repositoryVue) window.repositoryVue.$mount('#app').$router.push({ name: 'repoList' })
+        }
+
+        // 请求封装
+        function asyncGet (url, pid, includeCredentials) {
+            return new Promise(function (resolve, reject) {
+                const xhr = new XMLHttpRequest()
+                xhr.onreadystatechange = function (e) {
+                    try {
+                        if (this.readyState === 4 && this.status === 200) {
+                            const res = JSON.parse(xhr.responseText)
+                            resolve(res && res.data ? res.data : res)
+                        }
+                    } catch (error) {
+                        reject({
+                            status: this.status,
+                            message: error.message || error
+                        })
+                    }
+                }
+                xhr.withCredentials = typeof includeCredentials === 'boolean' ? includeCredentials : true
+                xhr.open('GET', url)
+                pid && xhr.setRequestHeader('X-DEVOPS-PROJECT-ID', pid)
+                xhr.send()
+            })
+        }
+        // sso配置
+        function fetchSsoStatus () {
+            // 不走网关
+            return asyncGet(DEVOPS_SITE_URL + '/ms/usermanager/api/external/login/config/unifiedLogin')
         }
 
         function printError (status, message) {
@@ -169,5 +201,6 @@
         }
     </script>
     <script src="/ui/libs/bk-magic-vue/bk-magic-vue.min.js"></script>
+    <script src="/ui/libs/cherry-markdown/cherry-markdown.min.js"></script>
 </body>
 </html>

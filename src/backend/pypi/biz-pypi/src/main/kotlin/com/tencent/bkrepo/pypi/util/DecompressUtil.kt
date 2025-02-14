@@ -31,75 +31,112 @@
 
 package com.tencent.bkrepo.pypi.util
 
-import com.tencent.bkrepo.common.api.util.DecompressUtils
-import com.tencent.bkrepo.pypi.exception.PypiUnSupportCompressException
-import com.tencent.bkrepo.pypi.util.JsonUtil.jsonValue
-import com.tencent.bkrepo.pypi.util.PropertiesUtil.propInfo
-import com.tencent.bkrepo.pypi.util.pojo.PypiInfo
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 import java.io.InputStream
+import org.apache.commons.compress.archivers.ArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import java.util.zip.GZIPInputStream
 
 object DecompressUtil {
 
-    // 支持的压缩格式
+    private const val BUFFER_SIZE = 2048
+    private const val METADATA = "METADATA"
+    private const val PKG_INFO = "PKG-INFO"
+    private const val DIST_INFO = ".dist-info"
     private const val TAR = "tar"
     private const val ZIP = "zip"
     private const val WHL = "whl"
-    private const val GZ = "tar.gz"
+    private const val TAR_GZ = "tar.gz"
     private const val TGZ = "tgz"
 
-    // 目标属性
-    private const val name = "name"
-    private const val version = "version"
-    private const val summary = "summary"
-
-    // 目标文件
-    private const val metadata = "metadata.json"
-    private const val pkgInfo = "PKG-INFO"
-
-    /**
-     * @param format 文件格式
-     * @return PypiInfo 包文件信息
-     */
-    fun InputStream.getPkgInfo(format: String): PypiInfo {
-        return when (format) {
+    @Throws(Exception::class)
+    fun InputStream.getPypiMetadata(fileName: String): String {
+        return when (getFormat(fileName)) {
             TAR -> {
-                getTarPkgInfo(this)
-            }
-            WHL -> {
-                getWhlMetadata(this)
+                getTarArchiversContent(this)
             }
             ZIP -> {
-                getZipMetadata(this)
+                getZipArchiversContent(this)
             }
-            GZ, TGZ -> {
-                getTgzPkgInfo(this)
+            WHL -> {
+                getZipArchiversContent(this, true)
+            }
+            TAR_GZ,
+            TGZ -> {
+                getTgzArchiversContent(this)
             }
             else -> {
-                throw PypiUnSupportCompressException("Can not support compress format!")
+                "can not support compress format!"
             }
         }
     }
 
-    private fun getWhlMetadata(inputStream: InputStream): PypiInfo {
-        val metadata = DecompressUtils.getContent(ZipArchiveInputStream(inputStream), metadata)
-        return PypiInfo(metadata jsonValue name, metadata jsonValue version, metadata jsonValue summary)
+    @Throws(Exception::class)
+    fun getZipArchiversContent(inputStream: InputStream, whlFormat: Boolean = false): String {
+        return getArchiversContent(ZipArchiveInputStream(inputStream), whlFormat)
     }
 
-    private fun getZipMetadata(inputStream: InputStream): PypiInfo {
-        val propStr = DecompressUtils.getContent(ZipArchiveInputStream(inputStream), pkgInfo)
-        return propStr.propInfo()
+    @Throws(Exception::class)
+    fun getTgzArchiversContent(inputStream: InputStream): String {
+        return getArchiversContent(TarArchiveInputStream(GZIPInputStream(inputStream)))
     }
 
-    private fun getTgzPkgInfo(inputStream: InputStream): PypiInfo {
-        val propStr = DecompressUtils.getContent(TarArchiveInputStream(GZIPInputStream(inputStream, 512)), pkgInfo)
-        return propStr.propInfo()
+    @Throws(Exception::class)
+    fun getTarArchiversContent(inputStream: InputStream): String {
+        return getArchiversContent(TarArchiveInputStream(inputStream))
     }
 
-    private fun getTarPkgInfo(inputStream: InputStream): PypiInfo {
-        val propStr = DecompressUtils.getContent(TarArchiveInputStream(inputStream), pkgInfo)
-        return propStr.propInfo()
+    private fun <E : ArchiveEntry> getArchiversContent(
+        archiveInputStream: ArchiveInputStream<E>,
+        whlFormat: Boolean = false
+    ): String {
+        var zipEntry: E
+        archiveInputStream.use { it ->
+            while (it.nextEntry.also { zipEntry = it } != null) {
+                if (isMatchEntry(zipEntry, whlFormat)) {
+                    return parseStream(it)
+                }
+            }
+        }
+        throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not find metadata file")
+    }
+
+    private fun <E : ArchiveEntry> parseStream(archiveInputStream: ArchiveInputStream<E>): String {
+        val stringBuilder = StringBuffer()
+        var length: Int
+        val bytes = ByteArray(BUFFER_SIZE)
+        while ((archiveInputStream.read(bytes).also { length = it }) != -1) {
+            stringBuilder.append(String(bytes, 0, length))
+        }
+        return stringBuilder.toString()
+    }
+
+    private fun isMatchEntry(zipEntry: ArchiveEntry, whlFormat: Boolean): Boolean {
+        if (zipEntry.isDirectory) return false
+        val entryList = zipEntry.name.split("/")
+        return if (whlFormat) {
+            entryList.last() == METADATA && entryList.getOrNull(entryList.size - 2)?.endsWith(DIST_INFO) ?: false
+        } else {
+            entryList.size <= 2 && entryList.last() == PKG_INFO
+        }
+    }
+
+    private fun getFormat(fileName: String): String {
+        return if (fileName.endsWith(".zip")) {
+            ZIP
+        } else if (fileName.endsWith(".tar")) {
+            TAR
+        } else if (fileName.endsWith(".tar.gz")) {
+            TAR_GZ
+        } else if (fileName.endsWith(".tgz")) {
+            TGZ
+        } else if (fileName.endsWith(".whl")) {
+            WHL
+        } else {
+            "can not support compress format!"
+        }
     }
 }

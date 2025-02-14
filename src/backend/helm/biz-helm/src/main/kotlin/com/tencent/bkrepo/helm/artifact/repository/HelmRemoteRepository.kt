@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.api.util.toYamlString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -49,9 +50,10 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.artifact.util.FileNameParser
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.helm.config.HelmProperties
 import com.tencent.bkrepo.helm.constants.CHART
+import com.tencent.bkrepo.helm.constants.CHARTS
 import com.tencent.bkrepo.helm.constants.FILE_TYPE
 import com.tencent.bkrepo.helm.constants.FULL_PATH
 import com.tencent.bkrepo.helm.constants.HelmMessageCode
@@ -73,6 +75,7 @@ import com.tencent.bkrepo.repository.constant.PROXY_DOWNLOAD_URL
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import okhttp3.Request
 import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -83,6 +86,41 @@ class HelmRemoteRepository(
     private val helmOperationService: HelmOperationService,
     private val helmProperties: HelmProperties
 ) : RemoteRepository() {
+
+
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+        }
+        return getCacheArtifactResource(context) ?: run {
+            val remoteConfiguration = context.getRemoteConfiguration()
+            logger.info(
+                    "Remote download: not found artifact in cache, " +
+                            "download from remote repository: $remoteConfiguration"
+            )
+            val httpClient = createHttpClient(remoteConfiguration)
+            val downloadUrl = createRemoteDownloadUrl(context)
+            val request = Request.Builder().url(downloadUrl).build()
+            logger.info("Remote download: download url: $downloadUrl")
+            val response = super.downloadRetry(request, httpClient)
+
+            return if (response != null && checkResponse(response)) {
+                onDownloadResponse(context, response)
+            } else if (downloadUrl.contains("$CHARTS/$CHARTS")) {
+                val newDownloadUrl = downloadUrl.replace("$CHARTS/$CHARTS", CHARTS)
+                logger.info("Remote new download new url:[$newDownloadUrl]")
+                val newRequest = Request.Builder().url(newDownloadUrl).build()
+                val newResponse = super.downloadRetry(newRequest, httpClient)
+                if (newResponse != null && checkResponse(newResponse)) {
+                    onDownloadResponse(context, newResponse)
+                } else {
+                    null
+                }
+            } else {
+                null
+            }
+        }
+    }
 
     override fun upload(context: ArtifactUploadContext) {
         with(context) {
@@ -210,6 +248,7 @@ class HelmRemoteRepository(
         return ArtifactResource(
             inputStream = artifactStream,
             artifactName = context.artifactInfo.getResponseName(),
+            srcRepo = RepositoryIdentify(context.projectId, context.repoName),
             node = node,
             channel = ArtifactChannel.PROXY,
             useDisposition = context.useDisposition

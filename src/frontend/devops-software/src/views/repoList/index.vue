@@ -11,11 +11,23 @@
                 right-icon="bk-icon icon-search">
             </bk-input>
             <bk-select
+                v-model="query.category"
+                class="ml10 w250"
+                @change="handlerPaginationChange"
+                :placeholder="$t('allStoreTypes')">
+                <bk-option v-for="category in storeTypeEnum" :key="category.id" :id="category.id" :name="$t(category.name)">
+                    <div class="flex-align-center">
+                        <Icon size="20" :name="category.icon" />
+                        <span class="ml10 flex-1 text-overflow">{{$t(category.name)}}</span>
+                    </div>
+                </bk-option>
+            </bk-select>
+            <bk-select
                 v-model="query.type"
                 class="ml10 w250"
                 @change="handlerPaginationChange"
                 :placeholder="$t('allTypes')">
-                <bk-option v-for="type in repoEnum.filter(r => r.value !== 'generic')" :key="type.value" :id="type.value" :name="type.label">
+                <bk-option v-for="type in repoEnum" :key="type.value" :id="type.value" :name="type.label">
                     <div class="flex-align-center">
                         <Icon size="20" :name="type.value" />
                         <span class="ml10 flex-1 text-overflow">{{type.label}}</span>
@@ -59,10 +71,15 @@
                     <span v-if="row.public" class="mr5 repo-tag WARNING" :data-name="$t('public')"></span>
                 </template>
             </bk-table-column>
+            <bk-table-column :label="$t('storeTypes')" width="140">
+                <template #default="{ row }">
+                    <span>{{$t((row.category.toLowerCase() || 'local') + 'Store')}}</span>
+                </template>
+            </bk-table-column>
             <bk-table-column :label="$t('createdDate')" width="250">
                 <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdBy')" width="150">
+            <bk-table-column :label="$t('createdBy')" width="150" show-overflow-tooltip>
                 <template #default="{ row }">
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>
@@ -84,7 +101,7 @@
 </template>
 <script>
     import { mapState, mapActions } from 'vuex'
-    import { repoEnum } from '@repository/store/publicEnum'
+    import { repoEnum, storeTypeEnum } from '@repository/store/publicEnum'
     import { formatDate, debounce } from '@repository/utils'
     import { cloneDeep } from 'lodash'
     const paginationParams = {
@@ -98,12 +115,14 @@
         data () {
             return {
                 repoEnum,
+                storeTypeEnum,
                 isLoading: false,
                 repoList: [],
                 query: {
                     projectId: this.$route.query.projectId,
                     name: this.$route.query.name,
                     type: this.$route.query.type,
+                    category: this.$route.query.category,
                     c: this.$route.query.c || 1,
                     l: this.$route.query.l || 20
                 },
@@ -128,7 +147,6 @@
                 }
             }
         },
-
         created () {
             // 此处的两个顺序不能更换，否则会导致请求数据时报错，防抖这个方法不是function
             this.debounceGetListData = debounce(this.getListData, 100)
@@ -163,7 +181,7 @@
                 })
                 this.debounceGetListData ? this.debounceGetListData() : this.getListData()
             },
-            toPackageList ({ projectId, repoType, name }) {
+            toPackageList ({ projectId, repoType, name, category }) {
                 this.$router.push({
                     name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
                     params: {
@@ -172,6 +190,7 @@
                     },
                     query: {
                         repoName: name,
+                        storeType: category?.toLowerCase() || '',
                         ...this.$route.query,
                         c: this.pagination.current,
                         l: this.pagination.limit

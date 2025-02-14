@@ -27,10 +27,6 @@
 
 package com.tencent.bkrepo.analyst.service.impl
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.common.analysis.pojo.scanner.CveOverviewKey
-import com.tencent.bkrepo.common.analysis.pojo.scanner.ScanType
-import com.tencent.bkrepo.common.analysis.pojo.scanner.Scanner
 import com.tencent.bkrepo.analyst.component.ScannerPermissionCheckHandler
 import com.tencent.bkrepo.analyst.dao.ScanPlanDao
 import com.tencent.bkrepo.analyst.pojo.request.ScanQualityUpdateRequest
@@ -38,6 +34,11 @@ import com.tencent.bkrepo.analyst.pojo.response.ScanQuality
 import com.tencent.bkrepo.analyst.service.LicenseScanQualityService
 import com.tencent.bkrepo.analyst.service.ScanQualityService
 import com.tencent.bkrepo.analyst.service.ScannerService
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.common.analysis.pojo.scanner.CveOverviewKey
+import com.tencent.bkrepo.common.analysis.pojo.scanner.ScanType
+import com.tencent.bkrepo.common.analysis.pojo.scanner.Scanner
+import com.tencent.bkrepo.common.analysis.pojo.scanner.VulRuleMatchOverviewKey
 import org.springframework.stereotype.Service
 
 @Service
@@ -63,22 +64,30 @@ class ScanQualityServiceImpl(
         return true
     }
 
-    override fun checkScanQualityRedLine(planId: String, scanResultOverview: Map<String, Number>): Boolean {
+    override fun checkScanQualityRedLine(
+        planId: String,
+        scanResultOverview: Map<String, Number>,
+        vulRuleMatchOverview: Map<String, Number>
+    ): Boolean {
         val tScanPlan = scanPlanDao.get(planId)
         val scanner = scannerService.get(tScanPlan.scanner)
         // 获取方案质量规则
         val scanQuality = scanPlanDao.get(planId).scanQuality
-        return checkScanQualityRedLine(scanQuality, scanResultOverview, scanner)
+        return checkScanQualityRedLine(scanQuality, scanResultOverview, vulRuleMatchOverview, scanner)
     }
 
     override fun checkScanQualityRedLine(
         scanQuality: Map<String, Any>,
         scanResultOverview: Map<String, Number>,
+        vulRuleMatchOverview: Map<String, Number>,
         scanner: Scanner
     ): Boolean {
         // 检查质量规则是否通过
+        VulRuleMatchOverviewKey.blacklistKeys().forEach {
+            if ((vulRuleMatchOverview[it.key]?.toLong() ?: 0) > 0) return false
+        }
         CveOverviewKey.values().forEach { overviewKey ->
-            if (checkRedLine(overviewKey, scanResultOverview, scanQuality)) {
+            if (checkRedLine(overviewKey, scanResultOverview, vulRuleMatchOverview, scanQuality)) {
                 return false
             }
         }
@@ -96,10 +105,14 @@ class ScanQualityServiceImpl(
     private fun checkRedLine(
         overviewKey: CveOverviewKey,
         overview: Map<String, Number>,
+        vulRuleMatchOverview: Map<String, Number>,
         quality: Map<String, Any>
     ): Boolean {
         val cveCount = overview[overviewKey.key]?.toLong() ?: 0L
+        val cveIgnoreCount = vulRuleMatchOverview[
+            VulRuleMatchOverviewKey.overviewKeyOf(true, overviewKey.level.name)
+        ]?.toLong() ?: 0L
         val redLine = quality[overviewKey.level.levelName] as Long? ?: Long.MAX_VALUE
-        return cveCount > redLine
+        return cveCount - cveIgnoreCount > redLine
     }
 }

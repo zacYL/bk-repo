@@ -217,7 +217,7 @@ class GenericController(
         return ResponseBuilder.success()
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
+    @Permission(ResourceType.NODE, PermissionAction.READ)
     @GetMapping(BLOCK_MAPPING_URI)
     fun listBlock(
         @RequestAttribute userId: String,

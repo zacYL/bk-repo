@@ -34,7 +34,7 @@ package com.tencent.bkrepo.repository.pojo.favorite
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
-@ApiModel("创建收藏文件夹")
+@ApiModel("创建收藏文件夹的请求")
 data class FavoriteRequest(
     @ApiModelProperty("项目id")
     val projectId: String,

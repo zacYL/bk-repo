@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.analyst.utils
 
+import com.tencent.bkrepo.analyst.pojo.rule.RuleArtifact
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -41,12 +42,28 @@ object RuleUtil {
     }
 
     /**
+     * 判断rule是否包含name或者version字段
+     */
+    fun nameOrVersionField(rule: Rule): Boolean {
+        if (rule is Rule.QueryRule &&
+            (rule.field == RuleArtifact::name.name || rule.field == RuleArtifact::version.name)
+        ) {
+            return true
+        }
+
+        if (rule is Rule.NestedRule) {
+            return rule.rules.any { nameOrVersionField(it) }
+        }
+        return false
+    }
+
+    /**
      * 在nestedRule第一层找需要字段的值
      * 如果指定要扫描的projectId或repoName，必须relation为AND，在nestedRule里面的第一层rule包含对应的匹配条件
      */
     @Suppress("UNCHECKED_CAST")
     fun fieldValueFromRule(rule: Rule?, field: String): List<String> {
-        return when(rule) {
+        return when (rule) {
             is Rule.QueryRule -> fieldValue(rule, field)
             is Rule.FixedRule -> fieldValue(rule.wrapperRule, field)
             is Rule.NestedRule -> valuesFromNestedRule(rule, field)

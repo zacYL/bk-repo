@@ -39,7 +39,9 @@ import com.tencent.bkrepo.analyst.dao.ScanTaskDao
 import com.tencent.bkrepo.analyst.dao.SubScanTaskDao
 import com.tencent.bkrepo.analyst.exception.ScanTaskNotFoundException
 import com.tencent.bkrepo.analyst.model.LeakDetailExport
+import com.tencent.bkrepo.analyst.model.LicenseScanDetailExport
 import com.tencent.bkrepo.analyst.model.ScanPlanExport
+import com.tencent.bkrepo.analyst.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.analyst.pojo.ScanTask
 import com.tencent.bkrepo.analyst.pojo.request.ArtifactVulnerabilityRequest
 import com.tencent.bkrepo.analyst.pojo.request.FileScanResultDetailRequest
@@ -145,6 +147,10 @@ class ScanTaskServiceImpl(
             permissionCheckHandler.checkReposPermission(request.projectId, repos, PermissionAction.READ)
         }
         return subtasks(request, archiveSubScanTaskDao)
+    }
+
+    override fun planArtifactSubtasks(projectId: String, planId: String): List<TPlanArtifactLatestSubScanTask> {
+        return planArtifactLatestSubScanTaskDao.findByPlanId(projectId, planId)
     }
 
     override fun planArtifactSubtaskPage(request: SubtaskInfoRequest): Page<SubtaskInfo> {
@@ -323,6 +329,30 @@ class ScanTaskServiceImpl(
         ) ?: Pages.buildPage(emptyList(), request.pageSize, request.pageNumber)
     }
 
+    override fun exportResultDetail(request: ArtifactLicensesDetailRequest) {
+        val resultList = mutableListOf<FileLicensesResultDetail>()
+        val subtask = planArtifactLatestSubScanTaskDao.findById(request.subScanTaskId!!)
+            ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, request.subScanTaskId!!)
+
+        var resultDetailPage = resultDetail(request)
+        var pageNumber = 1
+        while (resultDetailPage.records.isNotEmpty()) {
+            resultList.addAll(resultDetailPage.records)
+            resultDetailPage = resultDetail(
+                ArtifactLicensesDetailRequest(
+                    projectId = request.projectId,
+                    subScanTaskId = request.subScanTaskId,
+                    pageNumber = ++pageNumber
+                )
+            )
+        }
+        val resultListConvert = mutableListOf<LicenseScanDetailExport>()
+        resultList.forEach {
+            resultListConvert.add(ScanLicenseConverter.convert(it))
+        }
+        EasyExcelUtils.download(resultListConvert, subtask.artifactName, LicenseScanDetailExport::class.java)
+    }
+
     override fun planLicensesArtifact(projectId: String, subScanTaskId: String): FileLicensesResultOverview {
         return planLicensesArtifact(subScanTaskId, planArtifactLatestSubScanTaskDao)
     }
@@ -374,6 +404,8 @@ class ScanTaskServiceImpl(
             ?.let { convertToRes(scannerConverter, it) }
     }
 
+    // code和tx保持同步:
+    // 6.0合并了单独的许可扫描, 此函数不再使用, 因此不存在删除仓库后查看制品扫描记录鉴权异常的情况
     private fun planLicensesArtifact(
         subScanTaskId: String,
         subtaskDao: AbsSubScanTaskDao<*>

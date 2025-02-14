@@ -32,6 +32,7 @@ import com.google.common.cache.CacheLoader
 import com.tencent.bk.audit.context.ActionAuditContext
 import com.tencent.bkrepo.auth.constant.CUSTOM
 import com.tencent.bkrepo.auth.constant.PIPELINE
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_RANGE
@@ -51,6 +52,7 @@ import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -67,6 +69,7 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.chunked.ChunkedUploadUtils
 import com.tencent.bkrepo.common.artifact.util.http.HttpRangeUtils
 import com.tencent.bkrepo.common.metadata.model.TBlockNode
+import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.service.blocknode.BlockNodeService
 import com.tencent.bkrepo.common.metadata.service.node.PipelineNodeService
 import com.tencent.bkrepo.common.query.model.Rule
@@ -94,16 +97,16 @@ import com.tencent.bkrepo.generic.constant.BKREPO_META
 import com.tencent.bkrepo.generic.constant.BKREPO_META_PREFIX
 import com.tencent.bkrepo.generic.constant.CHUNKED_UPLOAD
 import com.tencent.bkrepo.generic.constant.GenericMessageCode
-import com.tencent.bkrepo.generic.constant.HEADER_MD5
-import com.tencent.bkrepo.generic.constant.HEADER_SEQUENCE
-import com.tencent.bkrepo.generic.constant.HEADER_SHA256
-import com.tencent.bkrepo.generic.constant.HEADER_UPLOAD_ID
-import com.tencent.bkrepo.generic.constant.HEADER_UPLOAD_TYPE
-import com.tencent.bkrepo.generic.constant.HEADER_OFFSET
-import com.tencent.bkrepo.generic.constant.HEADER_SIZE
-import com.tencent.bkrepo.generic.constant.HEADER_OVERWRITE
 import com.tencent.bkrepo.generic.constant.HEADER_BLOCK_APPEND
 import com.tencent.bkrepo.generic.constant.HEADER_EXPIRES
+import com.tencent.bkrepo.generic.constant.HEADER_MD5
+import com.tencent.bkrepo.generic.constant.HEADER_OFFSET
+import com.tencent.bkrepo.generic.constant.HEADER_OVERWRITE
+import com.tencent.bkrepo.generic.constant.HEADER_SEQUENCE
+import com.tencent.bkrepo.generic.constant.HEADER_SHA256
+import com.tencent.bkrepo.generic.constant.HEADER_SIZE
+import com.tencent.bkrepo.generic.constant.HEADER_UPLOAD_ID
+import com.tencent.bkrepo.generic.constant.HEADER_UPLOAD_TYPE
 import com.tencent.bkrepo.generic.constant.SEPARATE_UPLOAD
 import com.tencent.bkrepo.generic.pojo.ChunkedResponseProperty
 import com.tencent.bkrepo.generic.pojo.SeparateBlockInfo
@@ -123,6 +126,7 @@ import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
+import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
@@ -133,9 +137,7 @@ import org.springframework.util.unit.DataSize
 import java.net.URLDecoder
 import java.time.Duration
 import java.time.LocalDateTime
-import java.util.Base64
-import java.util.Locale
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
 import kotlin.reflect.full.memberProperties
@@ -146,6 +148,7 @@ class GenericLocalRepository(
     private val clusterNodeClient: ClusterNodeClient,
     private val pipelineNodeService: PipelineNodeService,
     private val ciPermissionManager: CIPermissionManager,
+    private val permissionManager: PermissionManager,
     private val blockNodeService: BlockNodeService,
     private val storageProperties: StorageProperties,
 ) : LocalRepository() {
@@ -299,9 +302,10 @@ class GenericLocalRepository(
     }
 
     /**
-     * 支持单文件、目录、批量文件下载
+     * 支持单文件、目录、批量仅文件、批量文件和目录下载
      * 目录下载会以zip包形式将目录下的文件打包下载
-     * 批量文件下载会以zip包形式将文件打包下载
+     * 批量仅文件下载会以zip包形式将文件打包下载
+     * 批量文件和目录下载会以zip包形式将文件和目录打包下载
      */
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return if (context.artifacts.isNullOrEmpty()) {
@@ -316,12 +320,14 @@ class GenericLocalRepository(
         val uploadId = HeaderUtils.getHeader(HEADER_UPLOAD_ID)
         val sequence = HeaderUtils.getHeader(HEADER_SEQUENCE)?.toInt()
         val uploadType = HeaderUtils.getHeader(HEADER_UPLOAD_TYPE)
-        if (!overwrite && !isBlockUpload(uploadId, sequence)
-            && !isChunkedUpload(uploadType) && !isSeparateUpload(uploadType)) {
-            with(context.artifactInfo) {
-                nodeService.getNodeDetail(this)?.let {
+        with(context.artifactInfo) {
+            nodeService.getNodeDetail(this)?.let {
+                if (!overwrite && !isBlockUpload(uploadId, sequence)
+                    && !isChunkedUpload(uploadType) && !isSeparateUpload(uploadType)
+                ) {
                     throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, getArtifactName())
                 }
+                uploadIntercept(context, it)
             }
         }
     }
@@ -480,17 +486,21 @@ class GenericLocalRepository(
      */
     private fun downloadSingleNode(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
-            val node = getNodeDetailsFromReq(true)?.firstOrNull()
+            var node = getNodeDetailsFromReq(true)?.firstOrNull()
                 ?: ArtifactContextHolder.getNodeDetail(artifactInfo)
                 ?: return null
             if (node.folder) {
                 return downloadFolder(this, node)
             }
             downloadIntercept(this, node)
+
+            node = listOf(node).filterNodeByAuth(context).firstOrNull()?: return null
+
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            nodeService.updateRecentlyUseDate(node.projectId, node.repoName, node.fullPath)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
 
@@ -529,20 +539,44 @@ class GenericLocalRepository(
             val prefixToRemove = if (fullPathList.size > 1) PathUtils.resolveParent(commonParent) else commonParent
             // 支持下载空目录
             val emptyStream = ArtifactInputStream(EmptyInputStream.INSTANCE, Range.full(0))
-            val nodeMap = allNodes.associateBy(
+            val nodeMap = allNodes.filterNodeByAuth(context).associateBy(
                 keySelector = {
                     prefixToAdd + it.fullPath.removePrefix(prefixToRemove) + if (it.folder) StringPool.SLASH else ""
                 },
                 valueTransform = {
                     if (it.folder) emptyStream else {
+                        nodeService.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath)
                         storageManager.loadArtifactInputStream(it, storageCredentials)
                             ?: throw ArtifactNotFoundException(it.fullPath)
                     }
                 }
             )
             // 添加node是为了下载单个空目录的时候以zip包的形式下载, 否则下载的是一个空文件而不是目录
-            val node = if (allNodes.size == 1) allNodes.first() else null
-            return ArtifactResource(nodeMap, node, useDisposition = true, nodes = allNodes)
+            val node = if (nodeMap.isEmpty()) allNodes.map { it to it.fullPath.split(StringPool.SLASH) }
+                .minByOrNull { it.second.size }?.first else null
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(nodeMap, srcRepo, node, useDisposition = true, nodes = allNodes)
+        }
+    }
+
+    private fun List<NodeDetail>.filterNodeByAuth(context: ArtifactDownloadContext): List<NodeDetail> {
+        val nodes = this
+        with(context){
+            return if (filterAuth) {
+                val userAuthPathCache = permissionManager.getUserAuthPathCache(
+                    UserAuthPathOption(
+                        userId,
+                        projectId,
+                        listOf(repoName),
+                        PermissionAction.READ
+                    )
+                )[repoName] ?: emptyList()
+                nodes.filter {
+                    userAuthPathCache.any { authPath -> PathUtils.toPath(it.fullPath).startsWith(authPath) }
+                }
+            } else {
+                nodes
+            }
         }
     }
 
@@ -583,7 +617,7 @@ class GenericLocalRepository(
         projectId: String,
         repoName: String,
         paths: List<String>,
-        prefix: String
+        prefix: String,
     ): List<NodeDetail> {
         var pageNumber = 1
         val nodeDetailList = mutableListOf<NodeDetail>()
@@ -617,13 +651,28 @@ class GenericLocalRepository(
         val nodes = getSubNodes(context, listOf(node))
         // 构造name-node map
         val prefix = "${node.fullPath}/"
-        val nodeMap = nodes.associate {
+
+        val userAuthPathCache = permissionManager.getUserAuthPathCache(
+            UserAuthPathOption(
+                context.userId,
+                context.projectId,
+                listOf(context.repoName),
+                PermissionAction.READ
+            )
+        )[context.repoName] ?: emptyList()
+
+        val nodeMap = nodes.filter {
+            userAuthPathCache.any { authPath -> PathUtils.toPath(it.fullPath).startsWith(authPath) }
+        }.associate {
+            nodeService.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath)
             val name = it.fullPath.removePrefix(prefix)
             val inputStream = storageManager.loadArtifactInputStream(it, context.storageCredentials) ?: return null
             name to inputStream
         }
-        return ArtifactResource(nodeMap, node, useDisposition = true, nodes = nodes)
+        val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+        return ArtifactResource(nodeMap, srcRepo, node, useDisposition = true)
     }
+
 
     private fun getNodeDetailsFromReq(allowFolder: Boolean): List<NodeDetail>? {
         val nodeDetailList = HttpContextHolder.getRequest().getAttribute(NODE_DETAIL_LIST_KEY) as? List<NodeDetail>

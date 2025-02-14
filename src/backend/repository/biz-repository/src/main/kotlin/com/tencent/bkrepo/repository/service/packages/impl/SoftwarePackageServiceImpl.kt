@@ -2,13 +2,19 @@ package com.tencent.bkrepo.repository.service.packages.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.EscapeUtils
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.metadata.dao.packages.PackageDao
+import com.tencent.bkrepo.common.metadata.dao.packages.PackageVersionDao
+import com.tencent.bkrepo.common.metadata.model.TPackage
+import com.tencent.bkrepo.common.metadata.search.packages.PackageQueryContext
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.common.metadata.dao.packages.PackageDao
-import com.tencent.bkrepo.common.metadata.model.TPackage
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.pojo.software.SoftwarePackageSearchPojo
@@ -24,7 +30,9 @@ import org.springframework.stereotype.Service
 class SoftwarePackageServiceImpl(
     private val packageDao: PackageDao,
     private val softwareRepositoryService: SoftwareRepositoryService,
-    private val softwarePackageSearchInterpreter: SoftwarePackageSearchInterpreter
+    private val softwarePackageSearchInterpreter: SoftwarePackageSearchInterpreter,
+    private val repositoryService: RepositoryService,
+    private val packageVersionDao: PackageVersionDao
 ) : SoftwarePackageService {
 
     override fun packageOverview(
@@ -39,13 +47,15 @@ class SoftwarePackageServiceImpl(
             if (repoName != null) {
                 criteria.and(TPackage::repoName.name).`is`(repoName)
             } else {
-                val allSoftRepo = softwareRepositoryService.listRepo(projectId, includeGeneric = false)
+                val allSoftRepo =
+                    softwareRepositoryService.listRepo(projectId, RepoListOption(), includeGeneric = false)
                 val repoNames = allSoftRepo.map { it.name }
                 criteria.and(TPackage::repoName.name).`in`(repoNames)
             }
         } else {
-            val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
-            if(allSoftRepo.isEmpty()) return listOf()
+            val option = RepoListOption(type = repoType.name)
+            val allSoftRepo = softwareRepositoryService.listRepo(option = option, includeGeneric = false)
+            if (allSoftRepo.isEmpty()) return listOf()
             transCri(criteria, allSoftRepo)
         }
         packageName?.let {
@@ -92,6 +102,7 @@ class SoftwarePackageServiceImpl(
         list.map { pojo ->
             val repoOverview = ProjectPackageOverview.RepoPackageOverview(
                 repoName = pojo.id.repoName,
+                repoCategory = repositoryService.getRepoInfo(pojo.id.projectId, pojo.id.repoName)?.category,
                 packages = pojo.count
             )
             projectSet.filter { it.projectId == pojo.id.projectId }.apply {
@@ -112,25 +123,32 @@ class SoftwarePackageServiceImpl(
         return projectSet.toList()
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun searchPackage(queryModel: QueryModel): Page<MutableMap<*, *>> {
         val rules = (queryModel.rule as Rule.NestedRule).rules
-        var repoName: String? = null
+        var repoNameRuleExist = false
         var projectId: String? = null
-        var repoType: RepositoryType? = null
+        var projectIdList: List<String>? = null
+        var repoType: String? = null
         val projectSubRule = mutableListOf<Rule>()
         for (rule in rules) {
             val queryRule = rule as Rule.QueryRule
             when (queryRule.field) {
-                "repoName" -> repoName = queryRule.value as String
-                "projectId" -> projectId = queryRule.value as String
-                "repoType" -> repoType = RepositoryType.valueOf(queryRule.value as String)
+                "repoName" -> repoNameRuleExist = true
+                "projectId" -> when (queryRule.operation) {
+                    OperationType.EQ -> projectId = queryRule.value as String
+                    OperationType.IN -> projectIdList = queryRule.value as List<String>
+                    else -> {}
+                }
+                "repoType" -> repoType = queryRule.value as String
                 else -> projectSubRule.add(queryRule)
             }
         }
+        val option = RepoListOption(type = repoType)
         if (projectId == null) {
             val projectsRule = mutableListOf<Rule>()
-            val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
-            if(allSoftRepo.isEmpty()) return Page(1, queryModel.page.pageSize, 0, listOf())
+            val allSoftRepo = softwareRepositoryService.listRepoByProjects(projectIdList, option = option)
+            if (allSoftRepo.isEmpty()) return Page(1, queryModel.page.pageSize, 0, listOf())
             val projectMap = transRepoTree(allSoftRepo)
             projectMap.map { project ->
                 val projectRule = Rule.QueryRule(field = "projectId", value = project.key)
@@ -140,7 +158,7 @@ class SoftwarePackageServiceImpl(
                         projectRule,
                         reposRule,
                         rules.first { (it as Rule.QueryRule).field == "repoType" }
-                    ).apply { this.addAll(projectSubRule) },
+                    ).apply { this.addAll(projectSubRule.map { (it as Rule.QueryRule).copy() }) },
                     Rule.NestedRule.RelationType.AND
                 )
                 projectsRule.add(rule)
@@ -150,18 +168,36 @@ class SoftwarePackageServiceImpl(
                 this.addAll(projectsRule)
             }
             queryModel.rule = Rule.NestedRule(rules, Rule.NestedRule.RelationType.OR)
-        }
-        if (projectId != null && repoName == null) {
+        } else if (!repoNameRuleExist) {
             val genericRepos =
-                softwareRepositoryService.listRepo(projectId, type = repoType, includeGeneric = false).map { it.name }
+                softwareRepositoryService.listRepo(projectId, option = option, includeGeneric = false).map { it.name }
             rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
         }
-        val context = softwarePackageSearchInterpreter.interpret(queryModel)
+        val context = softwarePackageSearchInterpreter.interpret(queryModel) as PackageQueryContext
         val query = context.mongoQuery
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = packageDao.count(countQuery)
-        val packageList = packageDao.find(query, MutableMap::class.java)
+        val packageList = packageDao.find(query, MutableMap::class.java) as List<MutableMap<String, Any?>>
+        packageList.forEach {
+            val packageId = it[ID].toString()
+            val name = it[LATEST].toString()
+            packageVersionDao.findByName(packageId, name)?.metadata?.forEach { tMetadata ->
+                if (tMetadata.key == SCAN_STATUS) {
+                    it[SCAN_STATUS] = tMetadata.value
+                }
+                if (tMetadata.key == FORBID_STATUS) {
+                    it[FORBID_STATUS] = tMetadata.value
+                }
+            }
+            context.matchedVersions[it[ID].toString()]?.apply { it[MATCHED_VERSIONS] = this }
+        }
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
         return Page(pageNumber + 1, query.limit, totalRecords, packageList)
+    }
+
+    companion object {
+        private const val ID = "_id"
+        private const val LATEST = "latest"
+        private const val MATCHED_VERSIONS = "matchedVersions"
     }
 }

@@ -32,6 +32,8 @@
 dependencies {
     api(project(":repository:api-repository"))
     implementation(project(":common:common-api"))
+    api(project(":common:common-artifact:artifact-service"))
+    api("com.github.zafarkhaja:java-semver")
     implementation(project(":common:common-artifact:artifact-api"))
     compileOnly("org.springframework:spring-web")
     compileOnly("org.springframework.cloud:spring-cloud-openfeign-core")

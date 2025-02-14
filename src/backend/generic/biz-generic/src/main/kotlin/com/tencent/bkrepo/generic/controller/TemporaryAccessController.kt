@@ -68,6 +68,7 @@ import com.tencent.bkrepo.generic.pojo.TemporaryAccessToken
 import com.tencent.bkrepo.generic.pojo.TemporaryAccessUrl
 import com.tencent.bkrepo.generic.pojo.TemporaryUrlCreateRequest
 import com.tencent.bkrepo.generic.pojo.UploadTransactionInfo
+import com.tencent.bkrepo.generic.service.DownloadService
 import com.tencent.bkrepo.generic.service.TemporaryAccessService
 import com.tencent.bkrepo.generic.service.UploadService
 import io.swagger.annotations.ApiOperation
@@ -94,6 +95,7 @@ class TemporaryAccessController(
     private val permissionManager: PermissionManager,
     private val uploadService: UploadService,
     private val genericProperties: GenericProperties,
+    private val downloadService: DownloadService,
 ) {
 
     @PostMapping("/token/create")
@@ -105,9 +107,12 @@ class TemporaryAccessController(
     @PostMapping("/url/create")
     fun createUrl(@RequestBody request: TemporaryUrlCreateRequest): Response<List<TemporaryAccessUrl>> {
         with(request) {
-            fullPathSet.forEach {
-                permissionManager.checkNodePermission(PermissionAction.WRITE, projectId, repoName, it)
-            }
+            permissionManager.checkNodePermission(
+                PermissionAction.SHARE,
+                projectId,
+                repoName,
+                path = fullPathSet.toTypedArray()
+            )
             return ResponseBuilder.success(temporaryAccessService.createUrl(request))
         }
     }
@@ -177,7 +182,7 @@ class TemporaryAccessController(
         @RequestParam token: String
     ) {
         val tokenInfo = temporaryAccessService.validateToken(token, artifactInfo, TokenType.DOWNLOAD)
-        temporaryAccessService.download(artifactInfo)
+        downloadService.batchDownload(listOf(artifactInfo), false)
         temporaryAccessService.decrementPermits(tokenInfo)
     }
 

@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Repository Service
+  quartz:
+    mongo: true
+    startupDelay: 60s
+    overwriteExistingJobs: true
+    schedulerName: bkrepo-scheduler
+  cloud:
+    stream:
+      bindings:
+        artifactEvent-out-0:
+          destination: artifactEvent
+          binder: pulsar
+        bkrepo_artifact_repo:
+          destination: bkrepo_artifact_repo
+          binder: pulsar
+server:
+  port: __BK_REPO_REPOSITORY_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: repository
+repository:
+  cleanStrategyTime: __BK_REPO_REPOSITORY_CLEAN_STRATEGY_TIME__

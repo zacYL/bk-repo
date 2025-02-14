@@ -86,6 +86,21 @@ interface NodeClient {
         @RequestParam fullPath: String,
     ): Response<NodeDetail?>
 
+    @ApiOperation("根据ID查询节点路径")
+    @PostMapping("/path/{projectId}")
+    fun listFullPathById(
+        @PathVariable projectId: String,
+        @RequestBody id: List<String>
+    ): Response<Map<String, String>>
+
+    @ApiOperation("更新最近使用时间")
+    @GetMapping("/update/{projectId}/{repoName}")
+    fun updateRecentlyUseDate(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam fullPath: String
+    ): Response<Void>
+
     @ApiOperation("根据路径查看节点是否存在")
     @GetMapping("/exist/{projectId}/{repoName}")
     fun checkExist(
@@ -175,6 +190,16 @@ interface NodeClient {
         @ApiParam(value = "节点完整路径", required = true)
         @RequestParam
         path: String,
+    ): Response<Long>
+
+    @ApiOperation("根据路径列表查询文件节点数量总和")
+    @PostMapping("/file/{projectId}/{repoName}")
+    fun countFileNodeByList(
+        @ApiParam(value = "所属项目", required = true)
+        @PathVariable projectId: String,
+        @ApiParam(value = "仓库名称", required = true)
+        @PathVariable repoName: String,
+        @RequestBody fullPathList: List<String>
     ): Response<Long>
 
     @ApiOperation("自定义查询节点，如不关注总记录数请使用queryWithoutCount")

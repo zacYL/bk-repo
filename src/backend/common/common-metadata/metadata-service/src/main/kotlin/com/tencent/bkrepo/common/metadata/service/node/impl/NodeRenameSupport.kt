@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.metadata.service.node.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
@@ -60,7 +61,13 @@ open class NodeRenameSupport(
             val node = nodeDao.findNode(projectId, repoName, fullPath)
                 ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, fullPath)
             checkNodeCluster(node)
+            if (node.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true) {
+                throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, fullPath)
+            }
             doRename(node, newFullPath, operator)
+            // 更新父目录的最后修改信息
+            val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+            nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator)
             publishEvent(buildRenamedEvent(renameRequest))
             logger.info("Rename node [$this] success.")
         }

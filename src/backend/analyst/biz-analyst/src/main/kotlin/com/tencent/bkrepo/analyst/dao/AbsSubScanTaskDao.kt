@@ -67,7 +67,7 @@ abstract class AbsSubScanTaskDao<E : SubScanTaskDefinition> : ScannerSimpleMongo
             repoType?.let { criteria.and(SubScanTaskDefinition::repoType.name).isEqualTo(repoType) }
             repoName?.let { criteria.and(SubScanTaskDefinition::repoName.name).isEqualTo(repoName) }
             subScanTaskStatus?.let { criteria.and(SubScanTaskDefinition::status.name).inValues(it) }
-            if (startTime != null && endTime != null) {
+            if (startDateTime != null && endDateTime != null) {
                 criteria.and(SubScanTaskDefinition::createdDate.name).gte(startDateTime!!).lte(endDateTime!!)
             }
             qualityRedLine?.let { criteria.and(SubScanTaskDefinition::qualityRedLine.name).isEqualTo(qualityRedLine) }
@@ -92,6 +92,19 @@ abstract class AbsSubScanTaskDao<E : SubScanTaskDefinition> : ScannerSimpleMongo
     fun deleteByParentTaskId(parentTaskId: String): DeleteResult {
         val query = Query(SubScanTaskDefinition::parentScanTaskId.isEqualTo(parentTaskId))
         return remove(query)
+    }
+
+    fun deleteByPlanId(planId: String): DeleteResult {
+        val query = Query(SubScanTaskDefinition::planId.isEqualTo(planId))
+        return remove(query)
+    }
+
+    fun findByPlanId(projectId: String, planId: String): List<E> {
+        val criteria = Criteria
+            .where(SubScanTaskDefinition::projectId.name).isEqualTo(projectId)
+            .and(SubScanTaskDefinition::planId.name).isEqualTo(planId)
+        val query = Query(criteria)
+        return find(query)
     }
 
     private fun addHighestVulnerabilityLevel(level: String, criteria: Criteria): Criteria {

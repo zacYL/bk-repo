@@ -31,13 +31,30 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
+import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
+import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.xml.Value
+import com.tencent.bkrepo.pypi.constants.FILE_NAME_REGEX
+import com.tencent.bkrepo.pypi.constants.INDENT
+import com.tencent.bkrepo.pypi.constants.LINE_BREAK
+import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
+import com.tencent.bkrepo.pypi.constants.PSEUDO_MATCH_REGEX
+import com.tencent.bkrepo.pypi.constants.REQUIRES_PYTHON_ATTR
+import com.tencent.bkrepo.pypi.constants.SELECTOR_ANCHOR
+import com.tencent.bkrepo.pypi.constants.SIMPLE_PAGE_CONTENT
+import com.tencent.bkrepo.pypi.constants.VERSION_INDEX_TITLE
+import com.tencent.bkrepo.pypi.util.HtmlUtils
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import org.springframework.stereotype.Component
-import java.lang.StringBuilder
+import java.util.TreeSet
 
 @Component
 class PypiVirtualRepository : VirtualRepository() {
@@ -45,22 +62,29 @@ class PypiVirtualRepository : VirtualRepository() {
     /**
      * 整合多个仓库的内容。
      */
-    override fun query(context: ArtifactQueryContext): Any? {
-        val virtualConfiguration = context.getVirtualConfiguration()
-
-        val repoList = virtualConfiguration.repositoryList
-        val traversedList = getTraversedList(context)
-        val stringBuilder = StringBuilder()
-        for (repoIdentify in repoList) {
-            if (repoIdentify in traversedList) {
-                continue
-            }
-            traversedList.add(repoIdentify)
-            val subRepoInfo = repositoryService.getRepoDetail(repoIdentify.projectId, repoIdentify.name)!!
-            val repository = ArtifactContextHolder.getRepository(subRepoInfo.category)
-            stringBuilder.append(repository.query(context))
+    @Suppress("UNCHECKED_CAST")
+    override fun query(context: ArtifactQueryContext): String? {
+        context.getFullPathInterceptors()
+            .forEach { it.intercept(context.projectId, context.artifactInfo.getArtifactFullPath()) }
+        val packageName = (context.artifactInfo as PypiSimpleArtifactInfo).packageName
+        val pseudoSelector = if (packageName == null) "" else String.format(PSEUDO_MATCH_REGEX, FILE_NAME_REGEX)
+        val indexPages = (super.query(context) as List<String>)
+            .map { Jsoup.parse(it).body().select(SELECTOR_ANCHOR + pseudoSelector) }
+            .filter { !it.isNullOrEmpty() }
+            .ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packageName ?: StringPool.SLASH) }
+        val compositePage = if (indexPages.size == 1) indexPages.first() else {
+            val anchorSet = TreeSet<Element>(compareBy { it.text() })
+            indexPages.forEach { anchorSet.addAll(it) }
+            Elements(anchorSet)
         }
-        return stringBuilder.toString()
+        val content = compositePage.joinToString("$LINE_BREAK\n$INDENT", INDENT, LINE_BREAK)
+        val encodedContent = if (packageName != null) {
+            content.replace(Regex("$REQUIRES_PYTHON_ATTR=\"[^\"]*")) {
+                HtmlUtils.partialEncode(it.value)
+            }
+        } else content
+        val title = if (packageName == null) PACKAGE_INDEX_TITLE else String.format(VERSION_INDEX_TITLE, packageName)
+        return String.format(SIMPLE_PAGE_CONTENT, title, title, encodedContent)
     }
 
     override fun search(context: ArtifactSearchContext): List<Any> {

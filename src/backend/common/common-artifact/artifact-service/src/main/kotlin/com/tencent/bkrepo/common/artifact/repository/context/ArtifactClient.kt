@@ -29,6 +29,7 @@ package com.tencent.bkrepo.common.artifact.repository.context
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.project.ProjectService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -41,10 +42,13 @@ import org.springframework.beans.factory.annotation.Autowired
 open class ArtifactClient {
 
     @Autowired
-    private lateinit var repositoryService: RepositoryService
+    lateinit var projectService: ProjectService
 
     @Autowired
-    private lateinit var nodeService: NodeService
+    lateinit var repositoryService: RepositoryService
+
+    @Autowired
+    lateinit var nodeService: NodeService
 
     open fun getRepositoryDetailOrNull(
         projectId: String,

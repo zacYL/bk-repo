@@ -154,7 +154,7 @@ class UserNodeController(
         content = ActionAuditContent.NODE_CREATE_CONTENT
     )
     @ApiOperation("创建文件夹")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.WRITE)
     @PostMapping(DEFAULT_MAPPING_URI/* Deprecated */, "/mkdir/$DEFAULT_MAPPING_URI")
     fun mkdir(
         @RequestAttribute userId: String,
@@ -290,7 +290,7 @@ class UserNodeController(
         scopeId = "#artifactInfo?.projectId",
         content = ActionAuditContent.NODE_CLEAN_CONTENT
     )
-    @ApiOperation("清理最后访问时间早于{date}的文件节点")
+    @ApiOperation("清理创建时间早于{date}的文件节点, 此方式删除的节点暂不放入回收站")
     @Permission(type = ResourceType.NODE, action = PermissionAction.DELETE)
     @DeleteMapping("/clean/$DEFAULT_MAPPING_URI")
     fun deleteNodeLastModifiedBeforeDate(
@@ -621,6 +621,9 @@ class UserNodeController(
         return ResponseBuilder.success(nodeSearchService.search(queryModel))
     }
 
+    /*
+        该接口不传repoName是只查询二进制仓库数据节点，不对项目开发开放
+     */
     @Deprecated("replace with search")
     @ApiOperation("自定义查询节点")
     @PostMapping("/query")
@@ -678,15 +681,22 @@ class UserNodeController(
      * 校验跨仓库操作权限
      */
     private fun checkCrossRepoPermission(request: UserNodeMoveCopyRequest) {
+
         with(request) {
             permissionManager.checkNodePermission(
-                PermissionAction.WRITE,
+                PermissionAction.READ,
                 srcProjectId,
                 srcRepoName,
                 PathUtils.normalizeFullPath(srcFullPath),
             )
             val toProjectId = request.destProjectId ?: srcProjectId
             val toRepoName = request.destRepoName ?: srcRepoName
+            permissionManager.checkNodePermission(
+                PermissionAction.READ,
+                toProjectId,
+                toRepoName,
+                PathUtils.normalizeFullPath(destFullPath)
+            )
             permissionManager.checkNodePermission(
                 PermissionAction.WRITE,
                 toProjectId,

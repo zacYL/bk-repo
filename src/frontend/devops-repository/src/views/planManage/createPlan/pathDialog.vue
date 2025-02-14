@@ -10,7 +10,7 @@
             class="w480"
             v-model="pathsStr"
             type="textarea"
-            :placeholder="$t('addFilePathPlaceHolder')"
+            :placeholder="$t('addFilePathPlaceholder')"
             :rows="6">
         </bk-input>
     </canway-dialog>

@@ -40,7 +40,7 @@ import io.swagger.annotations.ApiModelProperty
 @ApiModel("节点列表选项")
 data class NodeListOption(
     @ApiModelProperty("当前页")
-    val pageNumber: Int = DEFAULT_PAGE_NUMBER,
+    var pageNumber: Int = DEFAULT_PAGE_NUMBER,
     @ApiModelProperty("分页大小")
     val pageSize: Int = DEFAULT_PAGE_SIZE,
     @ApiModelProperty("是否包含目录")

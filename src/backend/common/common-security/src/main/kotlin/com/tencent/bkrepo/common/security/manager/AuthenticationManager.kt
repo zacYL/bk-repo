@@ -27,6 +27,9 @@
 
 package com.tencent.bkrepo.common.security.manager
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.api.ServiceAccountClient
 import com.tencent.bkrepo.auth.api.ServiceOauthAuthorizationClient
 import com.tencent.bkrepo.auth.api.ServiceTemporaryTokenClient
@@ -36,9 +39,12 @@ import com.tencent.bkrepo.auth.pojo.oauth.OauthToken
 import com.tencent.bkrepo.auth.pojo.token.TemporaryTokenInfo
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.common.devops.client.ServiceAccessTokenClient
+import com.tencent.bkrepo.common.devops.pojo.accesstoken.DevopsAccessToken
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
 
 @Component
 class AuthenticationManager {
@@ -54,13 +60,28 @@ class AuthenticationManager {
     @Autowired
     private lateinit var serviceTemporaryTokenClient: ServiceTemporaryTokenClient
 
+    @Autowired
+    private lateinit var serviceAccessTokenClient: ServiceAccessTokenClient
+
+    private val userTokenCache = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .refreshAfterWrite(30L, TimeUnit.SECONDS)
+        .expireAfterWrite(60L, TimeUnit.SECONDS)
+        .build(
+            CacheLoader.from<Pair<String, String>, Boolean> { serviceUserClient.checkToken(it.first, it.second).data }
+        )
+
     /**
      * 校验普通用户类型账户
      * @throws AuthenticationException 校验失败
      */
     fun checkUserAccount(uid: String, token: String): String {
-        val response = serviceUserClient.checkToken(uid, token)
-        return if (response.data == true) uid else throw AuthenticationException("Authorization value check failed")
+        val result = try {
+            userTokenCache.get(Pair(uid, token))
+        } catch (e: UncheckedExecutionException) {
+            throw e.cause ?: e
+        }
+        return if (result == true) uid else throw AuthenticationException("Authorization value check failed")
     }
 
     /**
@@ -123,6 +144,10 @@ class AuthenticationManager {
      * */
     fun findSecretKey(appId: String, accessKey: String): String? {
         return serviceAccountClient.findSecretKey(appId, accessKey).data
+    }
+
+    fun getDevopsAccessTokenDetail(token: String): DevopsAccessToken? {
+        return serviceAccessTokenClient.getTokenDetail(token).data
     }
 
     fun getTokenInfo(token: String): TemporaryTokenInfo? {

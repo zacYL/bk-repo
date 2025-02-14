@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Opdata Service
+server:
+  port: __BK_REPO_OPDATA_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: opdata
+op:
+  security:
+    admin-username: __BK_REPO_OP_ADMIN_USERNAME__
+    admin-password: __BK_REPO_OP_ADMIN_PASSWORD__

@@ -44,6 +44,7 @@ import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
+import com.tencent.bkrepo.pypi.artifact.PypiPackageArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.PypiProperties
 import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.xml.Value
@@ -58,7 +59,7 @@ class PypiService(
 ) : ArtifactService() {
 
     @Permission(ResourceType.REPO, PermissionAction.READ)
-    fun packages(pypiArtifactInfo: PypiArtifactInfo) {
+    fun packages(artifactInfo: PypiPackageArtifactInfo) {
         val context = ArtifactDownloadContext()
         repository.download(context)
     }

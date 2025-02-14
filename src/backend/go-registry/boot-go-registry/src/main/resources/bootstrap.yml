@@ -1,0 +1,2 @@
+spring.application.name: go
+server.port: 25820

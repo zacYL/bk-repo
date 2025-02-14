@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Npm Service
+  cloud:
+    stream:
+      function:
+        definition: artifactEvent
+      bindings:
+        artifactEvent-in-0:
+          group: npm
+          destination: artifactEvent
+          binder: pulsar
+server:
+  port: __BK_REPO_NPM_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+npm:
+  domain: ${cluster.self.url}/npm
+  tarball:
+    # 自定义配置返回的tarball地址前缀
+    prefix: http://__BK_REPO_FQDN__/npm/
+  migration:
+    remote_registry: __BK_REPO_NPM_MIGRATION_REMOTE_URL__
+    # 获取包的数据的URL地址
+    data_url: __BK_REPO_NPM_MIGRATION_DATA_URL__
+service:
+  name: npm

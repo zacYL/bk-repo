@@ -34,6 +34,7 @@ import com.tencent.bkrepo.analyst.model.TSubScanTask
 import com.tencent.bkrepo.analyst.pojo.TaskMetadata
 import com.tencent.bkrepo.analyst.pojo.TaskMetadata.Companion.TASK_METADATA_DISPATCHER
 import com.tencent.bkrepo.analyst.pojo.request.CredentialsKeyFiles
+import com.tencent.bkrepo.analyst.pojo.request.SubScanTaskQuery
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus.EXECUTING
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus.PULLED
@@ -86,6 +87,18 @@ class SubScanTaskDao(
             TSubScanTask::parentScanTaskId.isEqualTo(parentTaskId)
         )
         return find(query)
+    }
+
+    fun findByQuery(query: SubScanTaskQuery): List<TSubScanTask> {
+        with(query) {
+            val criteria = Criteria.where(TSubScanTask::projectId.name).isEqualTo(projectId)
+                .and(TSubScanTask::repoName.name).isEqualTo(repoName)
+                .and(TSubScanTask::repoType.name).isEqualTo(repoType)
+            packageKey?.let { criteria.and(TSubScanTask::packageKey.name).isEqualTo(packageKey) }
+            version?.let { criteria.and(TSubScanTask::version.name).isEqualTo(version) }
+            fullPath?.let { criteria.and(TSubScanTask::fullPath.name).isEqualTo(fullPath) }
+            return find(Query(criteria))
+        }
     }
 
     fun deleteById(subTaskId: String): DeleteResult {

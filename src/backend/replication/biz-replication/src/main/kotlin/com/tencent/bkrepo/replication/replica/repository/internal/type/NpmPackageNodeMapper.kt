@@ -28,10 +28,12 @@
 package com.tencent.bkrepo.replication.replica.repository.internal.type
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import org.springframework.stereotype.Component
 
+@Component
 class NpmPackageNodeMapper : PackageNodeMapper {
 
     override fun type() = RepositoryType.NPM

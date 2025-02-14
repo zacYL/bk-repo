@@ -29,7 +29,6 @@ package com.tencent.bkrepo.analyst.utils
 
 import com.alibaba.excel.EasyExcel
 import com.alibaba.excel.write.metadata.style.WriteCellStyle
-import com.alibaba.excel.write.style.HorizontalCellStyleStrategy
 import com.tencent.bkrepo.analyst.message.ScannerMessageCode
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -53,14 +52,14 @@ object EasyExcelUtils {
         try {
             EasyExcel.write(response.outputStream, dataClass).build().use { excelWriter ->
                 val date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
-                val cellStyleStrategy = HorizontalCellStyleStrategy(WriteCellStyle(), WriteCellStyle().apply {
+                val writeHandler = I18nHeaderCellWriteHandler(WriteCellStyle(), WriteCellStyle().apply {
                     this.horizontalAlignment = HorizontalAlignment.LEFT
                     this.verticalAlignment = VerticalAlignment.CENTER
                     this.wrapped = true
                 })
                 val writerSheetBuilder = EasyExcel
                     .writerSheet(date)
-                    .registerWriteHandler(cellStyleStrategy)
+                    .registerWriteHandler(writeHandler)
                     .head(dataClass)
                 includeColumns?.let {
                     writerSheetBuilder.includeColumnFieldNames(includeColumns)

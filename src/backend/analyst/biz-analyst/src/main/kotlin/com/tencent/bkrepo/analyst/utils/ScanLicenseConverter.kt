@@ -35,15 +35,67 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.LicenseOverviewKey
 import com.tencent.bkrepo.common.analysis.pojo.scanner.LicenseOverviewKey.NIL
 import com.tencent.bkrepo.common.analysis.pojo.scanner.LicenseOverviewKey.TOTAL
 import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
+
 import com.tencent.bkrepo.analyst.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.analyst.model.TScanPlan
 import com.tencent.bkrepo.analyst.model.TScanTask
 import com.tencent.bkrepo.analyst.pojo.ScanStatus
 import com.tencent.bkrepo.analyst.pojo.response.FileLicensesResultOverview
 import com.tencent.bkrepo.analyst.pojo.response.ScanLicensePlanInfo
+
+import com.tencent.bkrepo.analyst.model.ExportContent
+import com.tencent.bkrepo.analyst.model.LicenseScanDetailExport
+import com.tencent.bkrepo.analyst.pojo.response.FileLicensesResultDetail
+import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import java.time.format.DateTimeFormatter
 
 object ScanLicenseConverter {
+
+    fun convert(licensesResultDetail: FileLicensesResultDetail): LicenseScanDetailExport {
+        with(licensesResultDetail) {
+            return if (description.isEmpty()) LicenseScanDetailExport(
+                fullName = fullName.ifEmpty { licenseId },
+                dependentPath = dependentPath,
+                osi = StringPool.SLASH,
+                fsf = StringPool.SLASH,
+                deprecated = StringPool.SLASH,
+                compliance = StringPool.SLASH,
+                description = StringPool.EMPTY
+            ) else {
+                val osi = getBooleanLocalizedMsg(
+                    tag = isOsiApproved,
+                    trueContent = ExportContent.LICENSE_SCAN_DETAIL_OSI_TRUE,
+                    falseContent = ExportContent.LICENSE_SCAN_DETAIL_OSI_FALSE
+                )
+                val fsf = getBooleanLocalizedMsg(
+                    tag = isFsfLibre,
+                    trueContent = ExportContent.LICENSE_SCAN_DETAIL_FSF_TRUE,
+                    falseContent = ExportContent.LICENSE_SCAN_DETAIL_FSF_FALSE
+                )
+                // 导出与前端保持一致, 使用recommended, 后面前后端一起升级时再修改
+                val deprecated = getBooleanLocalizedMsg(
+                    tag = recommended,
+                    trueContent = ExportContent.LICENSE_SCAN_DETAIL_DEPRECATED_TRUE,
+                    falseContent = ExportContent.LICENSE_SCAN_DETAIL_DEPRECATED_FALSE
+                )
+                val compliant = getBooleanLocalizedMsg(
+                    tag = compliance,
+                    trueContent = ExportContent.LICENSE_SCAN_DETAIL_COMPLIANCE_TRUE,
+                    falseContent = ExportContent.LICENSE_SCAN_DETAIL_COMPLIANCE_FALSE
+                )
+                LicenseScanDetailExport(
+                    fullName = fullName.ifEmpty { licenseId },
+                    dependentPath = dependentPath,
+                    osi = osi,
+                    fsf = fsf,
+                    deprecated = deprecated,
+                    compliance = compliant,
+                    description = description
+                )
+            }
+        }
+    }
 
     fun convert(scanPlan: TScanPlan, subScanTasks: List<TPlanArtifactLatestSubScanTask>): ScanLicensePlanInfo {
         with(scanPlan) {
@@ -152,5 +204,12 @@ object ScanLicenseConverter {
     private fun getLicenseCount(level: String, overview: Map<String, Number>?): Long {
         val key = LicenseOverviewKey.overviewKeyOf(level)
         return overview?.get(key)?.toLong() ?: 0L
+    }
+
+    private fun getBooleanLocalizedMsg(tag: Boolean?, trueContent: ExportContent, falseContent: ExportContent): String {
+        val msgKey = tag?.let {
+            if (it) trueContent.msgKey else falseContent.msgKey
+        }
+        return msgKey?.let { LocaleMessageUtils.getLocalizedMessage(it) } ?: StringPool.SLASH
     }
 }

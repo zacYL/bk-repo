@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.metadata.service.metadata
 
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 
@@ -55,11 +56,12 @@ interface RMetadataService {
     suspend fun saveMetadata(request: MetadataSaveRequest)
 
     /**
-     * 根据请求[request]保存或者更新禁用元数据，只更新禁用相关元数据
+     * 根据请求[request]保存或者更新限制元数据，只更新限制相关元数据（禁用/锁定）
      *
      * 如果元数据`key`已经存在则更新，否则创建新的
      */
-    suspend fun addForbidMetadata(request: MetadataSaveRequest)
+    suspend fun addLimitMetadata(request: MetadataSaveRequest, limitType: LimitType)
+
 
     /**
      * 根据请求[request]删除元数据

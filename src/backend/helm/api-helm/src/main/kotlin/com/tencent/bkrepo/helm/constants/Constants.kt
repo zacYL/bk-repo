@@ -56,6 +56,12 @@ const val PROVENANCE_FILE_EXTENSION = "tgz.prov"
 const val QUERY_INDEX_KEY_PREFIX = "helm:lock:indexFile:"
 const val REFRESH_INDEX_KEY_PREFIX = "helm:lock:refreshIndex:"
 
+const val CHARTS = "charts"
+
+// 定义返回代码片段
+val CHART_NOT_FOUND = mapOf("error" to "chart not found")
+val NO_CHART_NAME_FOUND = mapOf("error" to "no chart name found")
+
 const val SLEEP_MILLIS = 20L
 
 

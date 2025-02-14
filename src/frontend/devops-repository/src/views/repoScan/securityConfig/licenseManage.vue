@@ -6,7 +6,7 @@
                 <bk-input
                     v-model.trim="name"
                     class="w250"
-                    :placeholder="$t('nameSearchPlaceHolder')"
+                    :placeholder="$t('nameSearchPlaceholder')"
                     clearable
                     @enter="handlerPaginationChange()"
                     @clear="handlerPaginationChange()"
@@ -15,7 +15,7 @@
                 <bk-select
                     class="ml10 w250"
                     v-model="isTrust"
-                    :placeholder="$t('compliancePlaceHolder')"
+                    :placeholder="$t('compliancePlaceholder')"
                     @change="handlerPaginationChange()">
                     <bk-option id="true" :name="$t('compliance')"></bk-option>
                     <bk-option id="false" :name="$t('notCompliance')"></bk-option>
@@ -40,19 +40,19 @@
                     >{{ row.licenseId }}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="`OSI` + $t('authenticated')" width="120">
-                <template #default="{ row }">{{ `${row.isOsiApproved ? $t('authenticated') : $t('notAuthenticated')}` }}</template>
+            <bk-table-column :label="'OSI' + $t('space') + $t('authenticated')" width="160">
+                <template #default="{ row }">{{ `${row.isOsiApproved ? $t('already') : $t('not')}` + $t('space') + $t('authenticated') }}</template>
             </bk-table-column>
-            <bk-table-column :label="`FSF` + $t('openSource')" width="120">
-                <template #default="{ row }">{{ `${row.isFsfLibre ? $t('openSource') : $t('notOpenSource')}` }}</template>
+            <bk-table-column :label="'FSF' + +$t('space') + $t('openSource')" width="150">
+                <template #default="{ row }">{{ `${row.isFsfLibre ? $t('already') : $t('not')}` + $t('space') + $t('openSource') }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('recommendUse')" width="120">
-                <template #default="{ row }">{{ `${row.isDeprecatedLicenseId ? $t('notRecommended') : $t('recommended')}` }}</template>
+            <bk-table-column :label="$t('useStatus')" width="120">
+                <template #default="{ row }">{{ `${row.isDeprecatedLicenseId ? $t('abandoned') : $t('usable')}` }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('compliance')" width="150">
+            <bk-table-column :label="$t('complianceQuality')" width="190">
                 <template #default="{ row }">
                     <span class="repo-tag" :class="row.isTrust ? 'SUCCESS' : 'FAILED'">{{ `${row.isTrust ? $t('compliance') : $t('notCompliance')}` }}</span>
-                    <bk-button class="hover-visible ml5" text theme="primary" @click="changeTrust(row)">{{ $t('switch') }}</bk-button>
+                    <bk-button class="hover-visible ml5" text theme="primary" @click="changeTrust(row)">{{$t('switch')}}</bk-button>
                 </template>
             </bk-table-column>
         </bk-table>
@@ -68,14 +68,15 @@
             :count="pagination.count"
             :limit-list="pagination.limitList">
         </bk-pagination>
-        <generic-upload-dialog ref="genericUploadDialog" @update="getLicenseListHandler"></generic-upload-dialog>
+        <upload-dialog ref="uploadDialog" @update="getLicenseListHandler"></upload-dialog>
         <canway-dialog
             v-model="licenseInfo.show"
             :title="$t('certificateDetails')"
+            width="500"
             :height-num="400"
             @cancel="licenseInfo.show = false">
-            <bk-form class="mr10" :label-width="90">
-                <bk-form-item :label="$t('licenceInfo')">
+            <bk-form class="mr10" :label-width=" currentLanguage === 'zh-cn' ? 90 : 150">
+                <bk-form-item :label="$t('licenseInfo')">
                     <a style="word-break:break-all;" :href="licenseInfo.reference" target="_blank">{{ licenseInfo.reference }}</a>
                 </bk-form-item>
                 <bk-form-item :label="$t('referenceDocuments')">
@@ -91,11 +92,11 @@
     </div>
 </template>
 <script>
-    import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
+    import uploadDialog from '@repository/views/repoScan/securityConfig/uploadDialog'
     import { mapActions } from 'vuex'
     export default {
         name: 'user',
-        components: { genericUploadDialog },
+        components: { uploadDialog },
         data () {
             return {
                 isLoading: false,
@@ -143,7 +144,7 @@
                 })
             },
             showUploadLicense () {
-                this.$refs.genericUploadDialog.setData({
+                this.$refs.uploadDialog.setData({
                     projectId: 'public-global',
                     repoName: 'vuldb-repo',
                     show: true,
@@ -158,7 +159,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('setCertificate') + this.$t('space') + `${!isTrust ? this.$t('compliance') : this.$t('notCompliance')}`
+                        message: this.$t('setCertificate') + this.$t('space') + `${!isTrust ? this.$t('compliance') : this.$t('notCompliance')}` + this.$t('space') + this.$t('success')
                     })
                 }).finally(() => {
                     this.getLicenseListHandler()

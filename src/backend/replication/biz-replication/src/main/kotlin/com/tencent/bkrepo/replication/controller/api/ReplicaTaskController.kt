@@ -27,10 +27,11 @@
 
 package com.tencent.bkrepo.replication.controller.api
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.security.permission.Principal
-import com.tencent.bkrepo.common.security.permission.PrincipalType
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskInfo
@@ -53,32 +54,44 @@ import org.springframework.web.bind.annotation.RestController
  * 数据同步任务接口
  */
 @Api("任务接口")
-@Principal(type = PrincipalType.ADMIN)
 @RestController
 @RequestMapping("/api/task")
 class ReplicaTaskController(
     private val replicaTaskService: ReplicaTaskService
 ) {
     @ApiOperation("创建任务")
-    @PostMapping("/create")
-    fun create(@RequestBody request: ReplicaTaskCreateRequest): Response<ReplicaTaskInfo> {
+    @PostMapping("/{projectId}/create")
+    @Permission(ResourceType.REPLICATION, PermissionAction.CREATE)
+    fun create(
+        @PathVariable projectId: String,
+        @RequestBody request: ReplicaTaskCreateRequest
+    ): Response<ReplicaTaskInfo> {
         return ResponseBuilder.success(replicaTaskService.create(request))
     }
 
     @ApiOperation("根据任务key查询任务信息")
-    @GetMapping("/info/{key}")
-    fun getByTaskKey(@PathVariable key: String): Response<ReplicaTaskInfo> {
+    @GetMapping("/info/{projectId}/{key}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.VIEW)
+    fun getByTaskKey(
+        @PathVariable projectId: String,
+        @PathVariable key: String
+    ): Response<ReplicaTaskInfo> {
         return ResponseBuilder.success(replicaTaskService.getByTaskKey(key))
     }
 
     @ApiOperation("根据任务key查询任务详情")
-    @GetMapping("/detail/{key}")
-    fun getDetailByTaskKey(@PathVariable key: String): Response<ReplicaTaskDetail> {
+    @GetMapping("/detail/{projectId}/{key}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.VIEW)
+    fun getDetailByTaskKey(
+        @PathVariable projectId: String,
+        @PathVariable key: String
+    ): Response<ReplicaTaskDetail> {
         return ResponseBuilder.success(replicaTaskService.getDetailByTaskKey(key))
     }
 
     @ApiOperation("分页查询任务")
     @GetMapping("/page/{projectId}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.VIEW)
     fun listReplicationTaskInfoPage(
         @PathVariable projectId: String,
         option: TaskPageParam
@@ -87,36 +100,56 @@ class ReplicaTaskController(
     }
 
     @ApiOperation("删除任务")
-    @DeleteMapping("/delete/{key}")
-    fun delete(@PathVariable key: String): Response<Void> {
+    @DeleteMapping("/delete/{projectId}/{key}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.DELETE)
+    fun delete(
+        @PathVariable projectId: String,
+        @PathVariable key: String
+    ): Response<Void> {
         replicaTaskService.deleteByTaskKey(key)
         return ResponseBuilder.success()
     }
 
     @ApiOperation("任务启停状态切换")
-    @PostMapping("/toggle/status/{key}")
-    fun toggleStatus(@PathVariable key: String): Response<Void> {
+    @PostMapping("/toggle/status/{projectId}/{key}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.ENABLE)
+    fun toggleStatus(
+        @PathVariable projectId: String,
+        @PathVariable key: String
+    ): Response<Void> {
         replicaTaskService.toggleStatus(key)
         return ResponseBuilder.success()
     }
 
     @ApiOperation("任务复制")
-    @PostMapping("/copy")
-    fun copy(@RequestBody request: ReplicaTaskCopyRequest): Response<Void> {
+    @PostMapping("/{projectId}/copy")
+    @Permission(ResourceType.REPLICATION, PermissionAction.COPY)
+    fun copy(
+        @PathVariable projectId: String,
+        @RequestBody request: ReplicaTaskCopyRequest
+    ): Response<Void> {
         replicaTaskService.copy(request)
         return ResponseBuilder.success()
     }
 
     @ApiOperation("任务更新")
-    @PostMapping("/update")
-    fun update(@RequestBody request: ReplicaTaskUpdateRequest): Response<Void> {
+    @PostMapping("/{projectId}/update")
+    @Permission(ResourceType.REPLICATION, PermissionAction.UPDATE)
+    fun update(
+        @PathVariable projectId: String,
+        @RequestBody request: ReplicaTaskUpdateRequest
+    ): Response<Void> {
         replicaTaskService.update(request)
         return ResponseBuilder.success()
     }
 
     @ApiOperation("执行计划")
-    @PostMapping("/execute/{key}")
-    fun execute(@PathVariable key: String): Response<Void> {
+    @PostMapping("/execute/{projectId}/{key}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.EXECUTE)
+    fun execute(
+        @PathVariable projectId: String,
+        @PathVariable key: String
+    ): Response<Void> {
         replicaTaskService.execute(key)
         return ResponseBuilder.success()
     }

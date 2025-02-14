@@ -5,7 +5,7 @@
             v-model="selectedRepoName"
             searchable
             :disabled="disabled"
-            :placeholder="$t('selectRepoPlaceHolder')"
+            :placeholder="$t('selectRepoPlaceholder')"
             @change="pathConstraints = []">
             <bk-option-group
                 v-for="(list, type) in repoGroupList"
@@ -19,8 +19,7 @@
                 </bk-option>
             </bk-option-group>
         </bk-select>
-        <bk-button v-show="!disabled && selectedRepoName" class="mt10" icon="plus" @click="showAddDialog = true">
-            {{ $t('addFilePath') }}</bk-button>
+        <bk-button v-show="!disabled && selectedRepoName" class="mt10" icon="plus" @click="showAddDialog = true">{{$t('addFilePath')}}</bk-button>
         <div class="mt10 path-list" v-show="pathConstraints.length">
             <div class="pl10 pr10 path-item flex-between-center" v-for="(path, ind) in pathConstraints" :key="path">
                 <span class="path-name text-overflow" :title="path">{{ path }}</span>
@@ -38,7 +37,9 @@
         components: { pathDialog },
         props: {
             initData: Array,
-            disabled: Boolean
+            disabled: Boolean,
+            targetStore: String,
+            targetProject: String
         },
         data () {
             return {
@@ -53,15 +54,21 @@
                 return this.$route.params.projectId
             },
             repoGroupList () {
-                return this.repoListAll
+                const groupMap = this.repoListAll
                     .filter(r => {
-                        return ['GENERIC'].includes(r.type)
+                        return ['GENERIC'].includes(r.type) && r.name !== 'pipeline' && r.name !== 'report'
                     })
                     .reduce((target, repo) => {
                         if (!target[repo.type]) target[repo.type] = []
                         target[repo.type].push(repo)
                         return target
                     }, {})
+                Object.keys(groupMap).forEach(key => {
+                    groupMap[key] = groupMap[key].filter(item => {
+                        return item.category !== 'REMOTE'
+                    })
+                })
+                return groupMap
             },
             selectedRepo () {
                 return this.repoListAll.find(v => v.name === this.selectedRepoName) || {}
@@ -70,10 +77,11 @@
         watch: {
             initData: {
                 handler (data) {
-                    const { remoteRepoName, pathConstraints = [] } = JSON.parse(JSON.stringify(data))[0] || {}
-                    this.selectedRepoName = remoteRepoName
+                    const { pathConstraints = [], localRepoName } = JSON.parse(JSON.stringify(data))[0] || {}
+                    this.selectedRepoName = localRepoName
                     this.pathConstraints = pathConstraints.map(v => v.path)
                 },
+                deep: true,
                 immediate: true
             }
         },
@@ -86,8 +94,8 @@
                 return new Promise((resolve, reject) => {
                     const replicaTaskObjects = [{
                         localRepoName: this.selectedRepoName,
-                        remoteProjectId: this.projectId,
-                        remoteRepoName: this.selectedRepoName,
+                        remoteProjectId: this.targetProject || this.projectId,
+                        remoteRepoName: this.targetStore || this.selectedRepoName,
                         repoType: this.selectedRepo.type,
                         pathConstraints: this.pathConstraints.map(path => ({ path }))
                     }]

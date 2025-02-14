@@ -4,12 +4,7 @@
             <template v-for="(item, index) in metadataList">
                 <li :key="index" v-if="index < 2">
                     <span class="key">{{ item.key }}</span>
-                    <span
-                        :style="{ 'background-color': getColorMap(item.key, item.value) }"
-                        v-bk-overflow-tips
-                    >
-                        {{ item.value }}
-                    </span>
+                    <span class="green" v-bk-overflow-tips>{{ item.value }}</span>
                 </li>
             </template>
             <li v-if="metadataList.length > 2">
@@ -18,25 +13,15 @@
                     <ul slot="content" class="popover-list">
                         <li v-for="(item, index) in metadataList.splice(2)" :key="index">
                             <span class="key">{{ item.key }}</span>
-                            <span
-                                :style="{ 'background-color': getColorMap(item.key, item.value) }"
-                                v-bk-overflow-tips
-                            >
-                                {{ item.value }}
-                            </span>
+                            <span class="green" v-bk-overflow-tips>{{ item.value }}</span>
                         </li>
                     </ul>
                 </bk-popover>
             </li>
         </template>
         <li v-else>
-            <span class="key">{{ metadata.key }}</span>
-            <span
-                :style="{ 'background-color': getColorMap(metadata.key, metadata.value) }"
-                v-bk-overflow-tips
-            >
-                {{ metadata.value }}
-            </span>
+            <span class="key" v-bk-overflow-tips>{{ metadata.key }}</span>
+            <span :class="getColor" v-bk-overflow-tips>{{ metadata.value }}</span>
         </li>
     </ul>
 </template>
@@ -46,15 +31,11 @@
         props: {
             metadata: {
                 type: [Array, Object]
-            },
-            metadataLabelList: {
-                type: Array,
-                default: () => []
             }
         },
         computed: {
             metadataList () {
-                return this.metadata.filter(item => item.display === true)
+                return this.metadata.filter(item => item.system === true)
             },
             getColor () {
                 const { system } = this.metadata
@@ -65,13 +46,6 @@
                         return 'red'
                     default:
                         return 'blue'
-                }
-            },
-            // 根据元数据的 key 和 value，获取 value 的配色
-            getColorMap () {
-                return function (key, value) {
-                    const label = this.metadataLabelList?.find(item => item.labelKey === key)
-                    return label?.labelColorMap[value] || '#333333'
                 }
             }
         }
@@ -116,6 +90,8 @@
         }
 
         &.key {
+            max-width: 150px;
+            overflow: hidden;
             background-color: #363c5e;
             background-image: linear-gradient(#606164, #4D4D4D);
         }
@@ -125,8 +101,8 @@
             background-image: linear-gradient(#2F79BA, #1E68A8);
         }
         &.green {
-            background-color: #4CC71F;
-            background-image: linear-gradient(#66BF3F, #54AD2D);
+            background-color: #55AC8E;
+            background-image: linear-gradient(#60B094, #4F9F83);
         }
         &.red {
             background-color: #CA553E;

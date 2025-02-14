@@ -36,5 +36,6 @@ data class TOciReplicationRecord(
     var repoName: String,
     var packageName: String,
     var packageVersion: String,
-    var manifestPath: String
+    var manifestPath: String,
+    var userId: String
 )

@@ -31,8 +31,11 @@ dependencies {
     implementation(project(":common:common-service:service-servlet"))
     implementation(project(":common:common-artifact:artifact-service"))
     implementation(project(":common:common-security"))
-    implementation(project(":common:common-checker:biz-checker"))
-    implementation(project(":common:common-mongo"))
     implementation(project(":common:common-storage:storage-service"))
     implementation("commons-io:commons-io")
+    implementation("net.canway:dependency-check-simple:0.6.1") {
+        exclude(group = "junit", module = "junit")
+        exclude(group = "org.slf4j", module = "slf4j-api")
+        exclude(group = "org.slf4j", module = "slf4j-simple")
+    }
 }

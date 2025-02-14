@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.auth.api
 
 import com.tencent.bkrepo.auth.constant.AUTH_SERVICE_PERMISSION_PREFIX
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.ListPathResult
 import com.tencent.bkrepo.common.api.constant.AUTH_SERVICE_NAME
@@ -41,7 +42,9 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -61,7 +64,11 @@ interface ServicePermissionClient {
         @ApiParam(value = "用户ID")
         @RequestParam userId: String,
         @ApiParam(value = "应用ID")
-        @RequestParam appId: String?
+        @RequestParam appId: String?,
+        @ApiParam(value = "权限动作")
+        @RequestParam actions: List<PermissionAction>?,
+        @ApiParam(value = "是否包含仅授权路径参数的仓库")
+        @RequestParam includePathAuthRepo: Boolean = true,
     ): Response<List<String>>
 
     @ApiOperation("list有权限项目")
@@ -89,4 +96,25 @@ interface ServicePermissionClient {
         @RequestBody request: CheckPermissionRequest,
     ): Response<Boolean>
 
+    @ApiOperation("获取用户仓库下授权的路径集合")
+    @GetMapping("/{userId}/auth/repo_path")
+    fun getAuthRepoPaths(
+        @ApiParam(value = "用户id")
+        @PathVariable userId: String,
+        @ApiParam(value = "项目id")
+        @RequestParam projectId: String,
+        @ApiParam(value = "仓库名称")
+        @RequestParam repoNames: List<String>,
+        @ApiParam(value = "仓库名称")
+        @RequestParam action: PermissionAction
+    ): Response<Map<String, List<String>>>
+
+    @ApiOperation("删除仓库权限数据")
+    @DeleteMapping("/delete/{projectId}/{repoName}")
+    fun deletePermissionData(
+        @ApiParam(value = "项目id")
+        @PathVariable projectId: String,
+        @ApiParam(value = "项目名称")
+        @PathVariable repoName: String
+    ): Response<Boolean>
 }

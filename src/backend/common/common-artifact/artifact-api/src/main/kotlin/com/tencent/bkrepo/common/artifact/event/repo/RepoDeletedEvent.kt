@@ -29,6 +29,7 @@ package com.tencent.bkrepo.common.artifact.event.repo
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 
 /**
  * 项目删除事件
@@ -36,11 +37,13 @@ import com.tencent.bkrepo.common.artifact.event.base.EventType
 data class RepoDeletedEvent(
     override val projectId: String,
     override val repoName: String,
-    override val userId: String
+    override val userId: String,
+    val repoType: RepositoryType
 ) : ArtifactEvent(
     type = EventType.REPO_DELETED,
     projectId = projectId,
     repoName = repoName,
     resourceKey = repoName,
-    userId = userId
+    userId = userId,
+    data = mapOf("repoType" to repoType)
 )

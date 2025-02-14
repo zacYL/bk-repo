@@ -31,9 +31,10 @@
 
 package com.tencent.bkrepo.maven.pojo
 
+import com.tencent.bkrepo.common.artifact.pojo.PackageVersionInfo
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 
 data class MavenArtifactVersionData(
-    val basic: Basic,
+    override val basic: MavenBasicInfo,
     val metadata: List<MetadataModel>?
-)
+) : PackageVersionInfo

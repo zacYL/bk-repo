@@ -32,5 +32,6 @@
 dependencies {
     api(project(":auth:api-auth"))
     api(project(":repository:api-repository"))
+    api(project(":common:common-devops:api"))
     api(project(":common:common-service:service-servlet"))
 }

@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -67,16 +67,24 @@ class ScheduledReplicaJobExecutor(
         var errorReason: String? = null
         var recordId: String? = null
         var replicaOverview: ReplicaOverview? = null
+        var taskDetail: ReplicaTaskDetail? = null
         try {
             // 查询同步对象
-            val taskDetail = replicaTaskService.getDetailByTaskKey(task.key)
+            taskDetail = replicaTaskService.getDetailByTaskKey(task.key)
+            sendReplicaNotify(taskDetail, START)
+            // 计算待同步的制品数
+            val count = replicaTaskService.countArtifactToReplica(taskDetail) * task.remoteClusters.size
+            // 初始化同步进度缓存
+            ReplicaExecutionContext.initProgress(task.key, count)
             // 开启新的同步记录
             val taskRecord = replicaRecordService.startNewRecord(task.key).apply { recordId = id }
             val result = task.remoteClusters.map { submit(taskDetail, taskRecord, it) }.map { it.get() }
-            val resultsSummary = getResultsSummary(result)
-            status = resultsSummary.status
-            errorReason = resultsSummary.errorReason
-            replicaOverview = resultsSummary.replicaOverview
+            val failedResults = result.filter { it.status == ExecutionStatus.FAILED }
+            if (failedResults.isNotEmpty()) {
+                status = ExecutionStatus.FAILED
+                errorReason = "部分数据同步失败 "
+                failedResults.map { errorReason += it.errorReason ?: "" }
+            }
         } catch (exception: Exception) {
             logger.error("提交同步任务失败", exception)
             // 记录异常
@@ -84,8 +92,11 @@ class ScheduledReplicaJobExecutor(
             errorReason = exception.message.orEmpty()
         } finally {
             // 保存结果
-            replicaRecordService.completeRecord(recordId!!, status, errorReason, replicaOverview)
+            replicaRecordService.completeRecord(recordId!!, status, errorReason)
+            // 删除缓存中的进度
+            ReplicaExecutionContext.removeProgress(task.key)
             logger.info("Replica task[$taskId], record[$recordId] finished")
+            sendReplicaNotify(taskDetail, status.name)
         }
     }
 

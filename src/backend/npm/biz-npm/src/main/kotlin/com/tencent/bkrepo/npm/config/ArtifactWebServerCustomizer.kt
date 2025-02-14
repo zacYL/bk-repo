@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.npm.config
 
+import com.tencent.bkrepo.common.service.condition.ConditionalOnUndertow
 import io.undertow.Undertow
 import io.undertow.UndertowOptions
 import org.springframework.boot.web.embedded.undertow.UndertowBuilderCustomizer
@@ -39,6 +40,7 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizer
 import org.springframework.context.annotation.Configuration
 
 @Configuration
+@ConditionalOnUndertow
 class ArtifactWebServerCustomizer : WebServerFactoryCustomizer<UndertowServletWebServerFactory> {
     override fun customize(factory: UndertowServletWebServerFactory) {
         factory.addBuilderCustomizers(

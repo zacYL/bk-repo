@@ -113,6 +113,17 @@ class PackageController(
         return ResponseBuilder.success()
     }
 
+    @Deprecated("生成下载记录时,更新该时间")
+    override fun updateRecentlyUseDate(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): Response<Void> {
+        packageService.updateRecentlyUseDate(projectId, repoName, packageKey, version)
+        return ResponseBuilder.success()
+    }
+
     override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?): Response<Void> {
         packageService.updatePackage(request, realIpAddress)
         return ResponseBuilder.success()
@@ -179,6 +190,11 @@ class PackageController(
 
     override fun getPackageCount(projectId: String, repoName: String): Response<Long> {
         val count = packageService.getPackageCount(projectId, repoName)
+        return ResponseBuilder.success(count)
+    }
+
+    override fun getVersionCount(projectId: String, repoName: String): Response<Long> {
+        val count = packageService.getVersionCount(projectId, repoName)
         return ResponseBuilder.success(count)
     }
 

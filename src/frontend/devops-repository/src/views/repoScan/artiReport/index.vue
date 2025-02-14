@@ -1,5 +1,5 @@
 <template>
-    <div class="container">
+    <div class="container" v-bkloading="{ isLoading }">
         <artifact-info :scan-types="scanTypes" :subtask-overview="subtaskOverview"></artifact-info>
         <bk-tab type="unborder-card" class="arti-tab">
             <bk-tab-panel v-for="(panel, index) in panels" v-bind="panel" :key="index" style="height: 100%">
@@ -20,13 +20,13 @@
         SCAN_TYPE_LICENSE,
         SCAN_TYPE_SECURITY,
         SCAN_TYPE_SENSITIVE
-    } from '../../../store/publicEnum'
+    } from '@repository/store/publicEnum'
     import artifactInfo from './artifactInfo'
     import leakComponent from './leak'
     import licenseComponent from './license'
     import sensitiveComponent from './sensitive'
     import { mapActions } from 'vuex'
-    import { formatDate, formatDuration } from '../../../utils'
+    import { formatDate, formatDuration } from '@repository/utils'
 
     export default {
         components: { artifactInfo, leakComponent, licenseComponent, sensitiveComponent },
@@ -39,7 +39,8 @@
                 },
                 scanTypes: [],
                 panels: [],
-                subtaskOverview: {}
+                subtaskOverview: {},
+                isLoading: false
             }
         },
         computed: {
@@ -60,6 +61,7 @@
             }
         },
         created () {
+            this.isLoading = true
             this.artiReportOverview({
                 projectId: this.projectId,
                 recordId: this.recordId,
@@ -74,10 +76,12 @@
                     duration: formatDuration(res.duration / 1000),
                     finishTime: formatDate(res.finishTime)
                 }
+            }).finally(() => {
+                this.isLoading = false
             })
         },
         methods: {
-            ...mapActions(['getScanConfig', 'artiReportOverview', 'startScanSingle']),
+            ...mapActions(['artiReportOverview', 'startScanSingle']),
             rescan () {
                 this.startScanSingle({
                     projectId: this.projectId,
@@ -125,7 +129,6 @@
         }
     }
 </script>
-
 <style lang="scss" scoped>
 .container {
     height: 100%;

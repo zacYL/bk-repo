@@ -76,6 +76,8 @@ data class ReplicaTaskInfo(
     val record: Boolean? = null,
     @ApiModelProperty("分发日志保留天数")
     val recordReserveDays: Long? = null,
+    @ApiModelProperty("不记录制品的分发记录")
+    var notRecord: Boolean,
     @ApiModelProperty("创建者")
     val createdBy: String,
     @ApiModelProperty("创建日期")
@@ -83,5 +85,9 @@ data class ReplicaTaskInfo(
     @ApiModelProperty("上次修改者")
     val lastModifiedBy: String,
     @ApiModelProperty("上次修改日期")
-    val lastModifiedDate: String
+    val lastModifiedDate: String,
+    @ApiModelProperty("已分发制品数量")
+    var currentProgress: Long? = null,
+    @ApiModelProperty("分发制品总数")
+    val artifactCount: Long? = null
 )

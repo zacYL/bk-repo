@@ -35,7 +35,7 @@ import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiModelProperty
 
-@Api("npm版本详情页返回包装模型")
+@Api("helm版本详情页返回包装模型")
 data class PackageVersionInfo(
     @ApiModelProperty("基础信息")
     val basic: BasicInfo,

@@ -1,0 +1,464 @@
+{
+  "timestamp" : "2024-11-08T18:47:42.459691938",
+  "systems" : [ ],
+  "tree" : [ {
+    "code" : "2c5c80cf",
+    "name" : "CPack",
+    "configJsonPath" : "CPack",
+    "nodeType" : "DIRECTORY",
+    "sort" : 1728724228311,
+    "unShelve" : false,
+    "children" : [ {
+      "code" : "716258c1",
+      "name" : "PyPI制品管理",
+      "configJsonPath" : "CPack/PyPI制品管理",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228372,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-pypi",
+        "name" : "删除指定PyPI包的所有版本",
+        "configJsonPath" : "CPack/PyPI制品管理/DELETE__ext_package_delete_{projectId}_{repoName}_repo-pypi.json",
+        "nodeType" : "API",
+        "sort" : 1728724228378,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-pypi",
+        "name" : "删除PyPI包的指定版本",
+        "configJsonPath" : "CPack/PyPI制品管理/DELETE__ext_version_delete_{projectId}_{repoName}_repo-pypi.json",
+        "nodeType" : "API",
+        "sort" : 1728724228378,
+        "unShelve" : false
+      }, {
+        "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-pypi",
+        "name" : "查询PyPI包版本详情",
+        "configJsonPath" : "CPack/PyPI制品管理/GET__ext_version_detail_{projectId}_{repoName}_repo-pypi.json",
+        "nodeType" : "API",
+        "sort" : 1728724228378,
+        "unShelve" : false
+      } ]
+    }, {
+      "code" : "3dbb80e5",
+      "name" : "helm制品管理",
+      "configJsonPath" : "CPack/helm制品管理",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228366,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-helm",
+        "name" : "删除指定helm包的所有版本",
+        "configJsonPath" : "CPack/helm制品管理/DELETE__ext_package_delete_{projectId}_{repoName}_repo-helm.json",
+        "nodeType" : "API",
+        "sort" : 1728724228372,
+        "unShelve" : false
+      }, {
+        "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-helm",
+        "name" : "查询helm包版本详情",
+        "configJsonPath" : "CPack/helm制品管理/GET__ext_version_detail_{projectId}_{repoName}_repo-helm.json",
+        "nodeType" : "API",
+        "sort" : 1728724228372,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-helm",
+        "name" : "删除helm包的指定版本",
+        "configJsonPath" : "CPack/helm制品管理/DELETE__ext_version_delete_{projectId}_{repoName}_repo-helm.json",
+        "nodeType" : "API",
+        "sort" : 1728724228372,
+        "unShelve" : false
+      } ]
+    }, {
+      "code" : "253af288",
+      "name" : "npm制品管理",
+      "configJsonPath" : "CPack/npm制品管理",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228359,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-npm",
+        "name" : "查询npm包版本详情",
+        "configJsonPath" : "CPack/npm制品管理/GET__ext_version_detail_{projectId}_{repoName}_repo-npm.json",
+        "nodeType" : "API",
+        "sort" : 1728724228366,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-npm",
+        "name" : "删除指定npm包的所有版本",
+        "configJsonPath" : "CPack/npm制品管理/DELETE__ext_package_delete_{projectId}_{repoName}_repo-npm.json",
+        "nodeType" : "API",
+        "sort" : 1728724228366,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-npm",
+        "name" : "删除npm包的指定版本",
+        "configJsonPath" : "CPack/npm制品管理/DELETE__ext_version_delete_{projectId}_{repoName}_repo-npm.json",
+        "nodeType" : "API",
+        "sort" : 1728724228366,
+        "unShelve" : false
+      } ]
+    }, {
+      "code" : "5dc53299",
+      "name" : "仓库管理",
+      "configJsonPath" : "CPack/仓库管理",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228353,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "DELETE__api_repo_delete_{projectId}_{repoName}_repo-repository",
+        "name" : "删除仓库",
+        "configJsonPath" : "CPack/仓库管理/DELETE__api_repo_delete_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228359,
+        "unShelve" : false
+      }, {
+        "code" : "POST__api_repo_create_repo-repository",
+        "name" : "创建仓库",
+        "configJsonPath" : "CPack/仓库管理/POST__api_repo_create_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228359,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_repo_info_{projectId}_{repoName}_repo-repository",
+        "name" : "查询指定仓库详情",
+        "configJsonPath" : "CPack/仓库管理/GET__api_repo_info_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228359,
+        "unShelve" : false
+      }, {
+        "code" : "POST__api_repo_update_{projectId}_{repoName}_repo-repository",
+        "name" : "修改仓库设置",
+        "configJsonPath" : "CPack/仓库管理/POST__api_repo_update_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228359,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_repo_page_{projectId}_{pageNumber}_{pageSize}_repo-repository",
+        "name" : "分页查询仓库列表",
+        "configJsonPath" : "CPack/仓库管理/GET__api_repo_page_{projectId}_{pageNumber}_{pageSize}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228359,
+        "unShelve" : false
+      } ]
+    }, {
+      "code" : "e8262b14",
+      "name" : "依赖源仓库制品包管理",
+      "configJsonPath" : "CPack/依赖源仓库制品包管理",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228346,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "GET__api_metadata_package_{projectId}_{repoName}_repo-repository",
+        "name" : "查询制品元数据列表",
+        "configJsonPath" : "CPack/依赖源仓库制品包管理/GET__api_metadata_package_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228353,
+        "unShelve" : false
+      }, {
+        "code" : "POST__api_stage_upgrade_{projectId}_{repoName}_repo-repository",
+        "name" : "制品晋级",
+        "configJsonPath" : "CPack/依赖源仓库制品包管理/POST__api_stage_upgrade_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228353,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_version_download_{projectId}_{repoName}_repo-repository",
+        "name" : "下载制品",
+        "configJsonPath" : "CPack/依赖源仓库制品包管理/GET__api_version_download_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228353,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_package_page_{projectId}_{repoName}_repo-repository",
+        "name" : "分页查询包",
+        "configJsonPath" : "CPack/依赖源仓库制品包管理/GET__api_package_page_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228353,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_stage_{projectId}_{repoName}_repo-repository",
+        "name" : "查询制品晋级状态",
+        "configJsonPath" : "CPack/依赖源仓库制品包管理/GET__api_stage_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228353,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__api_metadata_package_{projectId}_{repoName}_repo-repository",
+        "name" : "删除制品元数据",
+        "configJsonPath" : "CPack/依赖源仓库制品包管理/DELETE__api_metadata_package_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228353,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_version_page_{projectId}_{repoName}_repo-repository",
+        "name" : "分页查询包版本",
+        "configJsonPath" : "CPack/依赖源仓库制品包管理/GET__api_version_page_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228353,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_version_list_{projectId}_{repoName}_repo-repository",
+        "name" : "查询指定包的所有版本",
+        "configJsonPath" : "CPack/依赖源仓库制品包管理/GET__api_version_list_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228353,
+        "unShelve" : false
+      }, {
+        "code" : "POST__api_metadata_package_{projectId}_{repoName}_repo-repository",
+        "name" : "创建或更新元数据",
+        "configJsonPath" : "CPack/依赖源仓库制品包管理/POST__api_metadata_package_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228353,
+        "unShelve" : false
+      } ]
+    }, {
+      "code" : "59ca0db6",
+      "name" : "NuGet制品管理",
+      "configJsonPath" : "CPack/NuGet制品管理",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228341,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-nuget",
+        "name" : "查询NuGet包版本详情",
+        "configJsonPath" : "CPack/NuGet制品管理/GET__ext_version_detail_{projectId}_{repoName}_repo-nuget.json",
+        "nodeType" : "API",
+        "sort" : 1728724228346,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-nuget",
+        "name" : "删除指定NuGet包的所有版本",
+        "configJsonPath" : "CPack/NuGet制品管理/DELETE__ext_package_delete_{projectId}_{repoName}_repo-nuget.json",
+        "nodeType" : "API",
+        "sort" : 1728724228346,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-nuget",
+        "name" : "删除NuGet包的指定版本",
+        "configJsonPath" : "CPack/NuGet制品管理/DELETE__ext_version_delete_{projectId}_{repoName}_repo-nuget.json",
+        "nodeType" : "API",
+        "sort" : 1728724228346,
+        "unShelve" : false
+      } ]
+    }, {
+      "code" : "aacf7095",
+      "name" : "maven制品管理",
+      "configJsonPath" : "CPack/maven制品管理",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228335,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "GET__ext_search_gavc_{projectId}_{pageNumber}_{pageSize}_repo-maven",
+        "name" : "maven高级搜索",
+        "configJsonPath" : "CPack/maven制品管理/GET__ext_search_gavc_{projectId}_{pageNumber}_{pageSize}_repo-maven.json",
+        "nodeType" : "API",
+        "sort" : 1728724228341,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-maven",
+        "name" : "删除指定maven包的所有版本",
+        "configJsonPath" : "CPack/maven制品管理/DELETE__ext_package_delete_{projectId}_{repoName}_repo-maven.json",
+        "nodeType" : "API",
+        "sort" : 1728724228341,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-maven",
+        "name" : "删除maven包的指定版本",
+        "configJsonPath" : "CPack/maven制品管理/DELETE__ext_version_delete_{projectId}_{repoName}_repo-maven.json",
+        "nodeType" : "API",
+        "sort" : 1728724228341,
+        "unShelve" : false
+      }, {
+        "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-maven",
+        "name" : "查询maven包版本详情",
+        "configJsonPath" : "CPack/maven制品管理/GET__ext_version_detail_{projectId}_{repoName}_repo-maven.json",
+        "nodeType" : "API",
+        "sort" : 1728724228341,
+        "unShelve" : false
+      } ]
+    }, {
+      "code" : "518fd5b3",
+      "name" : "Generic仓库文件管理",
+      "configJsonPath" : "CPack/Generic仓库文件管理",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228329,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "POST__api_metadata_{projectId}_{repoName}_{fullPath}_repo-repository",
+        "name" : "创建或更新文件元数据",
+        "configJsonPath" : "CPack/Generic仓库文件管理/POST__api_metadata_{projectId}_{repoName}_{fullPath}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "GET__{projectId}_{repoName}_{fullPath}_repo-generic",
+        "name" : "下载文件或目录",
+        "configJsonPath" : "CPack/Generic仓库文件管理/GET__{projectId}_{repoName}_{fullPath}_repo-generic.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "PUT__{projectId}_{repoName}_{fullPath}_repo-generic",
+        "name" : "上传文件",
+        "configJsonPath" : "CPack/Generic仓库文件管理/PUT__{projectId}_{repoName}_{fullPath}_repo-generic.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__api_node_delete_{projectId}_{repoName}_{fullPath}_repo-repository",
+        "name" : "删除文件或目录",
+        "configJsonPath" : "CPack/Generic仓库文件管理/DELETE__api_node_delete_{projectId}_{repoName}_{fullPath}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__api_metadata_{projectId}_{repoName}_{fullPath}_repo-repository",
+        "name" : "删除文件元数据",
+        "configJsonPath" : "CPack/Generic仓库文件管理/DELETE__api_metadata_{projectId}_{repoName}_{fullPath}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_node_detail_{projectId}_{repoName}_{fullPath}_repo-repository",
+        "name" : "查询文件或目录详情",
+        "configJsonPath" : "CPack/Generic仓库文件管理/GET__api_node_detail_{projectId}_{repoName}_{fullPath}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__api_node_batch_{projectId}_{repoName}_repo-repository",
+        "name" : "批量删除文件",
+        "configJsonPath" : "CPack/Generic仓库文件管理/DELETE__api_node_batch_{projectId}_{repoName}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_node_page_{projectId}_{repoName}_{fullPath}_repo-repository",
+        "name" : "分页查询指定路径下的文件",
+        "configJsonPath" : "CPack/Generic仓库文件管理/GET__api_node_page_{projectId}_{repoName}_{fullPath}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "POST__api_node_copy_repo-repository",
+        "name" : "复制文件或目录",
+        "configJsonPath" : "CPack/Generic仓库文件管理/POST__api_node_copy_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_metadata_{projectId}_{repoName}_{fullPath}_repo-repository",
+        "name" : "查询文件元数据列表",
+        "configJsonPath" : "CPack/Generic仓库文件管理/GET__api_metadata_{projectId}_{repoName}_{fullPath}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "POST__api_node_move_repo-repository",
+        "name" : "移动文件或目录",
+        "configJsonPath" : "CPack/Generic仓库文件管理/POST__api_node_move_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "POST__api_node_mkdir_{projectId}_{repoName}_{fullPath}_repo-repository",
+        "name" : "创建目录",
+        "configJsonPath" : "CPack/Generic仓库文件管理/POST__api_node_mkdir_{projectId}_{repoName}_{fullPath}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "GET__api_node_page_repo-repository",
+        "name" : "根据sha256分页查询文件",
+        "configJsonPath" : "CPack/Generic仓库文件管理/GET__api_node_page_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__{projectId}_{repoName}_{fullPath}_repo-generic",
+        "name" : "删除文件或空目录",
+        "configJsonPath" : "CPack/Generic仓库文件管理/DELETE__{projectId}_{repoName}_{fullPath}_repo-generic.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      }, {
+        "code" : "POST__api_node_rename_{projectId}_{repoName}_{fullPath}_repo-repository",
+        "name" : "重命名文件或目录",
+        "configJsonPath" : "CPack/Generic仓库文件管理/POST__api_node_rename_{projectId}_{repoName}_{fullPath}_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228335,
+        "unShelve" : false
+      } ]
+    }, {
+      "code" : "99e678f0",
+      "name" : "docker制品管理",
+      "configJsonPath" : "CPack/docker制品管理",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228323,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-oci",
+        "name" : "查询docker镜像版本详情",
+        "configJsonPath" : "CPack/docker制品管理/GET__ext_version_detail_{projectId}_{repoName}_repo-oci.json",
+        "nodeType" : "API",
+        "sort" : 1728724228329,
+        "unShelve" : false
+      }, {
+        "code" : "GET__ext_tag_{projectId}_{repoName}_{name}_repo-oci",
+        "name" : "分页查询指定镜像名称的版本",
+        "configJsonPath" : "CPack/docker制品管理/GET__ext_tag_{projectId}_{repoName}_{name}_repo-oci.json",
+        "nodeType" : "API",
+        "sort" : 1728724228329,
+        "unShelve" : false
+      }, {
+        "code" : "GET__ext_repo_{projectId}_{repoName}_repo-oci",
+        "name" : "分页查询指定仓库内的镜像",
+        "configJsonPath" : "CPack/docker制品管理/GET__ext_repo_{projectId}_{repoName}_repo-oci.json",
+        "nodeType" : "API",
+        "sort" : 1728724228329,
+        "unShelve" : false
+      }, {
+        "code" : "GET__ext_manifest_{projectId}_{repoName}_{imageName}_{tag}_repo-oci",
+        "name" : "获取manifest文件内容",
+        "configJsonPath" : "CPack/docker制品管理/GET__ext_manifest_{projectId}_{repoName}_{imageName}_{tag}_repo-oci.json",
+        "nodeType" : "API",
+        "sort" : 1728724228329,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-oci",
+        "name" : "删除指定镜像的所有版本",
+        "configJsonPath" : "CPack/docker制品管理/DELETE__ext_package_delete_{projectId}_{repoName}_repo-oci.json",
+        "nodeType" : "API",
+        "sort" : 1728724228329,
+        "unShelve" : false
+      }, {
+        "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-oci",
+        "name" : "删除镜像的指定版本",
+        "configJsonPath" : "CPack/docker制品管理/DELETE__ext_version_delete_{projectId}_{repoName}_repo-oci.json",
+        "nodeType" : "API",
+        "sort" : 1728724228329,
+        "unShelve" : false
+      } ]
+    }, {
+      "code" : "092ba7b6",
+      "name" : "高级搜索",
+      "configJsonPath" : "CPack/高级搜索",
+      "nodeType" : "DIRECTORY",
+      "sort" : 1728724228318,
+      "unShelve" : false,
+      "children" : [ {
+        "code" : "POST__api_package_search_repo-repository",
+        "name" : "制品包高级搜索",
+        "configJsonPath" : "CPack/高级搜索/POST__api_package_search_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228323,
+        "unShelve" : false
+      }, {
+        "code" : "POST__api_node_search_repo-repository",
+        "name" : "文件高级搜索",
+        "configJsonPath" : "CPack/高级搜索/POST__api_node_search_repo-repository.json",
+        "nodeType" : "API",
+        "sort" : 1728724228323,
+        "unShelve" : false
+      } ]
+    } ]
+  } ]
+}

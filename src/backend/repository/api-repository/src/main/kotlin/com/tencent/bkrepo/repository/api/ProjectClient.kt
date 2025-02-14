@@ -43,6 +43,7 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -79,4 +80,11 @@ interface ProjectClient {
     @ApiOperation("获取项目启用/禁用状态")
     @PostMapping("/enabled/{name}")
     fun isProjectEnabled(@ApiParam(value = "项目名") @PathVariable name: String): Response<Boolean>
+
+    @ApiOperation("删除项目")
+    @DeleteMapping("/delete/{name}")
+    fun deleteProject(
+        @ApiParam(value = "项目ID", required = true)
+        @PathVariable name: String
+    ): Response<Void>
 }

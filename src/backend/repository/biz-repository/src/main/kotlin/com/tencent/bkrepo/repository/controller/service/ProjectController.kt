@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.ProjectClient
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
 import com.tencent.bkrepo.repository.pojo.project.ProjectMetricsInfo
@@ -72,5 +73,10 @@ class ProjectController(
 
     override fun isProjectEnabled(name: String): Response<Boolean> {
         return ResponseBuilder.success(projectService.isProjectEnabled(name))
+    }
+
+    override fun deleteProject(name: String): Response<Void> {
+        projectService.deleteProject(SYSTEM_USER, name, name)
+        return ResponseBuilder.success()
     }
 }

@@ -1,11 +1,13 @@
 <template>
-    <bk-breadcrumb separator-class="bk-icon icon-angle-right">
-        <slot></slot>
+    <bk-breadcrumb>
         <bk-breadcrumb-item
-            v-for="item in list"
+            v-for="(item, index) in list"
             :key="item.name"
-            :to="{ name: item.to || item.name, params: { ...$route.query, ...$route.params }, query: $route.query }">
-            {{ transformLabel(item.label,item.name) || $t(item.template) }}
+            :to="{ name: item.name, params: { ...$route.query, ...$route.params }, query: $route.query }">
+            <svg v-if="index === 0" width="48" height="16" style="vertical-align:-3px;margin-right: 5px;">
+                <use xlink:href="#vpack" />
+            </svg>
+            {{ transformLabel(item.label) || $t(item.template) }}
         </bk-breadcrumb-item>
     </bk-breadcrumb>
 </template>
@@ -18,12 +20,16 @@
             }
         },
         methods: {
-            transformLabel (label, name) {
+            transformLabel (label) {
                 const ctx = { ...this.$route.params, ...this.$route.query }
-                const transformLabel = label.replace(/\{(.*?)\}/g, (_, $1) => {
-                    return $1 in ctx ? ctx[$1] : ''
-                })
-                return this.replaceRepoName(transformLabel === label ? this.$t(name) : transformLabel)
+                const regexp = /\{(.*?)\}/g
+                // 当label不是{开头}结尾时，表示此时是一级菜单或是静态值，直接国际化即可
+                const transformLabel = regexp.test(label)
+                    ? label.replace(regexp, (_, $1) => {
+                        return $1 in ctx ? ctx[$1] : ''
+                    })
+                    : this.$t(label)
+                return this.replaceRepoName(transformLabel)
             }
         }
     }

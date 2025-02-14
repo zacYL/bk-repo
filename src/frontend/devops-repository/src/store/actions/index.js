@@ -6,11 +6,14 @@ import repoCommon from './repoCommon'
 import token from './token'
 import permission from './permission'
 import nodeManage from './nodeManage'
+import networkConfig from './networkConfig'
 import project from './project'
 import scan from './scan'
-import oauth from './oauth'
+import repoCatalog from './repoCatalog'
+import blackWhiteList from './blackWhiteList'
 
 const prefix = 'repository/api'
+const auth = 'auth/api'
 
 export default {
     ...repoGeneric,
@@ -18,9 +21,12 @@ export default {
     ...token,
     ...permission,
     ...nodeManage,
+    ...networkConfig,
     ...project,
     ...scan,
-    ...oauth,
+    ...repoCatalog,
+    ...blackWhiteList,
+
     /*
         创建仓库
         body: {
@@ -47,46 +53,49 @@ export default {
         )
     },
     // 分页查询仓库列表
-    getRepoList (_, { projectId, current, limit, name, type }) {
+    getRepoList (_, { projectId, current, limit, name, type, category }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/repo/page/${projectId}/${current}/${limit}`,
             {
                 params: {
                     name: name || undefined,
-                    type: type || undefined
+                    type: type || undefined,
+                    category: category || undefined
                 }
             }
-        ).then(res => ({
-            ...res,
-            records: MODE_CONFIG === 'ci'
-                ? res.records.filter(v => v.name !== 'report' && v.name !== 'log')
-                : res.records
-        })) // 前端隐藏report仓库/log仓库
+        )
     },
-    // 查询所有仓库
-    getRepoListWithoutPage (_, { projectId, name, type }) {
+    // 获取有复制移动权限的generic仓库列表
+    getGenericList (_, { projectId, type = 'GENERIC' }) {
+        return Vue.prototype.$ajax.get(`${prefix}/repo/list/${projectId}?type=${type}`)
+    },
+    // 查询仓库列表
+    getRepoListAll ({ commit }, { projectId, type, searchFlag = false }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/repo/list/${projectId}`,
             {
                 params: {
-                    name: name || undefined,
-                    type: type || undefined
+                    type: type || ''
                 }
             }
-        ).then(res => ({
-            ...res,
-            records: MODE_CONFIG === 'ci'
-                ? res.filter(v => v.name !== 'report' && v.name !== 'log' && v.type !== 'RDS')
-                : res.filter(v => v.type !== 'RDS')
-        }))
-    },
-    // 查询仓库列表
-    getRepoListAll ({ commit }, { projectId }) {
-        return Vue.prototype.$ajax.get(
-            `${prefix}/repo/list/${projectId}`
         ).then(res => {
-            // 前端隐藏report仓库/log仓库
-            commit('SET_REPO_LIST_ALL', res.filter(v => v.name !== 'report' && v.name !== 'log' && v.type !== 'RDS'))
+            return searchFlag ? res : commit('SET_REPO_LIST_ALL', res)
+        })
+    },
+    // 查询权限仓库列表
+    getReadRepoListAll ({ commit }, { projectId, type, searchFlag = false }) {
+        return Vue.prototype.$ajax.get(
+            `${prefix}/repo/list/${projectId}`,
+            {
+                params: {
+                    type: type || '',
+                    actions: 'READ',
+                    includePathAuthRepo: false
+
+                }
+            }
+        ).then(res => {
+            return searchFlag ? res : commit('SET_READ_REPO_LIST_ALL', res)
         })
     },
     // 查询仓库信息
@@ -121,15 +130,65 @@ export default {
             window.postMessage({
                 action: 'toggleLoginDialog'
             }, '*')
-            // eslint-disable-next-line no-undef
-            if (window.ADD_FROM_LOGOUT === 'not') {
-                location.href = window.getLoginUrl()
-            } else {
-                location.href = window.getLoginUrl() + '&is_from_logout=1'
-            }
+            location.href = window.getLoginUrl()
         } else {
             cookie.remove('bkrepo_ticket')
             commit('SHOW_LOGIN_DIALOG', true)
         }
+    },
+    // 创建远程仓库时测试链接
+    testRemoteUrl (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/repo/testremote`,
+            body
+        )
+    },
+    /**
+     * @description: 创建仓库权限路径集合资源
+     * @param {*} _
+     * @param {*} body
+     * @return {*}
+     */
+    repoPathCreate (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${auth}/permission/resource_type/repo_path_collection/create`,
+            body
+        )
+    },
+    /**
+     * @description: 删除仓库权限路径集合资源
+     * @param {*} _
+     * @param {*} body
+     * @return {*}
+     */
+    repoPathDelete (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${auth}/permission/resource_type/repo_path_collection/delete`,
+            body
+        )
+    },
+    /**
+     * @description: 仓库权限路径集合资源列表
+     * @param {*} _
+     * @param {*} body
+     * @return {*}
+     */
+    repoPathList (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${auth}/permission/resource_type/repo_path_collection/list`,
+            body
+        )
+    },
+    /**
+     * @description: 更新仓库权限路径集合资源
+     * @param {*} _
+     * @param {*} body
+     * @return {*}
+     */
+    repoPathUpdate (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${auth}/permission/resource_type/repo_path_collection/update`,
+            body
+        )
     }
 }

@@ -96,6 +96,17 @@ class ArtifactReplicaController(
         return ResponseBuilder.success(nodeService.checkExist(ArtifactInfo(projectId, repoName, fullPath)))
     }
 
+    override fun checkNodeExistAndMd5(
+        projectId: String,
+        repoName: String,
+        fullPath: String,
+        md5: String
+    ): Response<Boolean> {
+        return nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, fullPath))?.let {
+            ResponseBuilder.success(it.md5 == md5)
+        } ?: ResponseBuilder.success(false)
+    }
+
     override fun checkNodeExistList(
         request: NodeExistCheckRequest
     ): Response<List<String>> {
@@ -200,5 +211,9 @@ class ArtifactReplicaController(
     ): Response<Void> {
         packageService.createPackageVersion(request)
         return ResponseBuilder.success()
+    }
+
+    override fun checkProjectExist(projectId: String): Response<Boolean> {
+        return ResponseBuilder.success(projectService.getProjectInfo(projectId) != null)
     }
 }

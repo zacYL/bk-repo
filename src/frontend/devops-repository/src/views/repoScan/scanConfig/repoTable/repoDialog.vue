@@ -1,3 +1,9 @@
+<!--
+ * @Date: 2024-11-01 22:08:22
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2024-12-04 18:08:26
+ * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanConfig/repoTable/repoDialog.vue
+-->
 <template>
     <canway-dialog
         :value="show"

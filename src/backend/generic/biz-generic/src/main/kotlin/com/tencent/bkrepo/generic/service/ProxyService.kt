@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryId
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
@@ -107,6 +108,7 @@ class ProxyService(
                 ArtifactResource(
                     inputStream = ArtifactInputStream(proxyJar.bound(range), range),
                     artifactName = "proxy.jar",
+                    srcRepo = RepositoryIdentify(genericProperties.proxy.projectId, genericProperties.proxy.repoName),
                     useDisposition = true
                 )
             )

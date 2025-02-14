@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.conan.constant.X_CONAN_SERVER_CAPABILITIES
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.AUTHENTICATE_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.AUTHENTICATE_V2
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.BASE
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.CHECK_CREDENTIALS_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.CHECK_CREDENTIALS_V2
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.PING_V1

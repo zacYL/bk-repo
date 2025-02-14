@@ -63,6 +63,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.DeleteMapping
 
 @Api("项目用户接口")
 @RestController
@@ -216,4 +217,19 @@ class UserProjectController(
     ): Response<Boolean> {
         return ResponseBuilder.success(projectService.isProjectEnabled(projectId))
     }
+
+
+	@ApiOperation("删除项目")
+	@Principal(PrincipalType.ADMIN)
+	@DeleteMapping("/delete/{name}")
+	fun deleteProject(
+		@RequestAttribute userId: String,
+		@ApiParam(value = "项目ID", required = true)
+		@PathVariable name: String,
+		@ApiParam(value = "用户输入的确认信息(项目id)", required = true)
+		@RequestParam confirmName: String
+	): Response<Void> {
+		projectService.deleteProject(userId, name, confirmName)
+		return ResponseBuilder.success()
+	}
 }

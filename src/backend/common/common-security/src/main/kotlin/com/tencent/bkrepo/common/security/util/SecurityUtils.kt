@@ -33,6 +33,7 @@ package com.tencent.bkrepo.common.security.util
 
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.constant.AUTHORITIES_KEY
+import com.tencent.bkrepo.common.api.constant.CI_MS_REQUEST_KEY
 import com.tencent.bkrepo.common.api.constant.MS_REQUEST_KEY
 import com.tencent.bkrepo.common.api.constant.MS_REQUEST_SRC_CLUSTER
 import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
@@ -97,7 +98,8 @@ object SecurityUtils {
      */
     fun isServiceRequest(): Boolean {
         try {
-            return RequestContextHolder.getRequestAttributes()?.getAttribute(MS_REQUEST_KEY, SCOPE_REQUEST) != null
+            return (RequestContextHolder.getRequestAttributes()?.getAttribute(MS_REQUEST_KEY, SCOPE_REQUEST) != null
+                    || HttpContextHolder.getRequestOrNull()?.getHeader(CI_MS_REQUEST_KEY) != null)
         } catch (e: IllegalStateException) {
             logger.error("check isServiceRequest failed", e)
         }

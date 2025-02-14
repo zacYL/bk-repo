@@ -19,6 +19,7 @@ import com.tencent.bkrepo.common.metadata.interceptor.DownloadInterceptorFactory
 import com.tencent.bkrepo.common.metadata.model.TRepository
 import com.tencent.bkrepo.common.security.util.RsaUtils
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelCreateRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelDeleteRequest
@@ -76,6 +77,7 @@ class RepositoryServiceHelper(
                     quota = it.quota,
                     used = it.used,
                     oldCredentialsKey = it.oldCredentialsKey,
+                    coverStrategy = it.coverStrategy,
                 )
             }
         }
@@ -99,7 +101,8 @@ class RepositoryServiceHelper(
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     quota = it.quota,
                     used = it.used,
-                    display = it.display
+                    display = it.display,
+                    coverStrategy = it.coverStrategy,
                 )
             }
         }
@@ -205,6 +208,7 @@ class RepositoryServiceHelper(
             repoName: String? = null,
             repoType: String? = null,
             display: Boolean? = null,
+            category: List<String>? = null,
         ): Query {
             val criteria = where(TRepository::projectId).isEqualTo(projectId)
             if (display == true) {
@@ -215,6 +219,9 @@ class RepositoryServiceHelper(
             repoType?.takeIf { it.isNotBlank() }?.apply { criteria.and(TRepository::type).isEqualTo(this.uppercase(
                 Locale.getDefault()
             )) }
+            category
+                ?.takeIf { it.isNotEmpty() }
+                ?.apply { criteria.and(TRepository::category).inValues(this.map { it.uppercase(Locale.getDefault()) }) }
             return Query(criteria).with(Sort.by(Sort.Direction.DESC, TRepository::createdDate.name))
         }
 
@@ -240,6 +247,7 @@ class RepositoryServiceHelper(
                     quota = quota,
                     used = 0,
                     display = display,
+                    coverStrategy = coverStrategy,
                 )
             }
         }
@@ -264,7 +272,8 @@ class RepositoryServiceHelper(
         fun checkInterceptorConfig(configuration: RepositoryConfiguration?): Boolean {
             val settings = configuration?.settings
             settings?.let {
-                val interceptors = DownloadInterceptorFactory.buildInterceptors(settings)
+                val interceptors = DownloadInterceptorFactory.buildInterceptors<NodeDetail>(settings) +
+                        DownloadInterceptorFactory.buildInterceptors<String>(settings)
                 interceptors.forEach {
                     try {
                         it.parseRule()
@@ -313,8 +322,8 @@ class RepositoryServiceHelper(
             option.type?.takeIf { it.isNotBlank() }?.apply { criteria.and(TRepository::type).isEqualTo(this.uppercase(
                 Locale.getDefault()
             )) }
-            option.category?.takeIf { it.isNotBlank() }?.apply {
-                criteria.and(TRepository::category).isEqualTo(this.uppercase(Locale.getDefault()))
+            option.category?.takeIf { it.isNotEmpty() }?.apply {
+                criteria.and(TRepository::category).inValues(this.map { it.uppercase(Locale.getDefault()) })
             }
             val query = Query(criteria).with(Sort.by(Sort.Direction.DESC, TRepository::createdDate.name))
             return query
@@ -407,6 +416,9 @@ class RepositoryServiceHelper(
             password = proxy.password,
             public = proxy.public,
             credentialKey = proxy.credentialKey,
+            networkProxy = proxy.networkProxy,
+            connectTimeout = proxy.connectTimeout,
+            readTimeout = proxy.readTimeout,
         )
 
         fun buildProxyChannelUpdateRequest(
@@ -422,6 +434,9 @@ class RepositoryServiceHelper(
             password = proxy.password,
             public = proxy.public,
             credentialKey = proxy.credentialKey,
+            networkProxy = proxy.networkProxy,
+            connectTimeout = proxy.connectTimeout,
+            readTimeout = proxy.readTimeout,
         )
 
         fun buildTypeQuery(type: String): Query {

@@ -29,16 +29,17 @@ package com.tencent.bkrepo.common.artifact.resolve.response
 
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.exception.OverloadException
 import com.tencent.bkrepo.common.api.exception.TooManyRequestsException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.metrics.RecordAbleInputStream
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.common.artifact.util.http.IOExceptionUtils
-import com.tencent.bkrepo.common.storage.config.StorageProperties
-import com.tencent.bkrepo.common.api.exception.OverloadException
 import com.tencent.bkrepo.common.ratelimiter.service.RequestLimitCheckService
 import com.tencent.bkrepo.common.ratelimiter.stream.CommonRateLimitInputStream
+import com.tencent.bkrepo.common.storage.config.StorageProperties
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.common.storage.monitor.measureThroughput
 import org.slf4j.LoggerFactory
@@ -53,6 +54,14 @@ abstract class AbstractArtifactResourceHandler(
     private val storageProperties: StorageProperties,
     private val requestLimitCheckService: RequestLimitCheckService
 ) : ArtifactResourceWriter {
+
+    protected fun getBaseName(resource: ArtifactResource) =
+        when {
+            resource.node == null -> System.currentTimeMillis().toString()
+            PathUtils.isRoot(resource.node.name) -> resource.node.projectId + "-" + resource.node.repoName
+            else -> resource.node.name
+        }
+
     /**
      * 获取动态buffer size
      * @param totalSize 数据总大小

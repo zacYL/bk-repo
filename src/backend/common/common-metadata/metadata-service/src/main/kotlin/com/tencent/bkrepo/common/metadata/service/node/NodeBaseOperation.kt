@@ -53,6 +53,11 @@ interface NodeBaseOperation {
     fun getNodeDetail(artifact: ArtifactInfo, repoType: String? = null): NodeDetail?
 
     /**
+     * 通过ID查询节点路径
+     */
+    fun listFullPathById(projectId: String, id: List<String>): Map<String, String>
+
+    /**
      * 列表查询节点
      */
     fun listNode(artifact: ArtifactInfo, option: NodeListOption): List<NodeInfo>
@@ -102,6 +107,11 @@ interface NodeBaseOperation {
      * 更新节点
      */
     fun updateNode(updateRequest: NodeUpdateRequest)
+
+    /**
+     * 更新节点的【最近使用时间】
+     */
+    fun updateRecentlyUseDate(projectId: String, repoName: String, fullPath: String)
 
     /**
      * 更新节点访问时间

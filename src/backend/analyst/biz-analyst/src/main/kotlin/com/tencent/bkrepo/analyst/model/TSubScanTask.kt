@@ -115,7 +115,11 @@ class TSubScanTask(
     /**
      * 扫描任务元数据
      */
-    val metadata: List<TaskMetadata> = emptyList()
+    val metadata: List<TaskMetadata> = emptyList(),
+    /**
+     * cve白名单
+     */
+    cveWhite: List<String>? = null
 ) : SubScanTaskDefinition(
     id = id,
     createdDate = createdDate,
@@ -143,5 +147,6 @@ class TSubScanTask(
     packageSize = packageSize,
     credentialsKey = credentialsKey,
     scanResultOverview = null,
-    scanQuality = scanQuality
+    scanQuality = scanQuality,
+    cveWhite = cveWhite
 )

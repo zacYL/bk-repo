@@ -28,7 +28,9 @@
 package com.tencent.bkrepo.oci.controller.service
 
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.oci.api.OciClient
@@ -40,6 +42,7 @@ import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.third.OciReplicationRecordInfo
 import com.tencent.bkrepo.oci.service.OciOperationService
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
+import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.web.bind.annotation.RestController
@@ -49,15 +52,18 @@ class OciPackageController(
     private val operationService: OciOperationService,
     private val ociReplicationRecordDao: OciReplicationRecordDao,
     private val eventExecutor: EventExecutor
-    ): OciClient {
+) : OciClient {
+    private val logger = LoggerFactory.getLogger(OciPackageController::class.java)
     override fun packageCreate(record: OciReplicationRecordInfo): Response<Void> {
+        logger.info("Start create package for third party image by ociReplicationRecordInfo:[${record.toJsonString()}]")
         with(record) {
             val ociArtifactInfo = OciManifestArtifactInfo(
-                projectId, repoName, packageName, "", packageVersion, false
+                projectId, repoName, packageName, "", packageVersion, false, false
             )
             val result = operationService.createPackageForThirdPartyImage(
                 manifestPath = manifestPath,
                 ociArtifactInfo = ociArtifactInfo,
+                userId = userId
             )
             if (result) {
                 val criteria = Criteria.where(TOciReplicationRecord::projectId.name).`is`(projectId)
@@ -76,7 +82,6 @@ class OciPackageController(
         eventExecutor.submit(RepoCreatedEvent(
             projectId = projectId,
             repoName = repoName,
-            userId = SecurityUtils.getUserId()
         ))
         return ResponseBuilder.success()
     }
@@ -86,10 +91,10 @@ class OciPackageController(
     ): Response<Boolean> {
         return ResponseBuilder.success(
             operationService.refreshBlobNode(
-            projectId = projectId,
-            repoName = repoName,
-            pName = packageName,
-            pVersion = version
+                projectId = projectId,
+                repoName = repoName,
+                pName = packageName,
+                pVersion = version
             ))
     }
 

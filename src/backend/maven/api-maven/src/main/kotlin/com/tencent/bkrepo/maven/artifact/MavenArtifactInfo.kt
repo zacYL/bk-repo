@@ -32,7 +32,9 @@
 package com.tencent.bkrepo.maven.artifact
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.maven.constants.PACKAGE_METADATA_AND_CHECKSUM_REGEX
 import com.tencent.bkrepo.maven.constants.SNAPSHOT_SUFFIX
+import java.util.regex.Pattern
 
 class MavenArtifactInfo(
     projectId: String,
@@ -68,7 +70,25 @@ class MavenArtifactInfo(
         return hasGroupId() && hasArtifactId() && hasVersion()
     }
 
+    fun isArtifact(): Boolean {
+        return this::groupId.isInitialized && this::artifactId.isInitialized && this::versionId.isInitialized
+    }
+
+    fun isMetadata(): Boolean {
+        val filename = this.getArtifactFullPath().split("/").last()
+        return Pattern.matches("^maven-metadata\\.xml(\\.([a-z0-9]+))*", filename)
+    }
+
+    fun isAboutPackageMetadata(): Boolean {
+        val filename = this.getArtifactFullPath().split("/").last()
+        return Pattern.matches(PACKAGE_METADATA_AND_CHECKSUM_REGEX, filename)
+    }
+
     fun isSnapshot(): Boolean {
         return versionId.endsWith(SNAPSHOT_SUFFIX)
     }
+
+    override fun getPackageFullName() = if (isArtifact()) "$groupId:$artifactId" else ""
+
+    override fun getArtifactVersion() = if (isArtifact() && hasVersion()) versionId else null
 }

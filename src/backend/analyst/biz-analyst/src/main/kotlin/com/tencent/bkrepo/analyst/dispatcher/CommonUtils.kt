@@ -72,6 +72,7 @@ fun createClient(k8sProps: KubernetesExecutionClusterProperties): ApiClient {
         ClientBuilder()
             .setBasePath(k8sProps.apiServer)
             .setAuthentication(AccessTokenAuthentication(k8sProps.token))
+            .setVerifyingSsl(k8sProps.verifyingSsl)
             .build()
     } else if (k8sProps.clientKeyData != null && k8sProps.clientCertificateData != null) {
         require(k8sProps.certificateAuthorityData != null)
@@ -83,6 +84,7 @@ fun createClient(k8sProps: KubernetesExecutionClusterProperties): ApiClient {
             .setAuthentication(ClientCertificateAuthentication(cert, key))
             .setCertificateAuthority(ca)
             .setBasePath(k8sProps.apiServer)
+            .setVerifyingSsl(k8sProps.verifyingSsl)
             .build()
     } else {
         // 可通过KUBECONFIG环境变量设置config file路径

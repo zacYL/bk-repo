@@ -62,5 +62,9 @@ data class ReplicaSetting(
     /**
      * 当远程项目或者仓库不存在时是否自动创建
      */
-    val automaticCreateRemoteRepo: Boolean = true
+    val automaticCreateRemoteRepo: Boolean = true,
+    /**
+     * 实时同步计划是否同步删除操作
+     */
+    val syncDeletion: Boolean = false
 )

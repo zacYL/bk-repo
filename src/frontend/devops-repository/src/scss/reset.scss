@@ -30,66 +30,7 @@ body {
                 min-width: 30px;
             }
         }
-    }
-    /* 表格 */
-    .bk-table {
-        /* 列边距 */
-        .cell {
-            padding: 0 10px;
-        }
-        /* 替换图标 */
-        .bk-table-column-expand .bk-table-expand-icon .bk-icon {
-            font-size: 20px;
-            color: var(--fontSubsidiaryColor);
-            margin: -10px 0 0 -10px;
-            &:before {
-                content: '\e107'
-            }
-        }
-        /* 行高 */
-        td, th {
-            height: 40px;
-            /* 列边距 */
-            &:first-child > .cell {
-                padding-left: 30px;
-            }
-            &:last-child > .cell {
-                padding-right: 30px;
-            }
-            &.is-right .cell {
-                padding-right: 30px;
-            }
-        }
-        th {
-            :hover {
-                background-color: transparent;
-            }
-            > .cell {
-                height: 40px;
-                line-height: 40px;
-            }
-        }
-        /* 行hover背景 */
-        .bk-table-body tr.bk-table-row.hover-row > td {
-            background-color: var(--bgLighterColor);
-        }
-        /* 流体布局适应 */
-        .bk-table-body-wrapper {
-            overflow-y: auto!important;
-        }
-        .bk-table-body,
-        .bk-table-footer,
-        .bk-table-header,
-        .bk-table-empty-block {
-            width: auto
-        }
-        .bk-table-empty-text {
-            padding: 20px 0 100px;
-        }
-        .bk-table-column-selection .bk-form-checkbox .bk-checkbox {
-            flex: initial
-        }
-    }
+    }  
     /* 按钮 */
     .bk-button,
     .bk-button.no-slot {
@@ -117,27 +58,9 @@ body {
             background-color: var(--bgHoverLighterColor);
         }
     }
-    .bk-button-text.bk-primary.hover,
-    .bk-button-text.bk-primary:hover {
+    .bk-button-text.bk-primary:not([disabled]).hover,
+    .bk-button-text.bk-primary:not([disabled]):hover {
         color: var(--primaryWeightColor);
-    }
-    /* 面包屑 */
-    .bk-breadcrumb .bk-breadcrumb-item {
-        display: inline-flex;
-        align-items: center;
-        .bk-breadcrumb-separator {
-            margin: 0;
-            font-size: 20px;
-        }
-        .bk-breadcrumb-item-inner{
-            max-width: 200px;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-        &:last-child .bk-breadcrumb-item-inner.is-link {
-            cursor: initial;
-        }
     }
     /* 字体颜色重置 */
     .bk-table,
@@ -207,6 +130,7 @@ body {
     .bk-breadcrumb,
     .bk-button,
     .bk-button-text,
+    .bk-link .bk-link-text,
     .bk-form-radio {
         font-size: 12px;
     }
@@ -258,43 +182,13 @@ body {
         display: inline-flex;
         align-items: center;
         line-height: inherit;
-        .bk-checkbox {
-            width: 14px;
-            height: 14px;
-        }
         &.is-checked .bk-checkbox:after {
             top: -1px;
             left: 3px;
         }
-        &.is-indeterminate:not(.is-checked) .bk-checkbox {
-            border-color: var(--borderWeightColor);
-            background-color: white;
-            &:after {
-                width: 6px;
-                height: 6px;
-                margin-left: -3px;
-                margin-top: -3px;
-                border-radius: initial;
-                background-color: var(--primaryColor);
-            }
-        }
         &:not(.is-disabled, .is-checked, .is-indeterminate):hover .bk-checkbox {
             background-color: var(--bgHoverLighterColor);
             border-color: var(--primaryColor);
-        }
-    }
-
-    .bk-tab-label-wrapper .bk-tab-label-list {
-        &.bk-tab-label-list-has-bar:after {
-            margin-left: 8px;
-            width: calc(var(--activeBarWidth) - 16px);
-        }
-        .bk-tab-label-item {
-            min-width: initial;
-            padding: 0 20px;
-            &.active .bk-tab-label {
-                font-weight: bold;
-            }
         }
     }
 
@@ -583,34 +477,6 @@ body {
             }
         }
     }
-
-    .bk-message {
-        min-width: 220px;
-        padding: 10px 16px;
-        .bk-message-icon {
-            margin-right: 4px;
-        }
-        .bk-message-content {
-            min-width: initial;
-            max-width: 512px;
-        }
-        .bk-message-close .bk-icon {
-            color: var(--fontSubsidiaryColor);
-        }
-        &.bk-message-success {
-            background-color: var(--successBgColor);
-            .bk-message-content {
-                color: var(--successColor);
-            }
-        }
-        &.bk-message-error {
-            background-color: var(--dangerBgColor);
-            .bk-message-content {
-                color: var(--dangerColor);
-            }
-        }
-    }
-
     .bk-dialog-wrapper {
         .bk-dialog-body {
             font-size: 12px;

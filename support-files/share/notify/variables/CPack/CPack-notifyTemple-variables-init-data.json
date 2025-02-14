@@ -1,0 +1,604 @@
+{
+  "variables": [
+    {
+      "templateCode": "882f3d4714334b4689ab68d588ea381c",
+      "notifyType": "RTX",
+      "variable": "#{name}",
+      "description": "方案名称"
+    },
+    {
+      "templateCode": "882f3d4714334b4689ab68d588ea381c",
+      "notifyType": "RTX",
+      "variable": "#{completionTime}",
+      "description": "完成时间"
+    },
+    {
+      "templateCode": "882f3d4714334b4689ab68d588ea381c",
+      "notifyType": "RTX",
+      "variable": "#{url}",
+      "description": "扫描结果"
+    },
+    {
+      "templateCode": "23bae4b5d66b4d0689d3e370fdff80d4",
+      "notifyType": "RTX",
+      "variable": "#{name}",
+      "description": "方案名称"
+    },
+    {
+      "templateCode": "23bae4b5d66b4d0689d3e370fdff80d4",
+      "notifyType": "RTX",
+      "variable": "#{completionTime}",
+      "description": "完成时间"
+    },
+    {
+      "templateCode": "23bae4b5d66b4d0689d3e370fdff80d4",
+      "notifyType": "RTX",
+      "variable": "#{url}",
+      "description": "扫描结果"
+    },
+    {
+      "templateCode": "23bae4b5d66b4d0689d3e370fdff80d4",
+      "notifyType": "RTX",
+      "variable": "#{operator}",
+      "description": "操作人"
+    },
+    {
+      "templateCode": "709626167e61444686cafdac775279b8",
+      "notifyType": "RTX",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "709626167e61444686cafdac775279b8",
+      "notifyType": "RTX",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "709626167e61444686cafdac775279b8",
+      "notifyType": "RTX",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "709626167e61444686cafdac775279b8",
+      "notifyType": "RTX",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "709626167e61444686cafdac775279b8",
+      "notifyType": "RTX",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "709626167e61444686cafdac775279b8",
+      "notifyType": "RTX",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "e745920d00604332aaa264b04a8b63e4",
+      "notifyType": "RTX",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "e745920d00604332aaa264b04a8b63e4",
+      "notifyType": "RTX",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "e745920d00604332aaa264b04a8b63e4",
+      "notifyType": "RTX",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "e745920d00604332aaa264b04a8b63e4",
+      "notifyType": "RTX",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "e745920d00604332aaa264b04a8b63e4",
+      "notifyType": "RTX",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "e745920d00604332aaa264b04a8b63e4",
+      "notifyType": "RTX",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "68d8908b281d4f4ebee74d1378a74b72",
+      "notifyType": "RTX",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "68d8908b281d4f4ebee74d1378a74b72",
+      "notifyType": "RTX",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "68d8908b281d4f4ebee74d1378a74b72",
+      "notifyType": "RTX",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "68d8908b281d4f4ebee74d1378a74b72",
+      "notifyType": "RTX",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "68d8908b281d4f4ebee74d1378a74b72",
+      "notifyType": "RTX",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "68d8908b281d4f4ebee74d1378a74b72",
+      "notifyType": "RTX",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "15be23a36b4b467197a16ba37e0d93d8",
+      "notifyType": "EMAIL",
+      "variable": "#{name}",
+      "description": "方案名称"
+    },
+    {
+      "templateCode": "15be23a36b4b467197a16ba37e0d93d8",
+      "notifyType": "EMAIL",
+      "variable": "#{completionTime}",
+      "description": "完成时间"
+    },
+    {
+      "templateCode": "15be23a36b4b467197a16ba37e0d93d8",
+      "notifyType": "EMAIL",
+      "variable": "#{url}",
+      "description": "扫描结果"
+    },
+    {
+      "templateCode": "327e46b650ce42c7b524b3c29d40995a",
+      "notifyType": "EMAIL",
+      "variable": "#{name}",
+      "description": "方案名称"
+    },
+    {
+      "templateCode": "327e46b650ce42c7b524b3c29d40995a",
+      "notifyType": "EMAIL",
+      "variable": "#{completionTime}",
+      "description": "完成时间"
+    },
+    {
+      "templateCode": "327e46b650ce42c7b524b3c29d40995a",
+      "notifyType": "EMAIL",
+      "variable": "#{url}",
+      "description": "扫描结果"
+    },
+    {
+      "templateCode": "327e46b650ce42c7b524b3c29d40995a",
+      "notifyType": "EMAIL",
+      "variable": "#{operator}",
+      "description": "操作人"
+    },
+    {
+      "templateCode": "d694ea1f94db495cbcfdaa3c7322fee8",
+      "notifyType": "EMAIL",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "d694ea1f94db495cbcfdaa3c7322fee8",
+      "notifyType": "EMAIL",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "d694ea1f94db495cbcfdaa3c7322fee8",
+      "notifyType": "EMAIL",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "d694ea1f94db495cbcfdaa3c7322fee8",
+      "notifyType": "EMAIL",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "d694ea1f94db495cbcfdaa3c7322fee8",
+      "notifyType": "EMAIL",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "d694ea1f94db495cbcfdaa3c7322fee8",
+      "notifyType": "EMAIL",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "4f57d858ac954c2e87feb620449cee0e",
+      "notifyType": "EMAIL",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "4f57d858ac954c2e87feb620449cee0e",
+      "notifyType": "EMAIL",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "4f57d858ac954c2e87feb620449cee0e",
+      "notifyType": "EMAIL",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "4f57d858ac954c2e87feb620449cee0e",
+      "notifyType": "EMAIL",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "4f57d858ac954c2e87feb620449cee0e",
+      "notifyType": "EMAIL",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "4f57d858ac954c2e87feb620449cee0e",
+      "notifyType": "EMAIL",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "022612527f7a4bf6af9ca2b926e62be1",
+      "notifyType": "EMAIL",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "022612527f7a4bf6af9ca2b926e62be1",
+      "notifyType": "EMAIL",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "022612527f7a4bf6af9ca2b926e62be1",
+      "notifyType": "EMAIL",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "022612527f7a4bf6af9ca2b926e62be1",
+      "notifyType": "EMAIL",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "022612527f7a4bf6af9ca2b926e62be1",
+      "notifyType": "EMAIL",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "022612527f7a4bf6af9ca2b926e62be1",
+      "notifyType": "EMAIL",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "f46a4368f9cf4575815cee5d014c0773",
+      "notifyType": "FEISHU",
+      "variable": "#{name}",
+      "description": "方案名称"
+    },
+    {
+      "templateCode": "f46a4368f9cf4575815cee5d014c0773",
+      "notifyType": "FEISHU",
+      "variable": "#{completionTime}",
+      "description": "完成时间"
+    },
+    {
+      "templateCode": "f46a4368f9cf4575815cee5d014c0773",
+      "notifyType": "FEISHU",
+      "variable": "#{url}",
+      "description": "扫描结果"
+    },
+    {
+      "templateCode": "c9f33a0a389a42b0beedd12bb973ff1e",
+      "notifyType": "FEISHU",
+      "variable": "#{name}",
+      "description": "方案名称"
+    },
+    {
+      "templateCode": "c9f33a0a389a42b0beedd12bb973ff1e",
+      "notifyType": "FEISHU",
+      "variable": "#{completionTime}",
+      "description": "完成时间"
+    },
+    {
+      "templateCode": "c9f33a0a389a42b0beedd12bb973ff1e",
+      "notifyType": "FEISHU",
+      "variable": "#{url}",
+      "description": "扫描结果"
+    },
+    {
+      "templateCode": "c9f33a0a389a42b0beedd12bb973ff1e",
+      "notifyType": "FEISHU",
+      "variable": "#{operator}",
+      "description": "操作人"
+    },
+    {
+      "templateCode": "c0e7db2cce6d430886e8e526d994b558",
+      "notifyType": "FEISHU",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "c0e7db2cce6d430886e8e526d994b558",
+      "notifyType": "FEISHU",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "c0e7db2cce6d430886e8e526d994b558",
+      "notifyType": "FEISHU",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "c0e7db2cce6d430886e8e526d994b558",
+      "notifyType": "FEISHU",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "c0e7db2cce6d430886e8e526d994b558",
+      "notifyType": "FEISHU",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "c0e7db2cce6d430886e8e526d994b558",
+      "notifyType": "FEISHU",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "41d70d1ca1d8446ba3a2b9a112206888",
+      "notifyType": "FEISHU",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "41d70d1ca1d8446ba3a2b9a112206888",
+      "notifyType": "FEISHU",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "41d70d1ca1d8446ba3a2b9a112206888",
+      "notifyType": "FEISHU",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "41d70d1ca1d8446ba3a2b9a112206888",
+      "notifyType": "FEISHU",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "41d70d1ca1d8446ba3a2b9a112206888",
+      "notifyType": "FEISHU",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "41d70d1ca1d8446ba3a2b9a112206888",
+      "notifyType": "FEISHU",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "4c436ae156d54213b3c46a8342c8556d",
+      "notifyType": "FEISHU",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "4c436ae156d54213b3c46a8342c8556d",
+      "notifyType": "FEISHU",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "4c436ae156d54213b3c46a8342c8556d",
+      "notifyType": "FEISHU",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "4c436ae156d54213b3c46a8342c8556d",
+      "notifyType": "FEISHU",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "4c436ae156d54213b3c46a8342c8556d",
+      "notifyType": "FEISHU",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "4c436ae156d54213b3c46a8342c8556d",
+      "notifyType": "FEISHU",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "c60d5d7294b646e1b21e107d079b785b",
+      "notifyType": "DINGTALK",
+      "variable": "#{name}",
+      "description": "方案名称"
+    },
+    {
+      "templateCode": "c60d5d7294b646e1b21e107d079b785b",
+      "notifyType": "DINGTALK",
+      "variable": "#{completionTime}",
+      "description": "完成时间"
+    },
+    {
+      "templateCode": "c60d5d7294b646e1b21e107d079b785b",
+      "notifyType": "DINGTALK",
+      "variable": "#{url}",
+      "description": "扫描结果"
+    },
+    {
+      "templateCode": "67fd0354869541578c1bd313fd6852e4",
+      "notifyType": "DINGTALK",
+      "variable": "#{name}",
+      "description": "方案名称"
+    },
+    {
+      "templateCode": "67fd0354869541578c1bd313fd6852e4",
+      "notifyType": "DINGTALK",
+      "variable": "#{completionTime}",
+      "description": "完成时间"
+    },
+    {
+      "templateCode": "67fd0354869541578c1bd313fd6852e4",
+      "notifyType": "DINGTALK",
+      "variable": "#{url}",
+      "description": "扫描结果"
+    },
+    {
+      "templateCode": "67fd0354869541578c1bd313fd6852e4",
+      "notifyType": "DINGTALK",
+      "variable": "#{operator}",
+      "description": "操作人"
+    },
+    {
+      "templateCode": "82b628d887bd48da9958a628d8482821",
+      "notifyType": "DINGTALK",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "82b628d887bd48da9958a628d8482821",
+      "notifyType": "DINGTALK",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "82b628d887bd48da9958a628d8482821",
+      "notifyType": "DINGTALK",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "82b628d887bd48da9958a628d8482821",
+      "notifyType": "DINGTALK",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "82b628d887bd48da9958a628d8482821",
+      "notifyType": "DINGTALK",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "82b628d887bd48da9958a628d8482821",
+      "notifyType": "DINGTALK",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "d3b1dc2efd164382824aad6b407d8e3c",
+      "notifyType": "DINGTALK",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "d3b1dc2efd164382824aad6b407d8e3c",
+      "notifyType": "DINGTALK",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "d3b1dc2efd164382824aad6b407d8e3c",
+      "notifyType": "DINGTALK",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "d3b1dc2efd164382824aad6b407d8e3c",
+      "notifyType": "DINGTALK",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "d3b1dc2efd164382824aad6b407d8e3c",
+      "notifyType": "DINGTALK",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "d3b1dc2efd164382824aad6b407d8e3c",
+      "notifyType": "DINGTALK",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    },
+    {
+      "templateCode": "f9308ea97516436b8fced158db2452de",
+      "notifyType": "DINGTALK",
+      "variable": "#{name}",
+      "description": "任务名称"
+    },
+    {
+      "templateCode": "f9308ea97516436b8fced158db2452de",
+      "notifyType": "DINGTALK",
+      "variable": "#{replicaType}",
+      "description": "同步类型"
+    },
+    {
+      "templateCode": "f9308ea97516436b8fced158db2452de",
+      "notifyType": "DINGTALK",
+      "variable": "#{remoteClusters}",
+      "description": "同步节点"
+    },
+    {
+      "templateCode": "f9308ea97516436b8fced158db2452de",
+      "notifyType": "DINGTALK",
+      "variable": "#{localRepo}",
+      "description": "同步仓库"
+    },
+    {
+      "templateCode": "f9308ea97516436b8fced158db2452de",
+      "notifyType": "DINGTALK",
+      "variable": "#{time}",
+      "description": "时间"
+    },
+    {
+      "templateCode": "f9308ea97516436b8fced158db2452de",
+      "notifyType": "DINGTALK",
+      "variable": "#{url}",
+      "description": "跳转链接"
+    }
+  ]
+}

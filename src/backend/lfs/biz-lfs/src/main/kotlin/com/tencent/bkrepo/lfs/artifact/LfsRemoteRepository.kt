@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -76,7 +77,9 @@ class LfsRemoteRepository : RemoteRepository() {
         val artifactFile = createTempFile(response.body!!)
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
         val node = cacheArtifactFile(context, artifactFile)
-        return ArtifactResource(artifactStream, context.artifactInfo.getResponseName(), node, ArtifactChannel.LOCAL)
+        val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+        val responseName = context.artifactInfo.getResponseName()
+        return ArtifactResource(artifactStream, responseName, srcRepo, node, ArtifactChannel.LOCAL)
     }
 
 

@@ -31,7 +31,9 @@ import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.dao.repo.RepositoryDao
+import com.tencent.bkrepo.common.metadata.service.node.NodeSearchService
 import com.tencent.bkrepo.common.metadata.service.project.ProjectService
+import com.tencent.bkrepo.common.metadata.service.recycle.RecycleBinService
 import com.tencent.bkrepo.common.metadata.service.repo.ProxyChannelService
 import com.tencent.bkrepo.common.metadata.service.repo.ResourceClearService
 import com.tencent.bkrepo.common.metadata.service.repo.StorageCredentialService
@@ -55,6 +57,8 @@ import org.springframework.stereotype.Service
 class EdgeRepositoryServiceImpl(
     repositoryDao: RepositoryDao,
     projectService: ProjectService,
+    nodeSearchService: NodeSearchService,
+    recycleBinService: RecycleBinService,
     storageCredentialService: StorageCredentialService,
     proxyChannelService: ProxyChannelService,
     messageSupplier: MessageSupplier,
@@ -64,6 +68,8 @@ class EdgeRepositoryServiceImpl(
 ) : RepositoryServiceImpl(
     repositoryDao,
     projectService,
+    nodeSearchService,
+    recycleBinService,
     storageCredentialService,
     proxyChannelService,
     messageSupplier,

@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Repository Service
+  quartz:
+    mongo: true
+    startupDelay: 60s
+    overwriteExistingJobs: true
+    schedulerName: bkrepo-scheduler
+  cloud:
+    stream:
+      function:
+        definition: devopsProjectDeleted;devopsProjectUpdated
+      bindings:
+        artifactEvent-out-0:
+          destination: artifactEvent
+          binder: pulsar
+        bkrepo_artifact_repo:
+          destination: bkrepo_artifact_repo
+          binder: pulsar
+        devopsProjectDeleted-in-0:
+          group: repository
+          destination: devopsProjectDeleted
+          binder: pulsar
+        devopsProjectUpdated-in-0:
+          group: repository
+          destination: devopsProjectUpdated
+          binder: pulsar
+server:
+  port: __BK_REPO_REPOSITORY_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: repository
+repository:
+  cleanStrategyTime: __BK_REPO_REPOSITORY_CLEAN_STRATEGY_TIME__
+  # deletedNodeReserveDays配置项已迁移到application-repojob.yaml配置文件，此处配置不生效
+  # deletedNodeReserveDays: 14

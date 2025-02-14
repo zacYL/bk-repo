@@ -1,56 +1,73 @@
 <template>
-    <bk-dialog
-        class="previewBasic-file-dialog"
+    <canway-dialog
         v-model="previewDialog.show"
+        :title="previewDialog.title"
         :width="dialogWidth"
-        :show-footer="false"
-        :title="($t('preview') + ' - ' + previewDialog.title)">
-        <div v-if="previewDialog.isLoading" style="windt: 100%;" v-bkloading="{ isLoading: previewDialog.isLoading }"></div>
-        <div v-else>
-            <div class="preview-file-tips">{{ $t('previewFileTips') }}</div>
-            <textarea v-model="basicFileText" class="textarea" readonly></textarea>
+        height-num="705"
+        @cancel="previewDialog.show = false">
+        <div v-bkloading="{ isLoading }">
+            <div class="mb5 preview-file-tips">{{ $t('previewFileTips') }}</div>
+            <textarea class="textarea" v-model="basicFileText" readonly></textarea>
         </div>
-    </bk-dialog>
+        <template #footer>
+            <bk-button theme="primary" @click="previewDialog.show = false">{{ $t('confirm') }}</bk-button>
+        </template>
+    </canway-dialog>
 </template>
 
 <script>
+    import { mapActions } from 'vuex'
     export default {
         name: 'previewBasicFileDialog',
         data () {
             return {
-                basicFileText: '',
+                isLoading: false,
                 previewDialog: {
-                    title: '',
                     show: false,
-                    isLoading: true
+                    title: '',
+                    projectId: '',
+                    repoName: '',
+                    fullPath: ''
                 },
+                basicFileText: '',
                 dialogWidth: window.innerWidth - 600
             }
         },
         methods: {
+            ...mapActions(['previewBasicFile', 'previewCompressedBasicFile']),
             setData (data) {
-                this.basicFileText = data
-                this.previewDialog.isLoading = false
-            },
-            setDialogData (data) {
+                const { show, projectId, repoName, fullPath, filePath } = data
                 this.previewDialog = {
+                    ...this.previewDialog,
                     ...data
                 }
+                if (!show) return
+                this.isLoading = true
+                const fn = filePath ? this.previewCompressedBasicFile : this.previewBasicFile
+                fn({
+                    projectId,
+                    repoName,
+                    fullPath,
+                    filePath
+                }).then(res => {
+                    this.basicFileText = typeof res === 'string' ? res : JSON.stringify(res)
+                }).finally(() => {
+                    this.isLoading = false
+                })
             }
         }
     }
 </script>
 
 <style lang="scss" scoped>
-    .preview-file-tips {
-        margin-bottom: 10px;
-        color: #707070;
-    }
-    .textarea {
-        resize: none;
-        width: 100%;
-        height: 500px;
-        border: 1px solid #ccc;
-        padding: 0 5px;
-    }
+.preview-file-tips {
+    color: var(--fontSubsidiaryColor)
+}
+.textarea {
+    resize: none;
+    width: 100%;
+    height: 500px;
+    padding: 10px;
+    border: 1px solid var(--borderColor);
+}
 </style>

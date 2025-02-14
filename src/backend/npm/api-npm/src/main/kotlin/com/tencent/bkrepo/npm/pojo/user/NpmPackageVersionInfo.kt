@@ -31,25 +31,30 @@
 
 package com.tencent.bkrepo.npm.pojo.user
 
-import io.swagger.annotations.ApiModel
+import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
+import com.tencent.bkrepo.common.artifact.pojo.PackageVersionInfo
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import io.swagger.annotations.Api
 import io.swagger.annotations.ApiModelProperty
 
-@ApiModel("包的版本信息")
+@Api("npm版本详情页返回包装模型")
 data class NpmPackageVersionInfo(
-    @ApiModelProperty("资源名称")
-    val name: String,
-    @ApiModelProperty("文件大小，单位byte")
-    val size: Long,
-    @ApiModelProperty("当前版本")
-    val version: String,
-    @ApiModelProperty("制品晋级阶段")
-    val stageTag: String? = null,
-    @ApiModelProperty("修改者")
-    val lastModifiedBy: String,
-    @ApiModelProperty("修改时间")
-    val lastModifiedDate: String,
-    @ApiModelProperty("所属项目id")
-    val projectId: String,
-    @ApiModelProperty("所属仓库名称")
-    val repoName: String
+    @ApiModelProperty("基础信息")
+    override val basic: BasicInfo,
+    @ApiModelProperty("元数据信息")
+    val metadata: List<MetadataModel>,
+    @ApiModelProperty("依赖信息")
+    val dependencyInfo: VersionDependenciesInfo,
+    @ApiModelProperty("描述信息")
+    val readme: String?
+) : PackageVersionInfo
+
+@Api("版本的依赖信息")
+data class VersionDependenciesInfo(
+    @ApiModelProperty("包的依赖信息")
+    val dependencies: List<DependenciesInfo>,
+    @ApiModelProperty("包的开发依赖信息")
+    val devDependencies: List<DependenciesInfo>,
+    @ApiModelProperty("包的被依赖信息")
+    val dependents: Set<String>
 )

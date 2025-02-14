@@ -42,6 +42,7 @@ import com.tencent.bkrepo.replication.service.BlobChunkedService
 import com.tencent.bkrepo.replication.util.BlobChunkedResponseUtils.buildBlobUploadPatchResponse
 import com.tencent.bkrepo.replication.util.BlobChunkedResponseUtils.buildBlobUploadUUIDResponse
 import com.tencent.bkrepo.replication.util.BlobChunkedResponseUtils.uploadResponse
+import com.tencent.bkrepo.replication.util.HttpUtils.getRangeInfo
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -49,16 +50,20 @@ import org.springframework.stereotype.Service
 @Service
 class BlobChunkedServiceImpl(
     private val storageService: StorageService,
-): BlobChunkedService {
+) : BlobChunkedService {
 
 
     @Value("\${spring.application.name}")
     private var serviceName: String = "replication"
+
     /**
      * 获取上传文件uuid
      */
     override fun obtainSessionIdForUpload(
-        projectId: String, repoName: String, credentials: StorageCredentials, sha256: String
+        projectId: String,
+        repoName: String,
+        credentials: StorageCredentials,
+        sha256: String
     ) {
         val uuidCreated = storageService.createAppendId(credentials)
         logger.info("Uuid $uuidCreated has been created for file $sha256 in repo $projectId|$repoName.")
@@ -70,8 +75,12 @@ class BlobChunkedServiceImpl(
     }
 
     override fun uploadChunkedFile(
-        projectId: String, repoName: String,
-        credentials: StorageCredentials, sha256: String, artifactFile: ArtifactFile, uuid: String
+        projectId: String,
+        repoName: String,
+        credentials: StorageCredentials,
+        sha256: String,
+        artifactFile: ArtifactFile,
+        uuid: String
     ) {
         val range = HttpContextHolder.getRequest().getHeader("Content-Range")
         val length = HttpContextHolder.getRequest().contentLength
@@ -116,10 +125,14 @@ class BlobChunkedServiceImpl(
     }
 
     override fun finishChunkedUpload(
-        projectId: String, repoName: String,
-        credentials: StorageCredentials, sha256: String,
-        artifactFile: ArtifactFile, uuid: String,
-        size: Long?, md5: String?
+        projectId: String,
+        repoName: String,
+        credentials: StorageCredentials,
+        sha256: String,
+        artifactFile: ArtifactFile,
+        uuid: String,
+        size: Long?,
+        md5: String?
     ) {
         storageService.append(
             appendId = uuid,
@@ -139,7 +152,8 @@ class BlobChunkedServiceImpl(
         }
         logger.info(
             "The file with sha256 $sha256 in repo $projectId|$repoName has been uploaded with uuid: $uuid," +
-                        " received sha256 of file is ${fileInfo.sha256}")
+                " received sha256 of file is ${fileInfo.sha256}"
+        )
         // 没传递 size， 校验合并的文件生成的 sha256 与传递的 sha256 是否一致
         if (size == null && fileInfo.sha256 != sha256) {
             throw BadRequestException(ReplicationMessageCode.REPLICA_ARTIFACT_BROKEN, sha256)

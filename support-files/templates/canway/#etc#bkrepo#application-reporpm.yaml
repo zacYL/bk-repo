@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Rpm Service
+server:
+  port: __BK_REPO_RPM_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: rpm
+rpm:
+  domain: ${cluster.self.url}/rpm

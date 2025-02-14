@@ -40,17 +40,22 @@ import com.tencent.bkrepo.common.service.exception.GlobalExceptionHandler
 import com.tencent.bkrepo.common.service.exception.ServiceExceptionHandler
 import com.tencent.bkrepo.common.service.feign.ClientConfiguration
 import com.tencent.bkrepo.common.service.feign.CustomFeignClientsConfiguration
+import com.tencent.bkrepo.common.service.info.InfoController
+import com.tencent.bkrepo.common.service.info.InfoService
 import com.tencent.bkrepo.common.service.log.AccessLogWebServerCustomizer
 import com.tencent.bkrepo.common.service.message.MessageSourceConfiguration
 import com.tencent.bkrepo.common.service.metrics.UndertowMetrics
 import com.tencent.bkrepo.common.service.otel.mongodb.OtelMongoConfiguration
 import com.tencent.bkrepo.common.service.otel.web.OtelWebConfiguration
+import com.tencent.bkrepo.common.service.servlet.TongWebAutoConfiguration
 import com.tencent.bkrepo.common.service.shutdown.ServiceShutdownConfiguration
+import com.tencent.bkrepo.common.service.thread.ThreadPoolTaskExecutorConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.PropertySource
 import org.springframework.core.Ordered
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
@@ -73,11 +78,16 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
     CustomFeignClientsConfiguration::class,
     OtelMongoConfiguration::class,
     OtelWebConfiguration::class,
-    StandaloneJobAspect::class
+    StandaloneJobAspect::class,
+    InfoController::class,
+    InfoService::class,
+    TongWebAutoConfiguration::class,
+    ThreadPoolTaskExecutorConfiguration::class
 )
 class ServiceAutoConfiguration {
 
     @Bean
+    @Primary
     fun objectMapper() = JsonUtils.objectMapper
 
     @Bean

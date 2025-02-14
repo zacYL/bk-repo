@@ -98,7 +98,7 @@ class ComposerWebResourceController(
 
     override fun artifactDetail(
         composerArtifactInfo:
-        ComposerArtifactInfo,
+            ComposerArtifactInfo,
         packageKey: String,
         version: String?
     ): Response<Any?> {

@@ -35,6 +35,7 @@ import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
 import org.apache.commons.lang3.StringUtils
+import org.apache.maven.model.Model
 
 object MavenGAVCUtils {
 
@@ -52,13 +53,16 @@ object MavenGAVCUtils {
     /**
      *
      */
-    fun MavenArtifactInfo.toMavenGAVC(): MavenGAVC {
+    fun MavenArtifactInfo.toMavenGAVC(model:Model?): MavenGAVC {
         val mavenVersion = this.jarName.resolverName(this.artifactId, this.versionId)
         return MavenGAVC(
             groupId = this.groupId,
             artifactId = this.artifactId,
             version = this.versionId,
-            classifier = mavenVersion.classifier
+            classifier = mavenVersion.classifier,
+            packaging = mavenVersion.packaging,
+            modelVersion = model?.modelVersion,
+            name = model?.name
         )
     }
 

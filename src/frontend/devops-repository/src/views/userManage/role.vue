@@ -5,7 +5,7 @@
             <bk-input
                 v-model.trim="role"
                 class="mr20 w250"
-                :placeholder="`共有${roleList.length}个用户组`"
+                :placeholder="$t('userGroupCount', { length: roleList.length })"
                 clearable
                 right-icon="bk-icon icon-search">
             </bk-input>
@@ -20,23 +20,23 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(role)"></empty-data>
             </template>
-            <bk-table-column label="用户组名称" show-overflow-tooltip>
+            <bk-table-column :label="$t('userGroupName')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <span class="hover-btn" @click="showUsers(row)">{{row.name}}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="关联用户数" show-overflow-tooltip>
+            <bk-table-column :label="$t('relationUserCount')" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.users.length }}</template>
             </bk-table-column>
             <bk-table-column :label="$t('description')" show-overflow-tooltip>
                 <template #default="{ row }">{{row.description || '/'}}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="70">
+            <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }">
                     <operation-list
                         :list="[
-                            { label: '编辑', clickEvent: () => editRoleHandler(row) },
-                            { label: '删除', clickEvent: () => deleteRoleHandler(row) }
+                            { label: $t('edit'), clickEvent: () => editRoleHandler(row) },
+                            { label: $t('delete'), clickEvent: () => deleteRoleHandler(row) }
                         ]"></operation-list>
                 </template>
             </bk-table-column>
@@ -46,13 +46,13 @@
             theme="primary"
             width="500"
             height-num="301"
-            :title="editRoleConfig.id ? '编辑用户组' : '创建用户组'"
+            :title="editRoleConfig.id ? $t('editUserGroup') : $t('createUserGroup')"
             @cancel="editRoleConfig.show = false">
             <bk-form :label-width="80" :model="editRoleConfig" :rules="rules" ref="roleForm">
-                <bk-form-item label="名称" :required="true" property="name" error-display-type="normal">
+                <bk-form-item :label="$t('name')" :required="true" property="name" error-display-type="normal">
                     <bk-input v-model.trim="editRoleConfig.name" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>
-                <bk-form-item label="简介">
+                <bk-form-item :label="$t('introduction')">
                     <bk-input type="textarea" v-model.trim="editRoleConfig.description" maxlength="200"></bk-input>
                 </bk-form-item>
             </bk-form>
@@ -69,18 +69,24 @@
             :width="500">
             <template #content>
                 <div class="m10 flex-align-center">
-                    <bk-tag-input
+                    <bk-select
                         style="width: 300px"
                         v-model="editRoleUsers.addUsers"
-                        :list="Object.values(selectList)"
-                        :search-key="['id', 'name']"
+                        multiple
+                        clearable
+                        searchable
+                        :placeholder="$t('selectUserMsg')"
                         :title="editRoleUsers.addUsers.map(u => userList[u] ? userList[u].name : u)"
-                        placeholder="添加用户，按Enter键确认"
-                        trigger="focus"
-                        allow-create>
-                    </bk-tag-input>
-                    <bk-button :disabled="!editRoleUsers.addUsers.length" theme="primary" class="ml10" @click="handleAddUsers">添加</bk-button>
-                    <bk-button :disabled="!editRoleUsers.deleteUsers.length" theme="default" class="ml10" @click="handleDeleteUsers">批量移除</bk-button>
+                        :enable-virtual-scroll="Object.values(selectList).length > 3000"
+                        :list="Object.values(selectList)">
+                        <bk-option v-for="option in Object.values(selectList)"
+                            :key="option.id"
+                            :id="option.id"
+                            :name="option.name">
+                        </bk-option>
+                    </bk-select>
+                    <bk-button :disabled="!editRoleUsers.addUsers.length" theme="primary" class="ml10" @click="handleAddUsers">{{$t('add')}}</bk-button>
+                    <bk-button :disabled="!editRoleUsers.deleteUsers.length" theme="default" class="ml10" @click="handleDeleteUsers">{{$t('batchRemove')}}</bk-button>
                 </div>
                 <bk-table
                     :data="editRoleUsers.users"
@@ -95,7 +101,7 @@
                         editRoleUsers.deleteUsers = list
                     }">
                     <bk-table-column type="selection" width="60"></bk-table-column>
-                    <bk-table-column label="用户">
+                    <bk-table-column :label="$t('user')">
                         <template #default="{ row }">{{userList[row] ? userList[row].name : row}}</template>
                     </bk-table-column>
                 </bk-table>
@@ -134,7 +140,7 @@
                     name: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('userGroup') + this.$t('name'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('userGroup') + this.$t('space') + this.$t('name'),
                             trigger: 'blur'
                         }
                     ]
@@ -183,11 +189,11 @@
             },
             handleAddUsers () {
                 if (!this.editRoleUsers.addUsers.length) return
-                this.editRoleMixin([].concat(this.editRoleUsers.users, this.editRoleUsers.addUsers), '新增用户成功')
+                this.editRoleMixin([].concat(this.editRoleUsers.users, this.editRoleUsers.addUsers), this.$t('addUserSuccess'))
             },
             handleDeleteUsers () {
                 if (!this.editRoleUsers.deleteUsers.length) return
-                this.editRoleMixin(this.editRoleUsers.users.filter(v => !this.editRoleUsers.deleteUsers.find(w => w === v)), '移除用户成功')
+                this.editRoleMixin(this.editRoleUsers.users.filter(v => !this.editRoleUsers.deleteUsers.find(w => w === v)), this.$t('removeUserSuccess'))
             },
             editRoleMixin (userIds, message) {
                 this.editRoleUsers.loading = true
@@ -245,7 +251,7 @@
                 }).then(res => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (this.editRoleConfig.id ? '编辑用户组' : '新建用户组') + this.$t('success')
+                        message: (this.editRoleConfig.id ? this.$t('editUserGroup') : this.$t('createUserGroup')) + this.$t('space') + this.$t('success')
                     })
                     this.editRoleConfig.show = false
                     this.getRoleListHandler()
@@ -264,7 +270,7 @@
                         }).then(() => {
                             this.$bkMessage({
                                 theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
+                                message: this.$t('delete') + this.$t('space') + this.$t('userGroup') + this.$t('space') + this.$t('success')
                             })
                             this.getRoleListHandler()
                         })

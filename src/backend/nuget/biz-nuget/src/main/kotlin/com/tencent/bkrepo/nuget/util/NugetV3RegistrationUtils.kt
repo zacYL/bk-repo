@@ -63,7 +63,7 @@ object NugetV3RegistrationUtils {
 
     private fun betweenVersions(lowerVersion: String, upperVersion: String, version: String): Boolean {
         return NugetVersionUtils.compareSemVer(lowerVersion, version) <= 0 &&
-            NugetVersionUtils.compareSemVer(upperVersion, version) >= 0
+                NugetVersionUtils.compareSemVer(upperVersion, version) >= 0
     }
 
     fun registrationPageItemToRegistrationPage(

@@ -31,12 +31,22 @@
 
 package com.tencent.bkrepo.common.metadata.service.metadata
 
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
+import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 
 /**
  * 包元数据服务接口
  */
 interface PackageMetadataService {
+
+    /**
+     * 查询节点的元数据
+     *
+     * [projectId]为节点所属项目，[repoName]为节点所属仓库，[packageKey]为包唯一key, [version]为包版本
+     * 返回[Map]数据结构，`key`为元数据名称，`value`为元数据值
+     */
+    fun listMetadata(projectId: String, repoName: String, packageKey: String, version: String): Map<String, Any>
 
     /**
      * 根据请求[request]保存或者更新元数据
@@ -46,9 +56,14 @@ interface PackageMetadataService {
     fun saveMetadata(request: PackageMetadataSaveRequest)
 
     /**
-     * 根据请求[request]保存或者更新禁用元数据
+     * 根据请求[request]保存或者更新限制元数据，只更新限制相关元数据（禁用/锁定）
      *
      * 如果元数据`key`已经存在则更新，否则创建新的
      */
-    fun addForbidMetadata(request: PackageMetadataSaveRequest)
+    fun addLimitMetadata(request: PackageMetadataSaveRequest, limitType: LimitType)
+
+    /**
+     * 根据请求[request]删除元数据
+     */
+    fun deleteMetadata(request: PackageMetadataDeleteRequest)
 }

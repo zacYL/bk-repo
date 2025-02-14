@@ -1,0 +1,15 @@
+{
+  "code" : "GET__ext_manifest_{projectId}_{repoName}_{imageName}_{tag}_repo-oci",
+  "name" : "获取manifest文件内容",
+  "desc" : "获取manifest文件内容",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-oci/ext/manifest/{projectId}/{repoName}/**/{tag}",
+  "headers" : [ ],
+  "targetService" : "repooci",
+  "targetPath" : "/ext/manifest/{projectId}/{repoName}/**/{tag}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "获取manifest文件内容_0f15f438.md"
+}

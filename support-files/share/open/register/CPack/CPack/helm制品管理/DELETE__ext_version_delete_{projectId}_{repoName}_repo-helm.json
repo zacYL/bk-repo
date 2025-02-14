@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-helm",
+  "name" : "删除helm包的指定版本",
+  "desc" : "删除helm包的指定版本",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-helm/ext/version/delete/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repohelm",
+  "targetPath" : "/ext/version/delete/{projectId}/{repoName}",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除helm包的指定版本_87c2fb3a.md"
+}

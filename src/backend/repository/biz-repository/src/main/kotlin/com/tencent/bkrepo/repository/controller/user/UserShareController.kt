@@ -94,7 +94,7 @@ class UserShareController(
         content = ActionAuditContent.NODE_SHARE_CREATE_CONTENT
     )
     @ApiOperation("创建分享链接")
-    @Permission(type = ResourceType.NODE, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     @PostMapping(DEFAULT_MAPPING_URI)
     fun share(
         @RequestAttribute userId: String,

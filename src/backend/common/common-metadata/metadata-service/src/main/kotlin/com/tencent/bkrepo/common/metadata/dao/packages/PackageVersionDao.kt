@@ -92,8 +92,8 @@ class PackageVersionDao : SimpleMongoDao<TPackageVersion>() {
 
     }
 
-    fun findLatest(packageId: String): TPackageVersion? {
-        val query = PackageQueryHelper.versionLatestQuery(packageId)
+    fun findLatest(packageId: String, sortProperty: String? = null): TPackageVersion? {
+        val query = PackageQueryHelper.versionLatestQuery(packageId, sortProperty)
         return this.findOne(query)
     }
 

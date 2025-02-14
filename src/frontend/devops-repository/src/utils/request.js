@@ -1,6 +1,12 @@
-import { routeBase } from '@repository/utils'
+/*
+ * @Date: 2024-11-01 22:08:22
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2024-12-27 10:59:02
+ * @FilePath: /artifact/src/frontend/devops-repository/src/utils/request.js
+ */
 import axios from 'axios'
 import Vue from 'vue'
+
 const request = axios.create({
     baseURL: `${location.origin}/web`,
     validateStatus: status => {
@@ -20,8 +26,23 @@ function errorHandler (error) {
 }
 
 request.interceptors.response.use(response => {
-    const { data: { data, message }, status } = response
-    if (status === 200 || status === 206) {
+    const { data: { data, message, error }, status } = response
+
+    // 用于处理仓库列表helm仓库返回数据格式无法统一，造成的基础信息显示错误问题
+    if (status === 404 && error) {
+        return {
+            basic: {},
+            metadata: [],
+            _error: {
+                error,
+                status,
+                message
+            }
+        }
+    }
+
+    // 正常逻辑
+    if (status === 200 || status === 206 || status === 201) {
         return data === undefined ? response.data : data
     } else if (status === 401 || status === 402) {
         if (MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') {
@@ -32,12 +53,11 @@ request.interceptors.response.use(response => {
         } else {
             window.repositoryVue.$store.commit('SHOW_LOGIN_DIALOG')
         }
-    } else if (status === 440) {
-        const projectId = localStorage.getItem('projectId')
-        const path = routeBase + projectId + '/440/' + message
-        window.repositoryVue.$router.push({ path: path, replace: true })
     }
-    return Promise.reject({ status, message }) // eslint-disable-line
+    // 当用户没有权限去删除制品时，后端返回的报错信息(因为客户端上传需要这种格式的报错信息)是使用的{error:'xxxx'}
+    // 此时前端就需要先返回message的报错信息，如果message不存在则使用error
+    // 当后台报错时需要将后台返回的错误状态码及相应信息返回，用于求他地方做自定义报错及处理逻辑
+    return Promise.reject({ status, message:message || error || '未知错误', error: response.data }) // eslint-disable-line
 }, errorHandler)
 
 Vue.prototype.$ajax = request

@@ -5,12 +5,13 @@
                 class="w250"
                 v-model.trim="filter.licenseId"
                 clearable
-                :placeholder="$t('licencePlaceHolder')"
+                :placeholder="$t('licensePlaceholder')"
                 right-icon="bk-icon icon-search"
                 @enter="handlerPaginationChange()"
                 @clear="handlerPaginationChange()">
             </bk-input>
             <div class="flex-1 flex-end-center">
+                <bk-button class="mr10" theme="default" @click="exportReport">{{$t('exportReport')}}</bk-button>
                 <bk-button theme="default" @click="$emit('rescan')">{{$t('rescan')}}</bk-button>
             </div>
         </div>
@@ -29,35 +30,35 @@
                     :title="$t('noCrtTitle')">
                 </empty-data>
             </template>
-            <bk-table-column type="expand" width="40">
+            <bk-table-column type="expand" width="30">
                 <template #default="{ row }">
-                    <div class="leak-title">{{$t('licenceInfo')}}</div>
+                    <div class="leak-title">{{$t('licenseInfo')}}</div>
                     <div class="leak-tip">
                         <a :href="row.description" target="_blank">{{ row.description || '/' }}</a>
                     </div>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('name')" width="200px">
+            <bk-table-column :label="$t('name')" width="200">
                 <template #default="{ row }">
                     <span v-bk-tooltips="{ content: row.fullName, placements: ['top'] }">{{ row.licenseId }}</span>
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('dependPath')" prop="dependentPath"></bk-table-column>
-            <!--            <bk-table-column :label="`OSI` + $t('authenticated')" width="120">-->
-            <!--                <template #default="{ row }">{{ row.description ? `${row.isOsiApproved ? $t('authenticated') : $t('notAuthenticated')}` : '/' }}</template>-->
-            <!--            </bk-table-column>-->
-            <!--            <bk-table-column :label="`FSF` + $t('openSource')" width="120">-->
-            <!--                <template #default="{ row }">{{ row.description ? `${row.isFsfLibre ? $t('openSource') : $t('notOpenSource')}` : '/' }}</template>-->
-            <!--            </bk-table-column>-->
-            <!--            <bk-table-column :label="$t('recommendUse')" width="120">-->
-            <!--                <template #default="{ row }">{{ row.description ? `${row.recommended ? $t('recommended') : $t('notRecommended')}` : '/' }}</template>-->
-            <!--            </bk-table-column>-->
-            <!--            <bk-table-column :label="$t('compliance')" width="120">-->
-            <!--                <template #default="{ row }">-->
-            <!--                    <span v-if="row.description" class="repo-tag" :class="row.compliance ? 'SUCCESS' : 'FAILED'">{{ `${row.compliance ? $t('compliance') : $t('notCompliance')}` }}</span>-->
-            <!--                    <span v-else>/</span>-->
-            <!--                </template>-->
-            <!--            </bk-table-column>-->
+            <bk-table-column :label="`OSI` + $t('space') + $t('authenticated')" width="160">
+                <template #default="{ row }">{{ row.description ? `${row.isOsiApproved ? $t('already') : $t('not')}` + $t('space') + $t('authenticated') : '/' }}</template>
+            </bk-table-column>
+            <bk-table-column :label="`FSF` + $t('space') + $t('openSource')" width="150">
+                <template #default="{ row }">{{ row.description ? `${row.isFsfLibre ? $t('already') : $t('not')}` + $t('space') + $t('openSource') : '/' }}</template>
+            </bk-table-column>
+            <bk-table-column :label="$t('useStatus')" width="120">
+                <template #default="{ row }">{{ row.description ? `${row.recommended ? $t('usable') : $t('abandoned')}` : '/' }}</template>
+            </bk-table-column>
+            <bk-table-column :label="$t('complianceQuality')" width="120">
+                <template #default="{ row }">
+                    <span v-if="row.description" class="repo-tag" :class="row.compliance ? 'SUCCESS' : 'FAILED'">{{ `${row.compliance ? $t('compliance') : $t('notCompliance')}` }}</span>
+                    <span v-else>/</span>
+                </template>
+            </bk-table-column>
         </bk-table>
         <bk-pagination
             class="p10"
@@ -75,6 +76,7 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
+    import { customizeExportScanFile } from '@repository/utils/exportScanFile'
     export default {
         name: 'license',
         props: {
@@ -126,12 +128,16 @@
                 }).then(({ records, totalRecords }) => {
                     this.licenseList = records.map(v => ({
                         ...v,
-                        licenseKey: `${v.licenseId}-${v.dependentPath}-${v.pkgName}`
+                        licenseKey: `${v.licenseId}${v.dependentPath}-${v.pkgName}`
                     }))
                     this.pagination.count = totalRecords
                 }).finally(() => {
                     this.isLoading = false
                 })
+            },
+            exportReport () {
+                const url = `/web/analyst/api/scan/export/artifact/license/leak/${this.projectId}/${this.subtaskOverview.recordId}`
+                customizeExportScanFile(url, 'GET', this.currentLanguage, this.$t('exportLicenseReportInfo'))
             }
         }
     }

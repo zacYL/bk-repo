@@ -31,9 +31,12 @@
 
 package com.tencent.bkrepo.common.metadata.search.packages
 
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.metadata.search.common.CommonQueryContext
 import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
 import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.common.metadata.search.common.CommonQueryContext
+import com.tencent.bkrepo.common.query.model.Rule
 import org.springframework.data.mongodb.core.query.Query
 
 class PackageQueryContext(
@@ -41,4 +44,19 @@ class PackageQueryContext(
     override var permissionChecked: Boolean = false,
     override val mongoQuery: Query,
     override val interpreter: MongoQueryInterpreter
-) : CommonQueryContext(queryModel, permissionChecked, mongoQuery, interpreter)
+) : CommonQueryContext(queryModel, permissionChecked, mongoQuery, interpreter) {
+
+    private var repoType: String? = null
+
+    val matchedVersions: MutableMap<String, MutableSet<String>> = mutableMapOf()
+
+    fun findRepoType(siblingRule: Rule.QueryRule? = null): String {
+        val rule = queryModel.rule
+        if (repoType != null) return repoType!!
+        if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) {
+            findRule(rule.rules, "repoType")?.let { return it.value.toString().apply { repoType = this } }
+        }
+        if (siblingRule != null) (find("repoType", siblingRule) as? String)?.let { return it }
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "repoType")
+    }
+}

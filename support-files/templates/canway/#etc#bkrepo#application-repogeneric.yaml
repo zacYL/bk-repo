@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Generic Service
+  cloud:
+    stream:
+      bindings:
+        artifactEvent-out-0:
+          destination: artifactEvent
+          binder: pulsar
+server:
+  port: __BK_REPO_GENERIC_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: generic
+generic:
+  domain: ${cluster.self.url}/generic
+  delta:
+    projectId: bkrepo-internal
+    repoName: sign

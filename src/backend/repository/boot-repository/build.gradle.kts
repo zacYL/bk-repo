@@ -31,4 +31,5 @@
 
 dependencies {
     implementation(project(":repository:biz-repository"))
+    implementation(project(":common:common-license-canway"))
 }

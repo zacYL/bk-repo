@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_metadata_package_{projectId}_{repoName}_repo-repository",
+  "name" : "创建或更新元数据",
+  "desc" : "创建或更新元数据",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/repo-repository/api/metadata/package/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "reporepository",
+  "targetPath" : "/api/metadata/package/{projectId}/{repoName}",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "创建或更新元数据_054e0630.md"
+}

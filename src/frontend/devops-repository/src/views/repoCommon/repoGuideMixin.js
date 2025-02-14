@@ -1,7 +1,5 @@
 import { mapState, mapActions } from 'vuex'
-const guideMap = {
-    rds: 'helm'
-}
+import { findTargetObj } from '../../utils/index.js'
 export default {
     computed: {
         ...mapState(['userInfo', 'domain', 'dependAccessTokenValue', 'dependInputValue1', 'dependInputValue2', 'dependInputValue3']),
@@ -10,6 +8,9 @@ export default {
         },
         repoType () {
             return this.$route.params.repoType || ''
+        },
+        isSbt () {
+            return !!this.$route.query.isSbt
         },
         repoName () {
             return this.$route.query.repoName || ''
@@ -23,6 +24,27 @@ export default {
         packageName () {
             // 包列表页不需要指定具体的包名，直接都指定为<PACKAGE_NAME>即可
             return this.$route.path.endsWith('/list') ? '<PACKAGE_NAME>' : this.packageKey.replace(/^.*:\/\/(?:.*:)*([^:]+)$/, '$1') || '<PACKAGE_NAME>'
+        },
+        // 特殊正则的包名
+        specialPackageName () {
+            if (this.packageName !== '<PACKAGE_NAME>') {
+                const regex = /([^\@\/]+)@([^\@\/]+)\/([^\@\/]+)/
+                const match = this.packageName.match(regex)
+
+                if (match) {
+                    const username = match[1]
+                    const name = match[2]
+                    const channel = match[3]
+                    if (username === '_') {
+                        return `${name}/${this.version}`
+                    } else {
+                        return `${name}/${this.version}@${username}/${channel}`
+                    }
+                } else {
+                    return this.packageName
+                }
+            }
+            return this.packageName
         },
         versionLabel () {
             // 包列表页不需要指定具体的版本号，直接都指定为 <PACKAGE_VERSION> 即可
@@ -39,9 +61,15 @@ export default {
             // 注意，若用户手动在输入框的版本号输入框中输入了 版本号为sha256:xxxx，也需要修改版本之前的分隔符
             return ((this.repoType === 'docker' && this.dependInputValue2) || this.versionLabel).includes('sha256:') ? '@' : ':'
         },
-        // 获取当前仓库类型(本地、远程、组合、虚拟)
         storeType () {
             return this.$route.query.storeType || ''
+        },
+        // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
+        sourceRepoName () {
+            return this.$route.query.sourceName || ''
+        },
+        isPublic () {
+            return !!this.$route.query.publicType
         },
         // 是否是 软件源模式
         whetherSoftware () {
@@ -69,40 +97,42 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('push'),
-                    optionType: 'push',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue3', // vux中存储的变量名
-                            label: this.$t('dockerImageTag'), // 输入框左侧label文案
-                            placeholder: this.$t('pleaseInput') + this.$t('space') + this.$t('dockerImageTag'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
-                        },
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('artifactName'), // 输入框左侧label文案
-                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        },
-                        {
-                            key: 'dependInputValue2', // vux中存储的变量名
-                            label: this.$t('artifactVersion'), // 输入框左侧label文案
-                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('dockerPushGuideSubTitle1'),
-                            codeList: [`docker tag ${this.dependInputValue3 || '<LOCAL_IMAGE_TAG>'} ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
-                        },
-                        {
-                            subTitle: this.$t('dockerPushGuideSubTitle2'),
-                            codeList: [`docker push ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
-                        }
-                    ]
-                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue3', // vux中存储的变量名
+                                label: this.$t('dockerImageTag'), // 输入框左侧label文案
+                                placeholder: this.$t('pleaseInput') + this.$t('space') + this.$t('dockerImageTag'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('dockerPushGuideSubTitle1'),
+                                codeList: [`docker tag ${this.dependInputValue3 || '<LOCAL_IMAGE_TAG>'} ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
+                            },
+                            {
+                                subTitle: this.$t('dockerPushGuideSubTitle2'),
+                                codeList: [`docker push ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
+                            }
+                        ]
+                    },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
@@ -127,7 +157,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         dockerInstall () {
             return [
@@ -178,77 +208,52 @@ export default {
                             ]
                         }
                     ]
-
                 },
-                {
-                    title: this.$t('npmCreditGuideSubTitle1'),
-                    optionType: 'setCredentials',
-                    main: [
-
-                        {
-                            subTitle: this.$t('npmCreditGuideSubTitle3'),
-                            codeList: [
-                                'node -e "require(\'readline\') .createInterface({input:process.stdin,output:process.stdout,historySize:0}) .question(\'PAT> \',p => { b64=Buffer.from(p.trim()).toString(\'base64\');console.log(b64);process.exit(); })"'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('npmCreditGuideSubTitle4')
-                        },
-                        {
-                            subTitle: this.$t('npmCreditGuideSubTitle2'),
-                            codeList: [
-                                `registry=${this.domain.npm}/${this.projectId}/${this.repoName}/`,
-                                'always-auth=true',
-                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:username=${this.userName}`,
-                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:_password=<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>`,
-                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:email=${this.userInfo.email || '<EMAIL>'}`
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: this.$t('push'),
-                    optionType: 'push',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('artifactName'), // 输入框左侧label文案
-                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        },
-                        {
-                            key: 'dependInputValue2', // vux中存储的变量名
-                            label: this.$t('artifactVersion'), // 输入框左侧label文案
-                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('npmPushGuideSubTitle1'),
-                            codeList: [
-                                ' {',
-                                `    "name": "${this.dependInputValue1 || '<PACKAGE_NAME>'}"`,
-                                `    "version": "${this.dependInputValue2 || '<PACKAGE_VERSION>'}"`,
-                                '    "description": ""',
-                                '    "main": "index.js"',
-                                '    "author": ""',
-                                '    "license": "MIT"',
-                                ' }'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('npmPushGuideSubTitle2'),
-                            constructType: 'npm',
-                            codeList: ['npm publish']
-                        },
-                        {
-                            subTitle: this.$t('npmPushGuideSubTitle2'),
-                            constructType: 'yarn',
-                            codeList: ['yarn publish']
-                        }
-                    ]
-                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('npmPushGuideSubTitle1'),
+                                codeList: [
+                                    ' {',
+                                    `    "name": "${this.dependInputValue1 || '<PACKAGE_NAME>'}"`,
+                                    `    "version": "${this.dependInputValue2 || '<PACKAGE_VERSION>'}"`,
+                                    '    "description": ""',
+                                    '    "main": "index.js"',
+                                    '    "author": ""',
+                                    '    "license": "MIT"',
+                                    ' }'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('npmPushGuideSubTitle2'),
+                                constructType: 'npm',
+                                codeList: ['npm publish']
+                            },
+                            {
+                                subTitle: this.$t('npmPushGuideSubTitle2'),
+                                constructType: 'yarn',
+                                codeList: ['yarn publish']
+                            }
+                        ]
+                    },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
@@ -289,7 +294,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         npmInstall () {
             return [
@@ -306,6 +311,468 @@ export default {
                             codeList: [
                                 `npm install ${this.packageName}@${this.versionLabel} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`
                             ]
+                        }
+                    ]
+                }
+            ]
+        },
+        goGuide () {
+            return [
+                this.noShowOption
+                    ? undefined
+                    : {
+                        optionType: 'push',
+                        inputBoxList: [
+                            ...!this.isPublic
+                                ? [
+                                    {
+                                        key: 'dependInputValue3', // vux中存储的变量名
+                                        label: this.$t('customName'), // 输入框左侧label文案
+                                        methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                                    }
+                                ]
+                                : [],
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('targetName'), // 输入框左侧label文案
+                                placeholder: this.repoName,
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('customVersion'), // 输入框左侧label文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                title: this.$t('downClient'),
+                                contentList: [
+                                    {
+                                        val: this.$t('goTips3')
+                                    }
+                                ]
+                            },
+                            {
+                                componentInline: true,
+                                components: [
+                                    {
+                                        type: 'select',
+                                        cb: (val) => {
+                                            this.goDownloadUrl = val
+                                        },
+                                        values: [
+                                            {
+                                                platform: 'Linux (amd64)',
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/linux/amd64'
+                                            },
+                                            {
+                                                platform: 'Linux (arm64)',
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/linux/arm64'
+                                            },
+                                            {
+                                                platform: 'macOS (Intel)',
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/darwin/amd64'
+                                            },
+                                            {
+                                                platform: 'macOS (Apple Silicon)',
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/darwin/arm64'
+                                            },
+                                            {
+                                                platform: 'Windows',
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/windows/amd64'
+                                            },
+                                            {
+                                                platform: 'Windows (arm64)',
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/windows/arm64'
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'button',
+                                        disabled: !this.goDownloadUrl,
+                                        cb: () => {
+                                            window.open(this.goDownloadUrl, '_self')
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                title: this.$t('preprocessing'),
+                                subTitle: 'macOS/Linux',
+                                codeList: [
+                                    'chmod +x bk && mv bk /usr/local/bin/'
+                                ]
+                            },
+                            {
+                                subTitle: 'Windows',
+                                contentList: [
+                                    this.$t('goTips4')
+                                ]
+                            },
+                            {
+                                title: this.$t('loginRepository'),
+                                codeList: [
+                                    `bk go login -n ${this.dependInputValue1 || this.repoName} -r ${this.repoUrl} -u ${this.userName} -t ${this.accessToken}`
+                                ]
+                            },
+                            {
+                                title: this.$t('pushModule'),
+                                contentList: [
+                                    this.$t('goTips5')
+                                ]
+                            },
+                            {
+                                codeNoMargin: true,
+                                codeList: [
+                                    `bk go publish -n ${this.dependInputValue1 || this.repoName} -v ${this.dependInputValue2 || ('<' + this.$t('customVersion') + '>')}`
+                                ]
+                            },
+                            {
+                                codeNoMargin: true,
+                                contentList: [
+                                    this.$t('otherOptionalParams')
+                                ],
+                                codeList: [
+                                    `-d <${this.$t('moduleDirectory')}> ${this.$t('goTips6')}`,
+                                    `-o ${this.$t('goTips7')}`
+                                ]
+                            }
+                        ]
+                    },
+                {
+                    errTips: this.$t('goWarnTips'),
+                    showErrTips: (!this.isPublic && this.removeProtocolFromUrl(this.repoUrl, true) === 'http'),
+                    optionType: 'pull',
+                    main: [
+                        {
+                            contentList: [
+                                { val: this.$t('goVersion') }]
+                        },
+                        {
+                            title: this.$t('setEnvironmentVariable'),
+                            subTitle: 'macOS/Linux',
+                            codeList: [
+                                'export GO111MODULE=on',
+                                'export GOSUMDB=off',
+                                'export GOPROXY='
+                                + ((this.isPublic && this.removeProtocolFromUrl(this.repoUrl, true) === 'http')
+                                    ? `${this.repoUrl}`
+                                    : `${this.removeProtocolFromUrl(this.repoUrl, true)}://${this.userName}:${this.accessToken}@${this.removeProtocolFromUrl(this.repoUrl)}`)
+                            ]
+                        },
+                        {
+                            subTitle: 'Windows',
+                            contentList: [this.$t('powerShellExecute')]
+                        },
+                        {
+                            codeNoMargin: true,
+                            codeClass: 'mb10', // 调整间距
+                            codeList: [
+                                'go env -w GO111MODULE=on',
+                                'go env -w GOSUMDB=off',
+                                'go env -w GOPROXY='
+                                + ((this.isPublic && this.removeProtocolFromUrl(this.repoUrl, true) === 'http')
+                                    ? `${this.repoUrl}`
+                                    : `${this.removeProtocolFromUrl(this.repoUrl, true)}://${this.userName}:${this.accessToken}@${this.removeProtocolFromUrl(this.repoUrl)}`)
+                            ]
+                        },
+                        {
+                            title: this.$t('goTips2'),
+                            codeClass: 'mb10',
+                            codeList: [
+                                'go get <modulePath>'
+                            ]
+                        },
+                        {
+                            title: this.$t('downloadAllModule'),
+                            codeList: [
+                                'go mod download'
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        goInstall () {
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: this.$t('pull'),
+                            codeList: [
+                                `go get ${this.packageName}@${this.version}`
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        conanGuide () {
+            return [
+                {
+                    title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('conanCreditGuideSubTitle1'),
+                            codeList: [
+                                `conan remote add ${this.repoName} ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
+                            ]
+                        }, {
+                            subTitle: this.$t('conanCreditGuideSubTitle2'),
+                            codeList: [
+                                `conan remote login ${this.repoName} ${this.userName} -p ${this.accessToken}`
+                            ]
+                        }
+                    ]
+                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('conanCreditGuideSubTitle3'),
+                                codeList: [
+                                    `conan upload ${this.dependInputValue1 || '<PACKAGE>'}/${this.dependInputValue2 || '<REFERENCE>'} -r ${this.repoName}`
+                                ]
+                            }
+                        ]
+                    },
+                {
+                    title: this.$t('pull'),
+                    optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
+                    main: [
+                        {
+                            subTitle: this.$t('conanCreditGuideSubTitle3'),
+                            codeList: [
+                                `conan download ${this.dependInputValue1 || '<PACKAGE>'}/${this.dependInputValue2 || '<REFERENCE>'}  -r ${this.repoName}`
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        conanInstall () {
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: this.$t('pull'),
+                            codeList: [
+                                `conan download ${this.specialPackageName} -r ${this.repoName}`
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('push'),
+                            codeList: [
+                                `conan upload ${this.specialPackageName} -r ${this.repoName}`
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        ivyGuide () {
+            return [
+                {
+                    title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('ivyCreditGuideSubTitle1'),
+                            codeList: [
+                                '<ivysettings>',
+                                `   <credentials host="${location.host}" realm="Authentication Required" 
+    username="${this.userName || 'userId'}" passwd="${this.accessToken || 'PERSONAL_ACCESS_TOKEN'}"/>`,
+                                '</ivysettings>'
+                            ]
+                        }
+                    ]
+                },
+                {
+                    optionType: 'push',
+                    main: [
+                        {
+                            title: this.$t('push'),
+                            subTitle: this.$t('ivyCreditGuideSubTitle2'),
+                            codeList: [
+                                '<ivysettings>',
+                                '   <resolvers>',
+                                `       <url name="${this.repoName}">`,
+                                `           <ivy pattern="${location.origin}/ivy/${this.projectId}/${this.repoName}/${this.repoInfo?.configuration?.settings?.ivy_pattern || ''}" />`,
+                                `           <artifact pattern="${location.origin}/ivy/${this.projectId}/${this.repoName}/${this.repoInfo?.configuration?.settings?.artifact_pattern || ''}" />`,
+                                '       </url>',
+                                '       <chain name="chain">',
+                                `           <resolver ref="${this.repoName}"/>`,
+                                '       </chain>',
+                                '   </resolvers>',
+                                '</ivysettings>'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('ivyCreditGuideSubTitle3'),
+                            codeList: [
+                                `<ivy:publish resolver="${this.repoName}">`
+                            ]
+                        },
+                        {
+                            title: this.$t('push'),
+                            codeList: [
+                                'ant publish'
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        ivyInstall () {
+            /**
+             * @description: 生成QualifiedExtraAttributes文案，默认是个map，但里面可能为空
+             * @return {*}
+             */
+            const getQualifiedExtraAttributesText = () => {
+                const obj = findTargetObj(this.metadataDataList, 'qualifiedExtraAttributes', 'key')?.value || {}
+                return Object.keys(obj).map(key => `${key}="${obj[key]}"`).join(' ')
+            }
+            
+            const getDependencyCode = () => {
+                const org = findTargetObj(this.metadataDataList, 'org', 'key')?.value || ''
+                const name = findTargetObj(this.metadataDataList, 'name', 'key')?.value || ''
+                const rev = findTargetObj(this.metadataDataList, 'rev', 'key')?.value || ''
+                const branch = findTargetObj(this.metadataDataList, 'branch', 'key')?.value || ''
+            
+                return `<dependency org="${org}" name="${name}" rev="${rev}" ${branch ? `branch="${branch}" ` : ''}${getQualifiedExtraAttributesText()} />`
+            }
+            
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: 'Apache Ivy',
+                            codeList: [getDependencyCode()].filter(Boolean)
+                        }
+                    ]
+                }
+            ]
+        },
+        sbtGuide () {
+            return [
+                {
+                    title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('sbtCreditGuideSubTitle1'),
+                            codeList: [
+                                `credentials += Credentials("Authentication Required", "${window.location.host}", "${this.userName || 'userId'}", "${this.accessToken || 'PERSONAL_ACCESS_TOKEN'}")`
+                            ]
+                        }
+                    ]
+                },
+                {
+                    optionType: 'push',
+                    main: [
+                        {
+                            title: this.$t('push'),
+                            subTitle: this.$t('sbtCreditGuideSubTitle1')
+                        },
+                        this.repoType === 'ivy'
+                            ? {
+                                subTitle: this.$t('sbtCreditGuideSubTitle3'),
+                                codeList: [
+                                    `val ivyPattern = "${window.location.origin}/ivy/${this.projectId}/${this.repoName}/${this.repoInfo?.configuration?.settings?.ivy_pattern || ''}`,
+                                    `val artifactPattern = "${window.location.origin}/ivy/${this.projectId}/${this.repoName}/${this.repoInfo?.configuration?.settings?.artifact_pattern || ''}"`,
+                                    'val customPatterns = Patterns(',
+                                    '   ivyPatterns = Vector(ivyPattern),',
+                                    '   artifactPatterns = Vector(artifactPattern),',
+                                    '   isMavenCompatible = false,',
+                                    '   descriptorOptional = false,',
+                                    '   skipConsistencyCheck = false',
+                                    ')',
+                                    'publishMavenStyle := false',
+                                    'publishTo := Some(Resolver.url(',
+                                    `   "${this.repoName}",`,
+                                    `   url("${window.location.origin}/ivy/${this.projectId}/${this.repoName}/")`,
+                                    ')).withAllowInsecureProtocol(true).withPatterns(customPatterns)'
+                                ]
+                            }
+                            : '',
+                        this.repoType === 'maven'
+                            ? {
+                                subTitle: this.$t('sbtCreditGuideSubTitle2'),
+                                codeList: [
+                                    'publishMavenStyle := true',
+                                    'publishTo := {',
+                                    `   Some(("${this.repoName}" at "${window.location.origin}/maven/${this.projectId}/${this.repoName}/").withAllowInsecureProtocol(true))`,
+                                    '}'
+                                ]
+                            }
+                            : '',
+                        {
+                            title: this.$t('push'),
+                            codeList: [
+                                'sbt publish'
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        sbtInstall () {
+            let org; let name; let rev; let branch
+            let extraText = ''
+            if (this.repoType === 'ivy') {
+                org = findTargetObj(this.metadataDataList, 'org', 'key')?.value || ''
+                name = findTargetObj(this.metadataDataList, 'name', 'key')?.value || ''
+                rev = findTargetObj(this.metadataDataList, 'rev', 'key')?.value || ''
+                branch = findTargetObj(this.metadataDataList, 'branch', 'key')?.value || ''
+                const extraTextArr = []
+                if (branch) {
+                    extraTextArr.push(`"branch" -> "${branch}"`)
+                }
+                const obj = findTargetObj(this.metadataDataList, 'extraAttributes', 'key')?.value || {}
+                Object.keys(obj).forEach(key => extraTextArr.push(`"${key}" ->"${obj[key]}"`))
+                extraText = extraTextArr.join(',')
+            }
+            return [
+                {
+                    main: [
+                        {
+                            codeList: [
+                                this.repoType === 'ivy' ? `libraryDependencies += "${org}" % "${name}" % "${rev}" extra(${extraText})` : '',
+                                this.repoType === 'maven' ? `libraryDependencies += "${this.detail.basic.groupId}" % "${this.detail.basic.artifactId}" % "${this.versionLabel}"` : ''
+                            ].filter(Boolean)
                         }
                     ]
                 }
@@ -350,131 +817,133 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('push'),
-                    optionType: 'push',
-                    inputBoxList: [
-                        // groupId
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('mavenGroupIdLabel'), // 输入框左侧label文案
-                            placeholder: this.$t('mavenGroupIdPlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        },
-                        // artifactId
-                        {
-                            key: 'dependInputValue2', // vux中存储的变量名
-                            label: this.$t('mavenArtifactIdLabel'), // 输入框左侧label文案
-                            placeholder: this.$t('mavenArtifactIdPlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
-                        },
-                        // 制品版本
-                        {
-                            key: 'dependInputValue3', // vux中存储的变量名
-                            label: this.$t('artifactVersion'), // 输入框左侧label文案
-                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('mavenPushGuideSubTitle1'),
-                            constructType: 'Apache Maven',
-                            notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
-                            codeList: [
-                                '<distributionManagement>',
-                                '       <repository>',
-                                `               <!--${this.$t('mavenPushGuideCodeListAnnotate')}-->`,
-                                `               <id>${this.projectId}-${this.repoName}</id>`,
-                                `               <name>${this.repoName}</name>`,
-                                `               <url>${this.repoUrl}/</url>`,
-                                '       </repository>',
-                                '</distributionManagement>'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('mavenPushGuideSubTitle2'),
-                            constructType: 'Apache Maven',
-                            notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
-                            codeList: [
-                                'mvn clean deploy'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('mavenPushGuideSubTitle3'),
-                            constructType: 'Gradle Groovy DSL',
-                            codeList: [
-                                'plugins {',
-                                '    id "maven-publish"',
-                                '}',
-                                'publishing {',
-                                '    publications {',
-                                '        maven(MavenPublication) {',
-                                `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
-                                `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
-                                `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
-                                '            from components.java',
-                                '        }',
-                                '    }',
-                                '    repositories {',
-                                '        maven {',
-                                '            url = "${cpackUrl}"',
-                                '            credentials {',
-                                '                username = "${cpackUsername}"',
-                                '                password = "${cpackPassword}"',
-                                '            }',
-                                '        }',
-                                '    }',
-                                '}'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('mavenPushGuideSubTitle4'),
-                            constructType: 'Gradle Groovy DSL',
-                            codeList: [
-                                'gradle publish'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('mavenPushGuideSubTitle5'),
-                            constructType: 'Gradle Kotlin DSL',
-                            codeList: [
-                                'plugins {',
-                                '    `maven-publish`',
-                                '}',
-                                'publishing {',
-                                '    publications {',
-                                '        create<MavenPublication>("maven") {',
-                                `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
-                                `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
-                                `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
-                                '            from(components["java"])',
-                                '        }',
-                                '    }',
-                                '    repositories {',
-                                '        maven {',
-                                '            val cpackUrl: String by project',
-                                '            val cpackUsername: String by project',
-                                '            val cpackPassword: String by project',
-                                '            url = uri(cpackUrl)',
-                                '            credentials {',
-                                '                username = cpackUsername',
-                                '                password = cpackPassword',
-                                '            }',
-                                '        }',
-                                '    }',
-                                '}'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('mavenPushGuideSubTitle6'),
-                            constructType: 'Gradle Kotlin DSL',
-                            codeList: [
-                                'gradle publish'
-                            ]
-                        }
-                    ]
-                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            // groupId
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('mavenGroupIdLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('mavenGroupIdPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            // artifactId
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('mavenArtifactIdLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('mavenArtifactIdPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            },
+                            // 制品版本
+                            {
+                                key: 'dependInputValue3', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle1'),
+                                constructType: 'Apache Maven',
+                                notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
+                                codeList: [
+                                    '<distributionManagement>',
+                                    '       <repository>',
+                                    `               <!--${this.$t('mavenPushGuideCodeListAnnotate')}-->`,
+                                    `               <id>${this.projectId}-${this.repoName}</id>`,
+                                    `               <name>${this.repoName}</name>`,
+                                    `               <url>${this.repoUrl}/</url>`,
+                                    '       </repository>',
+                                    '</distributionManagement>'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle2'),
+                                constructType: 'Apache Maven',
+                                notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
+                                codeList: [
+                                    'mvn clean deploy'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle3'),
+                                constructType: 'Gradle Groovy DSL',
+                                codeList: [
+                                    'plugins {',
+                                    '    id "maven-publish"',
+                                    '}',
+                                    'publishing {',
+                                    '    publications {',
+                                    '        maven(MavenPublication) {',
+                                    `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
+                                    `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
+                                    `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
+                                    '            from components.java',
+                                    '        }',
+                                    '    }',
+                                    '    repositories {',
+                                    '        maven {',
+                                    '            url = "${cpackUrl}"',
+                                    '            credentials {',
+                                    '                username = "${cpackUsername}"',
+                                    '                password = "${cpackPassword}"',
+                                    '            }',
+                                    '        }',
+                                    '    }',
+                                    '}'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle4'),
+                                constructType: 'Gradle Groovy DSL',
+                                codeList: [
+                                    'gradle publish'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle5'),
+                                constructType: 'Gradle Kotlin DSL',
+                                codeList: [
+                                    'plugins {',
+                                    '    `maven-publish`',
+                                    '}',
+                                    'publishing {',
+                                    '    publications {',
+                                    '        create<MavenPublication>("maven") {',
+                                    `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
+                                    `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
+                                    `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
+                                    '            from(components["java"])',
+                                    '        }',
+                                    '    }',
+                                    '    repositories {',
+                                    '        maven {',
+                                    '            val cpackUrl: String by project',
+                                    '            val cpackUsername: String by project',
+                                    '            val cpackPassword: String by project',
+                                    '            url = uri(cpackUrl)',
+                                    '            credentials {',
+                                    '                username = cpackUsername',
+                                    '                password = cpackPassword',
+                                    '            }',
+                                    '        }',
+                                    '    }',
+                                    '}'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle6'),
+                                constructType: 'Gradle Kotlin DSL',
+                                codeList: [
+                                    'gradle publish'
+                                ]
+                            }
+                        ]
+                    },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
@@ -635,7 +1104,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         mavenInstall () {
             return [
@@ -647,8 +1116,369 @@ export default {
                                 '<dependency>',
                                 `   <groupId>${this.detail.basic.groupId}</groupId>`,
                                 `   <artifactId>${this.detail.basic.artifactId}</artifactId>`,
+                                this.detail.basic.classifier && `   <classifier>${this.detail.basic.classifier}</classifier>`,
                                 `   <version>${this.versionLabel}</version>`,
-                                this.detail.basic.type && this.detail.basic.type !== 'jar' && `   <type>${this.detail.basic.type}</type>`,
+                                this.detail.basic.type && `   <type>${this.detail.basic.type}</type>`,
+                                '</dependency>'
+                            ].filter(Boolean)
+                        },
+                        {
+                            subTitle: 'Gradle Groovy DSL',
+                            codeList: [
+                                `implementation '${this.detail.basic.groupId}:${this.detail.basic.artifactId}:${this.versionLabel}'`
+                            ]
+                        },
+                        {
+                            subTitle: 'Gradle Kotlin DSL',
+                            codeList: [
+                                `implementation("${this.detail.basic.groupId}:${this.detail.basic.artifactId}:${this.versionLabel}")`
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        gradleGuide () {
+            return [
+                {
+                    title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('mavenCreditGuideSubTitle1'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<servers>',
+                                '       <server>',
+                                `               <id>${this.projectId}-${this.repoName}</id>`,
+                                `               <username>${this.userName}</username>`,
+                                `               <password>${this.accessToken}</password>`,
+                                '       </server>',
+                                '</servers>'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenCreditGuideSubTitle2'),
+                            constructType: 'Gradle Groovy DSL',
+                            codeList: [
+                                `cpackUrl=${this.repoUrl}`,
+                                `cpackUsername=${this.userName}`,
+                                `cpackPassword=${this.accessToken}`
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenCreditGuideSubTitle2'),
+                            constructType: 'Gradle Kotlin DSL',
+                            codeList: [
+                                `cpackUrl=${this.repoUrl}`,
+                                `cpackUsername=${this.userName}`,
+                                `cpackPassword=${this.accessToken}`
+                            ]
+                        }
+                    ]
+                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            // groupId
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('mavenGroupIdLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('mavenGroupIdPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            // artifactId
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('mavenArtifactIdLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('mavenArtifactIdPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            },
+                            // 制品版本
+                            {
+                                key: 'dependInputValue3', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle1'),
+                                constructType: 'Apache Maven',
+                                notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
+                                codeList: [
+                                    '<distributionManagement>',
+                                    '       <repository>',
+                                    `               <!--${this.$t('mavenPushGuideCodeListAnnotate')}-->`,
+                                    `               <id>${this.projectId}-${this.repoName}</id>`,
+                                    `               <name>${this.repoName}</name>`,
+                                    `               <url>${this.repoUrl}/</url>`,
+                                    '       </repository>',
+                                    '</distributionManagement>'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle2'),
+                                constructType: 'Apache Maven',
+                                notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
+                                codeList: [
+                                    'mvn clean deploy'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle3'),
+                                constructType: 'Gradle Groovy DSL',
+                                codeList: [
+                                    'plugins {',
+                                    '    id "maven-publish"',
+                                    '}',
+                                    'publishing {',
+                                    '    publications {',
+                                    '        maven(MavenPublication) {',
+                                    `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
+                                    `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
+                                    `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
+                                    '            from components.java',
+                                    '        }',
+                                    '    }',
+                                    '    repositories {',
+                                    '        maven {',
+                                    '            url = "${cpackUrl}"',
+                                    '            credentials {',
+                                    '                username = "${cpackUsername}"',
+                                    '                password = "${cpackPassword}"',
+                                    '            }',
+                                    '        }',
+                                    '    }',
+                                    '}'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle4'),
+                                constructType: 'Gradle Groovy DSL',
+                                codeList: [
+                                    'gradle publish'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle5'),
+                                constructType: 'Gradle Kotlin DSL',
+                                codeList: [
+                                    'plugins {',
+                                    '    `maven-publish`',
+                                    '}',
+                                    'publishing {',
+                                    '    publications {',
+                                    '        create<MavenPublication>("maven") {',
+                                    `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
+                                    `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
+                                    `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
+                                    '            from(components["java"])',
+                                    '        }',
+                                    '    }',
+                                    '    repositories {',
+                                    '        maven {',
+                                    '            val cpackUrl: String by project',
+                                    '            val cpackUsername: String by project',
+                                    '            val cpackPassword: String by project',
+                                    '            url = uri(cpackUrl)',
+                                    '            credentials {',
+                                    '                username = cpackUsername',
+                                    '                password = cpackPassword',
+                                    '            }',
+                                    '        }',
+                                    '    }',
+                                    '}'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle6'),
+                                constructType: 'Gradle Kotlin DSL',
+                                codeList: [
+                                    'gradle publish'
+                                ]
+                            }
+                        ]
+                    },
+                {
+                    title: this.$t('pull'),
+                    optionType: 'pull',
+                    inputBoxList: [
+                        // groupId
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('mavenGroupIdLabel'), // 输入框左侧label文案
+                            placeholder: this.$t('mavenGroupIdPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        // artifactId
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('mavenArtifactIdLabel'), // 输入框左侧label文案
+                            placeholder: this.$t('mavenArtifactIdPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        },
+                        // 制品版本
+                        {
+                            key: 'dependInputValue3', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                        }
+                    ],
+                    main: [
+                        {
+                            title: this.$t('mavenGuideTitle'),
+                            subTitle: this.$t('mavenGuideSubTitle1'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<mirror>',
+                                `       <id>${this.projectId}-${this.repoName}</id>`,
+                                `       <name>${this.repoName}</name>`,
+                                `       <url>${this.repoUrl}/</url>`,
+                                '       <mirrorOf>central</mirrorOf>',
+                                '</mirror>'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle1'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<profiles>',
+                                '       <profile>',
+                                '               <id>repository proxy</id>',
+                                '               <activation>',
+                                '                       <activeByDefault>true</activeByDefault>',
+                                '               </activation>',
+                                '               <repositories>',
+                                '                       <repository>',
+                                `                               <id>${this.projectId}-${this.repoName}</id>`,
+                                `                               <name>${this.repoName}</name>`,
+                                `                               <url>${this.repoUrl}/</url>`,
+                                '                               <releases>',
+                                '                                       <enabled>true</enabled>',
+                                '                               </releases>',
+                                '                               <snapshots>',
+                                '                                       <enabled>true</enabled>',
+                                '                               </snapshots>',
+                                '                       </repository>',
+                                '               </repositories>',
+                                '       </profile>',
+                                '</profiles>'
+                            ]
+                        },
+                        {
+                            title: this.$t('mavenGuideTitle2'),
+                            subTitle: this.$t('mavenGuideSubTitle2'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<repositories>',
+                                '    <repository>',
+                                `       <!--${this.$t('mavenPushGuideCodeListAnnotate')}-->`,
+                                `       <id>${this.projectId}-${this.repoName}</id>`,
+                                `       <name>${this.repoName}</name>`,
+                                `       <url>${this.repoUrl}/</url>`,
+                                '    </repository>',
+                                '</repositories>'
+                            ]
+                        },
+                        {
+                            title: this.$t('mavenGuideTitle3'),
+                            subTitle: this.$t('mavenPullGuideSubTitle7'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<dependencies>',
+                                '    <dependency>',
+                                `        <groupId>${this.dependInputValue1 || '[GROUP_ID]'}</groupId>`,
+                                `        <artifactId>${this.dependInputValue2 || '[ARTIFACT_ID]'}</artifactId>`,
+                                `        <version>${this.dependInputValue3 || '[VERSION]'}</version>`,
+                                '    </dependency>',
+                                '</dependencies>'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle2'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                'mvn clean package'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle3'),
+                            constructType: 'Gradle Groovy DSL',
+                            codeList: [
+                                'repositories {',
+                                '    maven {',
+                                '        url = "${cpackUrl}"',
+                                '        credentials {',
+                                '            username = "${cpackUsername}"',
+                                '            password = "${cpackPassword}"',
+                                '        }',
+                                '    }',
+                                '}',
+                                '   ',
+                                'dependencies { ',
+                                `     api '${this.dependInputValue1 || '[GROUP_ID]'}:${this.dependInputValue2 || '[ARTIFACT_ID]'}:${this.dependInputValue3 || '[VERSION]'}'`,
+                                '}'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle4'),
+                            constructType: 'Gradle Groovy DSL',
+                            codeList: [
+                                'gradle dependencies'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle5'),
+                            constructType: 'Gradle Kotlin DSL',
+                            codeList: [
+                                'repositories {',
+                                '    maven {',
+                                '        val cpackUrl: String by project',
+                                '        val cpackUsername: String by project',
+                                '        val cpackPassword: String by project',
+                                '        url = uri(cpackUrl)',
+                                '        credentials {',
+                                '            username = cpackUsername',
+                                '            password = cpackPassword',
+                                '        }',
+                                '    }',
+                                '}',
+                                '   ',
+                                'dependencies { ',
+                                `     api ("${this.dependInputValue1 || '[GROUP_ID]'}:${this.dependInputValue2 || '[ARTIFACT_ID]'}:${this.dependInputValue3 || '[VERSION]'}")`,
+                                '}'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle6'),
+                            constructType: 'Gradle Kotlin DSL',
+                            codeList: [
+                                'gradle dependencies'
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        gradleInstall () {
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: 'Apache Maven',
+                            codeList: [
+                                '<dependency>',
+                                `   <groupId>${this.detail.basic.groupId}</groupId>`,
+                                `   <artifactId>${this.detail.basic.artifactId}</artifactId>`,
+                                this.detail.basic.classifier && `   <classifier>${this.detail.basic.classifier}</classifier>`,
+                                `   <version>${this.versionLabel}</version>`,
+                                this.detail.basic.type && `   <type>${this.detail.basic.type}</type>`,
                                 '</dependency>'
                             ].filter(Boolean)
                         },
@@ -677,7 +1507,7 @@ export default {
                         {
                             subTitle: this.$t('helmCreditGuideSubTitle1'),
                             codeList: [
-                                `helm repo add --username ${this.userName} --password ${this.accessToken} ${this.repoName} "${this.domain.helm}/${this.projectId}/${this.repoName}/"`
+                                `helm repo add --username ${this.userName} --password ${this.accessToken} ${this.repoName} "${this.repoUrl}"`
                             ]
                         },
                         {
@@ -688,38 +1518,40 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('push'),
-                    optionType: 'push',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('fileName'), // 输入框左侧label文案
-                            placeholder: this.$t('fileNamePlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('helmPushGuideSubTitle3'),
-                            codeList: [
-                                'helm package ./'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('helmPushGuideSubTitle1'),
-                            codeList: [
-                                `curl -F "chart=@${this.dependInputValue1 || '<FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${this.domain.helm}/api/${this.projectId}/${this.repoName}/charts`
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('helmPushGuideSubTitle2'),
-                            codeList: [
-                                `curl -F "prov=@${this.dependInputValue1 || '<PROV_FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${this.domain.helm}/api/${this.projectId}/${this.repoName}/charts`
-                            ]
-                        }
-                    ]
-                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('fileName'), // 输入框左侧label文案
+                                placeholder: this.$t('fileNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('helmPushGuideSubTitle3'),
+                                codeList: [
+                                    'helm package ./'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('helmPushGuideSubTitle1'),
+                                codeList: [
+                                    `curl -F "chart=@${this.dependInputValue1 || '<FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('helmPushGuideSubTitle2'),
+                                codeList: [
+                                    `curl -F "prov=@${this.dependInputValue1 || '<PROV_FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                ]
+                            }
+                        ]
+                    },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
@@ -746,7 +1578,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         helmInstall () {
             return [
@@ -755,13 +1587,13 @@ export default {
                         {
                             subTitle: this.$t('helmInstallGuideSubTitle1'),
                             codeList: [
-                                `helm repo add --username ${this.userName} --password <PERSONAL_ACCESS_TOKEN> ${this.repoName} "${this.domain.helm}/${this.projectId}/${this.repoName}/"`
+                                `helm repo add --username ${this.userName} --password <PERSONAL_ACCESS_TOKEN> ${this.repoName} "${this.repoUrl}"`
                             ]
                         },
                         {
                             subTitle: this.$t('helmInstallGuideSubTitle2'),
                             codeList: [
-                                'helm repo update  '
+                                'helm repo update'
                             ]
                         },
                         {
@@ -794,26 +1626,28 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('push'),
-                    optionType: 'push',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('fileName'), // 输入框左侧label文案
-                            placeholder: this.$t('fileNamePlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('pushGuideSubTitle'),
-                            codeList: [
-                                `curl -u ${this.userName}:${this.accessToken} -X PUT ${this.repoUrl}/ -T ${this.dependInputValue1 || '<RPM_FILE_NAME>'}`
-                            ]
-                        }
-                    ]
-                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('fileName'), // 输入框左侧label文案
+                                placeholder: this.$t('fileNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('pushGuideSubTitle'),
+                                codeList: [
+                                    `curl -u ${this.userName}:${this.accessToken} -X PUT ${this.repoUrl}/ -T ${this.dependInputValue1 || '<RPM_FILE_NAME>'}`
+                                ]
+                            }
+                        ]
+                    },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
@@ -835,7 +1669,7 @@ export default {
                         {
                             subTitle: this.$t('rpmPullGuideSunTitle1'),
                             codeList: [
-                                `rpm -i ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.dependInputValue1 || this.packageName}-${this.dependInputValue2 || this.versionLabel}.rpm`
+                                `rpm -i ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}-${this.dependInputValue2 || this.versionLabel}.rpm`
                             ]
                         },
                         {
@@ -846,7 +1680,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         rpmInstall () {
             return [
@@ -864,7 +1698,7 @@ export default {
                         {
                             subTitle: 'yum',
                             codeList: [
-                                `yum install --repo ${this.repoName} ${this.packageName}`
+                                `yum install ${this.packageName.split('/').pop()}-${this.versionLabel}`
                             ]
                         }
                     ]
@@ -908,18 +1742,20 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('push'),
-                    optionType: 'push',
-                    main: [
-                        {
-                            subTitle: this.$t('pypiPushGuideSubTitle'),
-                            codeList: [
-                                `python3 -m twine upload -r ${this.repoName} dist/*`
-                            ]
-                        }
-                    ]
-                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        main: [
+                            {
+                                subTitle: this.$t('pypiPushGuideSubTitle'),
+                                codeList: [
+                                    `python3 -m twine upload -r ${this.repoName} dist/*`
+                                ]
+                            }
+                        ]
+                    },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
@@ -946,7 +1782,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         pypiInstall () {
             return [
@@ -989,29 +1825,31 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('push'),
-                    optionType: 'push',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('composerInputLabel'), // 输入框左侧label文案
-                            placeholder: this.$t('composerInputPlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('composerPushGuideSubTitle2')
-                        },
-                        {
-                            subTitle: this.$t('composerPushGuideSubTitle'),
-                            codeList: [
-                                `curl -X PUT -u ${this.userName}:${this.accessToken} "${this.repoUrl}/" -T ${this.dependInputValue1 || '<PACKAGE_FILE>'}`
-                            ]
-                        }
-                    ]
-                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('composerInputLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('composerInputPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('composerPullGuideSubTitle')
+                            },
+                            {
+                                subTitle: '2. ' + this.$t('composerPushGuideSubTitle'),
+                                codeList: [
+                                    `curl -X PUT -u ${this.userName}:${this.accessToken} "${this.repoUrl}/" -T ${this.dependInputValue1 || '<PACKAGE_FILE>'}`
+                                ]
+                            }
+                        ]
+                    },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
@@ -1038,7 +1876,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         composerInstall () {
             return [
@@ -1072,26 +1910,28 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('push'),
-                    optionType: 'push',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('artifactName'), // 输入框左侧label文案
-                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('nugetPushGuideSubTitle'),
-                            codeList: [
-                                `nuget push -Source "${this.repoName}" ${this.dependInputValue1 || '<LOCAL_PACKAGE_NAME>'}.nupkg`
-                            ]
-                        }
-                    ]
-                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('nugetPushGuideSubTitle'),
+                                codeList: [
+                                    `nuget push -Source "${this.repoName}" ${this.dependInputValue1 || '<LOCAL_PACKAGE_NAME>'}.nupkg`
+                                ]
+                            }
+                        ]
+                    },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
@@ -1118,33 +1958,35 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('delete'),
-                    optionType: 'delete',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('artifactName'), // 输入框左侧label文案
-                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        },
-                        {
-                            key: 'dependInputValue2', // vux中存储的变量名
-                            label: this.$t('artifactVersion'), // 输入框左侧label文案
-                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('nugetDeleteGuideSubTitle'),
-                            codeList: [
-                                `nuget delete -Source "${this.repoName}" ${this.dependInputValue1 || this.packageName} ${this.dependInputValue2 || this.versionLabel}`
-                            ]
-                        }
-                    ]
-                }
-            ]
+                (this.storeType === 'virtual' || this.whetherSoftware)
+                    ? undefined
+                    : {
+                        title: this.$t('deleteArtifact'),
+                        optionType: 'delete',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('nugetDeleteGuideSubTitle'),
+                                codeList: [
+                                    `nuget delete -Source "${this.repoName}" ${this.dependInputValue1 || this.packageName} ${this.dependInputValue2 || this.versionLabel}`
+                                ]
+                            }
+                        ]
+                    }
+            ].filter(Boolean)
         },
         nugetInstall () {
             return [
@@ -1159,23 +2001,57 @@ export default {
                     ]
                 }]
         },
-        conanGuide () {
+        cocoapodsGuide () {
             return [
                 {
                     title: this.$t('setCredentials'),
                     optionType: 'setCredentials',
                     main: [
                         {
-                            subTitle: this.$t('conanCreditGuideSubTitle1'),
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle1'),
+                            btn: {
+                                cb: () => {
+                                    window.open(window.origin + '/web/cocoapods/ext/client/plugin/download', '_self')
+                                },
+                                label: this.$t('download')
+                            },
                             codeList: [
-                                `conan remote add ${this.repoName} ${this.domain.conan}/${this.projectId}/${this.repoName}`
+                                'gem install bk-cocoapods-1.0.0.gem'
+                            ]
+                        }, {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle6'),
+                            codeList: [
+                                `machine ${location.host}`,
+                                `login ${this.userName}`,
+                                `password ${this.accessToken}`
 
                             ]
                         },
                         {
-                            subTitle: this.$t('conanCreditGuideSubTitle2'),
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle2'),
                             codeList: [
-                                `conan user -p ${this.accessToken} -r ${this.repoName} ${this.userName}`
+                                `pod bk-repo add ${this.repoName} ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: this.$t('pull'),
+                    optionType: 'pull',
+                    main: [
+                        {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle4'),
+                            codeList: [
+                                'plugin \'bk-cocoapods\', :sources => [',
+                                `       '${this.repoName}'`,
+                                '] '
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle5'),
+                            codeList: [
+                                `pod bk-repo update ${this.repoName}`,
+                                'pod install'
                             ]
                         }
                     ]
@@ -1186,179 +2062,57 @@ export default {
                     inputBoxList: [
                         {
                             key: 'dependInputValue1', // vux中存储的变量名
-                            label: 'RECIPE', // 输入框左侧label文案
-                            placeholder: this.$t('conanRecipePlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('pushGuideSubTitle') + '(conan1.x)',
-                            codeList: [
-                                `conan upload ${this.dependInputValue1} -r ${this.repoName}`
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: this.$t('pull'),
-                    optionType: 'pull',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: 'RECIPE', // 输入框左侧label文案
-                            placeholder: this.$t('conanRecipePlaceholder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('helmPullGuideSubTitle'),
-                            codeList: [
-                                `conan install ${this.dependInputValue1} -r ${this.repoName}`
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        conanInstall () {
-            return [
-                {
-                    main: [
-                        {
-                            subTitle: this.$t('conanCreditGuideSubTitle1'),
-                            codeList: [
-                                `conan remote add ${this.repoName} ${this.domain.conan}/${this.projectId}/${this.repoName}`
-
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('conanCreditGuideSubTitle2'),
-                            codeList: [
-                                `conan user -p <PERSONAL_ACCESS_TOKEN> -r ${this.repoName} ${this.userName}`
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('conanPullGuideSubTitle'),
-                            codeList: [
-                                `conan install ${this.packageName.split('@', 2)[1].split('/', 2)[0]}/${this.versionLabel}@${this.packageName.split('@', 2)[0]}/${this.packageName.split('@', 2)[1].split('/', 2)[1]} -r ${this.repoName}`
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('pushGuideSubTitle') + '(conan1.x)',
-                            codeList: [
-                                `conan upload ${this.packageName.split('@', 2)[1].split('/', 2)[0]}/${this.versionLabel}@${this.packageName.split('@', 2)[0]}/${this.packageName.split('@', 2)[1].split('/', 2)[1]} -r ${this.repoName}`
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        ohpmGuide () {
-            return [
-                {
-                    title: this.$t('npmCreditGuideSubTitle1'),
-                    optionType: 'setCredentials',
-                    main: [
-                        {
-                            subTitle: this.$t('npmCreditGuideSubTitle3'),
-                            codeList: [
-                                'node -e "require(\'readline\') .createInterface({input:process.stdin,output:process.stdout,historySize:0}) .question(\'PAT> \',p => { b64=Buffer.from(p.trim()).toString(\'base64\');console.log(b64);process.exit(); })"'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('ohpmCreditGuideSubTitle4', { 0: this.userName })
-                        },
-                        {
-                            subTitle: this.$t('ohpmCreditGuideSubTitle5'),
-                            codeList: [
-                                `registry=${this.domain.ohpm}/${this.projectId}/${this.repoName}/`,
-                                `publish_registry=${this.domain.ohpm}/${this.projectId}/${this.repoName}/`,
-                                `//${this.domain.ohpm.split('//')[1]}/${this.projectId}/${this.repoName}/:_auth=Basic <BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>`
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: this.$t('push'),
-                    optionType: 'push',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('filePath'), // 输入框左侧label文案
-                            placeholder: this.$t('ohpmPushPlaceHolder'), // 输入框提示文案
-                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
-                        }
-                    ],
-                    main: [
-                        {
-                            subTitle: this.$t('ohpmPushGuideSubTitle1'),
-                            codeList: [
-                                `ohpm publish ${this.dependInputValue1 || '<PATH_TO_PACKAGE_FILE>'}`
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('ohpmPushGuideSubTitle2'),
-                            codeList: [`ohpm publish ${this.dependInputValue1 || '<PATH_TO_PACKAGE_FILE>'} --publish_registry ${this.domain.ohpm}/${this.projectId}/${this.repoName}/`]
-                        }
-                    ]
-                },
-                {
-                    title: this.$t('pull'),
-                    optionType: 'pull',
-                    inputBoxList: [
-                        {
-                            key: 'dependInputValue1', // vux中存储的变量名
-                            label: this.$t('artifactName'), // 输入框左侧label文案
-                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            label: this.$t('packageTargetFilePath'), // 输入框左侧label文案
+                            placeholder: this.$t('packageTargetFilePathPlaceholder'), // 输入框提示文案
                             methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
                         },
                         {
                             key: 'dependInputValue2', // vux中存储的变量名
-                            label: this.$t('artifactVersion'), // 输入框左侧label文案
-                            placeholder: this.$t('npmVersionInputPlaceholder'), // 输入框提示文案
+                            label: this.$t('uploadedFilePath'), // 输入框左侧label文案
+                            placeholder: this.$t('uploadedFilePathPlaceholder'), // 输入框提示文案
                             methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
                         }
                     ],
                     main: [
                         {
-                            subTitle: this.$t('npmDownloadGuideSubTitle1'),
-                            codeList: [`ohpm install ${this.dependInputValue1 || this.packageName + '@' + this.versionLabel}${this.dependInputValue1 && this.dependInputValue2 ? '@' + this.dependInputValue2 : ''}`]
-                        },
-                        {
-                            subTitle: this.$t('npmDownloadGuideSubTitle1'),
-                            codeList: [`ohpm install ${this.dependInputValue1 || this.packageName + '@' + this.versionLabel}${this.dependInputValue1 && this.dependInputValue2 ? '@' + this.dependInputValue2 : ''} --registry ${this.domain.ohpm}/${this.projectId}/${this.repoName}`]
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle3'),
+                            codeList: [
+                                `curl -u ${this.userName}:${this.accessToken} -X PUT ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || '<TARGET_FILE_PATH>'} -T ${this.dependInputValue2 || '<PATH_TO_FILE>'}`
+                            ]
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
-        ohpmInstall () {
+        cocoapodsInstall () {
             return [
                 {
                     main: [
                         {
-                            subTitle: this.$t('npmDownloadGuideSubTitle1'),
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle7'),
                             codeList: [
-                                `ohpm install ${this.packageName}@${this.versionLabel}`
+                                'target "YourApp" do',
+                                `   pod '${this.packageName}', '~>${this.version}'`,
+                                'end'
                             ]
                         },
                         {
-                            subTitle: this.$t('npmDownloadGuideSubTitle2'),
-                            codeList: [
-                                `ohpm install ${this.packageName}@${this.versionLabel} --registry ${this.domain.ohpm}/${this.projectId}/${this.repoName}/`
-                            ]
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle8')
                         }
                     ]
                 }
             ]
         },
         articleGuide () {
-            return this[`${guideMap[this.repoType] || this.repoType}Guide`]
+            return this[`${this.isSbt ? 'sbt' : this.repoType}Guide`]
         },
         articleInstall () {
-            return this[`${guideMap[this.repoType] || this.repoType}Install`]
+            return this[`${this.isSbt ? 'sbt' : this.repoType}Install`]
+        }
+    },
+    data () {
+        return {
+            goDownloadUrl: ''
         }
     },
     watch: {
@@ -1370,6 +2124,25 @@ export default {
         }
     },
     methods: {
-        ...mapActions(['getDomain'])
+        ...mapActions(['getDomain']),
+        removeProtocolFromUrl (url, needProtocol = false) {
+            if (needProtocol) {
+                const protocolIndex = url.indexOf('://')
+                if (protocolIndex !== -1) {
+                    // 返回协议部分
+                    return url.substring(0, protocolIndex)
+                }
+                return ''
+            }
+            // 检查 URL 是否包含协议部分
+            const protocolIndex = url.indexOf('://')
+            if (protocolIndex !== -1) {
+                // 去掉协议部分
+                return url.substring(protocolIndex + 3)
+            } else {
+                // 直接返回原 URL
+                return url
+            }
+        }
     }
 }

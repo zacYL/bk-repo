@@ -88,7 +88,13 @@ data class SemVersion(
             result = patch - other.patch
         }
         if (result == 0) {
-            result = preRelease.orEmpty().compareTo(other.preRelease.orEmpty())
+            result = if (preRelease == null && other.preRelease == null) {
+                0
+            } else if (preRelease == null) {
+                1
+            } else if (other.preRelease == null) {
+                -1
+            } else { preRelease.compareTo(other.preRelease) }
         }
         if (result == 0) {
             result = buildMetadata.orEmpty().compareTo(other.buildMetadata.orEmpty())

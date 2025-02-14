@@ -102,7 +102,7 @@ open class Scanner(
             return DEFAULT_MIN_SCAN_DURATION
         }
         val maxScanDuration = if (Long.MAX_VALUE / sizeMib > maxScanDurationPerMb) {
-            maxScanDurationPerMb * sizeMib
+            maxScanDurationPerMb * sizeMib * 15L
         } else {
             logger.warn("file too large size[$size]")
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)

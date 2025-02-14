@@ -69,7 +69,7 @@ class BkciAuthServiceTest {
             "aa",
             "bkrepo",
             BkAuthResourceType.PIPELINE_DEFAULT,
-            PermissionAction.READ.toString()
+            PermissionAction.READ
         )
         Assertions.assertEquals(result1, false)
     }

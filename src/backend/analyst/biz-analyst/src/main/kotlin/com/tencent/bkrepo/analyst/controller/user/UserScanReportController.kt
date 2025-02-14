@@ -143,6 +143,19 @@ class UserScanReportController(private val scanTaskService: ScanTaskService) {
         return ResponseBuilder.success(scanTaskService.resultDetail(request))
     }
 
+    @ApiOperation("制品详情--许可数据--导出")
+    @GetMapping("/export/artifact/license/leak/{projectId}/{subScanTaskId}")
+    fun exportArtifactLicenseLeak(
+        @ApiParam(value = "projectId", required = true) @PathVariable projectId: String,
+        @ApiParam(value = "扫描记录id", required = true) @PathVariable subScanTaskId: String,
+        request: ArtifactLicensesDetailRequest
+    ) {
+        request.projectId = projectId
+        request.subScanTaskId = subScanTaskId
+        scanTaskService.exportResultDetail(request)
+    }
+
+    // 6.0合并了许可和漏洞扫描显示, 此接口不再使用
     @ApiOperation("制品详情--许可数据")
     @GetMapping("/artifact/license/count/{projectId}/{subScanTaskId}")
     fun artifactLicenseCount(

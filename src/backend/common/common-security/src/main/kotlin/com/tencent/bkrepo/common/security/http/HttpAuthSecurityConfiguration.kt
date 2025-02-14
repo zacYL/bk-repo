@@ -33,9 +33,11 @@ package com.tencent.bkrepo.common.security.http
 
 import com.tencent.bkrepo.common.security.crypto.CryptoProperties
 import com.tencent.bkrepo.common.security.http.basic.BasicAuthHandler
+import com.tencent.bkrepo.common.security.http.cookie.CookieAuthHandler
 import com.tencent.bkrepo.common.security.http.core.HttpAuthInterceptor
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurityCustomizer
+import com.tencent.bkrepo.common.security.http.devops.AccessTokenAuthHandler
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthHandler
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.http.oauth.OauthAuthHandler
@@ -90,6 +92,7 @@ class HttpAuthSecurityConfiguration(
         unifiedCustomizer.stream().forEach {
             it.customize(httpAuthSecurity)
         }
+
         httpAuthSecurity.customizers.forEach {
             it.customize(httpAuthSecurity)
         }
@@ -97,6 +100,9 @@ class HttpAuthSecurityConfiguration(
         if (httpAuthSecurity.basicAuthEnabled) {
             httpAuthSecurity.addHttpAuthHandler(BasicAuthHandler(authenticationManager))
         }
+
+        httpAuthSecurity.addHttpAuthHandler(CookieAuthHandler(jwtAuthProperties))
+
         if (httpAuthSecurity.platformAuthEnabled) {
             httpAuthSecurity.addHttpAuthHandler(PlatformAuthHandler(authenticationManager))
         }
@@ -117,6 +123,9 @@ class HttpAuthSecurityConfiguration(
         }
         if (httpAuthSecurity.signAuthEnabled) {
             httpAuthSecurity.addHttpAuthHandler(SignAuthHandler(authenticationManager, httpAuthSecurity))
+        }
+        if (httpAuthSecurity.devopsAccessTokenAuthEnabled) {
+            httpAuthSecurity.addHttpAuthHandler(AccessTokenAuthHandler(authenticationManager))
         }
     }
 }

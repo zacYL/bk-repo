@@ -37,6 +37,7 @@ import com.tencent.bkrepo.repository.api.MetadataClient
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.common.metadata.service.metadata.MetadataService
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import org.springframework.web.bind.annotation.RestController
 
 /**
@@ -62,7 +63,7 @@ class MetadataController(
     }
 
     override fun addForbidMetadata(request: MetadataSaveRequest): Response<Void> {
-        metadataService.addForbidMetadata(request)
+        metadataService.addLimitMetadata(request, LimitType.FORBID)
         return ResponseBuilder.success()
     }
 }

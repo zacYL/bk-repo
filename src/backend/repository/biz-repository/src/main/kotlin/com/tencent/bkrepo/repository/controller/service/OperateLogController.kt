@@ -36,12 +36,14 @@ import com.tencent.bkrepo.common.metadata.pojo.log.OperateLog
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.OperateLogClient
+import com.tencent.bkrepo.common.metadata.pojo.log.event.EventCreateRequest
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class OperateLogController(
     private val operateLogService: OperateLogService
 ) : OperateLogClient {
+
     override fun record(event: ArtifactEvent): Response<Void> {
         operateLogService.saveEventAsync(event, HttpContextHolder.getClientAddress())
         return ResponseBuilder.success()
@@ -66,4 +68,20 @@ class OperateLogController(
         return ResponseBuilder.success(operateLogService.listPage(option))
     }
 
+    override fun saveEvent(request: EventCreateRequest): Response<Boolean> {
+        with(request) {
+            operateLogService.save(
+                OperateLog(
+                    type = type.name,
+                    projectId = projectId,
+                    repoName = repoName,
+                    resourceKey = resourceKey,
+                    userId = userId,
+                    description = data,
+                    clientAddress = address
+                )
+            )
+        }
+        return ResponseBuilder.success()
+    }
 }

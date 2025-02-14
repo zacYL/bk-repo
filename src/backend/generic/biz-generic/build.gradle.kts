@@ -36,6 +36,7 @@ dependencies {
     api(project(":common:common-generic"))
     api(project(":common:common-artifact:artifact-service"))
     implementation(project(":common:common-artifact:artifact-cache"))
+    api(project((":common:common-cpack")))
     testImplementation("org.mockito.kotlin:mockito-kotlin")
     testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
     testImplementation("io.mockk:mockk")

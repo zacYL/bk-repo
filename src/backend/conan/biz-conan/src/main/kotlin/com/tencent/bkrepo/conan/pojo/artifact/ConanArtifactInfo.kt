@@ -28,6 +28,8 @@
 package com.tencent.bkrepo.conan.pojo.artifact
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
+import com.tencent.bkrepo.conan.utils.PathUtils
 
 class ConanArtifactInfo(
     projectId: String,
@@ -40,9 +42,23 @@ class ConanArtifactInfo(
     var packageId: String?,
     var revision: String? = null,
     var pRevision: String? = null,
+    var fileName: String? = null
 ) : ArtifactInfo(projectId, repoName, artifactUri) {
+
+    override fun getArtifactFullPath(): String {
+        return PathUtils.generateFullPath(this)
+    }
+
+    override fun getPackageFullName() = ObjectBuildUtil.buildRefStr(this)
+
+    override fun getArtifactVersion() = version
+
     companion object {
 
+        // TODO 路径优化
+        const val BASE = "/{projectId}/{repoName}"
+        // v1
+        private const val CONAN_V1_PREFIX = "/{projectId}/{repoName}/v1/conans"
         // ping
         const val PING_V1 = "/{projectId}/{repoName}/v1/ping"
 
@@ -53,86 +69,65 @@ class ConanArtifactInfo(
         const val AUTHENTICATE_V1 = "/{projectId}/{repoName}/v1/users/authenticate"
 
         // search
-        const val SEARCH_V1 = "/{projectId}/{repoName}/v1/conans/search"
-
+        const val SEARCH_V1 = "$CONAN_V1_PREFIX/search"
+        // revision search
+        const val REVISION_SEARCH_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/revisions/{revision}/search"
         // package search
-        const val PACKAGE_SEARCH_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/search"
+        const val PACKAGE_SEARCH_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/search"
 
         // get recipe manifest
-        const val GET_RECIPE_MANIFEST_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/digest"
-
+        const val GET_RECIPE_MANIFEST_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/digest"
         // get recipe snapshot
-        const val GET_RECIPE_SNAPSHOT_V1 = "/{projectId}/{repoName}/v1/conans/{name}/{version}/{username}/{channel}"
-
+        const val GET_RECIPE_SNAPSHOT_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}"
         // get package manifest
-        const val GET_PACKAGE_MANIFEST_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/packages/{packageId}/digest"
-
+        const val GET_PACKAGE_MANIFEST_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/packages/{packageId}/digest"
         // get package snapshot
-        const val GET_PACKAGE_SNAPSHOT_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/packages/{packageId}"
-
+        const val GET_PACKAGE_SNAPSHOT_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/packages/{packageId}"
         // get recipe upload urls
-        const val GET_RECIPE_UPLOAD_URLS_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/upload_urls"
-
+        const val GET_RECIPE_UPLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/upload_urls"
         // get package download urls
-        const val GET_PACKAGE_UPLOAD_URLS_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/packages/{packageId}/upload_urls"
+        const val GET_PACKAGE_UPLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/packages/{packageId}/upload_urls"
 
         // get conan file download urls
-        const val GET_CONANFILE_DOWNLOAD_URLS_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/download_urls"
-
+        const val GET_CONANFILE_DOWNLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/download_urls"
         // get package download urls
-        const val GET_PACKAGE_DOWNLOAD_URLS_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/packages/{packageId}/download_urls"
+        const val GET_PACKAGE_DOWNLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/packages/{packageId}/download_urls"
 
         // upload file
         const val UPLOAD_FILE_V1 = "/{projectId}/{repoName}/v1/files/" +
-            "{username}/{name}/{version}/{channel}/{revision}/export/**"
+            "{username}/{name}/{version}/{channel}/{revision}/export/{path}"
         const val UPLOAD_PACKAGE_FILE_V1 = "/{projectId}/{repoName}/v1/files/" +
-            "{username}/{name}/{version}/{channel}/{revision}/package/{packageId}/{pRevision}/**"
+            "{username}/{name}/{version}/{channel}/{revision}/package/{packageId}/{pRevision}/{path}"
 
         // remove recipe
-        const val REMOVE_RECIPE_V1 = "/{projectId}/{repoName}/v1/conans/{name}/{version}/{username}/{channel}"
-
+        const val REMOVE_RECIPE_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}"
         // remove packages
-        const val REMOVE_PACKAGES_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/packages/delete"
-
+        const val REMOVE_PACKAGES_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/packages/delete"
         // remove recipe files
-        const val REMOVE_FILES_V1 = "/{projectId}/{repoName}/v1/conans/" +
-            "{name}/{version}/{username}/{channel}/remove_files"
+        const val REMOVE_FILES_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/remove_files"
 
         // V2
+        private const val CONAN_V2_PREFIX = "/{projectId}/{repoName}/v2/conans"
         // get package file list
-        const val GET_PACKAGE_REVISION_FILES_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}" +
+        const val GET_PACKAGE_REVISION_FILES_V2 = CONAN_V2_PREFIX +
+            "/{name}/{version}/{username}/{channel}/revisions/{revision}" +
             "/packages/{packageId}/revisions/{pRevision}/files"
-
         // package file
-        const val PACKAGE_REVISION_FILE_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}" +
-            "/packages/{packageId}/revisions/{pRevision}/files/**"
+        const val PACKAGE_REVISION_FILE_V2 = CONAN_V2_PREFIX +
+            "/{name}/{version}/{username}/{channel}/revisions/{revision}" +
+            "/packages/{packageId}/revisions/{pRevision}/files/{path}"
 
         // get recipe file list
-        const val GET_RECIPE_REVISION_FILES_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}/files"
-
+        const val GET_RECIPE_REVISION_FILES_V2 = CONAN_V2_PREFIX +
+            "/{name}/{version}/{username}/{channel}/revisions/{revision}/files"
         // recipe file
-        const val RECIPE_REVISION_FILE_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}/files/**"
+        const val RECIPE_REVISION_FILE_V2 = CONAN_V2_PREFIX +
+            "/{name}/{version}/{username}/{channel}/revisions/{revision}/files/{path}"
 
         // get recipe revisions
-        const val RECIPE_REVISIONS_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions"
-
+        const val RECIPE_REVISIONS_V2 = "$CONAN_V2_PREFIX/{name}/{version}/{username}/{channel}/revisions"
         // get recipe latest
-        const val RECIPE_LATEST_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/latest"
+        const val RECIPE_LATEST_V2 = "$CONAN_V2_PREFIX/{name}/{version}/{username}/{channel}/latest"
 
         // get recipe index.json
         const val RECIPE_INDEX = "/{projectId}/{repoName}/" +
@@ -143,45 +138,36 @@ class ConanArtifactInfo(
             "{username}/{name}/{version}/{channel}/{revision}/package/{packageId}/index.json"
 
         // get package revisions
-        const val PACKAGE_REVISIONS_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}" +
+        const val PACKAGE_REVISIONS_V2 = CONAN_V2_PREFIX +
+            "/{name}/{version}/{username}/{channel}/revisions/{revision}" +
             "/packages/{packageId}/revisions"
-
         // get package latest
-        const val PACKAGE_LATEST_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}" +
+        const val PACKAGE_LATEST_V2 = CONAN_V2_PREFIX +
+            "/{name}/{version}/{username}/{channel}/revisions/{revision}" +
             "/packages/{packageId}/latest"
-
         // search
-        const val SEARCH_V2 = "/{projectId}/{repoName}/v2/conans/search"
-
-        const val REVISION_SEARCH_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}/search"
-
+        const val SEARCH_V2 = "$CONAN_V2_PREFIX/search"
+        // revision search
+        const val REVISION_SEARCH_V2 = "$CONAN_V2_PREFIX/{name}/{version}/{username}/{channel}/revisions/{revision}/search"
         // package search
-        const val PACKAGE_SEARCH_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/search"
-
+        const val PACKAGE_SEARCH_V2 = "$CONAN_V2_PREFIX/{name}/{version}/{username}/{channel}/search"
         // check_credentials
         const val CHECK_CREDENTIALS_V2 = "/{projectId}/{repoName}/v2/users/check_credentials"
-
         // authenticate
         const val AUTHENTICATE_V2 = "/{projectId}/{repoName}/v2/users/authenticate"
 
         // remove recipe
-        const val REMOVE_RECIPE_V2 = "/{projectId}/{repoName}/v2/conans/{name}/{version}/{username}/{channel}"
+        const val REMOVE_RECIPE_V2 = "$CONAN_V2_PREFIX/{name}/{version}/{username}/{channel}"
         const val REMOVE_RECIPE_REVISIONS_V2 =
-            "/{projectId}/{repoName}/v2/conans/{name}/{version}/{username}/{channel}/revisions/{revision}"
-
+            "$CONAN_V2_PREFIX/{name}/{version}/{username}/{channel}/revisions/{revision}"
         // remove packages
-        const val REMOVE_PACKAGE_RECIPE_REVISION_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}/packages/{packageId}"
-        const val REMOVE_PACKAGE_REVISION_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}/packages/{packageId}/revisions/{pRevision}"
-
+        const val REMOVE_PACKAGE_RECIPE_REVISION_V2 = CONAN_V2_PREFIX +
+            "/{name}/{version}/{username}/{channel}/revisions/{revision}/packages/{packageId}"
+        const val REMOVE_PACKAGE_REVISION_V2 = CONAN_V2_PREFIX +
+            "/{name}/{version}/{username}/{channel}/revisions/{revision}/packages/{packageId}/revisions/{pRevision}"
         // remove all packages in revision
-        const val REMOVE_ALL_PACKAGE_UNDER_REVISION_V2 = "/{projectId}/{repoName}/v2/conans/" +
-            "{name}/{version}/{username}/{channel}/revisions/{revision}/packages"
+        const val REMOVE_ALL_PACKAGE_UNDER_REVISION_V2 = CONAN_V2_PREFIX +
+            "/{name}/{version}/{username}/{channel}/revisions/{revision}/packages"
 
         // conan version detail
         const val CONAN_VERSION_DETAIL = "/version/detail/{projectId}/{repoName}"

@@ -195,7 +195,9 @@ class SeparationDataServiceImpl(
                     extension = it.extension.orEmpty(),
                     contentPath = it.artifactPath,
                     manifestPath = it.manifestPath,
-                    clusterNames = it.clusterNames
+                    clusterNames = it.clusterNames,
+                    recentlyUseDate = it.recentlyUseDate,
+                    ordinal = it.ordinal,
                 )
             }
         }
@@ -203,6 +205,7 @@ class SeparationDataServiceImpl(
         private fun convert(tPackage: TSeparationPackage?): PackageSummary? {
             return tPackage?.let {
                 PackageSummary(
+                    id = it.id,
                     createdBy = it.createdBy,
                     createdDate = it.createdDate,
                     lastModifiedBy = it.lastModifiedBy,

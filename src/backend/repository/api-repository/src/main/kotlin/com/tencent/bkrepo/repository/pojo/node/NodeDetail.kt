@@ -54,6 +54,8 @@ data class NodeDetail(
     val lastModifiedBy: String = nodeInfo.lastModifiedBy,
     @ApiModelProperty("修改时间")
     val lastModifiedDate: String = nodeInfo.lastModifiedDate,
+    @ApiModelProperty("最近使用时间")
+    val recentlyUseDate: String? = nodeInfo.recentlyUseDate,
     @ApiModelProperty("访问时间")
     val lastAccessDate: String? = nodeInfo.lastAccessDate,
 

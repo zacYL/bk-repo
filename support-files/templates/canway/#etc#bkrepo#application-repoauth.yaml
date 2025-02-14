@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Auth Service
+server:
+  port: __BK_REPO_AUTH_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: auth

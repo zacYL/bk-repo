@@ -61,6 +61,7 @@ object StringPool {
     const val BYTES = "bytes"
     const val NO_CACHE = "no-cache"
     const val URL_REGEX = "(\\w+):\\/\\/([^/:]+)(:\\d*)?([^# ]*)"
+    const val SCHEME_SEPARATOR = "://"
 
     private val alphabet: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 

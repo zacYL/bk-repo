@@ -28,8 +28,8 @@
 package com.tencent.bkrepo.common.analysis.pojo.scanner.dependencycheck.result
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import com.tencent.bkrepo.common.checker.pojo.Cvssv2
-import com.tencent.bkrepo.common.checker.pojo.Cvssv3
+import com.tencent.bkrepo.common.analysis.pojo.scanner.dependencycheck.pojo.Cvssv2
+import com.tencent.bkrepo.common.analysis.pojo.scanner.dependencycheck.pojo.Cvssv3
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 

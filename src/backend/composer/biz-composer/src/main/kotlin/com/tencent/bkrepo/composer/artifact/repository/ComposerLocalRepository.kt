@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryId
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -43,7 +44,7 @@ import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.closeQuietly
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.metadata.service.packages.StageService
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
@@ -57,6 +58,7 @@ import com.tencent.bkrepo.composer.pojo.ArtifactRepeat
 import com.tencent.bkrepo.composer.pojo.ArtifactUploadResponse
 import com.tencent.bkrepo.composer.pojo.ArtifactVersionDetail
 import com.tencent.bkrepo.composer.pojo.Basic
+import com.tencent.bkrepo.composer.pojo.ComposerMetadata
 import com.tencent.bkrepo.composer.util.DecompressUtil.wrapperJson
 import com.tencent.bkrepo.composer.util.JsonUtil
 import com.tencent.bkrepo.composer.util.JsonUtil.wrapperJson
@@ -78,6 +80,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
+import java.time.format.DateTimeFormatter
 
 @Component
 class ComposerLocalRepository(private val stageService: StageService) : LocalRepository() {
@@ -219,15 +222,32 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
             artifactInfo.setArtifactMappingUri(artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS"))
             val node = ArtifactContextHolder.getNodeDetail(artifactInfo)
-            node?.let {
-                downloadIntercept(context, it)
-                packageVersion(it)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
+            if (node != null) {
+                val name = node.metadata[METADATA_KEY_PACKAGE_KEY].toString()
+                val version = node.metadata[METADATA_KEY_VERSION]?.toString()
+                checkPackageAccessRule(projectId, PackageType.COMPOSER, name, version)
             }
+            downloadIntercept(context, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
+        }
+    }
+
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        super.onUploadBefore(context)
+        with(context){
+            val artifactPath = artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
+            val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, artifactPath))
+            // TODO: 需要抽象处理
+            node?.let {
+                uploadIntercept(context, it)
+                packageVersion(null, it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
+            }
         }
     }
 
@@ -243,8 +263,15 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
         }
         // 保存节点
         val metadata = mutableMapOf<String, String>()
+        val composerMetadata = JsonUtil.mapper.readValue(composerArtifact.json, ComposerMetadata::class.java)
+        metadata["name"] = composerMetadata.name
         metadata[METADATA_KEY_PACKAGE_KEY] = PackageKeys.ofComposer(composerArtifact.name)
         metadata[METADATA_KEY_VERSION] = composerArtifact.version
+        metadata["type"] = composerMetadata.type
+        composerMetadata.description?.let { metadata["description"] = it }
+        composerMetadata.keywords?.let {
+            if (it.toString() != "null") metadata["keywords"] = it.toString()
+        }
         val nodeCreateRequest = getCompressNodeCreateRequest(context, metadata)
         store(nodeCreateRequest, context.getArtifactFile(), context.storageCredentials)
         // 更新索引
@@ -263,7 +290,8 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
                 manifestPath = null,
                 artifactPath = context.artifactInfo.getArtifactFullPath(),
                 overwrite = true,
-                createdBy = context.userId
+                createdBy = context.userId,
+                packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value, system = true) }
             ),
             HttpContextHolder.getClientAddress()
         )
@@ -278,7 +306,7 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
                 projectId, repoName, getArtifactFullPath(),
                 context.getArtifactFile().getFileSha256(), context.getArtifactFile().getFileMd5(),
                 "Uploaded " +
-                    "success"
+                        "success"
             )
             response.writer.print(artifactUploadResponse.toJsonString())
         }
@@ -484,7 +512,8 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
                 return PackageDownloadRecord(
                     projectId, repoName,
                     packageKey.toString(),
-                    version.toString()
+                    version.toString(),
+                    userId
                 )
             } else {
                 null
@@ -515,13 +544,20 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
             val packageVersion = packageService.findVersionByName(
                 projectId, repoName, packageKey, version
             )
+            val createdDate = packageVersion?.createdDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.createdDate
+            val lastModifiedDate = packageVersion?.lastModifiedDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.lastModifiedDate
             val count = packageVersion?.downloads ?: 0
             val composerArtifactBasic = Basic(
                 name,
                 version,
-                jarNode.size, jarNode.fullPath,
-                jarNode.createdBy, jarNode.createdDate,
-                jarNode.lastModifiedBy, jarNode.lastModifiedDate,
+                jarNode.size,
+                jarNode.fullPath,
+                jarNode.createdBy,
+                createdDate,
+                jarNode.lastModifiedBy,
+                lastModifiedDate,
                 count,
                 jarNode.sha256,
                 jarNode.md5,
@@ -549,10 +585,12 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
         return true
     }
 
-    fun packageVersion(node: NodeDetail): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        if (node == null) return null
         with(node) {
-            val packageKey = metadata[METADATA_KEY_PACKAGE_KEY]?.toString() ?: return null
-            val packageVersion = metadata[METADATA_KEY_VERSION]?.toString() ?: return null
+            val packageKey = metadata[METADATA_KEY_PACKAGE_KEY]?.toString()
+            val packageVersion = metadata[METADATA_KEY_VERSION]?.toString()
+            if (packageKey == null || packageVersion == null) return null
             return packageService.findVersionByName(projectId, repoName, packageKey, packageVersion)
         }
     }

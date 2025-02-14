@@ -31,17 +31,21 @@
 
 package com.tencent.bkrepo.common.service.log
 
+import com.tencent.bkrepo.common.service.condition.ConditionalOnUndertow
 import io.undertow.Undertow
 import io.undertow.UndertowOptions
+import io.undertow.server.handlers.DisallowedMethodsHandler
 import io.undertow.server.handlers.accesslog.AccessLogHandler
 import io.undertow.server.handlers.accesslog.AccessLogReceiver
+import io.undertow.util.HttpString
 import org.springframework.boot.web.embedded.undertow.UndertowBuilderCustomizer
 import org.springframework.boot.web.embedded.undertow.UndertowDeploymentInfoCustomizer
 import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory
-import org.springframework.context.annotation.Configuration
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
+import org.springframework.context.annotation.Configuration
 
 @Configuration
+@ConditionalOnUndertow
 class AccessLogWebServerCustomizer : WebServerFactoryCustomizer<UndertowServletWebServerFactory> {
 
     override fun customize(factory: UndertowServletWebServerFactory) {
@@ -60,6 +64,7 @@ class AccessLogWebServerCustomizer : WebServerFactoryCustomizer<UndertowServletW
                 deploymentInfo.addInitialHandlerChainWrapper { handler ->
                     val accessLogReceiver = Slf4jAccessLogReceiver()
                     AccessLogHandler(handler, accessLogReceiver, pattern, Undertow::class.java.classLoader)
+                    DisallowedMethodsHandler(handler, HttpString("TRACE"))
                 }
             }
         )

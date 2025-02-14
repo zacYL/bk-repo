@@ -41,6 +41,7 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfigura
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyConfiguration
+import com.tencent.bkrepo.common.devops.repository
 import com.tencent.bkrepo.common.metadata.client.RAuthClient
 import com.tencent.bkrepo.common.metadata.condition.ReactiveCondition
 import com.tencent.bkrepo.common.metadata.dao.repo.RRepositoryDao
@@ -296,14 +297,14 @@ class RRepositoryServiceImpl(
             }
             repository.display = display
             repositoryDao.save(repository)
+            val event = buildUpdatedEvent(repoUpdateRequest, repository.type)
+            resourcePermissionListener.handle(event)
+            messageSupplier.delegateToSupplier(
+                data = event,
+                topic = event.topic,
+                key = event.getFullResourceKey(),
+            )
         }
-        val event = buildUpdatedEvent(repoUpdateRequest)
-        resourcePermissionListener.handle(event)
-        messageSupplier.delegateToSupplier(
-            data = event,
-            topic = event.topic,
-            key = event.getFullResourceKey(),
-        )
         logger.info("Update repository[$repoUpdateRequest] success.")
     }
 
@@ -324,8 +325,8 @@ class RRepositoryServiceImpl(
                     deleteProxyRepo(repository, it)
                 }
             }
+            resourcePermissionListener.handle(buildDeletedEvent(repoDeleteRequest, repository.type))
         }
-        resourcePermissionListener.handle(buildDeletedEvent(repoDeleteRequest))
         logger.info("Delete repository [$repoDeleteRequest] success.")
     }
 

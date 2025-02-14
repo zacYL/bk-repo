@@ -35,7 +35,9 @@ import com.tencent.bkrepo.common.metadata.pojo.log.OpLogListOption
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLog
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLogResponse
 import com.tencent.bkrepo.common.metadata.service.log.OperateLogService
+import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper
 import com.tencent.bkrepo.common.security.exception.PermissionException
+import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -65,11 +67,20 @@ class UserOperateLogController(
         return ResponseBuilder.success(operateLogService.listPage(option))
     }
 
+    @ApiOperation("审计日志事件类型")
+    @GetMapping("/event/type")
+    fun type(): Response<Map<String, String>> {
+        val map = OperateLogServiceHelper.eventTypes.associateWith { OperateLogServiceHelper.eventName(it) }
+        return ResponseBuilder.success(map)
+    }
+
     @ApiOperation("审计日志查询接口")
     @GetMapping("/page")
     fun page(
         @ApiParam("资源类型", required = false)
         @RequestParam type: String?,
+        @ApiParam("事件类型", required = false)
+        @RequestParam eventType: List<String>?,
         @ApiParam("项目名", required = false)
         @RequestParam projectId: String?,
         @ApiParam("仓库名", required = false)
@@ -87,10 +98,17 @@ class UserOperateLogController(
     ): Response<Page<OperateLogResponse?>> {
         checkPermission(projectId)
         val page = operateLogService.page(
-            type, projectId, repoName,
-            operator, startTime, endTime, pageNumber ?: 1, pageSize ?: 20
+                type, eventType, projectId, repoName,
+                operator, startTime, endTime, pageNumber ?: 1, pageSize ?: 20
         )
         return ResponseBuilder.success(page)
+    }
+
+    @GetMapping("/migrate")
+    @ApiOperation("历史审计历史数据迁移接口")
+    @Principal(PrincipalType.ADMIN)
+    fun opLogsMigrate() {
+        operateLogService.opLogsMigrate()
     }
 
     private fun checkPermission(projectId: String?) {

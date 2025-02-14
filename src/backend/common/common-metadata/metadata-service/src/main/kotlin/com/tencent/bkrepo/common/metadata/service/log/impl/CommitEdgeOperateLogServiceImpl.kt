@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.metadata.dao.log.OperateLogDao
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLog
 import com.tencent.bkrepo.common.metadata.properties.OperateProperties
+import com.tencent.bkrepo.common.operate.service.dao.OperateLogMigrateDao
 import com.tencent.bkrepo.common.service.cluster.properties.ClusterProperties
 import com.tencent.bkrepo.common.service.feign.FeignClientFactory
 import com.tencent.bkrepo.repository.api.cluster.ClusterOperateLogClient
@@ -39,10 +40,12 @@ import com.tencent.bkrepo.repository.api.cluster.ClusterOperateLogClient
 open class CommitEdgeOperateLogServiceImpl(
     operateProperties: OperateProperties,
     operateLogDao: OperateLogDao,
+    operateLogMigrateDao: OperateLogMigrateDao,
     clusterProperties: ClusterProperties
 ) : OperateLogServiceImpl(
     operateProperties,
     operateLogDao,
+    operateLogMigrateDao,
 ) {
 
     private val centerOpLogClient: ClusterOperateLogClient by lazy {

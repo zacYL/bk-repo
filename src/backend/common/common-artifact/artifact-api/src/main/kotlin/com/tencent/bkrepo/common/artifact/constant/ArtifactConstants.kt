@@ -57,6 +57,11 @@ const val NODE_DETAIL_KEY = "node-detail"
 const val REPO_RATE_LIMIT_KEY = "repo-rate-limit"
 
 /**
+ * 显示仓库类型，存放在元数据，如用于mavne、ivy仓库在前端显示sbt类型
+ */
+const val DISPLAY_REPO_TYPE_KEY = "display_repo_type"
+
+/**
  * 项目id字段
  */
 const val PROJECT_ID = "projectId"
@@ -162,6 +167,14 @@ const val FORBID_STATUS = "forbidStatus"
 const val FORBID_USER = "forbidUser"
 const val FORBID_TYPE = "forbidType"
 
+// 制品锁定信息
+const val LOCK_STATUS = "lockStatus"
+const val LOCK_USER = "lockUser"
+const val LOCK_TYPE = "lockType"
+
+// 质量状态
+const val QUALITY_STATUS = "qualityRedLine"
+
 // 制品扫描状态
 const val SCAN_STATUS = "scanStatus"
 
@@ -185,3 +198,27 @@ const val METADATA_KEY_LINK_FULL_PATH = "targetFullPath"
  * sha256长度
  */
 const val SHA256_STR_LENGTH = 64
+
+// 删除节点操作的顶层节点，在回收站显示
+const val ROOT_DELETED_NODE = "_root_deleted_node"
+// 跳过节点保留时间删除
+const val EXPIRED_DELETED_NODE = "_expired_deleted_node"
+
+/**
+ * 元数据KEY保留字，仅允许系统使用
+ */
+val RESERVED_KEY = setOf(
+    SCAN_STATUS,
+    FORBID_STATUS,
+    FORBID_USER,
+    FORBID_TYPE,
+    QUALITY_STATUS,
+    LOCK_STATUS,
+    LOCK_USER,
+    LOCK_TYPE,
+    ROOT_DELETED_NODE,
+    EXPIRED_DELETED_NODE
+)
+
+const val SHA256 = "sha256"
+const val MD5 = "md5"

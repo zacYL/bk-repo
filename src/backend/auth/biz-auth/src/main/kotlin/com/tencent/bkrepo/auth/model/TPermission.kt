@@ -31,6 +31,8 @@
 
 package com.tencent.bkrepo.auth.model
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.mapping.Document
@@ -50,22 +52,24 @@ import java.time.LocalDateTime
     CompoundIndex(name = "users_action_idx", def = "{'users.action': 1}", background = true),
     CompoundIndex(name = "roles_iid_idx", def = "{'roles._id': 1}", background = true),
     CompoundIndex(name = "roles_action_idx", def = "{'roles.action': 1}", background = true)
+//    CompoundIndex(name = "unique_index", def = "{'resourceType':1, 'projectId':1, 'permName':1, 'repos':1 }"
+//        , background = true, unique = true)
 )
 
 data class TPermission(
-    val id: String? = null,
-    var resourceType: String,
-    var projectId: String? = null,
-    var permName: String,
-    var repos: List<String> = emptyList(),
-    var includePattern: List<String> = emptyList(),
-    var excludePattern: List<String> = emptyList(),
-    var createBy: String,
-    val createAt: LocalDateTime,
-    var updatedBy: String,
-    val updateAt: LocalDateTime,
-    var users: List<String> = emptyList(),
-    var roles: List<String> = emptyList(),
-    var departments: List<String> = emptyList(),
-    var actions: List<String> = emptyList()
+	val id: String? = null,
+	var resourceType: ResourceType,
+	var projectId: String? = null,
+	var permName: String,
+	var repos: List<String> = emptyList(),
+	var includePattern: List<String> = emptyList(),
+	var excludePattern: List<String> = emptyList(),
+	var createBy: String,
+	val createAt: LocalDateTime,
+	var updatedBy: String,
+	val updateAt: LocalDateTime,
+	var users: List<String> = emptyList(),
+	var roles: List<String> = emptyList(),
+	var departments: List<String> = emptyList(),
+	var actions: List<PermissionAction> = emptyList()
 )

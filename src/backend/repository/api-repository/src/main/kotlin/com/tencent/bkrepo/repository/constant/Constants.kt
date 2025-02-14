@@ -31,10 +31,15 @@
 
 package com.tencent.bkrepo.repository.constant
 
+const val SYSTEM_REPO = "system"
 const val SYSTEM_USER = "system"
 const val SHARDING_COUNT = 256
 const val METADATA_PREFIX = "metadata."
 const val DEFAULT_STORAGE_CREDENTIALS_KEY = "default"
+const val ALL_REPO_STORAGE_CACHE = "ALL_REPO_STORAGE_CACHE"
+
+const val PACKAGE_VERSION = "version"
+const val DATE = "date"
 
 const val PROJECT_ID = "projectId"
 const val REPO_NAME = "repoName"

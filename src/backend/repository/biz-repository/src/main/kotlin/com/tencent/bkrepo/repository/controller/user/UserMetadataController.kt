@@ -50,6 +50,7 @@ import com.tencent.bkrepo.common.metadata.service.metadata.MetadataService
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.metadata.UserMetadataDeleteRequest
@@ -121,7 +122,7 @@ class UserMetadataController(
         content = ActionAuditContent.NODE_METADATA_EDIT_CONTENT
     )
     @ApiOperation("创建/更新元数据列表")
-    @Permission(type = ResourceType.NODE, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.UPDATE)
     @PostMapping(DEFAULT_MAPPING_URI)
     fun save(
         @RequestAttribute userId: String,
@@ -160,8 +161,8 @@ class UserMetadataController(
         scopeId = "#artifactInfo?.projectId",
         content = ActionAuditContent.NODE_METADATA_FORBID_CONTENT
     )
-    @ApiOperation("创建/更新禁用元数据")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @ApiOperation("创建/更新禁止元数据")
+    @Permission(type = ResourceType.NODE, action = PermissionAction.FORBID)
     @PostMapping("/forbid$DEFAULT_MAPPING_URI")
     fun forbidMetadata(
         @RequestAttribute userId: String,
@@ -176,7 +177,27 @@ class UserMetadataController(
                 nodeMetadata = metadataSaveRequest.nodeMetadata
             )
             ActionAuditContext.current().setInstance(request)
-            metadataService.addForbidMetadata(request)
+            metadataService.addLimitMetadata(request, LimitType.FORBID)
+            return ResponseBuilder.success()
+        }
+    }
+
+    @ApiOperation("创建/更新锁定元数据")
+    @Permission(type = ResourceType.NODE, action = PermissionAction.LOCK)
+    @PostMapping("/lock$DEFAULT_MAPPING_URI")
+    fun lockMetadata(
+        @RequestAttribute userId: String,
+        @ArtifactPathVariable artifactInfo: ArtifactInfo,
+        @RequestBody metadataSaveRequest: UserMetadataSaveRequest
+    ): Response<Void> {
+        artifactInfo.run {
+            val request = MetadataSaveRequest(
+                projectId = projectId,
+                repoName = repoName,
+                fullPath = getArtifactFullPath(),
+                nodeMetadata = metadataSaveRequest.nodeMetadata
+            )
+            metadataService.addLimitMetadata(request, LimitType.LOCK)
             return ResponseBuilder.success()
         }
     }
@@ -199,7 +220,7 @@ class UserMetadataController(
         content = ActionAuditContent.NODE_METADATA_DELETE_CONTENT
     )
     @ApiOperation("删除元数据")
-    @Permission(type = ResourceType.NODE, action = PermissionAction.DELETE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.UPDATE)
     @DeleteMapping(DEFAULT_MAPPING_URI)
     fun delete(
         @RequestAttribute userId: String,

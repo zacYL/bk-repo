@@ -27,10 +27,12 @@
 
 package com.tencent.bkrepo.common.metadata.service.log.impl
 
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.metadata.dao.log.OperateLogDao
 import com.tencent.bkrepo.common.metadata.model.TOperateLog
+import com.tencent.bkrepo.common.metadata.model.TOperateLogMig
 import com.tencent.bkrepo.common.metadata.pojo.log.OpLogListOption
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLog
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLogResponse
@@ -40,10 +42,15 @@ import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.buildList
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.buildLog
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.buildOperateLogPageQuery
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.convert
+import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.eventTypes
+import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.getEventList
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.match
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.transfer
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
+import com.tencent.bkrepo.common.operate.service.dao.OperateLogMigrateDao
 import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
 import org.springframework.scheduling.annotation.Async
 
 /**
@@ -52,6 +59,7 @@ import org.springframework.scheduling.annotation.Async
 open class OperateLogServiceImpl(
     private val operateProperties: OperateProperties,
     private val operateLogDao: OperateLogDao,
+    private val operatorLogMigrateDao: OperateLogMigrateDao
 ) : OperateLogService {
 
     @Async
@@ -123,6 +131,7 @@ open class OperateLogServiceImpl(
 
     override fun page(
         type: String?,
+        eventType: List<String>?,
         projectId: String?,
         repoName: String?,
         operator: String?,
@@ -132,10 +141,41 @@ open class OperateLogServiceImpl(
         pageSize: Int
     ): Page<OperateLogResponse?> {
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
-        val query = buildOperateLogPageQuery(type, projectId, repoName, operator, startTime, endTime)
+        if (!eventType.isNullOrEmpty()) {
+            require(eventTypes.containsAll(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support")
+            }
+        }
+        if (type != null && !eventType.isNullOrEmpty()) {
+            require(getEventList(type).containsAll(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support for [$type]")
+            }
+        }
+        val query = buildOperateLogPageQuery(type, eventType, projectId, repoName, operator, startTime, endTime)
         val totalRecords = operateLogDao.count(query)
         val records = operateLogDao.find(query.with(pageRequest)).map { convert(it) }
         return Pages.ofResponse(pageRequest, totalRecords, records)
+    }
+
+    override fun opLogsMigrate() {
+        while (true) {
+            val logs = operatorLogMigrateDao.find(
+                Query(Criteria.where(TOperateLogMig::projectId.name).ne(null)).limit(2)
+            ).onEach { log ->
+                val operateLog = TOperateLog(
+                    type = log.type.name,
+                    resourceKey = log.resourceKey,
+                    projectId = log.projectId,
+                    repoName = log.repoName,
+                    description = log.description,
+                    userId = log.userId,
+                    clientAddress = log.clientAddress
+                )
+                operateLogDao.save(operateLog)
+                operatorLogMigrateDao.removeById(log.id!!)
+            }
+            if (logs.isEmpty()) break
+        }
     }
 
     protected fun notNeedRecord(type: String, projectId: String?, repoName: String?): Boolean {

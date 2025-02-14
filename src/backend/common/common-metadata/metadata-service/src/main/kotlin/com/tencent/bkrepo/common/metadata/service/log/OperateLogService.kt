@@ -56,6 +56,7 @@ interface OperateLogService {
 
     fun page(
         type: String?,
+        eventType: List<String>?,
         projectId: String?,
         repoName: String?,
         operator: String?,
@@ -64,4 +65,9 @@ interface OperateLogService {
         pageNumber: Int,
         pageSize: Int
     ): Page<OperateLogResponse?>
+
+    /**
+     * 历史审计历史数据迁移
+     */
+    fun opLogsMigrate()
 }

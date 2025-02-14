@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.controller.service
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
@@ -64,8 +65,24 @@ class RepositoryController(
         return ResponseBuilder.success(repositoryService.getRepoDetail(projectId, repoName, type))
     }
 
-    override fun listRepo(projectId: String, name: String?, type: String?): Response<List<RepositoryInfo>> {
-        return ResponseBuilder.success(repositoryService.listRepo(projectId, name, type))
+    override fun listRepo(
+        projectId: String,
+        name: String?,
+        type: String?,
+        category: List<String>?
+    ): Response<List<RepositoryInfo>> {
+        return ResponseBuilder.success(repositoryService.listRepo(projectId, name, type, null, category))
+    }
+
+    override fun listUserRepo(
+        projectId: String,
+        userId: String,
+        name: String?,
+        type: String?
+    ): Response<List<RepositoryInfo>> {
+        return ResponseBuilder.success(
+            repositoryService.listPermissionRepo(userId, projectId, RepoListOption(name, type))
+        )
     }
 
     override fun rangeQuery(request: RepoRangeQueryRequest): Response<Page<RepositoryInfo?>> {
@@ -114,5 +131,13 @@ class RepositoryController(
     override fun unsetOldStorageCredentialsKey(projectId: String, repoName: String): Response<Void> {
         repositoryService.unsetOldStorageCredentialsKey(projectId, repoName)
         return ResponseBuilder.success()
+    }
+
+    override fun allRepos(
+        projectId: String?,
+        repoName: String?,
+        repoType: RepositoryType?
+    ): Response<List<RepositoryInfo?>> {
+        return ResponseBuilder.success(repositoryService.allRepos(projectId, repoName, repoType))
     }
 }

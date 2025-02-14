@@ -29,11 +29,13 @@ package com.tencent.bkrepo.conan.controller
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.PACKAGE_SEARCH_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.PACKAGE_SEARCH_V2
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.REVISION_SEARCH_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.REVISION_SEARCH_V2
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.SEARCH_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.SEARCH_V2
@@ -54,16 +56,23 @@ class ConanSearchController(
     @GetMapping(SEARCH_V1, SEARCH_V2)
     @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun search(
-        @PathVariable projectId: String,
-        @PathVariable repoName: String,
+        @ArtifactPathVariable artifactInfo: ArtifactInfo,
         @RequestParam q: String?,
         @RequestParam ignorecase: Boolean?
     ): ResponseEntity<Any> {
         val ignoreCase = ignorecase ?: true
-        return ConanCommonController.buildResponse(conanSearchService.search(projectId, repoName, q, ignoreCase))
+        return ConanCommonController.buildResponse(conanSearchService.search(artifactInfo, q, ignoreCase))
     }
 
-    @GetMapping(PACKAGE_SEARCH_V1, PACKAGE_SEARCH_V2, REVISION_SEARCH_V2)
+    @GetMapping(REVISION_SEARCH_V1, REVISION_SEARCH_V2)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    fun searchRevision(
+        @ArtifactPathVariable conanArtifactInfo: ConanArtifactInfo
+    ): ResponseEntity<Any> {
+        return ConanCommonController.buildResponse(conanSearchService.searchRevision( conanArtifactInfo))
+    }
+
+    @GetMapping(PACKAGE_SEARCH_V1, PACKAGE_SEARCH_V2)
     @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun searchPackages(
         @ArtifactPathVariable conanArtifactInfo: ConanArtifactInfo,

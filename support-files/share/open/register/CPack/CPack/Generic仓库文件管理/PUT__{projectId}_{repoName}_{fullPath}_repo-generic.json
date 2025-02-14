@@ -1,0 +1,15 @@
+{
+  "code" : "PUT__{projectId}_{repoName}_{fullPath}_repo-generic",
+  "name" : "上传文件",
+  "desc" : "上传文件",
+  "systemCode" : "CPack",
+  "method" : "PUT",
+  "path" : "/repo-generic/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repogeneric",
+  "targetPath" : "/{projectId}/{repoName}/**",
+  "targetMethod" : "PUT",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "上传文件_bcfe9ffc.md"
+}

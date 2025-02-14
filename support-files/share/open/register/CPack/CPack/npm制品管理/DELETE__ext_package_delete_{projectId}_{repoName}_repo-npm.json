@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-npm",
+  "name" : "删除指定npm包的所有版本",
+  "desc" : "删除指定npm包的所有版本",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-npm/ext/package/delete/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "reponpm",
+  "targetPath" : "/ext/package/delete/{projectId}/{repoName}",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除指定npm包的所有版本_113c3946.md"
+}

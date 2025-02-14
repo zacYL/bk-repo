@@ -34,6 +34,7 @@ package com.tencent.bkrepo.maven.artifact
 import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
@@ -50,6 +51,11 @@ class MavenArtifactInfoResolver : ArtifactInfoResolver {
         request: HttpServletRequest
     ): MavenArtifactInfo {
         val mavenArtifactInfo = MavenArtifactInfo(projectId, repoName, artifactUri)
+        if (HttpContextHolder.getRequest().requestURI.startsWith("/deploy") ||
+            HttpContextHolder.getRequest().requestURI.startsWith("/cancel")
+        ) {
+                return mavenArtifactInfo
+            }
         val fileName = artifactUri.substringAfterLast("/")
         if (fileName.matches(Regex(PACKAGE_SUFFIX_REGEX))) {
             val paths = artifactUri.trim('/').split("/")

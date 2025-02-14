@@ -32,8 +32,9 @@
 package com.tencent.bkrepo.pypi.artifact
 
 import com.tencent.bkrepo.common.api.constant.StringPool
-import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
-import com.tencent.bkrepo.pypi.constants.REMOTE_HTML_CACHE_FULL_PATH
+import com.tencent.bkrepo.pypi.constants.HTML_EXTENSION
+import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_CACHE_NAME_HTML
+import com.tencent.bkrepo.pypi.constants.PYPI_SIMPLE_CACHE_PATH
 
 class PypiSimpleArtifactInfo(
     projectId: String,
@@ -41,10 +42,9 @@ class PypiSimpleArtifactInfo(
     val packageName: String?
 ) : PypiArtifactInfo(projectId, repoName, StringPool.EMPTY) {
 
-    override fun getArtifactName(): String {
-        return packageName ?: StringPool.SLASH
-    }
+    override fun getArtifactName() = packageName ?: ""
 
-    override fun getArtifactFullPath() = if (packageName == null) "/$REMOTE_HTML_CACHE_FULL_PATH" else
-        throw MethodNotAllowedException("Information about version-index cache file is not available")
+    override fun getArtifactFullPath() =
+        if (packageName == null) "$PYPI_SIMPLE_CACHE_PATH/$PACKAGE_INDEX_CACHE_NAME_HTML"
+        else "$PYPI_SIMPLE_CACHE_PATH/$packageName$HTML_EXTENSION"
 }

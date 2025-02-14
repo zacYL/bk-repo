@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.common.service.metrics
 
+import com.tencent.bkrepo.common.service.condition.ConditionalOnUndertow
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
@@ -37,6 +38,7 @@ import javax.management.MBeanServer
 import javax.management.ObjectName
 
 @Component
+@ConditionalOnUndertow
 class UndertowMetrics : MeterBinder {
     private val platformMBeanServer: MBeanServer = ManagementFactory.getPlatformMBeanServer()
     private val workerObjectName by lazy { ObjectName(OBJECT_NAME) }

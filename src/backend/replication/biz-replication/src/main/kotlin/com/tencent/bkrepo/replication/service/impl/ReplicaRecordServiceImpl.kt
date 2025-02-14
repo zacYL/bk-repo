@@ -154,7 +154,9 @@ class ReplicaRecordServiceImpl(
                 sha256 = sha256,
                 status = ExecutionStatus.RUNNING,
                 progress = ReplicaProgress(),
-                startTime = LocalDateTime.now()
+                startTime = LocalDateTime.now(),
+                actionType = actionType,
+                errorReason = errorReason
             )
             return try {
                 replicaRecordDetailDao.insert(recordDetail).let { convert(it)!! }
@@ -200,6 +202,24 @@ class ReplicaRecordServiceImpl(
         val totalRecords = replicaRecordDao.count(query)
         val records = replicaRecordDao.find(query.with(pageRequest)).map { convert(it)!! }
         return Pages.ofResponse(pageRequest, totalRecords, records)
+    }
+
+    override fun deleteRecord(key: String, startTime: String, endTime: String): Long {
+        var deleteCount = 0L
+        val localStart = TimeUtils.toSystemZoneTime(startTime)
+        val localEnd = TimeUtils.toSystemZoneTime(endTime)
+        require(localStart.isBefore(localEnd)) {
+            throw IllegalArgumentException("startTime must before endTime")
+        }
+        val criteria = Criteria.where(TReplicaRecord::taskKey.name).`is`(key)
+            .and(TReplicaRecord::startTime.name).gte(localStart)
+            .and(TReplicaRecord::endTime.name).lte(localEnd)
+        replicaRecordDao.find(Query(criteria)).forEach {
+            replicaRecordDetailDao.deleteByRecordId(it.id!!)
+            replicaRecordDao.removeById(it.id!!)
+            deleteCount++
+        }
+        return deleteCount
     }
 
     override fun listDetailsByRecordId(recordId: String): List<ReplicaRecordDetail> {
@@ -272,6 +292,32 @@ class ReplicaRecordServiceImpl(
         )
     }
 
+    override fun recordDetailOverview(recordId: String): RecordOverview {
+        var success = 0L
+        var fail = 0L
+        var running = 0L
+        val aggregation = Aggregation.newAggregation(
+            TReplicaRecordDetail::class.java,
+            Aggregation.match(Criteria.where(TReplicaRecordDetail::recordId.name).`is`(recordId)),
+            Aggregation.group("\$${TReplicaRecordDetail::status.name}").count().`as`("count")
+        )
+        val result = replicaRecordDetailDao.aggregate(aggregation, RecordCountResult::class.java).mappedResults
+        result.forEach {
+            when (it.id) {
+                SUCCESS -> success = it.count
+                FAILED -> fail = it.count
+                RUNNING -> running = it.count
+            }
+        }
+        val conflict = replicaRecordDetailDao.find(
+            Query.query(
+                Criteria.where(TReplicaRecordDetail::recordId.name).`is`(recordId)
+                    .and(TReplicaRecordDetail::conflictStrategy.name).ne(null)
+            )
+        ).count().toLong()
+        return RecordOverview(success + fail + running, success, fail, conflict)
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(ReplicaRecordServiceImpl::class.java)
 
@@ -314,7 +360,8 @@ class ReplicaRecordServiceImpl(
                     progress = it.progress,
                     startTime = it.startTime,
                     endTime = it.endTime,
-                    errorReason = it.errorReason
+                    errorReason = it.errorReason,
+                    actionType = it.actionType
                 )
             }
         }

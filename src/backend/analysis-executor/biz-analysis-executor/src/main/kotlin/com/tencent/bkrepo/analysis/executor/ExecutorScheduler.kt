@@ -149,7 +149,7 @@ class ExecutorScheduler @Autowired constructor(
         if (!memAvailable || !diskAvailable) {
             logger.warn(
                 "memory[$freeMemPercent]: $freeMem / $totalMem, " +
-                    "disk space[$usableDiskSpacePercent]: $usableDiskSpacePercent / ${workDir.totalSpace}"
+                    "disk space[$usableDiskSpacePercent]: ${workDir.usableSpace} / ${workDir.totalSpace}"
             )
         }
 

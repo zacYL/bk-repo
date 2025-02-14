@@ -57,6 +57,11 @@ interface NodeStatsOperation {
     fun countFileNode(artifact: ArtifactInfo): Long
 
     /**
+     * 根据路径列表查询文件节点数量总和
+     */
+    fun countFileNodeByList(projectId: String, repoName: String, fullPathList: List<String>): Long
+
+    /**
      * 聚合查询节点大小
      */
     fun aggregateComputeSize(criteria: Criteria): Long

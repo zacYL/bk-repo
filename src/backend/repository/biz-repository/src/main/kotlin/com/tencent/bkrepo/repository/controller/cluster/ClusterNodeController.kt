@@ -144,6 +144,12 @@ class ClusterNodeController(
         }
     }
 
+    override fun updateRecentlyUseDate(projectId: String, repoName: String, fullPath: String): Response<Void> {
+        permissionManager.checkNodePermission(PermissionAction.WRITE, projectId, repoName, fullPath)
+        nodeService.updateRecentlyUseDate(projectId, repoName, fullPath)
+        return ResponseBuilder.success()
+    }
+
     private fun checkCrossRepoPermission(request: NodeMoveCopyRequest) {
         with(request) {
             permissionManager.checkNodePermission(

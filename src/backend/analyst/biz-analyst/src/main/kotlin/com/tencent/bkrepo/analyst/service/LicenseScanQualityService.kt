@@ -29,7 +29,7 @@ package com.tencent.bkrepo.analyst.service
 
 interface LicenseScanQualityService {
     /**
-     * 检查是否通过质量规则
+     * 检查许可质量规则是否通过
      */
     fun checkLicenseScanQualityRedLine(scanQuality: Map<String, Any>, scanResultOverview: Map<String, Number>): Boolean
 }

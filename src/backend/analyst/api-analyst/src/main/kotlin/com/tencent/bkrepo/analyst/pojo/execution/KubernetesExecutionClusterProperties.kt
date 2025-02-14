@@ -22,7 +22,9 @@ data class KubernetesExecutionClusterProperties(
     @ApiModelProperty("集群允许单容器使用的最大ephemeralStorage")
     val limitStorage: Long = 128 * GB,
     @ApiModelProperty("集群允许单容器使用的最大cpu")
-    val limitCpu: Double = 16.0
+    val limitCpu: Double = 16.0,
+    @ApiModelProperty("是否验证ssl，默认不验证")
+    val verifyingSsl: Boolean = false,
 ) {
     companion object {
         const val GB = 1024 * 1024 * 1024L

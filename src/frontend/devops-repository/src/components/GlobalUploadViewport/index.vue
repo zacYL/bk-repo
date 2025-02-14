@@ -23,19 +23,19 @@
                 :row-border="false"
                 :virtual-render="fileList.length > 3000"
                 size="small">
-                <bk-table-column :label="$t('fileName')" min-width="230" show-overflow-tooltip>
+                <bk-table-column :label="$t('fileName')" min-width="300">
                     <template #default="{ row }">
                         <bk-popover placement="top">
-                            {{row.file.name}}
+                            <div class="file-name-info">{{row.name || row.file.name}}</div>
                             <template #content>
-                                <div>{{$t('project')}}：{{ (projectList.find(p => p.id === row.projectId)).name }}</div>
-                                <div>{{$t('repository')}}：{{ replaceRepoName(row.repoName) }}</div>
-                                <div>{{$t('fileStoragePath')}}：{{ row.fullPath }}</div>
+                                <div>{{$t('project') + ': ' + (projectList.find(p => p.id === row.projectId)).name }}</div>
+                                <div>{{$t('repository') + ': ' + replaceRepoName(row.repoName) }}</div>
+                                <div>{{$t('fileStoragePath') + ': ' + row.fullPath }}</div>
                             </template>
                         </bk-popover>
                     </template>
                 </bk-table-column>
-                <bk-table-column :label="$t('status')" width="140">
+                <bk-table-column :label="$t('status')" width="100">
                     <template #default="{ row }">
                         <span v-if="row.status === 'UPLOADING'"
                             v-bk-tooltips="{ content: row.progressDetail, placements: ['bottom'] }">
@@ -45,17 +45,13 @@
                             </span>
                             <span>{{ row.progressPercent }}</span>
                         </span>
-                        <span v-else class="repo-tag" :class="row.status">
+                        <span v-else class="repo-tag" :class="row.status"
+                            v-bk-tooltips="{ disabled: row.status !== 'FAILED' || !row.errMsg, content: row.errMsg, placements: ['bottom'] }">
                             {{ uploadStatus[row.status].label }}
                         </span>
                     </template>
                 </bk-table-column>
-                <bk-table-column :label="$t('errMsg')" width="140" show-overflow-tooltip>
-                    <template #default="{ row }">
-                        {{ row.errMsg }}
-                    </template>
-                </bk-table-column>
-                <bk-table-column :label="$t('operation')" width="90">
+                <bk-table-column :label="$t('operation')" width="100">
                     <template #default="{ row }">
                         <bk-button v-if="row.status === 'INIT' || row.status === 'UPLOADING'"
                             text theme="primary" @click="cancelUpload(row)">{{$t('cancel')}}</bk-button>
@@ -76,18 +72,16 @@
             :root-data="rootData"
             @confirm="addFilesToFileList">
         </selected-files-dialog>
-        <iam-deny-dialog :visible.sync="showIamDenyDialog" :show-data="showData"></iam-deny-dialog>
     </div>
 </template>
 <script>
     import Vue from 'vue'
-    import iamDenyDialog from '@repository/components/IamDenyDialog/IamDenyDialog'
     import selectedFilesDialog from './selectedFilesDialog'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize } from '@repository/utils'
     export default {
         name: 'globalUploadViewport',
-        components: { selectedFilesDialog, iamDenyDialog },
+        components: { selectedFilesDialog },
         data () {
             return {
                 show: false,
@@ -99,13 +93,11 @@
                     fullPath: ''
                 },
                 fileList: [],
-                upLoadTaskQueue: [],
-                showIamDenyDialog: false,
-                showData: {}
+                upLoadTaskQueue: []
             }
         },
         computed: {
-            ...mapState(['projectList', 'userInfo']),
+            ...mapState(['projectList']),
             uploadStatus () {
                 return {
                     UPLOADING: { label: this.$t('uploading'), power: 1 },
@@ -122,20 +114,121 @@
         methods: {
             ...mapActions([
                 'uploadArtifactory',
-                'getPermissionUrl'
+                'submitMavenArtifactory'
             ]),
-            selectFiles (data = {}) {
+            initData () {
                 this.rootData = {
-                    ...this.rootData,
-                    ...data
+                    projectId: '',
+                    repoName: '',
+                    folder: false,
+                    fullPath: ''
                 }
-                this.$refs.selectedFilesDialog.selectFiles()
+            },
+            selectFiles (data = {}) {
+                this.initData()
+                
+                this.$nextTick(() => {
+                    this.rootData = {
+                        ...this.rootData,
+                        ...data
+                    }
+                    this.$refs.selectedFilesDialog.selectFiles()
+                })
             },
             addFilesToFileList ({ overwrite, selectedFiles }) {
-                const fileList = selectedFiles.map(file => this.getUploadObj(file, overwrite))
-                this.sortFileList(fileList)
-                this.addToUpLoadTaskQueue()
-                this.show = true
+                if (this.rootData.uploadType) {
+                    if (selectedFiles.length) {
+                        selectedFiles.forEach(file => {
+                            this.uploadHandle(file)
+                        })
+                        this.show = true
+                    } else {
+                        this.$bkMessage({
+                            theme: 'error',
+                            message: this.$t('uploadMavenErrorMsgTip')
+                        })
+                    }
+                } else {
+                    const fileList = selectedFiles.map(file => this.getUploadObj(file, overwrite))
+                    this.sortFileList(fileList)
+                    this.addToUpLoadTaskQueue()
+                    this.show = true
+                }
+            },
+            uploadHandle (file) {
+                return new Promise((resolve, reject) => {
+                    // 处理重新替换逻辑
+                    const index = this.fileList.findIndex(item => {
+                        // 有可能不是文件对象，而是表单包裹的文件对象
+                        let realFile = file
+                        let name = item.file.name
+                        if (file.get && typeof file.get === 'function') {
+                            realFile = file.get('file')
+                            name = item.name
+                        }
+                        return name === realFile.name
+                    })
+                    let data, params, eventPromise
+                    if (this.rootData.uploadType === 'mavenUpload') {
+                        data = {
+                            xhr: new XMLHttpRequest(),
+                            projectId: this.rootData.projectId,
+                            repoName: this.rootData.repoName,
+                            file,
+                            status: 'INIT'
+                        }
+                        params = {
+                            projectId: this.rootData.projectId,
+                            repoName: this.rootData.repoName,
+                            body: { ...file._tempParams }
+                        }
+                        eventPromise = this.submitMavenArtifactory(params)
+                    } else if (this.rootData.uploadType === 'npmUpload') {
+                        const formData = new FormData()
+                        let targetFile = file
+                        // file 可能是表单
+                        if (file.get && typeof file.get === 'function') {
+                            targetFile = file.get('file')
+                        }
+                        formData.append('file', targetFile)
+                        data = {
+                            xhr: new XMLHttpRequest(),
+                            projectId: this.rootData.projectId,
+                            repoName: this.rootData.repoName,
+                            file: formData,
+                            name: targetFile.name,
+                            status: 'INIT'
+                        }
+                    
+                        const headers = {
+                            'Content-Type': 'multipart/form-data; boundary=----',
+                            'X-BKREPO-EXPIRES': 0
+                        }
+                        eventPromise = this.uploadArtifactory({
+                            xhr: data.xhr,
+                            body: data.file,
+                            headers,
+                            uploadType: 'npmUpload',
+                            projectId: data.projectId,
+                            repoName: data.repoName
+                        })
+                    }
+                    data.status = 'UPLOADING'
+                    eventPromise.then(res => {
+                        data.status = 'SUCCESS'
+                        resolve()
+                    }).catch(error => {
+                        data.status = 'FAILED'
+                        data.errMsg = `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                        reject(error)
+                    }).finally(() => {
+                        if (index !== -1) {
+                            this.fileList.splice(index, 1, data)
+                        } else {
+                            this.fileList.push(data)
+                        }
+                    })
+                })
             },
             getUploadObj (file, overwrite) {
                 const { projectId, repoName, fullPath: path } = this.rootData
@@ -200,28 +293,7 @@
                     window.repositoryVue.$emit('upload-refresh', fullPath)
                 }).catch(e => {
                     if (wait.status === 'CANCEL') return
-                    if (e.status === 403) {
-                        this.getPermissionUrl({
-                            body: {
-                                projectId: projectId,
-                                action: 'WRITE',
-                                resourceType: 'REPO',
-                                uid: this.userInfo.name,
-                                repoName: repoName
-                            }
-                        }).then(res => {
-                            if (res !== '') {
-                                this.showIamDenyDialog = true
-                                this.showData = {
-                                    projectId: projectId,
-                                    repoName: repoName,
-                                    action: 'WRITE',
-                                    url: res
-                                }
-                            }
-                        })
-                    }
-                    e && this.$set(wait, 'errMsg', e.response.message || e)
+                    e && this.$set(wait, 'errMsg', e.message || e)
                     this.$set(wait, 'status', 'FAILED')
                 }).finally(() => {
                     this.upLoadTaskQueue = this.upLoadTaskQueue.filter(task => task !== wait)
@@ -236,9 +308,23 @@
                 row.xhr.abort()
             },
             reUpload (row) {
-                this.$set(row, 'status', 'INIT')
-                this.sortFileList()
-                this.addToUpLoadTaskQueue() // 开启队列
+                if (this.rootData.uploadType) {
+                    this.uploadHandle(row.file).then(() => {
+                        this.$bkMessage({
+                            theme: 'success',
+                            message: this.$t('uploadSuccess')
+                        })
+                    }).catch(error => {
+                        this.$bkMessage({
+                            message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`,
+                            theme: 'error'
+                        })
+                    })
+                } else {
+                    this.$set(row, 'status', 'INIT')
+                    this.sortFileList()
+                    this.addToUpLoadTaskQueue() // 开启队列
+                }
             },
             getProgress ({ loaded, total }) {
                 const progressDetail = `(${convertFileSize(loaded)}/${convertFileSize(total)})`
@@ -254,7 +340,7 @@
     position: fixed;
     right: 40px;
     bottom: 60px;
-    width: 600px;
+    width: 520px;
     z-index: 1999;
     border-radius: 3px;
     box-shadow: 0px 0px 20px 0px rgba(8, 30, 64, 0.2);
@@ -281,6 +367,12 @@
         height: 325px;
         border-top: 1px solid var(--borderColor);
         background-color: white;
+        .file-name-info {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     }
     &.file-visible {
         .viewport-header {

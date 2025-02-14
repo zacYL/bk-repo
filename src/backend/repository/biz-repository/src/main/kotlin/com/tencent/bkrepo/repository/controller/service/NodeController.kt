@@ -58,6 +58,8 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.common.metadata.service.node.NodeSearchService
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Primary
 import org.springframework.web.bind.annotation.RestController
 
@@ -74,6 +76,19 @@ class NodeController(
     override fun getNodeDetail(projectId: String, repoName: String, fullPath: String): Response<NodeDetail?> {
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, fullPath)
         return ResponseBuilder.success(nodeService.getNodeDetail(artifactInfo))
+    }
+
+    override fun listFullPathById(projectId: String, id: List<String>): Response<Map<String, String>> {
+        return ResponseBuilder.success(nodeService.listFullPathById(projectId, id))
+    }
+
+    override fun updateRecentlyUseDate(
+        projectId: String,
+        repoName: String,
+        fullPath: String
+    ): Response<Void> {
+        nodeService.updateRecentlyUseDate(projectId, repoName, fullPath)
+        return ResponseBuilder.success()
     }
 
     override fun checkExist(projectId: String, repoName: String, fullPath: String): Response<Boolean> {
@@ -153,6 +168,10 @@ class NodeController(
     override fun countFileNode(projectId: String, repoName: String, path: String): Response<Long> {
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, path)
         return ResponseBuilder.success(nodeService.countFileNode(artifactInfo))
+    }
+
+    override fun countFileNodeByList(projectId: String, repoName: String, fullPathList: List<String>): Response<Long> {
+        return ResponseBuilder.success(nodeService.countFileNodeByList(projectId, repoName, fullPathList))
     }
 
     override fun search(queryModel: QueryModel): Response<Page<Map<String, Any?>>> {
@@ -235,5 +254,9 @@ class NodeController(
 
     override fun link(nodeLinkRequest: NodeLinkRequest): Response<NodeDetail> {
         return ResponseBuilder.success(nodeService.link(nodeLinkRequest))
+    }
+
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(NodeController::class.java)
     }
 }

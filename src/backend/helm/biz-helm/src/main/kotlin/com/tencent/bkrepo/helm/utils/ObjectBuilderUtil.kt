@@ -38,11 +38,12 @@ import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.event.packages.VersionUpdatedEvent
 import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
 import com.tencent.bkrepo.common.artifact.event.repo.RepoRefreshedEvent
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.helm.constants.FULL_PATH
 import com.tencent.bkrepo.helm.constants.META_DETAIL
@@ -61,6 +62,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
+import java.time.format.DateTimeFormatter
 
 object ObjectBuilderUtil {
 
@@ -75,7 +77,8 @@ object ObjectBuilderUtil {
         return RepoCreatedEvent(
             projectId = projectId,
             repoName = repoName,
-            userId = operator
+            userId = operator,
+            repoType = RepositoryType.HELM
         )
     }
 
@@ -205,7 +208,7 @@ object ObjectBuilderUtil {
         // 下载index.yaml不进行下载次数统计
         if (name.isEmpty() && version.isEmpty()) return null
         with(context) {
-            return PackageDownloadRecord(projectId, repoName, PackageKeys.ofHelm(name), version)
+            return PackageDownloadRecord(projectId, repoName, PackageKeys.ofHelm(name), version, userId)
         }
     }
 
@@ -285,9 +288,9 @@ object ObjectBuilderUtil {
                 repoName = repoName,
                 downloadCount = packageVersion.downloads,
                 createdBy = createdBy,
-                createdDate = createdDate,
+                createdDate = packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                 lastModifiedBy = lastModifiedBy,
-                lastModifiedDate = lastModifiedDate
+                lastModifiedDate = packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
             )
         }
     }

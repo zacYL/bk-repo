@@ -6,19 +6,18 @@
                 <div class="repo-title text-overflow" :title="pkg.name">
                     {{ pkg.name }}
                 </div>
-                <!-- <div class="repo-description text-overflow"
-                    :title="pkg.description">
-                    {{ pkg.description || '【制品描述】' }}
-                </div> -->
             </div>
+            <bk-button class="common-package-header-refresh" @click="refresh((currentVersion || {}).name)">
+                {{ $t('refresh') }}
+            </bk-button>
         </header>
         <div class="common-version-main flex-align-center">
             <aside class="common-version" v-bkloading="{ isLoading }">
-                <header class="pl30 version-header flex-align-center">{{ $t('artifactVersion')}}</header>
+                <header class="pl30 version-header flex-align-center">{{$t('artifactVersion')}}</header>
                 <div class="version-search">
                     <bk-input
                         v-model.trim="versionInput"
-                        :placeholder="$t('versionPlaceHolder')"
+                        :placeholder="$t('versionPlaceholder')"
                         clearable
                         @enter="handlerPaginationChange()"
                         @clear="handlerPaginationChange()"
@@ -31,7 +30,7 @@
                         :is-loading="isLoading"
                         :has-next="versionList.length < pagination.count"
                         @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
-                        <div class="mb10 list-count">{{ $t('totalVersionCount', [pagination.count])}}</div>
+                        <div class="mb10 list-count">{{$t('totalVersionCount', [pagination.count])}} </div>
                         <div
                             class="mb10 version-item flex-center"
                             :class="{ 'selected': $version.name === version }"
@@ -43,15 +42,16 @@
                                 class="version-operation"
                                 :list="[
                                     ...(!$version.metadata.forbidStatus ? [
-                                        permission.edit && {
+                                        (showPromotion && !$version.metadata.lockStatus) && {
                                             label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
                                         repoType !== 'docker' && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) },
-                                        showRepoScan && { label: $t('scanArtifact'), clickEvent: () => scanPackageHandler($version) }
+                                        showRepoScan && { label: $t('scan'), clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
-                                    { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? $t('liftBan') : $t('forbiddenUse') },
-                                    permission.delete && { label: $t('delete'), clickEvent: () => deleteVersionHandler($version) }
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
+                                    (permission.delete && !whetherSoftware && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: $t('delete'), clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
                     </infinite-scroll>
@@ -62,29 +62,27 @@
                     ref="versionDetail"
                     @tag="changeStageTagHandler()"
                     @scan="scanPackageHandler()"
-                    @forbid="changeForbidStatusHandler()"
+                    @forbid="showLimitDialog('forbid')"
+                    @lock="showLimitDialog('lock')"
                     @download="downloadPackageHandler()"
                     @delete="deleteVersionHandler()">
                 </version-detail>
             </div>
         </div>
-
         <common-form-dialog ref="commonFormDialog" @refresh="refresh"></common-form-dialog>
-        <loading ref="loading" @closeLoading="closeLoading"></loading>
-        <iam-deny-dialog :visible.sync="showIamDenyDialog" :show-data="showData"></iam-deny-dialog>
+        <operationLimitConfirmDialog ref="operationLimitConfirmDialog" @confirm="changeLimitStatusHandler"></operationLimitConfirmDialog>
     </div>
 </template>
 <script>
     import OperationList from '@repository/components/OperationList'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
+    import operationLimitConfirmDialog from '@repository/components/operationLimitConfirmDialog'
     import VersionDetail from '@repository/views/repoCommon/commonVersionDetail'
     import commonFormDialog from '@repository/views/repoCommon/commonFormDialog'
-    import iamDenyDialog from '@repository/components/IamDenyDialog/IamDenyDialog'
     import { mapState, mapActions } from 'vuex'
-    import Loading from '@repository/components/Loading/loading'
     export default {
         name: 'commonPackageDetail',
-        components: { Loading, OperationList, InfiniteScroll, VersionDetail, commonFormDialog, iamDenyDialog },
+        components: { OperationList, InfiniteScroll, VersionDetail, commonFormDialog, operationLimitConfirmDialog },
         data () {
             return {
                 tabName: 'commonVersion',
@@ -122,14 +120,11 @@
                     current: 1,
                     limit: 20,
                     limitList: [10, 20, 40]
-                },
-                showIamDenyDialog: false,
-                showData: {},
-                timer: null
+                }
             }
         },
         computed: {
-            ...mapState(['permission', 'scannerSupportPackageType', 'userInfo']),
+            ...mapState(['permission', 'scannerSupportPackageType']),
             projectId () {
                 return this.$route.params.projectId || ''
             },
@@ -148,17 +143,35 @@
             currentVersion () {
                 return this.versionList.find(version => version.name === this.version)
             },
+            // 当前仓库类型
+            storeType () {
+                return this.$route.query.storeType || ''
+            },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
+            },
             showRepoScan () {
-                const show = RELEASE_MODE !== 'community' || SHOW_ANALYST_MENU
-                return show && this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType)
+                // 软件源模式下屏蔽安全扫描和禁用操作
+                // 虚拟仓库屏蔽安全扫描和禁用操作
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !this.whetherSoftware && !(this.storeType === 'virtual')
+            },
+            // 是否显示晋级操作
+            showPromotion () {
+                // 远程或虚拟仓库不显示晋级操作
+                return this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware
+            },
+            // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
+            sourceRepoName () {
+                return this.$route.query.sourceName || ''
             }
         },
         created () {
+            // 制品搜索且选择了指定的版本详情时需要默认触发版本的搜索
+            this.versionInput = this.$route.query.searchFlag ? this.version : ''
             this.getPackageInfoHandler()
             this.handlerPaginationChange()
-            if (RELEASE_MODE !== 'community' || SHOW_ANALYST_MENU) {
-                this.refreshSupportPackageTypeList()
-            }
+            this.refreshSupportPackageTypeList()
         },
         methods: {
             ...mapActions([
@@ -167,8 +180,8 @@
                 'changeStageTag',
                 'deleteVersion',
                 'forbidPackageMetadata',
-                'refreshSupportPackageTypeList',
-                'getPermissionUrl'
+                'lockPackageMetadata',
+                'refreshSupportPackageTypeList'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
@@ -189,11 +202,12 @@
                 this.isLoading = !load
                 this.getVersionList({
                     projectId: this.projectId,
-                    repoName: this.repoName,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
-                    version: this.versionInput
+                    version: this.versionInput,
+                    srcRepo: this.sourceRepoName || undefined
                 }).then(({ records, totalRecords }) => {
                     load ? this.versionList.push(...records) : (this.versionList = records)
                     this.pagination.count = totalRecords
@@ -218,7 +232,7 @@
                 this.infoLoading = true
                 this.getPackageInfo({
                     projectId: this.projectId,
-                    repoName: this.repoName,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey
                 }).then(info => {
                     this.pkg = info
@@ -249,121 +263,70 @@
                     type: 'upgrade',
                     version: row.name,
                     default: row.stageTag,
-                    tag: '',
-                    path: this.currentVersion.contentPath
+                    tag: ''
                 })
             },
             scanPackageHandler (row = this.currentVersion) {
                 this.$refs.commonFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: this.$t('scanArtifact'),
+                    title: this.$t('scan') + this.$t('space') + this.$t('artifact'),
                     type: 'scan',
                     id: '',
                     name: this.pkg.name,
-                    version: row.name,
-                    path: this.currentVersion.contentPath
+                    version: row.name
                 })
             },
-            changeForbidStatusHandler (row = this.currentVersion) {
-                this.forbidPackageMetadata({
+            // 打开二次确认弹窗
+            showLimitDialog (limitType, row = this.currentVersion) {
+                this.$refs.operationLimitConfirmDialog.setData({
+                    show: true,
+                    loading: false,
+                    limitType: limitType,
+                    theme: 'danger',
+                    limitStatus: row.metadata[`${limitType}Status`],
+                    limitReason: '',
+                    name: row.name,
+                    message: this.$t(row.metadata[`${limitType}Status`] ? 'confirmRemoveLimitOperationInfo' : 'confirmLimitOperationInfo', { limit: this.$t(limitType), type: this.$t('version') })
+                })
+            },
+            // 改变制品的禁用或锁定状态
+            changeLimitStatusHandler (row = this.currentVersion) {
+                this[`${row.limitType}PackageMetadata`]({
                     projectId: this.projectId,
                     repoName: this.repoName,
                     body: {
                         packageKey: this.packageKey,
                         version: row.name,
-                        versionMetadata: [{ key: 'forbidStatus', value: !row.metadata.forbidStatus }]
+                        versionMetadata: [{ key: `${row.limitType}Status`, value: !row.limitStatus, description: row.limitReason }]
                     }
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (row.metadata.forbidStatus ? this.$t('liftBan') : this.$t('forbiddenUse')) + this.$t('space') + this.$t('success')
+                        message: (row.limitStatus ? this.$t('relieve') + this.$t('space') + this.$t(row.limitType) : this.$t(row.limitType)) + this.$t('space') + this.$t('success')
                     })
+                    this.$refs.operationLimitConfirmDialog.dialogData.show = false
                     this.refresh(row.name)
-                }).catch(e => {
-                    if (e.status === 403) {
-                        this.getPermissionUrl({
-                            body: {
-                                projectId: this.projectId,
-                                action: 'UPDATE',
-                                resourceType: 'NODE',
-                                uid: this.userInfo.name,
-                                repoName: this.repoName,
-                                path: this.currentVersion.contentPath
-                            }
-                        }).then(res => {
-                            if (res !== '') {
-                                this.showIamDenyDialog = true
-                                this.showData = {
-                                    projectId: this.projectId,
-                                    repoName: this.repoName,
-                                    action: 'UPDATE',
-                                    url: res,
-                                    path: this.currentVersion.contentPath
-                                }
-                            }
-                        })
-                    }
+                }).finally(() => {
+                    this.$refs.operationLimitConfirmDialog.dialogData.loading = false
                 })
             },
             downloadPackageHandler (row = this.currentVersion) {
                 if (this.repoType === 'docker') return
-                const url = `/repository/api/version/download/${this.projectId}/${this.repoName}?packageKey=${this.packageKey}&version=${encodeURIComponent(row.name)}&download=true`
+                const repoName = this.storeType === 'virtual' ? this.sourceRepoName : this.repoName
+                const url = `/repository/api/version/download/${this.projectId}/${repoName}?packageKey=${this.packageKey}&version=${encodeURIComponent(row.name)}&download=true`
                 this.$ajax.head(url).then(() => {
                     window.open(
                         '/web' + url,
                         '_self'
                     )
                 }).catch(e => {
-                    if (e.status === 451) {
-                        this.$refs.loading.isShow = true
-                        this.$refs.loading.complete = false
-                        this.$refs.loading.title = ''
-                        this.$refs.loading.backUp = true
-                        this.$refs.loading.cancelMessage = this.$t('downloadLater')
-                        this.$refs.loading.subMessage = this.$t('backUpSubMessage')
-                        this.$refs.loading.message = this.$t('backUpMessage', { 0: this.currentVersion.contentPath })
-                        this.timerDownload(url, this.currentVersion.contentPath)
-                    } else {
-                        const message = e.status === 403 ? this.$t('fileDownloadError') : this.$t('fileError')
-                        this.$bkMessage({
-                            theme: 'error',
-                            message
-                        })
-                    }
-                })
-            },
-            timerDownload (url, fullPath) {
-                this.timer = setInterval(() => {
-                    this.$ajax.head(url).then(() => {
-                        clearInterval(this.timer)
-                        this.timer = null
-                        this.$refs.loading.isShow = false
-                        window.open(
-                            '/web' + url,
-                            '_self'
-                        )
-                    }).catch(e => {
-                        if (e.status === 451) {
-                            this.$refs.loading.isShow = true
-                            this.$refs.loading.complete = false
-                            this.$refs.loading.title = ''
-                            this.$refs.loading.backUp = true
-                            this.$refs.loading.cancelMessage = this.$t('downloadLater')
-                            this.$refs.loading.subMessage = this.$t('backUpSubMessage')
-                            this.$refs.loading.message = this.$t('backUpMessage', { 0: fullPath })
-                        } else {
-                            clearInterval(this.timer)
-                            this.timer = null
-                            this.$refs.loading.isShow = false
-                            const message = e.status === 403 ? this.$t('fileDownloadError') : this.$t('fileError')
-                            this.$bkMessage({
-                                theme: 'error',
-                                message
-                            })
-                        }
+                    const message = e.status === 423 ? this.$t('fileDownloadError') : this.$t('fileError')
+                    this.$bkMessage({
+                        theme: 'error',
+                        message
                     })
-                }, 5000)
+                })
             },
             deleteVersionHandler ({ name: version } = this.currentVersion) {
                 this.$confirm({
@@ -383,38 +346,9 @@
                                 theme: 'success',
                                 message: this.$t('delete') + this.$t('space') + this.$t('success')
                             })
-                        }).catch(e => {
-                            if (e.status === 403) {
-                                this.getPermissionUrl({
-                                    body: {
-                                        projectId: this.projectId,
-                                        action: 'DELETE',
-                                        resourceType: 'NODE',
-                                        uid: this.userInfo.name,
-                                        repoName: this.repoName,
-                                        path: this.currentVersion.contentPath
-                                    }
-                                }).then(res => {
-                                    if (res !== '') {
-                                        this.showIamDenyDialog = true
-                                        this.showData = {
-                                            projectId: this.projectId,
-                                            repoName: this.repoName,
-                                            action: 'DELETE',
-                                            url: res,
-                                            packageName: this.currentVersion.metadata.name,
-                                            packageVersion: this.currentVersion.metadata.version
-                                        }
-                                    }
-                                })
-                            }
                         })
                     }
                 })
-            },
-            closeLoading () {
-                clearInterval(this.timer)
-                this.timer = null
             }
         }
     }
@@ -425,6 +359,9 @@
     .common-package-header{
         height: 60px;
         background-color: white;
+        &-refresh{
+            margin-left: auto !important ;
+        }
         .package-img {
             border-radius: 4px;
         }

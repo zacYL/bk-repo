@@ -36,7 +36,10 @@ interface BlobChunkedService {
      * 获取sessionId
      */
     fun obtainSessionIdForUpload(
-        projectId: String, repoName: String, credentials: StorageCredentials, sha256: String
+        projectId: String,
+        repoName: String,
+        credentials: StorageCredentials,
+        sha256: String
     )
 
 
@@ -44,17 +47,25 @@ interface BlobChunkedService {
      * 上传分块文件
      */
     fun uploadChunkedFile(
-        projectId: String, repoName: String,
-        credentials: StorageCredentials, sha256: String, artifactFile: ArtifactFile, uuid: String
+        projectId: String,
+        repoName: String,
+        credentials: StorageCredentials,
+        sha256: String,
+        artifactFile: ArtifactFile,
+        uuid: String
     )
 
     /**
      * 结束上传
      */
     fun finishChunkedUpload(
-        projectId: String, repoName: String,
-        credentials: StorageCredentials, sha256: String,
-        artifactFile: ArtifactFile, uuid: String,
-        size: Long?, md5: String?
+        projectId: String,
+        repoName: String,
+        credentials: StorageCredentials,
+        sha256: String,
+        artifactFile: ArtifactFile,
+        uuid: String,
+        size: Long?,
+        md5: String?
     )
 }

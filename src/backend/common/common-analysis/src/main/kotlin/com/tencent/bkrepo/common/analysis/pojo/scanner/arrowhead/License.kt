@@ -27,7 +27,6 @@
 
 package com.tencent.bkrepo.common.analysis.pojo.scanner.arrowhead
 
-
 import com.fasterxml.jackson.annotation.JsonAlias
 import io.swagger.annotations.ApiModelProperty
 

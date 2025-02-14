@@ -29,9 +29,10 @@ package com.tencent.bkrepo.replication.model
 
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.ReplicaOverview
+import java.time.LocalDateTime
+import org.springframework.data.mongodb.core.index.IndexDirection
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
-import java.time.LocalDateTime
 
 /**
  * 同步任务执行记录
@@ -51,6 +52,7 @@ data class TReplicaRecord(
     /**
      * 开启时间
      */
+    @Indexed(direction = IndexDirection.DESCENDING)
     var startTime: LocalDateTime,
     /**
      * 结束时间

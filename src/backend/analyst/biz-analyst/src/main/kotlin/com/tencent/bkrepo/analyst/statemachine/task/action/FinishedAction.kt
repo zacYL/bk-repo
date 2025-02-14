@@ -29,6 +29,7 @@ package com.tencent.bkrepo.analyst.statemachine.task.action
 
 import com.tencent.bkrepo.analyst.dao.ScanPlanDao
 import com.tencent.bkrepo.analyst.dao.ScanTaskDao
+import com.tencent.bkrepo.analyst.event.ScanTaskNotifyEvent
 import com.tencent.bkrepo.analyst.event.ScanTaskStatusChangedEvent
 import com.tencent.bkrepo.analyst.metrics.ScannerMetrics
 import com.tencent.bkrepo.analyst.pojo.ScanTaskStatus
@@ -58,6 +59,9 @@ class FinishedAction(
                 val scanTask = scanTaskDao.findById(taskId)!!
                 val finishedScanTask = Converter.convert(scanTask, scanPlan)
                 publisher.publishEvent(ScanTaskStatusChangedEvent(ScanTaskStatus.SCANNING_SUBMITTED, finishedScanTask))
+                publisher.publishEvent(
+                    ScanTaskNotifyEvent(ScanTaskStatus.FINISHED, scanTask, scanPlan, finishedDateTime)
+                )
                 logger.info("scan finished, task[${taskId}]")
                 return TransitResult(target)
             }

@@ -114,16 +114,17 @@ class WebHookExecutor(
     }
 
     fun asyncExecutor(event: ArtifactEvent, webHook: TWebHook) {
-        val payload = try {
-            eventPayloadFactory.build(event)
+        val (request, log) = try {
+            val payload = eventPayloadFactory.build(event)
+            val request = buildRequest(webHook, payload)
+            val log = buildWebHookLog(webHook, request, payload)
+            request to log
         }catch (e :Exception) {
             logger.warn("webhook build payload error, event[$event], error: ${e.message}")
             webHookLogDao.insert(buildWebHookErrorLog(event, webHook, e))
             return
         }
-        val request = buildRequest(webHook, payload)
         val startTimestamp = System.currentTimeMillis()
-        val log = buildWebHookLog(webHook, request, payload)
         webHookMetrics.executingCount.incrementAndGet()
         httpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, exception: IOException) {

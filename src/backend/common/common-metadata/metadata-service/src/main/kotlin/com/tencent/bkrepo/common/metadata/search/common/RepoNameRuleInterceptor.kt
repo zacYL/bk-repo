@@ -34,17 +34,23 @@ package com.tencent.bkrepo.common.metadata.search.common
 import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.ensureSuffix
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.permission.PermissionManager
+import com.tencent.bkrepo.common.metadata.search.packages.PackageQueryContext
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.listPermissionPaths
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
+import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -64,6 +70,7 @@ import org.springframework.stereotype.Component
 class RepoNameRuleInterceptor(
     private val permissionManager: PermissionManager,
     private val repositoryService: RepositoryService,
+    private val httpAuthProperties: HttpAuthProperties,
     private val servicePermissionClient: ServicePermissionClient,
 ) : QueryRuleInterceptor {
 
@@ -74,7 +81,7 @@ class RepoNameRuleInterceptor(
     override fun intercept(rule: Rule, context: QueryContext): Criteria {
         with(rule as Rule.QueryRule) {
             require(context is CommonQueryContext)
-            val projectId = context.findProjectId()
+            val projectId = context.findProjectId(rule)
             val queryRule = when (operation) {
                 OperationType.EQ -> {
                     handleRepoNameEq(projectId, value.toString())
@@ -103,18 +110,34 @@ class RepoNameRuleInterceptor(
         if (!hasRepoPermission(projectId, value)) {
             throw PermissionException()
         }
+        val repoInfo = repositoryService.getRepoInfo(projectId, value)!!
+        if (repoInfo.category == RepositoryCategory.VIRTUAL) {
+            val memberList = (repoInfo.configuration as VirtualConfiguration).repositoryList
+                .filter { it.projectId == projectId }.map { it.name }
+            if (memberList.isNotEmpty()) {
+                return handleRepoNameIn(projectId, memberList)
+            }
+        }
         return buildRule(projectId, listOf(value))
     }
 
     private fun handleRepoNameIn(
         projectId: String,
         value: List<*>,
-        context: CommonQueryContext
+        context: CommonQueryContext? = null,
     ): Rule {
-        val repoNameList = if (context.repoList != null) {
-            context.repoList!!.filter { hasRepoPermission(projectId, it.name, it.public) }.map { it.name }
+        val contextRepoList = context?.repoList
+        val repoType = if (context is PackageQueryContext) {
+            try { context.findRepoType() } catch (ignore: ErrorCodeException) { null }
+        } else null
+        val repoNameList = if (contextRepoList != null) {
+            if (contextRepoList.size > 3) {
+                filterAccessibleRepo(projectId, repoType, contextRepoList.map { it.name })
+            } else contextRepoList.filter { hasRepoPermission(projectId, it.name, it.public) }.map { it.name }
         } else {
-            value.filter { hasRepoPermission(projectId, it.toString()) }.map { it.toString() }
+            if (value.size > 3) {
+                filterAccessibleRepo(projectId, repoType, value.map { it.toString() })
+            } else value.filter { hasRepoPermission(projectId, it.toString()) }.map { it.toString() }
         }
         return buildRule(projectId, repoNameList)
     }
@@ -234,7 +257,26 @@ class RepoNameRuleInterceptor(
             false
         } catch (ignored: RepoNotFoundException) {
             false
+        } catch (ignored: AuthenticationException) {
+            false
         }
+    }
+
+    private fun filterAccessibleRepo(
+        projectId: String,
+        repoType: String?,
+        inputList: List<String>
+    ): List<String> {
+        if (SecurityUtils.isServiceRequest() || !httpAuthProperties.enabled) {
+            return inputList
+        }
+        val option = RepoListOption(
+            type = repoType,
+            actions = listOf(PermissionAction.READ)
+        )
+        val userId = SecurityUtils.getUserId()
+        return repositoryService.listPermissionRepo(userId, projectId, option)
+            .filter { it.name in inputList }.map { it.name }
     }
 
     companion object {

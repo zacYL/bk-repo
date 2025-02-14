@@ -11,6 +11,7 @@ import com.tencent.bkrepo.common.metadata.properties.ProjectUsageStatisticsPrope
 import com.tencent.bkrepo.common.metadata.service.log.impl.CommitEdgeOperateLogServiceImpl
 import com.tencent.bkrepo.common.metadata.service.log.impl.OperateLogServiceImpl
 import com.tencent.bkrepo.common.metadata.service.project.ProjectUsageStatisticsService
+import com.tencent.bkrepo.common.operate.service.dao.OperateLogMigrateDao
 import com.tencent.bkrepo.common.service.cluster.properties.ClusterProperties
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -30,15 +31,16 @@ class OperateLogConfiguration {
     fun operateLogService(
         operateProperties: OperateProperties,
         operateLogDao: OperateLogDao,
+        operateLogMigrateDao: OperateLogMigrateDao,
         clusterProperties: ClusterProperties
     ): OperateLogService {
         return if (clusterProperties.role == ClusterNodeType.EDGE &&
             clusterProperties.architecture == ClusterArchitecture.COMMIT_EDGE &&
             clusterProperties.commitEdge.oplog.enabled
         ) {
-            CommitEdgeOperateLogServiceImpl(operateProperties, operateLogDao, clusterProperties)
+            CommitEdgeOperateLogServiceImpl(operateProperties, operateLogDao, operateLogMigrateDao, clusterProperties)
         } else {
-            OperateLogServiceImpl(operateProperties, operateLogDao)
+            OperateLogServiceImpl(operateProperties, operateLogDao, operateLogMigrateDao)
         }
     }
 

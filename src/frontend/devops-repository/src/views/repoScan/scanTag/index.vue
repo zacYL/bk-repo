@@ -1,7 +1,7 @@
 <template>
     <span class="scan-tag-container"
         :class="{ 'spin-icon': status === 'RUNNING', readonly }"
-        v-bk-tooltips="{ content: scanStatusEnum[status] ? $t(`scanStatusEnum.${status}`) : $t('unscanned'), placements: ['right'] }"
+        v-bk-tooltips="{ content: scanStatusEnum[status] ? $t(`scanStatusEnum.${status}`) : $t('unScanned'), placements: ['right'] }"
         @click.stop="showScanList"
         v-bk-clickoutside="handleClickOutSide">
         <Icon size="16" :name="`scan-${(status || 'INIT').toLowerCase()}`" />
@@ -15,25 +15,26 @@
             :show-footer="false"
             :draggable="false">
             <div class="">
-                <span style="font-size:14px;font-weight:600;">{{ $t('qualityRules') }}</span>
+                <span style="font-size:14px;font-weight:600;">{{$t('qualityRules')}}</span>
                 <span class="ml10 repo-tag"
                     :class="{
                         [status]: true,
                         'SUCCESS': status === 'QUALITY_PASS',
                         'INIT': status === 'UN_QUALITY',
                         'WARNING': status === 'QUALITY_UNPASS'
-                    }">
-                    {{scanStatusEnum[status] ? $t(`scanStatusEnum.${status}`) : $t('unscanned')}}
+                    }"
+                    v-bk-overflow-tips>
+                    {{ scanStatusEnum[status] ? $t(`scanStatusEnum.${status}`) : $t('unScanned')}}
                 </span>
             </div>
             <div class="scan-item flex-between-center"
                 v-for="scan in scanList"
                 :key="scan.id">
                 <div class="flex-align-center">
-                    <Icon v-bk-tooltips="{ content: scanStatusEnum[scan.status] ? $t(`scanStatusEnum.${scan.status}`) : $t('unscanned'), placements: ['bottom-start'] }" size="16" :name="`scan-${(scan.status || 'INIT').toLowerCase()}`" />
+                    <Icon v-bk-tooltips="{ content: scanStatusEnum[scan.status] ? $t(`scanStatusEnum.${scan.status}`) : $t('unScanned'), placements: ['bottom-start'] }" size="16" :name="`scan-${(scan.status || 'INIT').toLowerCase()}`" />
                     <span class="ml5 text-overflow" style="max-width:150px;" :title="scan.name">{{ scan.name }}</span>
                 </div>
-                <bk-button text theme="primary" :disabled="!['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(scan.status)" @click="toReport(scan)">{{ $t('viewDetails') }}</bk-button>
+                <bk-button text theme="primary" :disabled="!['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(scan.status)" @click="toReport(scan)">{{$t('viewDetails')}}</bk-button>
             </div>
         </bk-dialog>
     </span>
@@ -61,10 +62,17 @@
                 scanList: []
             }
         },
+        computed: {
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
+            }
+        },
         methods: {
             ...mapActions(['getArtiScanList']),
             showScanList (e) {
-                if (this.readonly || !this.status) return
+                // 软件源模式不允许显示点击扫描状态图标显示扫描结果弹窗，因为扫描弹窗中点击扫描结果不允许跳转
+                if (this.readonly || !this.status || this.whetherSoftware) return
                 this.openScanList(e)
                 this.isLoading = true
                 const { projectId, repoType = this.repoType } = this.$route.params
@@ -115,6 +123,7 @@
 <style lang="scss" scoped>
 .scan-tag-container {
     font-size: 0;
+    vertical-align: middle;
     &:not(.readonly) {
         cursor: pointer;
     }

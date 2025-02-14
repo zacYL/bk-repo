@@ -49,12 +49,15 @@ enum class ArtifactMessageCode(private val key: String) : MessageCode {
     NODE_NOT_FOUND("artifact.node.not-found"),
     NODE_PATH_INVALID("artifact.node.path.invalid"),
     NODE_EXISTED("artifact.node.existed"),
+    NODE_LOCK("artifact.node.locked"),
+    NODE_CHILD_LOCK("artifact.node.child.locked"),
     NODE_CONFLICT("artifact.node.conflict"),
     NODE_LIST_TOO_LARGE("artifact.node.list.too-large"),
     STAGE_UPGRADE_ERROR("artifact.stage.upgrade.error"),
     STAGE_DOWNGRADE_ERROR("artifact.stage.downgrade.error"),
     PACKAGE_NOT_FOUND("artifact.package.not-found"),
     PACKAGE_EXISTED("artifact.package.existed"),
+    PACKAGE_LOCK("artifact.package.locked"),
     VERSION_NOT_FOUND("artifact.version.not-found"),
     VERSION_EXISTED("artifact.version.existed"),
     TEMPORARY_TOKEN_INVALID("artifact.temporary-token.invalid"),
@@ -70,7 +73,11 @@ enum class ArtifactMessageCode(private val key: String) : MessageCode {
     SIZE_CHECK_FAILED("artifact.size.check-failed"),
     NODE_LINK_FOLDER_UNSUPPORTED("artifact.node.link-folder-unsupported"),
     ARTIFACT_PRELOAD_STRATEGY_NOT_FOUND("artifact.preload-strategy.not-found"),
-    ARTIFACT_PRELOAD_STRATEGY_EXCEED_MAX_COUNT("artifact.preload-strategy.exceed-max-count")
+    ARTIFACT_PRELOAD_STRATEGY_EXCEED_MAX_COUNT("artifact.preload-strategy.exceed-max-count"),
+    FILE_LIST_EMPTY("artifact.file.list.empty"),
+    ARTIFACT_FORBIDDEN_WHITELIST("artifact.forbidden.whitelist"),
+    ARTIFACT_TASK_LOCK("artifact.task.lock"),
+    PATH_PATTERN_NOT_MATCHED("artifact.path-pattern.not-matched")
     ;
 
     override fun getBusinessCode() = ordinal + 1

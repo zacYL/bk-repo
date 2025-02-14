@@ -45,7 +45,11 @@ interface ScanQualityService {
     /**
      * 检查是否通过质量规则
      */
-    fun checkScanQualityRedLine(planId: String, scanResultOverview: Map<String, Number>): Boolean
+    fun checkScanQualityRedLine(
+        planId: String,
+        scanResultOverview: Map<String, Number>,
+        vulRuleMatchOverview: Map<String, Number>
+    ): Boolean
 
     /**
      * 检查是否通过质量规则
@@ -53,6 +57,7 @@ interface ScanQualityService {
     fun checkScanQualityRedLine(
         scanQuality: Map<String, Any>,
         scanResultOverview: Map<String, Number>,
+        vulRuleMatchOverview: Map<String, Number>,
         scanner: Scanner
     ): Boolean
 }

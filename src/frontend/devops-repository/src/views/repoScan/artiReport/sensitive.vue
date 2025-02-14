@@ -5,7 +5,7 @@
                 class="w250"
                 v-model.trim="sensitiveContent"
                 clearable
-                :placeholder="$t('sensitiveContentPlaceHolder')"
+                :placeholder="$t('sensitiveContentPlaceholder')"
                 right-icon="bk-icon icon-search"
                 @enter="handlerPaginationChange()"
                 @clear="handlerPaginationChange()">
@@ -14,13 +14,13 @@
                 class="ml10 w250"
                 v-model.trim="sensitiveType"
                 clearable
-                :placeholder="$t('sensitiveTypePlaceHolder')"
+                :placeholder="$t('sensitiveTypePlaceholder')"
                 right-icon="bk-icon icon-search"
                 @enter="handlerPaginationChange()"
                 @clear="handlerPaginationChange()">
             </bk-input>
             <div class="flex-1 flex-end-center">
-                <bk-button theme="default" @click="$emit('rescan')">{{ $t('rescan') }}</bk-button>
+                <bk-button theme="default" @click="$emit('rescan')">{{$t('rescan')}}</bk-button>
             </div>
         </div>
         <bk-table
@@ -34,14 +34,14 @@
                 <empty-data :is-loading="isLoading" :title="$t('noSensitiveTitle')">
                 </empty-data>
             </template>
-            <bk-table-column type="expand" width="40">
+            <bk-table-column type="expand" width="30">
                 <template #default="{ row }">
                     <template v-if="row.path">
-                        <div class="leak-title">{{ $t('hasSensitivePath') }}</div>
+                        <div class="leak-title">{{$t('hasSensitivePath')}}</div>
                         <div class="leak-tip">{{ row.path }}</div>
                     </template>
                     <template v-if="row.content">
-                        <div class="leak-title">{{ $t('sensitiveContent') }}</div>
+                        <div class="leak-title">{{$t('sensitiveContent')}}</div>
                         <div class="leak-tip">{{ row.content }}</div>
                     </template>
                 </template>

@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.pojo.repo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
@@ -52,7 +53,7 @@ data class RepoCreateRequest(
     @ApiModelProperty("仓库类别", required = true)
     val category: RepositoryCategory,
     @ApiModelProperty("是否公开", required = true)
-    val public: Boolean,
+    var public: Boolean,
     @ApiModelProperty("简要描述", required = false)
     val description: String? = null,
     @ApiModelProperty("仓库配置", required = true)
@@ -64,6 +65,8 @@ data class RepoCreateRequest(
     @ApiModelProperty("来自插件的请求", required = false)
     val pluginRequest: Boolean = false,
 
+    @ApiModelProperty("覆盖策略", required = false)
+    val coverStrategy: CoverStrategy? = null,
     @ApiModelProperty("操作用户", required = false)
     val operator: String = SYSTEM_USER,
     @ApiModelProperty("是否展示", required = true)

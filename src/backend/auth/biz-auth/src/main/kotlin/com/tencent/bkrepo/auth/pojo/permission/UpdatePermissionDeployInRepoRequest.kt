@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2023 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -29,14 +29,13 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.auth.pojo.permission
+package com.tencent.bkrepo.rds.pojo
 
-data class UpdatePermissionDeployInRepoRequest(
-    val permissionId: String,
-    val path: List<String>,
-    val users: List<String>,
-    val roles: List<String>,
-    val name: String,
-    val projectId: String
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiModelProperty
+
+@Api("rds error 包装返回模型")
+data class RdsErrorResponse(
+    @ApiModelProperty("错误信息")
+    val error: String
 )
-

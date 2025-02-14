@@ -32,6 +32,7 @@
 dependencies{
     implementation(project(":common:common-api"))
     implementation(project(":common:common-artifact:artifact-api"))
+    implementation("org.apache.maven:maven-model:${Versions.MAVEN}")
     api(project(":common:common-artifact:artifact-service"))
     compileOnly("org.springframework:spring-web")
 }

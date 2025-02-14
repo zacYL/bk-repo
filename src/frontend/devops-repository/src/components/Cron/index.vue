@@ -6,8 +6,8 @@
         </div>
         <div v-if="showMain" class="cron-main" :style="{ 'width': `${currentLanguage === 'zh-cn' ? 490 : 590}px` }">
             <bk-radio-group style="display:flex;" v-model="mode">
-                <bk-radio value="manual">{{ $t('manualInput')}}</bk-radio>
-                <bk-radio value="ui">{{ $t('autoEdit') }}</bk-radio>
+                <bk-radio value="manual">{{$t('manualInput')}}</bk-radio>
+                <bk-radio value="ui">{{$t('autoEdit')}}</bk-radio>
             </bk-radio-group>
             <div v-if="mode === 'manual'" class="mt10">
                 <bk-input v-model="manualVal" @blur="manualChange"></bk-input>
@@ -20,96 +20,100 @@
                     :name="tab"
                     :disabled="(tab === 'day' && cron.week.type !== 'every') || (tab === 'week' && cron.day.type !== 'every')">
                     <bk-radio-group v-model="cron[tab].type" @change="uiChange">
-                        <bk-radio
-                            v-for="type in ['every', 'interval', ...(tab === 'year' ? [] : ['circle', 'enumeration'])]"
-                            :key="tab + type"
-                            class="cron-radio-item"
-                            :value="type">
-                            <span class="mr20">{{ $t(`cron.${type}`, [$t(`cron.${tab === 'week' ? 'day' : tab}`)]) }}</span>
-                            <template v-if="type === 'interval' && cron[tab].type === 'interval'">
-                                <span>{{ $t('cron.from') }}</span>
-                                <bk-select style="width: 100px;margin: 0 5px;"
-                                    v-model="cron[tab][type][0]"
-                                    @change="uiChange"
-                                    @click.native.stop.prevent="() => {}">
-                                    <bk-option
-                                        v-for="option in cron[tab].enumerationList.map(v => ({
+                        <div class="flex-align-center" v-for="type in ['every', 'interval', ...(tab === 'year' ? [] : ['circle', 'enumeration'])]" :key="type">
+                            <bk-radio
+                                :key="tab + type"
+                                class="cron-radio-item"
+                                :value="type">
+                                <span class="mr20">{{ $t(`cron.${type}`, [$t(`cron.${tab === 'week' ? 'day' : tab}`)]) }}</span>
+                            </bk-radio>
+                            <div class="pt20 flex-align-center">
+                                <template v-if="type === 'interval' && cron[tab].type === 'interval'">
+                                    <span>{{$t('cron.from')}}</span>
+                                    <bk-select style="width: 100px;margin: 0 5px;"
+                                        v-model="cron[tab][type][0]"
+                                        @change="uiChange"
+                                        @click.native.stop.prevent="() => {}">
+                                        <bk-option
+                                            v-for="option in cron[tab].enumerationList.map(v => ({
+                                                id: v,
+                                                name: tab === 'week' ? $t(`cron.${v}`) : v + $t('space') + $t(`cron.${tab}`)
+                                            }))"
+                                            :key="option.id"
+                                            :id="option.id"
+                                            :name="option.name">
+                                        </bk-option>
+                                    </bk-select>
+                                    <span>{{ $t('cron.to') }}</span>
+                                    <bk-select style="width: 100px;margin: 0 5px;"
+                                        v-model="cron[tab][type][1]"
+                                        @change="uiChange"
+                                        @click.native.stop.prevent="() => {}">
+                                        <bk-option
+                                            v-for="option in cron[tab].enumerationList.map(v => ({
+                                                id: v,
+                                                name: tab === 'week' ? $t(`cron.${v}`) : v + $t('space') + $t(`cron.${tab}`)
+                                            }))"
+                                            :key="option.id"
+                                            :id="option.id"
+                                            :name="option.name">
+                                        </bk-option>
+                                    </bk-select>
+                                    <span>{{$t('intervalMsg')}}</span>
+                                </template>
+                                <template v-else-if="type === 'circle' && cron[tab].type === 'circle' && tab !== 'year'">
+                                    <bk-select style="width: 100px;margin: 0 5px;"
+                                        v-model="cron[tab][type][0]"
+                                        @change="uiChange"
+                                        @click.native.stop.prevent="() => {}">
+                                        <bk-option
+                                            v-for="option in cron[tab].enumerationList.map(v => ({
+                                                id: v,
+                                                name: tab === 'week' ? $t(`cron.${v}`) : v + $t('space') + $t(`cron.${tab}`)
+                                            }))"
+                                            :key="option.id"
+                                            :id="option.id"
+                                            :name="option.name">
+                                        </bk-option>
+                                    </bk-select>
+                                    <span>{{$t('circleMsg1')}}</span>
+                                    <bk-select style="width: 100px;margin: 0 5px;"
+                                        v-model="cron[tab][type][1]"
+                                        @change="uiChange"
+                                        @click.native.stop.prevent="() => {}">
+                                        <bk-option
+                                            v-for="option in cron[tab].enumerationList.map(v => ({
+                                                id: v,
+                                                name: v + $t('space') + $t(`cron.${tab === 'week' ? 'day' : tab}`)
+                                            }))"
+                                            :key="option.id"
+                                            :id="option.id"
+                                            :name="option.name">
+                                        </bk-option>
+                                    </bk-select>
+                                    <span>{{$t('circleMsg2')}}</span>
+                                </template>
+                                <template v-else-if="type === 'enumeration' && cron[tab].type === 'enumeration' && tab !== 'year'">
+                                    <bk-tag-input
+                                        style="width:300px"
+                                        v-model="cron[tab][type]"
+                                        :allow-create="tab === 'year'"
+                                        trigger="focus"
+                                        separator=","
+                                        :create-tag-validator="tag => {
+                                            return Number(tag) && tag >= new Date().getFullYear()
+                                        }"
+                                        :title="cron[tab][type]"
+                                        :list="cron[tab].enumerationList.map(v => ({
                                             id: v,
-                                            name: tab === 'week' ? $t(`cron.${v}`) : v + $t('space') + $t(`cron.${tab}`)
-                                        }))"
-                                        :key="option.id"
-                                        :id="option.id"
-                                        :name="option.name">
-                                    </bk-option>
-                                </bk-select>
-                                <span>{{ $t('cron.to') }}</span>
-                                <bk-select style="width: 100px;margin: 0 5px;"
-                                    v-model="cron[tab][type][1]"
-                                    @change="uiChange"
-                                    @click.native.stop.prevent="() => {}">
-                                    <bk-option
-                                        v-for="option in cron[tab].enumerationList.map(v => ({
-                                            id: v,
-                                            name: tab === 'week' ? $t(`cron.${v}`) : v + $t('space') + $t(`cron.${tab}`)
-                                        }))"
-                                        :key="option.id"
-                                        :id="option.id"
-                                        :name="option.name">
-                                    </bk-option>
-                                </bk-select>
-                                <span>{{ $t('intervalMsg') }}</span>
-                            </template>
-                            <template v-else-if="type === 'circle' && cron[tab].type === 'circle' && tab !== 'year'">
-                                <bk-select style="width: 108px;margin: 0 5px;"
-                                    v-model="cron[tab][type][0]"
-                                    @change="uiChange"
-                                    @click.native.stop.prevent="() => {}">
-                                    <bk-option
-                                        v-for="option in cron[tab].enumerationList.map(v => ({
-                                            id: v,
-                                            name: tab === 'week' ? $t(`cron.${v}`) : v + $t('space') + $t(`cron.${tab}`)
-                                        }))"
-                                        :key="option.id"
-                                        :id="option.id"
-                                        :name="option.name">
-                                    </bk-option>
-                                </bk-select>
-                                <span>{{ $t('circleMsg1') }}</span>
-                                <bk-select style="width: 100px;margin: 0 5px;"
-                                    v-model="cron[tab][type][1]"
-                                    @change="uiChange"
-                                    @click.native.stop.prevent="() => {}">
-                                    <bk-option
-                                        v-for="option in cron[tab].enumerationList.map(v => ({
-                                            id: v,
-                                            name: v + $t('space') + $t(`cron.${tab === 'week' ? 'day' : tab}`)
-                                        }))"
-                                        :key="option.id"
-                                        :id="option.id"
-                                        :name="option.name">
-                                    </bk-option>
-                                </bk-select>
-                                <span>{{ $t('circleMsg2') }}</span>
-                            </template>
-                            <template v-else-if="type === 'enumeration' && cron[tab].type === 'enumeration' && tab !== 'year'">
-                                <bk-tag-input
-                                    style="width:300px"
-                                    v-model="cron[tab][type]"
-                                    :allow-create="tab === 'year'"
-                                    trigger="focus"
-                                    separator=","
-                                    :create-tag-validator="tag => {
-                                        return Number(tag) && tag >= new Date().getFullYear()
-                                    }"
-                                    @change="uiChange"
-                                    @click.native.stop.prevent="() => {}"
-                                    :list="cron[tab].enumerationList.map(v => ({
-                                        id: v,
-                                        name: tab === 'week' ? $t(`cron.${tab}`) + $t(`cron.${v}`) : v + $t(`cron.${tab}`)
-                                    }))">
-                                </bk-tag-input>
-                            </template>
-                        </bk-radio>
+                                            name: tab === 'week' ? $t(`cron.${tab}`) + $t(`cron.${v}`) : v + $t(`cron.${tab}`)
+                                        }))">
+                                        @change="uiChange"
+                                        @click.native.stop.prevent="() => {}"
+                                    </bk-tag-input>
+                                </template>
+                            </div>
+                        </div>
                     </bk-radio-group>
                 </bk-tab-panel>
             </bk-tab>
@@ -245,6 +249,9 @@
 <style lang="scss" scoped>
 .cron-container {
     position: relative;
+    ::v-deep .bk-form-radio {
+        min-width: 60px !important;
+    }
     .cron-display {
         cursor: pointer;
         ::v-deep .bk-form-input[readonly] {
@@ -278,6 +285,7 @@
                 align-items: center;
                 margin-top: 20px;
                 height: 32px;
+                margin-right: 0;
                 line-height: inherit;
                 ::v-deep .bk-radio-text {
                     display: flex;

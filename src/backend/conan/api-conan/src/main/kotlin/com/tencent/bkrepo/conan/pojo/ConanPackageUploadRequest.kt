@@ -37,5 +37,4 @@ data class ConanPackageUploadRequest(
     override val pRevPath: String? = null,
     override val pRevision: String? = null,
     val revision: String,
-    val dateStr: String
 ): RevisionOperationRequest

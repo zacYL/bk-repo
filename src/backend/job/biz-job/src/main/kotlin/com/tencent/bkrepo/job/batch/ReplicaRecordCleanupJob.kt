@@ -4,9 +4,10 @@ import com.tencent.bkrepo.common.mongo.constant.ID
 import com.tencent.bkrepo.common.service.log.LoggerHolder
 import com.tencent.bkrepo.job.KEY
 import com.tencent.bkrepo.job.RECORD_RESERVE_DAYS
+import com.tencent.bkrepo.job.REPLICA_OBJECT_TYPE
 import com.tencent.bkrepo.job.REPLICA_TYPE
-import com.tencent.bkrepo.job.batch.base.DefaultContextMongoDbJob
-import com.tencent.bkrepo.job.batch.base.JobContext
+import com.tencent.bkrepo.job.batch.base.MongoDbBatchJob
+import com.tencent.bkrepo.job.batch.context.ReplicaRecordCleanupJobContext
 import com.tencent.bkrepo.job.config.properties.ReplicaRecordCleanupJobProperties
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -23,13 +24,13 @@ import kotlin.reflect.KClass
 
 /**
  * 清理超过保留时间的分发记录
- * 根据分发计划设置的 保留天数，历史数据默认为 30 天
+ * 根据分发计划设置的 保留天数，历史数据默认为 60 天
  */
 @Component
 @EnableConfigurationProperties(ReplicaRecordCleanupJobProperties::class)
 class ReplicaRecordCleanupJob(
     properties: ReplicaRecordCleanupJobProperties,
-) : DefaultContextMongoDbJob<ReplicaRecordCleanupJob.ReplicaTask>(properties) {
+) : MongoDbBatchJob<ReplicaRecordCleanupJob.ReplicaTask, ReplicaRecordCleanupJobContext>(properties) {
     override fun getLockAtMostFor(): Duration = Duration.ofDays(7)
 
     override fun collectionNames(): List<String> {
@@ -45,6 +46,7 @@ class ReplicaRecordCleanupJob(
             id = row[ID].toString(),
             key = row[KEY].toString(),
             replicaType = row[REPLICA_TYPE].toString(),
+            replicaObjectType = row[REPLICA_OBJECT_TYPE].toString(),
             recordReserveDays = row[RECORD_RESERVE_DAYS]?.toString()?.toLong()
         )
     }
@@ -53,20 +55,26 @@ class ReplicaRecordCleanupJob(
         return ReplicaTask::class
     }
 
-    override fun run(row: ReplicaTask, collectionName: String, context: JobContext) {
+    override fun run(row: ReplicaTask, collectionName: String, context: ReplicaRecordCleanupJobContext) {
         val expireDate = if (row.recordReserveDays != null) {
             LocalDateTime.now().minusDays(row.recordReserveDays)
         } else {
-            LocalDateTime.now().minusDays(30)
+            LocalDateTime.now().minusDays(60)
         }
-        cleanUpReplicaTask(row.key, row.replicaType, expireDate)
+        if (row.replicaObjectType == "REPOSITORY") {
+            cleanUpReplicaTask(row.key, row.replicaType, expireDate, context)
+        }
     }
 
+    override fun createJobContext(): ReplicaRecordCleanupJobContext {
+        return ReplicaRecordCleanupJobContext()
+    }
 
     private fun cleanUpReplicaTask(
         key: String,
         replicaType: String,
         expireDate: LocalDateTime,
+        context: ReplicaRecordCleanupJobContext
     ) {
         if (replicaType == "REAL_TIME") {
             val recordQuery = Query(where(Record::taskKey).isEqualTo(key))
@@ -80,6 +88,7 @@ class ReplicaRecordCleanupJob(
                 recordList.forEach {
                     cleanUpRecordDetail(it.id, expireDate)
                     logger.info("cleanup replica record:[$key/${it.id}]")
+                    context.recordCount.incrementAndGet()
                 }
                 page++
                 recordList = mongoTemplate.find(
@@ -100,6 +109,7 @@ class ReplicaRecordCleanupJob(
                 recordList.forEach {
                     cleanUpRecordDetail(it.id)
                     logger.info("cleanup replica record:[$key/${it.id}]")
+                    context.recordCount.incrementAndGet()
                 }
             }
         }
@@ -125,6 +135,7 @@ class ReplicaRecordCleanupJob(
         val id: String,
         val key: String,
         val replicaType: String,
+        val replicaObjectType: String,
         val recordReserveDays: Long?
     )
 

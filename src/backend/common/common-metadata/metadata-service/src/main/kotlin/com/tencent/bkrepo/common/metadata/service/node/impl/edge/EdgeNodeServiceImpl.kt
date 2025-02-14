@@ -108,6 +108,10 @@ class EdgeNodeServiceImpl(
     projectService,
     clusterProperties
 ) {
+    override fun countFileNodeByList(projectId: String, repoName: String, fullPathList: List<String>): Long {
+        return NodeStatsSupport(this).countFileNodeByList(projectId, repoName, fullPathList)
+    }
+
     override fun computeSize(
         artifact: ArtifactInfo,
         estimated: Boolean,

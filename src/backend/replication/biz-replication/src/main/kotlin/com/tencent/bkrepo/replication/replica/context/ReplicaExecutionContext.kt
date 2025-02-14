@@ -27,14 +27,21 @@
 
 package com.tencent.bkrepo.replication.replica.context
 
+import com.google.common.cache.CacheBuilder
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.ReplicaProgress
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
+import java.util.concurrent.atomic.AtomicLong
 
 class ReplicaExecutionContext(
     val replicaContext: ReplicaContext,
     val detail: ReplicaRecordDetail
 ) {
+    /**
+     * 同步任务Key
+     */
+    val taskKey = replicaContext.task.key
+
     /**
      * 同步器
      */
@@ -69,4 +76,59 @@ class ReplicaExecutionContext(
     fun buildErrorReason(): String {
         return errorReason.toString()
     }
+
+    /**
+     * 更新进度
+     * @param executed 是否执行了同步
+     */
+    fun updateProgress(executed: Boolean) {
+        if (executed) {
+            progress.success += 1
+        } else {
+            progress.skip += 1
+        }
+    }
+
+    companion object {
+
+        // 进行中的同步任务进度缓存
+        private val progressMap = CacheBuilder.newBuilder()
+            .maximumSize(1000)
+            .build<String, Progress>()
+
+        fun initProgress(taskKey: String, count: Long) {
+            progressMap.put(taskKey, Progress(AtomicLong(0), AtomicLong(count)))
+        }
+
+        fun increaseProgress(taskKey: String, count: Long = 1): Long? {
+            return progressMap.getIfPresent(taskKey)?.currentProgress?.addAndGet(count)
+        }
+
+        fun increaseArtifactCount(taskKey: String, count: Long = 1): Long? {
+            return progressMap.getIfPresent(taskKey)?.artifactCount?.addAndGet(count)
+        }
+
+        fun getCurrentProgress(taskKey: String): Long? {
+            return progressMap.getIfPresent(taskKey)?.currentProgress?.get()
+        }
+
+        fun getArtifactCount(taskKey: String): Long? {
+            return progressMap.getIfPresent(taskKey)?.artifactCount?.get()
+        }
+
+        fun removeProgress(taskKey: String) {
+            progressMap.invalidate(taskKey)
+        }
+    }
 }
+
+data class Progress(
+    /**
+     * 已分发的制品数量
+     */
+    var currentProgress: AtomicLong,
+    /**
+     * 本次任务需要分发的制品数量
+     */
+    var artifactCount: AtomicLong
+)

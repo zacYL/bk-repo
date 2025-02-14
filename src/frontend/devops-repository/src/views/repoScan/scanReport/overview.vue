@@ -1,7 +1,7 @@
 <template>
     <div class="report-overview">
         <div class="flex-between-center">
-            <span class="report-title flex-align-center">{{ $t('overviewTitle') }}</span>
+            <span class="report-title flex-align-center">{{$t('overviewTitle')}}</span>
             <div class="flex-align-center">
                 <bk-button class="mr10" theme="default" @click="showExportDialog = true">{{$t('exportReport')}}</bk-button>
                 <bk-date-picker
@@ -10,12 +10,12 @@
                     :shortcuts="shortcuts"
                     type="daterange"
                     transfer
-                    :placeholder="$t('selectDatePlaceHolder')"
+                    :placeholder="$t('selectDatePlaceholder')"
                     @change="changeFilterTime">
                 </bk-date-picker>
-                <bk-button class="mr10" theme="default" @click="stopScanHandler">{{ $t('abortScan') }}</bk-button>
-                <bk-button v-if="!scanPlan.readOnly" class="mr10" theme="default" @click="startScanHandler">{{ $t('scanImmediately') }}</bk-button>
-                <bk-button theme="default" @click="scanSettingHandler">{{ $t('setting') }}</bk-button>
+                <bk-button class="mr10" theme="default" @click="stopScanHandler">{{$t('abortScan')}}</bk-button>
+                <bk-button v-if="!scanPlan.readOnly" class="mr10" theme="default" @click="startScanHandler">{{$t('scanImmediately')}}</bk-button>
+                <bk-button v-if="!scanPlan.readOnly" theme="default" @click="scanSettingHandler">{{$t('setting')}}</bk-button>
             </div>
         </div>
         <div class="mt10 flex-align-center">
@@ -37,7 +37,7 @@
                         :shortcuts="shortcuts"
                         type="daterange"
                         transfer
-                        :placeholder="$t('selectDatePlaceHolder')">
+                        :placeholder="$t('selectDatePlaceholder')">
                     </bk-date-picker>
                 </bk-form-item>
                 <bk-form-item :label="$t('scanStatus')">
@@ -45,9 +45,9 @@
                         v-model="exportStatus"
                         :clearable="false">
                         <bk-option id="ALL" :name="$t('total')"></bk-option>
-                        <bk-option id="UN_QUALITY" :name="$t(`scanStatusEnum.UN_QUALITY`)"></bk-option>
-                        <bk-option id="QUALITY_PASS" :name="$t(`scanStatusEnum.QUALITY_PASS`)"></bk-option>
-                        <bk-option id="QUALITY_UNPASS" :name="$t(`scanStatusEnum.QUALITY_UNPASS`)"></bk-option>
+                        <bk-option id="UN_QUALITY" :name="$t('scanStatusEnum.UN_QUALITY')"></bk-option>
+                        <bk-option id="QUALITY_PASS" :name="$t('scanStatusEnum.QUALITY_PASS')"></bk-option>
+                        <bk-option id="QUALITY_UNPASS" :name="$t('scanStatusEnum.QUALITY_UNPASS')"></bk-option>
                     </bk-select>
                 </bk-form-item>
             </bk-form>
@@ -60,11 +60,13 @@
 </template>
 <script>
     import { segmentNumberThree } from '@repository/utils'
+    import { customizeExportScanFile } from '@repository/utils/exportScanFile'
     import { mapActions } from 'vuex'
-    import { SCAN_TYPE_LICENSE, SCAN_TYPE_SECURITY } from '../../../store/publicEnum'
-    import moment from 'moment'
-    import { before, zeroTime } from '@repository/utils/date'
-    const nowTime = moment()
+    import { SCAN_TYPE_LICENSE, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
+    const nowTime = new Date(
+        `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`
+    ).getTime() + 3600 * 1000 * 24
+   
     export default {
         props: {
             scanPlan: Object
@@ -73,7 +75,7 @@
             return {
                 filterTime: [],
                 showExportDialog: false,
-                exportTime: [zeroTime(before(30)), nowTime.toDate()],
+                exportTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
                 exportStatus: 'ALL',
                 overview: {
                     artifactCount: 0,
@@ -90,19 +92,19 @@
                     {
                         text: this.$t('lastSevenDays'),
                         value () {
-                            return [zeroTime(before(7)), nowTime.toDate()]
+                            return [new Date(nowTime - 3600 * 1000 * 24 * 7), new Date(nowTime)]
                         }
                     },
                     {
                         text: this.$t('lastFifteenDays'),
                         value () {
-                            return [zeroTime(before(15)), nowTime.toDate()]
+                            return [new Date(nowTime - 3600 * 1000 * 24 * 15), new Date(nowTime)]
                         }
                     },
                     {
                         text: this.$t('lastThirtyDays'),
                         value () {
-                            return [zeroTime(before(30)), nowTime.toDate()]
+                            return [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)]
                         }
                     }
                 ]
@@ -113,17 +115,17 @@
                 const info = [{ key: 'artifactCount', label: this.$t('scanArtifactNum') }]
                 if (this.scanPlan.scanTypes.includes(SCAN_TYPE_SECURITY)) {
                     info.push(
-                        { key: 'critical', label: this.$t(`leakLevelEnum.${'CRITICAL'}`) + this.$t('space') + this.$t('vulnerability'), color: '#EA3736' },
-                        { key: 'high', label: this.$t(`leakLevelEnum.${'HIGH'}`) + this.$t('space') + this.$t('vulnerability'), color: '#FFB549' },
-                        { key: 'medium', label: this.$t(`leakLevelEnum.${'MEDIUM'}`) + this.$t('space') + this.$t('vulnerability'), color: '#3A84FF' },
-                        { key: 'low', label: this.$t(`leakLevelEnum.${'LOW'}`) + this.$t('space') + this.$t('vulnerability'), color: '#979BA5' })
+                        { key: 'critical', label: this.$t('leakLevelEnum.CRITICAL') + this.$t('space') + this.$t('vulnerability'), color: '#EA3736' },
+                        { key: 'high', label: this.$t('leakLevelEnum.HIGH') + this.$t('space') + this.$t('vulnerability'), color: '#FFB549' },
+                        { key: 'medium', label: this.$t('leakLevelEnum.MEDIUM') + this.$t('space') + this.$t('vulnerability'), color: '#3A84FF' },
+                        { key: 'low', label: this.$t('leakLevelEnum.LOW') + this.$t('space') + this.$t('vulnerability'), color: '#979BA5' })
                 }
                 if (this.scanPlan.scanTypes.includes(SCAN_TYPE_LICENSE)) {
                     info.push(
                         { key: 'total', label: this.$t('totalLicenses') },
                         { key: 'unRecommend', label: this.$t('deprecatedNumber') },
                         { key: 'unknown', label: this.$t('unknownNun') },
-                        { key: 'unCompliance', label: this.$t('non-compliance') }
+                        { key: 'unCompliance', label: this.$t('nonCompliance') }
                     )
                 }
                 return info
@@ -231,13 +233,8 @@
                     ...(endTime instanceof Date ? { endTime: endTime.toISOString() } : {})
                 })
                 this.showExportDialog = false
-                this.$bkNotify({
-                    title: this.$t('exportReportInfo'),
-                    position: 'bottom-right',
-                    theme: 'success'
-                })
                 const url = `/web/analyst/api/scan/plan/export?${params.toString()}`
-                window.open(url, '_self')
+                customizeExportScanFile(url, 'GET', this.currentLanguage, this.$t('exportReportInfo'))
             }
         }
     }
@@ -298,10 +295,15 @@
         }
         &:last-child {
             border-right-width: 1px;
+            flex: initial;
+            width: 190px;
         }
         :not(:first-child).base-info-key {
             color: var(--subsidiaryColor)
         }
     }
+}
+::v-deep .bk-select{
+    width: 261px;
 }
 </style>

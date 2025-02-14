@@ -33,6 +33,8 @@ package com.tencent.bkrepo.common.artifact.event.base
 enum class EventType(val msgKey: String) {
     // PROJECT
     PROJECT_CREATED("artifact.event.project-created"),
+    PROJECT_DELETED("artifact.event.project-deleted"),
+    PROJECT_UPDATED("artifact.event.project-updated"),
 
     // REPOSITORY
     REPO_CREATED("artifact.event.repo-created"),
@@ -68,6 +70,11 @@ enum class EventType(val msgKey: String) {
     // ADMIN
     ADMIN_ADD("artifact.event.admin-add"),
     ADMIN_DELETE("artifact.event.admin-delete"),
+
+    // USER
+    USER_ADD("新增用户"),
+    USER_DELETE("删除用户"),
+    USER_UPDATE("更新用户"),
 
     // WebHook
     WEBHOOK_TEST("artifact.event.webhook-test"),
@@ -158,6 +165,17 @@ enum class EventType(val msgKey: String) {
     // CONFIG
     CONFIG_UPDATE("artifact.event.config-update"),
 
+    // repository clean
+    REPOSITORY_CLEAN("artifact.event.repo-cleanup"),
+
+    VUL_RULE_ADD("artifact.event.vul-rule-item-add"),
+    VUL_RULE_ADD_BATCH("artifact.event.vul-rule-items-add"),
+    VUL_RULE_REMOVE("artifact.event.vul-rule-item-remove"),
+    VUL_RULE_REMOVE_BATCH("artifact.event.vul-rule-items-remove"),
+
     // 第三方同步
-    REPLICATION_THIRD_PARTY("artifact.event.replication-third-party");
+    REPLICATION_THIRD_PARTY("artifact.event.replication-third-party"),
+
+    //制品同步
+    REPLICATION("artifact.event.replication");
 }

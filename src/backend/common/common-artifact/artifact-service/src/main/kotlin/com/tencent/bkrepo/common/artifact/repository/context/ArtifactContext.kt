@@ -87,9 +87,11 @@ open class ArtifactContext(
      */
     open fun copy(
         repositoryDetail: RepositoryDetail,
-        instantiation: ((ArtifactInfo) -> ArtifactContext)?
+        artifactInfoAttrMap: Map<String, Any?>? = null,
+        instantiation: ((ArtifactInfo) -> ArtifactContext)? = null
     ): ArtifactContext {
-        val artifactInfo = this.artifactInfo.copy(repositoryDetail.projectId, repositoryDetail.name)
+        val artifactInfo =
+            this.artifactInfo.copy(repositoryDetail.projectId, repositoryDetail.name, artifactInfoAttrMap)
         val context = instantiation?.invoke(artifactInfo)
             ?: this::class.primaryConstructor!!.call(repositoryDetail, artifactInfo)
         context.contextAttributes = this.contextAttributes

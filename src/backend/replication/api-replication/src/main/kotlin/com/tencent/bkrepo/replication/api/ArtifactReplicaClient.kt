@@ -79,6 +79,14 @@ interface ArtifactReplicaClient {
         @RequestParam fullPath: String
     ): Response<Boolean>
 
+    @GetMapping("/node/check")
+    fun checkNodeExistAndMd5(
+        @RequestParam projectId: String,
+        @RequestParam repoName: String,
+        @RequestParam fullPath: String,
+        @RequestParam md5: String
+    ): Response<Boolean>
+
     @PostMapping("/node/create")
     fun replicaNodeCreateRequest(
         @RequestBody request: NodeCreateRequest
@@ -151,4 +159,9 @@ interface ArtifactReplicaClient {
     fun replicaPackageVersionCreatedRequest(
         @RequestBody request: PackageVersionCreateRequest
     ): Response<Void>
+
+    @GetMapping("/project/exist")
+    fun checkProjectExist(
+        @RequestParam projectId: String
+    ): Response<Boolean>
 }

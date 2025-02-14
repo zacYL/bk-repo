@@ -5,31 +5,33 @@
         </bk-form-item>
         <template>
             <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_LICENSE)" :label="$t('licenseRules')" property="recommend" error-display-type="normal">
-                <div style="color:var(--fontSubsidiaryColor);">{{ $t('scanQualityLicenceRule') }}</div>
-                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.recommend">{{ $t('recommendLicenseRule') }}</bk-checkbox></div>
-                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.compliance">{{ $t('compliantLicenseRule') }}</bk-checkbox></div>
-                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.unknown">{{ $t('unknownLicenseRule') }}</bk-checkbox></div>
+                <div style="color:var(--fontSubsidiaryColor);">{{$t('scanQualityLicenseRule')}}</div>
+                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.recommend">{{$t('recommendLicenseRule')}}</bk-checkbox></div>
+                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.compliance">{{$t('compliantLicenseRule')}}</bk-checkbox></div>
+                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.unknown">{{$t('unknownLicenseRule')}}</bk-checkbox></div>
             </bk-form-item>
             <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_SECURITY)" :label="$t('safetyRules')">
-                <div style="color:var(--fontSubsidiaryColor);">{{ $t('scanQualitySafetyRule') }}</div>
+                <div style="color:var(--fontSubsidiaryColor);">{{$t('scanQualitySafetyRule')}}</div>
             </bk-form-item>
             <template v-if="ruleTypes.includes(SCAN_TYPE_SECURITY)">
                 <bk-form-item label="" v-for="[id] in Object.entries(leakLevelEnum)" :key="id"
                     :property="id.toLowerCase()" error-display-type="normal">
                     <div class="flex-align-center">
-                        <div :class="`status-sign ${id}`" :data-name="$t(`leakLevelEnum.${id}`) + $t('space') + $t('vulnerability') + `≦`"></div>
-                        <bk-input class="ml10 mr10" style="width: 80px;" :disabled="!editable" v-model.trim="rule[id.toLowerCase()]"
+                        <div :class="`status-sign ${id}`" :data-name="$t(`leakLevelEnum.${id}`) + $t('space') + $t('vulnerability') + ` ≦`"></div>
+                        <bk-input class="ml10 mr10" style="width: 100px;"
+                            :disabled="!editable" v-model.trim="rule[id.toLowerCase()]"
                             @focus="$refs.ruleForm.clearError()"
-                            @blur="$refs.ruleForm.validate()"></bk-input>
-                        <span>{{ $t('per') }}</span>
+                            @blur="$refs.ruleForm.validate()">
+                        </bk-input>
+                        <span>{{$t('per')}}</span>
                     </div>
                 </bk-form-item>
             </template>
         </template>
         <bk-form-item :label="$t('triggerEvent')">
-            <div style="color:var(--fontSubsidiaryColor);">{{ $t('scanQualityCheckBtnPre') }}</div>
-            <!-- <div class="mt10"><bk-checkbox v-model="rule.forbidScanUnFinished">自动禁止使用制品：制品扫描未结束的制品</bk-checkbox></div> -->
-            <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.forbidQualityUnPass">{{ $t('scanQualityCheckBtn') }}</bk-checkbox></div>
+            <div style="color:var(--fontSubsidiaryColor);">{{$t('scanQualityCheckBtnPre')}}</div>
+            <!-- <div class="mt10"><bk-checkbox v-model="rule.forbidScanUnFinished">自动禁用制品：制品扫描未结束的制品</bk-checkbox></div> -->
+            <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.forbidQualityUnPass">{{$t('scanQualityCheckBtn')}}</bk-checkbox></div>
         </bk-form-item>
         <bk-form-item>
             <bk-button :loading="isLoading" theme="primary" @click="save()">{{$t('save')}}</bk-button>
@@ -106,16 +108,7 @@
                 return (/^[0-9]*$/).test(value) && value <= 10000
             },
             initData () {
-                this.rule = this.scanTypes.includes('LICENSE')
-                    && {
-                        ...this.rule,
-                        recommend: false,
-                        compliance: false,
-                        unknown: false,
-                        forbidScanUnFinished: false,
-                        forbidQualityUnPass: false
-                    }
-                this.rule = this.scanTypes.includes('SECURITY')
+                this.rule = (this.scanTypes.includes('SECURITY')
                     && {
                         ...this.rule,
                         critical: '',
@@ -124,7 +117,16 @@
                         low: '',
                         forbidScanUnFinished: false,
                         forbidQualityUnPass: false
-                    }
+                    }) || this.rule
+                this.rule = (this.scanTypes.includes('LICENSE')
+                    && {
+                        ...this.rule,
+                        recommend: false,
+                        compliance: false,
+                        unknown: false,
+                        forbidScanUnFinished: false,
+                        forbidQualityUnPass: false
+                    }) || this.rule
             },
             async save () {
                 await this.$refs.ruleForm.validate()
@@ -147,7 +149,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('save') + this.$t('success')
+                        message: this.$t('save') + this.$t('space') + this.$t('success')
                     })
                     this.initData()
                     this.getRules()

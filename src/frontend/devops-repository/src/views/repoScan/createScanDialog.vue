@@ -2,10 +2,10 @@
     <canway-dialog
         v-model="scanForm.show"
         :title="$t('createScanPlan')"
-        width="500"
-        :height-num="365"
+        width="555"
+        :height-num="380"
         @cancel="cancel">
-        <bk-form class="mr10" :label-width="100" :model="scanForm" :rules="rules" ref="scanForm">
+        <bk-form class="mr10" :label-width="135" :model="scanForm" :rules="rules" ref="scanForm">
             <bk-form-item :label="$t('schemeName')" :required="true" property="name" error-display-type="normal">
                 <bk-input v-model.trim="scanForm.name" maxlength="32" show-word-limit></bk-input>
             </bk-form-item>
@@ -19,9 +19,9 @@
             <bk-form-item v-if="scanForm.type" :label="$t('scanner')" :required="true" property="scanner" error-display-type="normal">
                 <bk-select
                     v-model="scanForm.scanner">
-                    <bk-option v-for="scanner in filterScannerList" :key="scanner.name" :id="scanner.name" :name="scanner.name"></bk-option>
+                    <bk-option v-for="scanner in filterScannerList" :key="scanner.name" :id="scanner.name" :name="$t(scanner.label)"></bk-option>
                 </bk-select>
-                <div v-if="scannerTip" class="form-tip">{{ scannerTip }}</div>
+                <div v-if="scannerTip" class="form-tip">{{ $t(scannerTip) }}</div>
             </bk-form-item>
             <bk-form-item :label="$t('description')" property="description">
                 <bk-input
@@ -41,7 +41,7 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
-    import { scanTypeEnum } from '@repository/store/publicEnum'
+    import { scanTypeEnum, scannerTypes } from '@repository/store/publicEnum'
     export default {
         name: 'createScan',
         data () {
@@ -55,6 +55,7 @@
                     name: '',
                     description: ''
                 },
+                scannerTypes,
                 filterScannerList: [],
                 rules: {
                     name: [
@@ -74,7 +75,7 @@
                     scanner: [
                         {
                             required: true,
-                            message: this.$t('selectScannerPlaceHolder'),
+                            message: this.$t('selectScannerPlaceholder'),
                             trigger: 'blur'
                         }
                     ]
@@ -92,11 +93,16 @@
         },
         watch: {
             'scanForm.type': function (newVal) {
-                return this
-                    .getScannerList({ packageType: this.scanForm.type })
-                    .then(res => {
-                        this.filterScannerList = res
+                return this.getScannerList({ packageType: this.scanForm.type }).then(res => {
+                    this.filterScannerList = res.map((item) => {
+                        const scanner = this.scannerTypes.find((scan) => scan.name === item.name)
+                        return {
+                            ...item,
+                            label: scanner?.label || item.name,
+                            description: scanner?.description || item.description
+                        }
                     })
+                })
             }
         },
         methods: {

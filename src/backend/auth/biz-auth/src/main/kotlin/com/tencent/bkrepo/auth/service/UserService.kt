@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.auth.service
 
+import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
@@ -39,6 +40,7 @@ import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.common.api.pojo.Page
 
 interface UserService {
@@ -52,6 +54,8 @@ interface UserService {
     fun createUserToRepo(request: CreateUserToRepoRequest): Boolean
 
     fun listUser(rids: List<String>): List<User>
+
+    fun listUserResult(rids: List<String>): List<UserResult>
 
     fun deleteById(userId: String): Boolean
 
@@ -79,6 +83,8 @@ interface UserService {
 
     fun userPage(pageNumber: Int, pageSize: Int, userName: String?, admin: Boolean?, locked: Boolean?): Page<UserInfo>
 
+    fun userAll(userName: String?, admin: Boolean?, locked: Boolean?): List<TUser>
+
     fun getUserInfoById(userId: String): UserInfo?
 
     fun getUserPwdById(userId: String): String?
@@ -88,6 +94,14 @@ interface UserService {
     fun resetPassword(userId: String): Boolean
 
     fun repeatUid(userId: String): Boolean
+
+    fun listAdminUser(): List<User>
+
+    // cpack ext
+
+    fun resetPassword(userId: String, newPwd: String?): Boolean
+
+    fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult>
 
     fun addUserAccount(userId: String, accountId: String): Boolean
 

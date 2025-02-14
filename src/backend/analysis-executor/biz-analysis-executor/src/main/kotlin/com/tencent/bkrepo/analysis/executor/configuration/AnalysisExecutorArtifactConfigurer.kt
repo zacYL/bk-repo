@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
+import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurityCustomizer
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -45,7 +46,9 @@ class AnalysisExecutorArtifactConfigurer : ArtifactConfigurerSupport() {
     override fun getRemoteRepository(): RemoteRepository = object : RemoteRepository() {}
     override fun getVirtualRepository(): VirtualRepository = object : VirtualRepository() {}
 
-    override fun getAuthSecurityCustomizer() = HttpAuthSecurityCustomizer { httpAuthSecurity ->
-        httpAuthSecurity.withPrefix("/analysis-executor").includePattern("/api/**")
+    override fun getAuthSecurityCustomizer() = object : HttpAuthSecurityCustomizer {
+        override fun customize(httpAuthSecurity: HttpAuthSecurity) {
+            httpAuthSecurity.withPrefix("/analysis-executor").includePattern("/api/**")
+        }
     }
 }

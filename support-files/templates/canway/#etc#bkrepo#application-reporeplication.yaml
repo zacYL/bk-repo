@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Replication Service
+  cloud:
+    stream:
+      function:
+        definition: artifactEvent
+      bindings:
+        artifactEvent-in-0:
+          group: replication
+          destination: artifactEvent
+          binder: pulsar
+        artifactEvent-out-0:
+          destination: artifactEvent
+          binder: pulsar
+server:
+  port: __BK_REPO_REPLICATION_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: replication
+replication:
+  domain: ${cluster.self.url}/replication

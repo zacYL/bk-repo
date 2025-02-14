@@ -2,62 +2,68 @@
     <div class="project-detail-container">
         <bk-tab class="project-detail-tab page-tab" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="basic" :label="$t('baseInfo')">
-                <bk-form class="ml10 mr10" :label-width="75">
-                    <bk-form-item :label="$t('projectId')">
-                        <span>{{ currentProject.id }}</span>
-                    </bk-form-item>
-                    <bk-form-item :label="$t('projectName')">
-                        <span>{{ currentProject.name }}</span>
-                    </bk-form-item>
-                    <bk-form-item :label="$t('projectDescription')">
-                        <span>{{ currentProject.description }}</span>
-                    </bk-form-item>
-                    <bk-form-item>
-                        <bk-button theme="primary" @click="showProjectDialog">{{ $t('edit') }}</bk-button>
-                    </bk-form-item>
-                </bk-form>
             </bk-tab-panel>
-            <!-- <bk-tab-panel v-for="tab in [manage, user, role]" :key="tab.name" :name="tab.name" :label="tab.name"> -->
-            <bk-tab-panel v-for="tab in [manage, user]" :key="tab.name" :name="tab.name" :label="tab.name">
-                <div class="flex-align-center">
-                    <bk-select class="w250 select-user"
-                        v-model="tab.add"
-                        multiple
-                        searchable
-                        :placeholder="$t('selectUserMsg')"
-                        :enable-virtual-scroll="selectList(tab).length > 3000"
-                        :list="selectList(tab)">
-                        <bk-option v-for="option in selectList(tab)"
-                            :key="option.id"
-                            :id="option.id"
-                            :name="option.name">
-                        </bk-option>
-                    </bk-select>
-                    <bk-button :disabled="!tab.add.length" icon="plus" theme="primary" class="ml10" @click="confirmHandler(tab, 'add')">{{ $t('add') }}</bk-button>
-                    <bk-button :disabled="!tab.delete.length" theme="default" class="ml10" @click="confirmHandler(tab, 'delete')">
-                        {{ $t('batchRemove')}}</bk-button>
-                </div>
-                <bk-table
-                    class="mt10"
-                    :data="tab.items"
-                    height="calc(100% - 40px)"
-                    :outer-border="false"
-                    :row-border="false"
-                    size="small"
-                    @select="list => {
-                        tab.delete = list
-                    }"
-                    @select-all="list => {
-                        tab.delete = list
-                    }">
-                    <template #empty><empty-data style="margin-top:100px;"></empty-data></template>
-                    <bk-table-column type="selection" width="60"></bk-table-column>
-                    <bk-table-column :label="tab.name" width="1600"><template #default="{ row }">
-                        {{ (userList[row] && userList[row].name) || (roleList[row] && roleList[row].name) || row }}
-                    </template></bk-table-column>
-                </bk-table>
+            <bk-tab-panel v-for="tab in [manage, user, role]" :key="tab.name" :name="tab.name" :label="tab.name" style="display:none;">
             </bk-tab-panel>
         </bk-tab>
+        <!-- 基础信息 -->
+        <bk-form class="ml10 mr10 tab-common" :label-width="75" v-if="tabName === 'basic'">
+            <bk-form-item :label="$t('projectId')">
+                <span>{{ currentProject.id }}</span>
+            </bk-form-item>
+            <bk-form-item :label="$t('projectName')">
+                <span class="break-all">{{ currentProject.name }}</span>
+            </bk-form-item>
+            <bk-form-item :label="$t('projectDescription')">
+                <span class="break-all">{{ currentProject.description }}</span>
+            </bk-form-item>
+            <bk-form-item>
+                <bk-button theme="primary" @click="showProjectDialog">{{$t('modify')}}</bk-button>
+            </bk-form-item>
+        </bk-form>
+        <!-- 其他 -->
+        <div v-if="activeTabObj" class="tab-common">
+            <div class="flex-align-center">
+                <bk-select class="w250 select-user"
+                    v-model="activeTabObj.add"
+                    multiple
+                    searchable
+                    :placeholder="$t('selectUserMsg')"
+                    :show-select-all="tabName === $t('projectManager') ? false : true"
+                    :enable-virtual-scroll="selectList(activeTabObj).length > 3000"
+                    :list="selectList(activeTabObj)">
+                    <bk-option v-for="option in selectList(activeTabObj)"
+                        :key="option.id"
+                        :id="option.id"
+                        :name="option.name">
+                    </bk-option>
+                </bk-select>
+                <bk-button :disabled="!activeTabObj.add.length" icon="plus" theme="primary" class="ml10" @click="confirmHandler(activeTabObj, 'add')">{{ $t('add') }}</bk-button>
+                <bk-button :disabled="!activeTabObj.delete.length" theme="default" class="ml10" @click="confirmHandler(activeTabObj, 'delete')">{{$t('batchRemove')}}</bk-button>
+            </div>
+            <bk-table
+                class="mt10"
+                :data="activeTabObj.items"
+                height="calc(100% - 40px)"
+                :outer-border="false"
+                :row-border="false"
+                size="small"
+                :fit="true"
+                @select="list => {
+                    activeTabObj.delete = list
+                }"
+                @select-all="list => {
+                    activeTabObj.delete = list
+                }">
+                <template #empty><empty-data style="margin-top:100px;"></empty-data></template>
+                <bk-table-column type="selection" width="60"></bk-table-column>
+                <bk-table-column :label="activeTabObj.name">
+                    <template #default="{ row }">
+                        {{ (userList[row] && userList[row].name) || (roleList[row] && roleList[row].name) || row }}
+                    </template>
+                </bk-table-column>
+            </bk-table>
+        </div>
         <project-info-dialog ref="projectInfoDialog"></project-info-dialog>
     </div>
 </template>
@@ -97,9 +103,7 @@
                     add: [],
                     delete: []
                 },
-                roleList: {},
-                admins: [],
-                users: []
+                roleList: {}
             }
         },
         computed: {
@@ -109,6 +113,9 @@
             },
             currentProject () {
                 return this.projectList.find(project => project.id === this.projectId) || {}
+            },
+            activeTabObj () {
+                return [this.manage, this.user, this.role].find(item => item.name === this.tabName)
             }
         },
         watch: {
@@ -145,8 +152,6 @@
                 this.getProjectPermission({ projectId: this.currentProject.id }).then(data => {
                     const manage = data.find(p => p.permName === 'project_manage_permission') || {}
                     const view = data.find(p => p.permName === 'project_view_permission') || {}
-                    this.admins = manage.users
-                    this.users = view.users
                     this.manage = {
                         ...this.manage,
                         id: manage.id,
@@ -165,22 +170,9 @@
                 })
             },
             selectList (tab) {
-                const usersWithoutAnonymous = Object.values(this.userList).filter(v => v.id !== 'anonymous')
-                let final = usersWithoutAnonymous
-                if ((tab.items instanceof Array) && tab.items.length !== 0) {
-                    final = usersWithoutAnonymous.filter(v => !~tab.items.findIndex(w => w === v.id))
-                }
-                if (tab.name === this.$t('projectUser')) {
-                    if (this.admins.length !== 0 && final.length !== 0) {
-                        final = final.filter(v => !~this.admins.findIndex(w => w === v.id))
-                    }
-                }
-                if (tab.name === this.$t('projectManager')) {
-                    if (this.users.length !== 0 && final.length !== 0) {
-                        final = final.filter(v => !~this.users.findIndex(w => w === v.id))
-                    }
-                }
-                return final
+                return Object.values(tab.type === 'role' ? this.roleList : this.userList)
+                    .filter(v => v.id !== 'anonymous')
+                    .filter(v => !~tab.items.findIndex(w => w === v.id))
             },
             confirmHandler (tab, type) {
                 if (tab.loading || !tab[type].length) return
@@ -196,13 +188,12 @@
                     return ({ user: this.setUserPermission, role: this.setRolePermission })[tab.type]({
                         body: {
                             permissionId: tab.id,
-                            projectId: this.currentProject.id,
                             [key]: value
                         }
                     }).then(() => {
                         this.$bkMessage({
                             theme: 'success',
-                            message: (type === 'add' ? this.$t('add') : this.$t('delete')) + this.$t('success')
+                            message: (type === 'add' ? this.$t('add') : this.$t('delete')) + this.$t('space') + this.$t('success')
                         })
                         this.initProjectConfig()
                         tab[type] = []
@@ -215,7 +206,7 @@
                     ? confirmFn()
                     : this.$confirm({
                         theme: 'danger',
-                        message: this.$t('removeConfirm') + `${deleteName} ?`,
+                        message: this.$t('removeConfirm') + ` ${deleteName} ?`,
                         confirmFn
                     })
             },
@@ -235,16 +226,18 @@
 </script>
 <style lang="scss" scoped>
 .project-detail-container {
-    height: 100%;
+    // height: 100%;
     background-color: white;
     .project-detail-tab {
-        height: 100%;
+        // height: 100%;
         ::v-deep .bk-tab-section {
-            height: calc(100% - 60px);
-            .bk-tab-content {
-                height: 100%;
-            }
+               display: none;
         }
     }
+}
+.tab-common{
+    height: calc(100% - 60px);
+    padding: 20px;
+    border-radius: 0 0 2px 2px;
 }
 </style>

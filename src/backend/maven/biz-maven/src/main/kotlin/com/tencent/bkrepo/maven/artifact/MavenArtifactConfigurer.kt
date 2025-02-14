@@ -49,6 +49,8 @@ import org.springframework.stereotype.Component
 @EnableConfigurationProperties(MavenProperties::class)
 class MavenArtifactConfigurer : ArtifactConfigurerSupport() {
 
+    override fun getRepositoryTypes() = listOf(RepositoryType.GRADLE)
+
     override fun getRepositoryType() = RepositoryType.MAVEN
     override fun getLocalRepository() = SpringContextUtils.getBean<MavenLocalRepository>()
     override fun getRemoteRepository() = SpringContextUtils.getBean<MavenRemoteRepository>()

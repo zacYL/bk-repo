@@ -32,7 +32,7 @@
 package com.tencent.bkrepo.helm.pojo.artifact
 
 import com.tencent.bkrepo.common.api.constant.StringPool
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.helm.utils.HelmUtils
 
 class HelmDeleteArtifactInfo(

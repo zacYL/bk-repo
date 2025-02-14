@@ -75,6 +75,17 @@ class RedisOperation(private val redisTemplate: RedisTemplate<String, String>) {
         return redisTemplate.hasKey(key)
     }
 
+    fun scanForFirstKey(pattern: String, count: Long = 1000L): String? {
+        val scanOptions = ScanOptions.scanOptions().match(pattern).count(count).build()
+        return redisTemplate.execute { connection ->
+            val cursor = connection.scan(scanOptions)
+            if (cursor.hasNext()) {
+                return@execute String(cursor.next()) // 返回第一个匹配的 key
+            }
+            null
+        }
+    }
+
     fun addSetValue(key: String, item: String) {
         redisTemplate.opsForSet().add(key, item)
     }

@@ -103,12 +103,14 @@ class PackageVersionCorrectionJob(
                 if (!dryRun) {
                     packageService.deleteVersion(repo.projectId, repo.name, pkg.key, version.name)
                 }
-                result.add(mapOf(
-                    "projectId" to repo.projectId,
-                    "repoName" to repo.name,
-                    "packageKey" to pkg.key,
-                    "versionName" to version.name
-                ))
+                result.add(
+                    mapOf(
+                        "projectId" to repo.projectId,
+                        "repoName" to repo.name,
+                        "packageKey" to pkg.key,
+                        "versionName" to version.name
+                    )
+                )
             }
         }
         return result

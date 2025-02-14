@@ -39,7 +39,7 @@ end
 
 if matched == false then
   ngx.log(ngx.STDERR, "can not allow access: ", http_origin)
-  return
+  ngx.exit(204)
 end
 
 local m = ngx.req.get_method()

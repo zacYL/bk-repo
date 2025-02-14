@@ -32,7 +32,7 @@
 package com.tencent.bkrepo.rpm.artifact
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.apache.commons.lang3.StringUtils
 
@@ -70,5 +70,18 @@ class RpmArtifactInfo(
                 super.getArtifactFullPath()
             }
         } else getArtifactMappingUri()!!
+    }
+
+    override fun getArtifactName(): String {
+        val fullPath = getArtifactFullPath()
+        val secondLastHyphenIndex = fullPath.lastIndexOf("-", fullPath.lastIndexOf("-") - 1)
+        return if (secondLastHyphenIndex < 0) "" else fullPath.substring(0, secondLastHyphenIndex).trimStart('/')
+    }
+
+    override fun getArtifactVersion(): String? {
+        val fullPath = getArtifactFullPath()
+        val secondLastHyphenIndex = fullPath.lastIndexOf("-", fullPath.lastIndexOf("-") - 1)
+        return if (secondLastHyphenIndex < 0) null else
+            fullPath.substring(secondLastHyphenIndex + 1).substringBeforeLast(".rpm")
     }
 }

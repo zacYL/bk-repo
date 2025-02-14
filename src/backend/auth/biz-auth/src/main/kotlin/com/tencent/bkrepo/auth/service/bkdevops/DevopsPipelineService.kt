@@ -34,6 +34,7 @@ package com.tencent.bkrepo.auth.service.bkdevops
 import com.tencent.bkrepo.auth.condition.DevopsAuthCondition
 import com.tencent.bkrepo.auth.pojo.enums.BkAuthPermission
 import com.tencent.bkrepo.auth.pojo.enums.BkAuthResourceType
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Conditional
 import org.springframework.stereotype.Service
@@ -59,7 +60,7 @@ class DevopsPipelineService(
         uid: String,
         projectId: String,
         pipelineId: String,
-        permissionAction: String?
+        permissionAction: PermissionAction?
     ): Boolean {
         logger.debug(
             "hasPermission: uid: $uid, projectId: $projectId, " +

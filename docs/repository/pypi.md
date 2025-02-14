@@ -64,21 +64,23 @@ python3 -m twine upload -r {bkrepo} dist/*
 
 #### install
 
-替换默认依赖源地址
+配置拉取依赖源地址
 
-- MacOS/Linux配置目录 :  $HOME/.pip/pip.conf
-- Windows配置目录 :  %HOME%/pip/pip.ini
-  ```txt
-  [global]
-  index-url = http://{admin}:{PASSWORD}@{bk_repo_addr}/{projectId}/{repoName}/simple
-  [install]
-  trusted-host=http://{bk_repo_addr}
-  ```
-- 执行下面命令：
-  ```bash
-  pip3 install {packageName}=={version}
-  ```
-  
+```shell
+pip config set global.index-url http://{admin}:{PASSWORD}@{bk_repo_addr}/{projectId}/{repoName}/simple
+```
+
+如果服务地址为http, 还需额外配置授信该站点
+
+```shell
+pip config set install.trusted-host {bk_repo_addr}
+```
+
+执行下面命令：
+```bash
+pip3 install {packageName}=={version}
+```
+
 指定依赖源下载
 ```bash
 pip3 install -i http://{bk_repo_addr}/{projectId}/{repoName} {package}=={version}

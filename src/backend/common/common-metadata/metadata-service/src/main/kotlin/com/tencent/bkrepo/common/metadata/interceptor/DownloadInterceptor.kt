@@ -40,6 +40,8 @@ abstract class DownloadInterceptor<R, A>(
 
     abstract fun matcher(artifact: A, rule: R): Boolean
 
+    open fun onForbidden(projectId: String, artifact: A, rule: R){}
+
     open fun intercept(projectId: String, artifact: A) {
         val rule = try {
             parseRule()
@@ -50,7 +52,8 @@ abstract class DownloadInterceptor<R, A>(
         val match = matcher(artifact, rule)
         val forbidden = (allowed() && !match) || (!allowed() && match)
         if (forbidden) {
-            throw ArtifactDownloadForbiddenException(projectId)
+            onForbidden(projectId, artifact,rule)
+            throw constructException(projectId, artifact)
         }
     }
 
@@ -63,6 +66,10 @@ abstract class DownloadInterceptor<R, A>(
      */
     private fun allowed(): Boolean {
         return rules[ALLOWED] as? Boolean ?: true
+    }
+
+    protected open fun constructException(projectId: String, artifact: A): Exception {
+        return ArtifactDownloadForbiddenException(projectId)
     }
 
     companion object {

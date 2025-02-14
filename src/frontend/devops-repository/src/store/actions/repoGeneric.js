@@ -50,137 +50,113 @@ export default {
             paths
         )
     },
-    // 批量查询所有文件夹数量（递归）
-    getMultiFolderNumOfFolder (_, { projectId, repoName, paths, isFolder }) {
+    // 请求文件夹下的子文件夹
+    getFolderList ({ commit }, { projectId, repoName, roadMap, fullPath = '', isPipeline = false }) {
+        // let request
+        // if (isPipeline && !fullPath) {
+        //     request = Vue.prototype.$ajax.get(
+        //         `${prefix}/pipeline/list/${projectId}`
+        //     ).then(records => ({ records }))
+        // } else {
         return Vue.prototype.$ajax.post(
-            `${prefix}/node/batch/${projectId}/${repoName}`,
-            paths,
+            `${prefix}/node/search`,
             {
-                params: {
-                    isFolder: isFolder
+                page: {
+                    pageNumber: 1,
+                    pageSize: 10000
+                },
+                sort: {
+                    properties: ['lastModifiedDate'],
+                    direction: 'DESC'
+                },
+                rule: {
+                    rules: [
+                        {
+                            field: 'projectId',
+                            value: projectId,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'repoName',
+                            value: repoName,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'path',
+                            value: `${fullPath === '/' ? '' : fullPath}/`,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'folder',
+                            value: true,
+                            operation: 'EQ'
+                        }
+                    ],
+                    relation: 'AND'
                 }
             }
         )
-    },
-    // 请求文件夹下的子文件夹
-    getFolderList ({ commit }, { projectId, repoName, roadMap, fullPath = '', isPipeline = false, localRepo = true }) {
-        let request
-        if (isPipeline && !fullPath && localRepo) {
-            request = Vue.prototype.$ajax.get(
-                `${prefix}/pipeline/list/${projectId}`
-            ).then(records => ({ records }))
-        } else {
-            request = Vue.prototype.$ajax.post(
-                localRepo ? `${prefix}/node/search` : `generic/${projectId}/${repoName}/search`,
-                {
-                    select: ['name', 'fullPath', 'metadata'],
-                    page: {
-                        pageNumber: 1,
-                        pageSize: 10000
-                    },
-                    sort: {
-                        properties: ['lastModifiedDate'],
-                        direction: 'DESC'
-                    },
-                    rule: {
-                        rules: [
-                            {
-                                field: 'projectId',
-                                value: projectId,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'repoName',
-                                value: repoName,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'path',
-                                value: `${fullPath === '/' ? '' : fullPath}/`,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'folder',
-                                value: true,
-                                operation: 'EQ'
-                            }
-                        ],
-                        relation: 'AND'
-                    }
-                }
-            )
-        }
-        return request.then(({ records }) => {
-            commit('UPDATE_TREE', {
-                roadMap,
-                list: records.map((v, index) => ({
-                    ...v,
-                    roadMap: `${roadMap},${index}`
-                }))
-            })
-        })
+        // }
+        // return request
     },
     // 请求文件/文件夹详情
-    getNodeDetail (_, { projectId, repoName, fullPath = '', localNode = true }) {
+    getNodeDetail (_, { projectId, repoName, fullPath = '', localNode = true, withEncode = true }) {
         return Vue.prototype.$ajax.get(
-            localNode
-                ? `${prefix}/node/detail/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`
-                : `generic/detail/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`
+            localNode ? `${prefix}/node/detail/${projectId}/${repoName}/${withEncode ? encodeURIComponent(fullPath) : fullPath}` : `generic/detail/${projectId}/${repoName}/${withEncode ? encodeURIComponent(fullPath) : fullPath}`
         )
     },
     // 仓库内自定义查询
-    getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, isPipeline = false, sortType, searchFlag, localRepo = true }) {
-        if (isPipeline && !fullPath && !name && localRepo) {
-            return Vue.prototype.$ajax.get(
-                `${prefix}/pipeline/list/${projectId}`
-            ).then(records => ({ records, totalRecords: records.length }))
-        } else {
-            return Vue.prototype.$ajax.post(
-                localRepo ? `${prefix}/node/search` : `generic/${projectId}/${repoName}/search`,
-                {
-                    page: {
-                        pageNumber: current,
-                        pageSize: limit
-                    },
-                    sort: sortType,
-                    rule: {
-                        rules: [
-                            {
-                                field: 'projectId',
-                                value: projectId,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'repoName',
-                                value: repoName,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'path',
-                                value: `${fullPath === '/' ? '' : fullPath}/`,
-                                operation: searchFlag ? 'PREFIX' : 'EQ'
-                            },
-                            ...(name
-                                ? [
-                                    {
-                                        field: 'name',
-                                        value: `*${name}*`,
-                                        operation: 'MATCH'
-                                    }
-                                ]
-                                : [])
-                        ],
-                        relation: 'AND'
-                    }
+    getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, isPipeline = false, sortType = 'lastModifiedDate', sortDirection = 'DESC', searchFlag }) {
+        // if (isPipeline && !fullPath && !name) {
+        //     return Vue.prototype.$ajax.get(
+        //         `${prefix}/pipeline/list/${projectId}`
+        //     ).then(records => ({ records, totalRecords: 0 }))
+        // } else {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/node/search`,
+            {
+                page: {
+                    pageNumber: current,
+                    pageSize: limit
+                },
+                sort: {
+                    properties: ['folder', sortType],
+                    direction: sortDirection
+                },
+                rule: {
+                    rules: [
+                        {
+                            field: 'projectId',
+                            value: projectId,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'repoName',
+                            value: repoName,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'path',
+                            value: `${fullPath === '/' ? '' : fullPath}/`,
+                            operation: searchFlag ? 'PREFIX' : 'EQ'
+                        },
+                        ...(name
+                            ? [
+                                {
+                                    field: 'name',
+                                    value: `*${name}*`,
+                                    operation: 'MATCH'
+                                }
+                            ]
+                            : [
+                              
+                            ])
+                    ],
+                    relation: 'AND'
                 }
-            )
-        }
-    },
-    // 查询元数据标签列表
-    getMetadataLabelList (_, { projectId }) {
-        return Vue.prototype.$ajax.get(
-            `${prefix}/metadata/label/${projectId}`
+            }
         )
+        // }
     },
     // 创建目录
     createFolder (_, { projectId, repoName, fullPath = '' }) {
@@ -209,25 +185,44 @@ export default {
         )
     },
     // 上传文件
-    uploadArtifactory (_, { xhr, projectId, repoName, body, progressHandler, fullPath = '', headers = {} }) {
+    uploadArtifactory (_, { xhr, projectId, repoName, body, progressHandler, fullPath = '', headers = {}, uploadType }) {
         return new Promise((resolve, reject) => {
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
+                    if ([200, 201].includes(xhr.status)) {
                         resolve(xhr.response)
                     } else {
-                        reject(xhr)
+                        reject(xhr.response)
                     }
                 }
             }
+            let requestUrl
+            if (uploadType === 'mavenUpload') {
+                requestUrl = 'web/maven/jar_gav'
+            } else if (uploadType === 'pomUpload') {
+                requestUrl = 'web/maven/pom_gav'
+            } else if (uploadType === 'dockerUpload') {
+                requestUrl = 'web/docker/ext/upload'
+            } else if (uploadType === 'npmUpload') {
+                requestUrl = 'web/npm/ext/upload'
+            } else {
+                requestUrl = 'web/generic'
+            }
             xhr.upload.addEventListener('progress', progressHandler)
-            xhr.open('PUT', `/web/generic/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`, true)
+            if (['mavenUpload', 'pomUpload'].includes(uploadType)) {
+                xhr.open('POST', `/${requestUrl}`, true)
+            } else if (uploadType === 'dockerUpload') {
+                xhr.open('PUT', `/${requestUrl}/${projectId}/${repoName}`, true)
+            } else if (uploadType === 'npmUpload') {
+                xhr.open('POST', `/${requestUrl}/${projectId}/${repoName}`, true)
+            } else {
+                xhr.open('PUT', `/${requestUrl}/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`, true)
+            }
             xhr.responseType = 'json'
             xhr.setRequestHeader('Content-Type', headers['Content-Type'])
             xhr.setRequestHeader('X-BKREPO-OVERWRITE', headers['X-BKREPO-OVERWRITE'])
             xhr.setRequestHeader('X-BKREPO-EXPIRES', headers['X-BKREPO-EXPIRES'])
             xhr.setRequestHeader('X-CSRFToken', cookies.get((MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') ? 'bk_token' : 'bkrepo_ticket'))
-            xhr.setRequestHeader('Accept-Language', cookies.get('blueking_language') || 'zh-CN')
             xhr.addEventListener('error', e => reject(e.target.response))
             xhr.send(body)
         })
@@ -281,10 +276,24 @@ export default {
             body
         )
     },
+    // generic 锁定/解除锁定
+    lockMetadata (_, { projectId, repoName, fullPath, body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/metadata/lock/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`,
+            body
+        )
+    },
     // package禁止使用/解除禁止
     forbidPackageMetadata (_, { projectId, repoName, body }) {
         return Vue.prototype.$ajax.post(
             `${prefix}/metadata/package/forbid/${projectId}/${repoName}`,
+            body
+        )
+    },
+    // package 锁定/解除锁定
+    lockPackageMetadata (_, { projectId, repoName, body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/metadata/package/lock/${projectId}/${repoName}`,
             body
         )
     },
@@ -296,101 +305,97 @@ export default {
         )
     },
     // 预览基本文件
-    previewBasicFile (_, { projectId, repoName, path }) {
+    previewBasicFile (_, { projectId, repoName, fullPath }) {
         return Vue.prototype.$ajax.get(
-            `generic/${projectId}/${repoName}${path}?preview=true`, {
+            `generic/${projectId}/${repoName}/${encodeURIComponent(fullPath)}?preview=true`, {
                 headers: {
                     range: 'bytes=0-52428800'
-                },
-                withCredentials: false
-            }
-        )
-    },
-    previewCompressedFileList (_, { projectId, repoName, path }) {
-        return Vue.prototype.$ajax.get(
-            `generic/compressed/list/${projectId}/${repoName}${path}`
-        )
-    },
-    previewCompressedBasicFile (_, { projectId, repoName, path, filePath }) {
-        return Vue.prototype.$ajax.get(
-            `generic/compressed/preview/${projectId}/${repoName}${path}?filePath=${filePath}`
-        )
-    },
-    getProjectMetrics (_, { projectId }) {
-        return Vue.prototype.$ajax.get(
-            `${prefix}/project/metrics/${projectId}`
-        )
-    },
-    // 清理创建时间早于{date}的文件节点
-    cleanNode (_, { path, date }) {
-        return Vue.prototype.$ajax.delete(
-            `${prefix}/node/clean/${path}`,
-            {
-                params: {
-                    date: date
                 }
             }
         )
     },
-    // 查询repo下一级目录
-    getFirstLevelFolder (_, { projectId, repoName, fullPath = '', isPipeline = false, localRepo = true }) {
-        let request
-        if (isPipeline && !fullPath && localRepo) {
-            request = Vue.prototype.$ajax.get(
-                `${prefix}/pipeline/list/${projectId}`
-            ).then(records => ({ records }))
-        } else {
-            request = Vue.prototype.$ajax.post(
-                localRepo ? `${prefix}/node/search` : `generic/${projectId}/${repoName}/search`,
-                {
-                    select: ['name', 'fullPath', 'metadata'],
-                    page: {
-                        pageNumber: 1,
-                        pageSize: 10000
-                    },
-                    sort: {
-                        properties: ['lastModifiedDate'],
-                        direction: 'DESC'
-                    },
-                    rule: {
-                        rules: [
-                            {
-                                field: 'projectId',
-                                value: projectId,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'repoName',
-                                value: repoName,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'path',
-                                value: `${fullPath === '/' ? '' : fullPath}/`,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'folder',
-                                value: true,
-                                operation: 'EQ'
-                            }
-                        ],
-                        relation: 'AND'
-                    }
-                }
-            )
-        }
-        return request
-    },
-    // 统计时间早于{date}的文件节点信息
-    getFolderSizeBefore (_, { path, date }) {
+    previewCompressedFileList (_, { projectId, repoName, fullPath }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/node/calculate/${path}`,
-            {
-                params: {
-                    date: date
-                }
-            }
+            `generic/compressed/list/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`
         )
+    },
+    previewCompressedBasicFile (_, { projectId, repoName, fullPath, filePath }) {
+        return Vue.prototype.$ajax.get(
+            `generic/compressed/preview/${projectId}/${repoName}/${encodeURIComponent(fullPath)}?filePath=${filePath}`
+        )
+    },
+    // maven仓库上传制品后提交任务
+    submitMavenArtifactory (_, { projectId, repoName, body }) {
+        return Vue.prototype.$ajax.post(
+            `/maven/deploy/${projectId}/${repoName}`, body
+
+        )
+    },
+    
+    /**
+     * @description: 获取回收站列表
+     * @param {*} _
+     * @param {*} params
+     * @return {*}
+     */
+    getRecycleBinList (_, params) {
+        return Vue.prototype.$ajax.post(`${prefix}/node/search`, params)
+    },
+    /**
+     * @description: 获取回收站权限
+     * @param {*} _
+     * @param {*} params
+     * @return {*}
+     */
+    getRecycleBinPermission (_) {
+        return Vue.prototype.$ajax.get(window.DEVOPS_SITE_URL + '/ms/auth/api/user/global/admin/user/is_admin')
+    },
+
+    /**
+     * @description: 校验冲突路径
+     * @param {*} _
+     * @param {*} projectId
+     * @param {*} repoName
+     * @param {*} fullPath
+     * @return {*}
+     */
+    checkConflictPath (_, { projectId, repoName, fullPath }) {
+        return Vue.prototype.$ajax.get(`${prefix}/node/detail/${projectId}/${repoName}/${fullPath}`)
+    },
+    /**
+     * @description: 节点恢复
+     * @param {*} _
+     * @param {string} projectId
+     * @param {string} repoName
+     * @param {string} fullPath
+     * @param {string} deleteTime
+     * @param {string} type
+     * @return {*}
+     */
+    nodeRevert (_, { projectId, repoName, fullPath, deleteTime, type }) {
+        return Vue.prototype.$ajax.post(`${prefix}/node/restore/${projectId}/${repoName}/${fullPath}?deletedId=${deleteTime}&conflictStrategy=${type}`)
+    },
+
+    /**
+     * @description: 节点彻底删除
+     * @param {*} _
+     * @param {string} projectId
+     * @param {string} repoName
+     * @param {string} fullPath
+     * @param {string} deleteTime
+     * @return {*}
+     */
+    nodeDelete (_, { projectId, repoName, fullPath, deleteTime }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/recycle-bin/node/delete/${projectId}/${repoName}/${fullPath}?deletedId=${deleteTime}`)
+    },
+    /**
+     * @description: 清空回收站
+     * @param {*} _
+     * @param {*} projectId
+     * @param {*} repoName
+     * @return {*}
+     */
+    cleanUpRecycleBin (_, { projectId, repoName }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/recycle-bin/clean/${projectId}/${repoName}`)
     }
 }

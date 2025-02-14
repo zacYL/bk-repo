@@ -132,6 +132,25 @@ open class MavenMetadataService(
         }
     }
 
+
+    fun delete(projectId: String, repoName: String, mavenGavc: MavenGAVC) {
+        mavenGavc.let {
+            val groupId = mavenGavc.groupId
+            val artifactId = mavenGavc.artifactId
+            val version = mavenGavc.version
+            logger.info(
+                "Node info: groupId[$groupId], artifactId[$artifactId], version[$version]"
+            )
+            val criteria = Criteria.where(TMavenMetadataRecord::projectId.name).`is`(projectId)
+                .and(TMavenMetadataRecord::repoName.name).`is`(repoName)
+                .and(TMavenMetadataRecord::groupId.name).`is`(groupId)
+                .and(TMavenMetadataRecord::artifactId.name).`is`(artifactId)
+                .and(TMavenMetadataRecord::version.name).`is`(version)
+            val query = Query(criteria)
+            mavenMetadataDao.remove(query)
+        }
+    }
+
     fun search(mavenArtifactInfo: ArtifactInfo, mavenGavc: MavenGAVC): List<TMavenMetadataRecord> {
         logger.info(
             "Searching Node info: groupId[${mavenGavc.groupId}], artifactId[${mavenGavc.artifactId}], " +
@@ -147,6 +166,9 @@ open class MavenMetadataService(
         return mavenMetadataDao.find(query)
     }
 
+    /**
+     * 查询最新snapshot版本记录, 并更新snapshot版本记录:timestamp根据当前时间生成, buildNo根据当前最大buildNo+1生成
+     */
     fun findAndModify(mavenMetadataSearchPojo: MavenMetadataSearchPojo): TMavenMetadataRecord {
         logger.info(
             "findAndModify metadata groupId[${mavenMetadataSearchPojo.groupId}], " +

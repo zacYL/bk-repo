@@ -48,8 +48,14 @@ object HelmMetadataUtils {
 
     // 增加sourceType字段，用于区分该制品来源，是从代理源下载还是用户上传
     fun convertToMetadata(chartInfo: HelmChartMetadata, sourceType: ArtifactChannel? = null): List<MetadataModel> {
-        val mutableMap: MutableList<MetadataModel> = convertToMap(chartInfo).map {
-            MetadataModel(key = it.key, value = it.value)
+        val mutableMap: MutableList<MetadataModel> = convertToMap(chartInfo).mapNotNull {
+            when (it.value) {
+                is Array<*> -> if ((it.value as Array<*>).isEmpty()) null else MetadataModel(key = it.key, value = it.value, system = true, display = true)
+                is Set<*> -> if ((it.value as Set<*>).isEmpty()) null else MetadataModel(key = it.key, value = it.value, system = true, display = true)
+                is List<*> -> if ((it.value as List<*>).isEmpty()) null else MetadataModel(key = it.key, value = it.value, system = true, display = true)
+                is String -> if ((it.value as String).isEmpty()) null else MetadataModel(key = it.key, value = it.value, system = true, display = true)
+                else -> MetadataModel(key = it.key, value = it.value, system = true, display = true)
+            }
         } as MutableList<MetadataModel>
         sourceType?.let {
             mutableMap.add(MetadataModel(SOURCE_TYPE, sourceType))
@@ -68,3 +74,4 @@ object HelmMetadataUtils {
         return chartInfo.toJsonString()
     }
 }
+

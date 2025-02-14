@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.replication.pojo.record
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.replication.pojo.request.ActionType
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
 import com.tencent.bkrepo.replication.pojo.task.objects.PathConstraint
 import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy
@@ -58,7 +59,7 @@ data class ReplicaRecordDetail(
     @ApiModelProperty("包版本")
     var version: String? = null,
     @ApiModelProperty("冲突策略")
-    var conflictStrategy: ConflictStrategy? = null,
+    var conflictStrategy: ConflictStrategy?,
     @ApiModelProperty("制品大小")
     var size: Long? = null,
     @ApiModelProperty("制品sha256")
@@ -72,5 +73,7 @@ data class ReplicaRecordDetail(
     @ApiModelProperty("结束时间")
     var endTime: LocalDateTime? = null,
     @ApiModelProperty("错误原因，未执行或执行成功则为null")
-    var errorReason: String? = null
+    var errorReason: String? = null,
+    @ApiModelProperty("动作类型")
+    var actionType: ActionType? = null
 )

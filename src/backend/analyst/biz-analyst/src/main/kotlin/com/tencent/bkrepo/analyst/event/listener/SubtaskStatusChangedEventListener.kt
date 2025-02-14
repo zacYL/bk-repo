@@ -30,6 +30,7 @@ package com.tencent.bkrepo.analyst.event.listener
 import com.tencent.bkrepo.analyst.event.SubtaskStatusChangedEvent
 import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
 import com.tencent.bkrepo.analyst.model.TPlanArtifactLatestSubScanTask
+import com.tencent.bkrepo.analyst.event.DelScanPlanEvent
 import com.tencent.bkrepo.analyst.pojo.request.ArtifactPlanRelationRequest
 import com.tencent.bkrepo.analyst.service.ScanPlanService
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus
@@ -74,10 +75,78 @@ class SubtaskStatusChangedEventListener(
                 if (!qualityRedLine) {
                     addForbidMetadata(this, metadata)
                 }
-                metadata.add(MetadataModel(key = SubScanTaskDefinition::qualityRedLine.name, value = it, system = true))
+                metadata.add(MetadataModel(key = SubScanTaskDefinition::qualityRedLine.name, value = it, system = true, display = false))
             }
             saveMetadata(this, metadata)
             logger.info("update project[$projectId] repo[$repoName] fullPath[$fullPath] metadata[$metadata] success")
+        }
+    }
+
+    /**
+     * 删除方案，更新与该方案有关的制品的扫描状态
+     */
+    @Async
+    @EventListener(DelScanPlanEvent::class)
+    fun listen(event: DelScanPlanEvent) {
+        logger.info("DelScanPlanEvent planArtifactSubtasks:${event.planArtifactSubtasks.toJsonString()}")
+        event.planArtifactSubtasks.forEach {
+            with(it) {
+                val metadata = ArrayList<MetadataModel>(1)
+                addScanStatus(this, metadata)
+                saveMetadata(this, metadata)
+                logger.info(
+                    "update project[$projectId] repo[$repoName] fullPath[$fullPath] metadata[$metadata] success"
+                )
+            }
+        }
+    }
+
+    fun saveMetadata(subtask: TPlanArtifactLatestSubScanTask, metadata: ArrayList<MetadataModel>) {
+        with(subtask) {
+            if (repoType == RepositoryType.GENERIC.name) {
+                val request = MetadataSaveRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    fullPath = fullPath,
+                    nodeMetadata = metadata
+                )
+                metadataService.saveMetadata(request)
+            } else {
+                val request = PackageMetadataSaveRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = packageKey!!,
+                    version = version!!,
+                    versionMetadata = metadata
+                )
+                packageMetadataService.saveMetadata(request)
+            }
+        }
+    }
+
+    fun addScanStatus(subtask: TPlanArtifactLatestSubScanTask, metadata: ArrayList<MetadataModel>) {
+        with(subtask) {
+            logger.debug("getArtifactPlanStatus ${subtask.toJsonString()}")
+            //状态转换，存到元数据中
+            val artifactPlanStatus = scanPlanService.artifactPlanStatus(
+                ArtifactPlanRelationRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    repoType = repoType,
+                    packageKey = packageKey,
+                    version = version,
+                    fullPath = fullPath
+                )
+            ) ?: return
+            logger.info("artifactPlanStatus:$artifactPlanStatus")
+            metadata.add(
+                MetadataModel(
+                    key = SCAN_STATUS,
+                    value = artifactPlanStatus,
+                    system = true,
+                    display = false
+                )
+            )
         }
     }
 
@@ -103,62 +172,18 @@ class SubtaskStatusChangedEventListener(
                     MetadataModel(
                         key = FORBID_STATUS,
                         value = true,
-                        system = true
+                        system = true,
+                        display = false
                     )
                 )
                 metadata.add(
                     MetadataModel(
                         key = FORBID_TYPE,
                         value = ForbidType.QUALITY_UNPASS.name,
-                        system = true
+                        system = true,
+                        display = false
                     )
                 )
-            }
-        }
-    }
-
-    fun addScanStatus(subtask: TPlanArtifactLatestSubScanTask, metadata: ArrayList<MetadataModel>) {
-        with(subtask) {
-            //状态转换, 存到元数据中
-            val artifactPlanStatus = scanPlanService.artifactPlanStatus(
-                ArtifactPlanRelationRequest(
-                    projectId = projectId,
-                    repoName = repoName,
-                    repoType = repoType,
-                    packageKey = packageKey,
-                    version = version,
-                    fullPath = fullPath
-                )
-            ) ?: return
-            metadata.add(
-                MetadataModel(
-                    key = SCAN_STATUS,
-                    value = artifactPlanStatus,
-                    system = true
-                )
-            )
-        }
-    }
-
-    fun saveMetadata(subtask: TPlanArtifactLatestSubScanTask, metadata: ArrayList<MetadataModel>) {
-        with(subtask) {
-            if (repoType == RepositoryType.GENERIC.name) {
-                val request = MetadataSaveRequest(
-                    projectId = projectId,
-                    repoName = repoName,
-                    fullPath = fullPath,
-                    nodeMetadata = metadata
-                )
-                metadataService.saveMetadata(request)
-            } else {
-                val request = PackageMetadataSaveRequest(
-                    projectId = projectId,
-                    repoName = repoName,
-                    packageKey = packageKey!!,
-                    version = version!!,
-                    versionMetadata = metadata
-                )
-                packageMetadataService.saveMetadata(request)
             }
         }
     }

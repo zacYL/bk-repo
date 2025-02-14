@@ -57,6 +57,10 @@ interface ScannerConverter {
         throw UnsupportedOperationException()
     }
 
+    fun convertVulRuleMatchOverview(scanExecutorResult: ScanExecutorResult): Map<String, Any?> {
+        throw UnsupportedOperationException()
+    }
+
     fun incLicenseOverview(overview: MutableMap<String, Long>, level: String) {
         val overviewKey = LicenseOverviewKey.overviewKeyOf(level)
         overview[overviewKey] = overview.getOrDefault(overviewKey, 0L) + 1L

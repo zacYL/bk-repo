@@ -6,7 +6,7 @@
                 class="mr20 w250"
                 v-model="scannerFilter"
                 @change="handlerPaginationChange()">
-                <bk-option v-for="scanner in scannerList" :key="scanner.typr" :id="scanner.type" :name="scanner.name"></bk-option>
+                <bk-option v-for="scanner in scannerList" :key="scanner.name" :id="scanner.name" :name="scanner.name"></bk-option>
             </bk-select>
         </div>
         <bk-table
@@ -19,11 +19,11 @@
             <template #empty>
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
-            <bk-table-column :label="$t('bugPackageName')" prop="name"></bk-table-column>
-            <bk-table-column :label="$t('associatedScanner')">
+            <bk-table-column :label="$t('bugPackageName')" prop="name" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('associatedScanner')" show-overflow-tooltip>
                 <template #default="{ row }">{{ getScannerName(row) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="200">
+            <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="150">
                 <template #default="{ row }">{{ formatDate(row.lastModifiedDate) }}</template>
             </bk-table-column>
         </bk-table>
@@ -39,33 +39,33 @@
             :count="pagination.count"
             :limit-list="pagination.limitList">
         </bk-pagination>
-        <generic-upload-dialog ref="genericUploadDialog" height-num="375" @update="getDataListHandler">
-            <bk-form class="mb20" :label-width="90">
+        <upload-dialog ref="uploadDialog" height-num="375" @update="getDataListHandler">
+            <bk-form class="mb20" :label-width="140">
                 <bk-form-item :label="$t('associatedScanner')">
                     <bk-select
                         class="w250"
-                        v-model="scannerType"
-                        :placeholder="$t('selectScannerPlaceHolder')"
+                        v-model="scannerName"
+                        :placeholder="$t('selectScannerPlaceholder')"
                         :clearable="false">
-                        <bk-option v-for="scanner in scannerList" :key="scanner.type" :id="scanner.type" :name="scanner.name"></bk-option>
+                        <bk-option v-for="scanner in scannerList" :key="scanner.name" :id="scanner.name" :name="scanner.name"></bk-option>
                     </bk-select>
                 </bk-form-item>
             </bk-form>
-        </generic-upload-dialog>
+        </upload-dialog>
     </div>
 </template>
 <script>
-    import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
+    import uploadDialog from '@repository/views/repoScan/securityConfig/uploadDialog'
     import { mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     export default {
         name: 'user',
-        components: { genericUploadDialog },
+        components: { uploadDialog },
         data () {
             return {
                 isLoading: false,
                 scannerFilter: '',
-                scannerType: '',
+                scannerName: '',
                 scannerList: [],
                 dataList: [],
                 pagination: {
@@ -77,16 +77,16 @@
             }
         },
         watch: {
-            scannerType (val) {
-                this.$refs.genericUploadDialog.setData({
-                    fullPath: `/${val}`
+            scannerName (val) {
+                this.$refs.uploadDialog.setData({
+                    fullPath: `${val}`
                 }, true)
             }
         },
         created () {
-            this.getScannerList().then(res => {
-                this.scannerList = res.filter(v => v.type !== 'scancodeToolkit')
-                this.scannerType = this.scannerList[0]?.type || ''
+            this.getScannerList({ scannerType: 'standard' }).then(res => {
+                this.scannerList = res
+                this.scannerName = this.scannerList[0]?.name || ''
             })
             this.handlerPaginationChange()
         },
@@ -103,15 +103,17 @@
             },
             getDataListHandler () {
                 this.isLoading = true
+                const currentScanner = this.scannerList.find(item => item.name === this.scannerFilter)
+                const currentScannerFilter = currentScanner?.type === 'standard' ? currentScanner?.name : currentScanner?.type
                 this.searchPackageList({
                     projectId: 'public-global',
                     repoType: 'generic',
                     repoName: 'vuldb-repo',
-                    extRules: this.scannerFilter
+                    extRules: currentScannerFilter
                         ? [
                             {
                                 field: 'path',
-                                value: `/${this.scannerFilter}/`,
+                                value: `/${currentScannerFilter}/`,
                                 operation: 'EQ'
                             }
                         ]
@@ -132,18 +134,21 @@
                 })
             },
             upload () {
-                this.$refs.genericUploadDialog.setData({
+                this.$refs.uploadDialog.setData({
                     projectId: 'public-global',
                     repoName: 'vuldb-repo',
                     show: true,
                     title: this.$t('upload'),
-                    fullPath: `/${this.scannerType}`
+                    fullPath: `${this.scannerName}`
                 })
             },
             getScannerName ({ fullPath }) {
                 const scannerType = fullPath.replace(/^\/([^/]+)\/[^/]+$/, '$1')
-                const scanner = this.scannerList.find(s => s.type === scannerType)
-                return scanner?.name
+                const scanner = this.scannerList.find(s => s.name === scannerType)
+                // 根据后端同学要求，此处需要先根据当前行返回的数据的 path去除前后 / 后去匹配是否存在于支持的扫描器的数组中的name，
+                // 如果存在则回显匹配到的扫描器数组的name
+                // 如果不存在，则用当前行返回的数据的 path去除前后 / 后去匹配支持的扫描器数组中的 type ，然后返回匹配到的扫描器数组的 name
+                return scanner?.name || this.scannerList.find(s => s.type === scannerType)?.name
             }
         }
     }

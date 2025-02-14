@@ -40,7 +40,9 @@ enum class OciMessageCode(private val key: String) : MessageCode {
     OCI_DIGEST_INVALID("oci.digest.invalid"),
     OCI_MANIFEST_SCHEMA1_NOT_SUPPORT("oci.manifest.schema1.not.support"),
     OCI_REMOTE_CONFIGURATION_ERROR("oci.remote.configuration.error"),
-    OCI_REMOTE_CREDENTIALS_INVALID("oci.remote.credentials.invalid")
+    OCI_REMOTE_CREDENTIALS_INVALID("oci.remote.credentials.invalid"),
+    OCI_IMAGE_UPLOADING("oci.image.uploading"),
+    OCI_IMAGE_INVALID("oci.image.invalid")
     ;
     override fun getBusinessCode() = ordinal + 1
     override fun getKey() = key

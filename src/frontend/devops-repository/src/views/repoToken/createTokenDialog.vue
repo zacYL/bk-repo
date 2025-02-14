@@ -7,10 +7,10 @@
         @cancel="cancel">
         <div v-if="token" class="flex-align-center">
             <i class="flex-center devops-icon icon-check-1"></i>
-            <div style="width: 400px">
+            <div style="max-width: 400px;">
                 <span class="token-title">{{ $t('create') + $t('space') + $t('success') }}</span>
                 <div @click="copyToken(token)" class="mt10 mb10 hover-btn flex-align-center">
-                    {{ $t('tokenIs') + token }}
+                    {{ $t('tokenIs') + $t('space') + token }}
                     <i class="ml10 devops-icon icon-clipboard"></i>
                 </div>
                 <span class="token-tip">{{ $t('tokenCopyTip') }}</span>
@@ -41,7 +41,7 @@
     </canway-dialog>
 </template>
 <script>
-    import { mapState, mapActions } from 'vuex'
+    import { mapActions } from 'vuex'
     import { copyToClipboard } from '@repository/utils'
     export default {
         name: 'createToken',
@@ -49,7 +49,6 @@
             return {
                 show: false,
                 loading: false,
-                userName: '',
                 tokenFormData: {
                     name: '',
                     expiredAt: ''
@@ -65,9 +64,6 @@
                 },
                 token: ''
             }
-        },
-        computed: {
-            ...mapState(['userInfo'])
         },
         methods: {
             ...mapActions(['addToken']),
@@ -85,7 +81,6 @@
                 this.loading = true
                 this.addToken({
                     projectId: this.$route.params.projectId,
-                    username: this.userName,
                     name: this.tokenFormData.name,
                     expiredAt: this.tokenFormData.expiredAt instanceof Date ? this.tokenFormData.expiredAt.toISOString() : ''
                 }).then(({ id }) => {
@@ -119,15 +114,14 @@
 </script>
 <style lang="scss" scoped>
 .icon-check-1 {
-    width: 58px !important;
+    width: 58px;
     height: 58px;
+    margin: 0 auto;
     line-height: 58px;
     font-size: 30px;
     color: white;
     border-radius: 50%;
     background-color: var(--successColor);
-    margin-left: 10px;
-    margin-right: 10px;
 }
 .token-title {
     font-size: 17px;

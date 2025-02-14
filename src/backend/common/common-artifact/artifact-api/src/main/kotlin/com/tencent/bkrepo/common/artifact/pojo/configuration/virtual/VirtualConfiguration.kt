@@ -38,7 +38,14 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfigura
  * 虚拟仓库配置
  */
 data class VirtualConfiguration(
-    var repositoryList: List<RepositoryIdentify> = emptyList()
+    /**
+     * 虚拟仓库成员列表
+     */
+    var repositoryList: List<RepositoryIdentify> = emptyList(),
+    /**
+     * 对虚拟仓库进行上传或修改操作时，将操作映射到的本地仓库名称
+     */
+    var deploymentRepo: String? = null
 ) : RepositoryConfiguration() {
 
     override fun toString(): String {

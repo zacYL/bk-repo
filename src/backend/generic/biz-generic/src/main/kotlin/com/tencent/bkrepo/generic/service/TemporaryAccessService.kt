@@ -47,6 +47,7 @@ import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.exception.TemporaryCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.api.util.UrlFormatter
@@ -66,6 +67,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
+import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -236,6 +238,9 @@ class TemporaryAccessService(
      * 如果[tokenInfo]访问次数 <= 1，则直接删除
      */
     fun decrementPermits(tokenInfo: TemporaryTokenInfo) {
+        if (HttpContextHolder.getRequest().method.equals("HEAD", ignoreCase = true)) {
+            return
+        }
         if (tokenInfo.permits == null) {
             return
         }
@@ -389,7 +394,7 @@ class TemporaryAccessService(
         expireDateString?.let {
             val expireDate = LocalDateTime.parse(it, DateTimeFormatter.ISO_DATE_TIME)
             if (expireDate.isBefore(LocalDateTime.now())) {
-                throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_EXPIRED)
+                throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_EXPIRED)
             }
         }
     }
@@ -400,7 +405,7 @@ class TemporaryAccessService(
     private fun checkAccessPermits(permits: Int?) {
         permits?.let {
             if (it <= 0) {
-                throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_EXPIRED)
+                throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_EXPIRED)
             }
         }
     }
@@ -410,7 +415,7 @@ class TemporaryAccessService(
      */
     private fun checkAccessType(grantedType: TokenType, accessType: TokenType) {
         if (grantedType != TokenType.ALL && grantedType != accessType) {
-            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID, accessType)
+            throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID, accessType)
         }
     }
 
@@ -446,6 +451,9 @@ class TemporaryAccessService(
         // 检查用户授权
         // 获取经过认证的uid
         val authenticatedUid = SecurityUtils.getUserId()
+        if (tokenInfo.authorizedUserList.isNotEmpty() && authenticatedUid == ANONYMOUS_USER) {
+            throw AuthenticationException()
+        }
         // 使用认证uid校验授权
         if (tokenInfo.authorizedUserList.isNotEmpty() && authenticatedUid !in tokenInfo.authorizedUserList) {
             throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID, authenticatedUid)

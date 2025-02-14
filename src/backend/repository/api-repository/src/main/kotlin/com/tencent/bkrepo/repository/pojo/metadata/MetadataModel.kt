@@ -47,5 +47,9 @@ data class MetadataModel(
     /**
      * 元数据链接地址
      */
-    val link: String? = null
+    val link: String? = null,
+    /**
+     * 是否可见
+     */
+    val display: Boolean? = true
 )

@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-maven",
+  "name" : "删除指定maven包的所有版本",
+  "desc" : "删除指定maven包的所有版本",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-maven/ext/package/delete/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repomaven",
+  "targetPath" : "/ext/package/delete/{projectId}/{repoName}",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除指定maven包的所有版本_c5ad5b77.md"
+}

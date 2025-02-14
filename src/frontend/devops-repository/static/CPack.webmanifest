@@ -4,8 +4,9 @@
     "description": "WelCome to CPack provide by Canway",
     "icons": [
         {
-            "src": "/ui/repository.svg",
-            "sizes": "168x168"
+            "src": "/ui/CPack.png",
+            "sizes": "168x168",
+            "type": "image/png"
         }
     ],
     "start_url": "/",

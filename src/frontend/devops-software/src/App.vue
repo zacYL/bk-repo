@@ -3,6 +3,7 @@
         <Header v-if="!ciMode" />
         <router-view class="bkrepo-main-container"></router-view>
         <ConfirmDialog />
+        <GlobalUploadViewport />
         <Login v-if="!ciMode" />
     </div>
 </template>
@@ -22,6 +23,8 @@
             }
         },
         created () {
+            // 浏览器标签头展示文案
+            document.title = this.$t('softwareTitle')
             const username = cookies.get('bk_uid')
             username && this.SET_USER_INFO({ username })
 
@@ -31,13 +34,13 @@
                     : '/ui/devops-utils.js'
                 this.loadDevopsUtils(url)
             } else {
-                this.ajaxUserInfo()
+                this.getUserInfo()
                 this.getRepoUserList()
                 this.getProjectList()
             }
         },
         methods: {
-            ...mapActions(['getProjectList', 'ajaxUserInfo', 'getRepoUserList'])
+            ...mapActions(['getProjectList', 'getUserInfo', 'getRepoUserList'])
         }
     }
 </script>

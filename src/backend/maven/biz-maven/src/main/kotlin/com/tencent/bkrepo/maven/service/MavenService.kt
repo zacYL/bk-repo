@@ -28,8 +28,13 @@
 package com.tencent.bkrepo.maven.service
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
-import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
+import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
+import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
+import com.tencent.bkrepo.maven.pojo.response.MavenWebDeployResponse
+import org.springframework.web.multipart.MultipartFile
 
 interface MavenService {
 
@@ -52,12 +57,26 @@ interface MavenService {
     fun deleteDependency(mavenArtifactInfo: MavenArtifactInfo)
 
     /**
-     * 删除对应的packageversion
+     * 删除对应的package
      */
-    fun delete(mavenArtifactInfo: MavenDeleteArtifactInfo, packageKey: String, version: String?)
+    fun deletePackage(userId: String, artifactInfo: ArtifactInfo)
+
+    /**
+     * 删除对应的packageVersion
+     */
+    fun deleteVersion(userId: String, artifactInfo: ArtifactInfo)
 
     /**
      * 获取对应制品版本详情
      */
-    fun artifactDetail(mavenArtifactInfo: MavenArtifactInfo, packageKey: String, version: String?): Any?
+    fun getVersionDetail(userId: String, artifactInfo: ArtifactInfo): MavenArtifactVersionData
+//    fun fileDeploy(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): MavenWebDeployResponse?
+//    fun fileDeployCancel(mavenArtifactInfo: MavenArtifactInfo): Boolean
+    fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest)
+
+    fun moveCopyVersion(request: PackageVersionMoveCopyRequest, move: Boolean)
+
+    fun extractGavFromPom(file: MultipartFile): MavenWebDeployResponse
+
+    fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse
 }

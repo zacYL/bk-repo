@@ -56,6 +56,8 @@ class AuthConfig : WebMvcConfigurer {
             .excludePattern("/api/user/rsa")
             .excludePattern("/api/oauth/*/token")
             .excludePattern("/api/oauth/*/.well-known/**")
+            .excludePathPatterns("/api/oauth/token")
+            .excludePathPatterns("/api/extAuth/instanceld")
         if (prefixEnabled) {
             httpAuthSecurity.enablePrefix()
         }

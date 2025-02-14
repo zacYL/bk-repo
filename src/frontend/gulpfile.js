@@ -22,7 +22,7 @@ const { dist, env, lsVersion, mode } = argv
 
 gulp.task('build', cb => {
     const spinner = new Ora(`building bkrepo frontend project, mode: ${mode}`).start()
-    const scopeCli = mode === 'canway-ci' ? '--scope=devops-{repository-ci,software}' : '--scope=devops-{repository,software,op}'
+    const scopeCli = mode === 'canway-ci' ? '--scope=devops-{repository-ci,software}' : '--scope=devops-{repository,software}'
     const cp = require('child_process')
     cp.execSync('cd ./devops-repository && yarn sprite')
     spinner.succeed('create sprite.svg finished')

@@ -39,12 +39,13 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.api.exception.OverloadException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -432,7 +433,8 @@ class ChartRepositoryServiceImpl(
             val artifactInputStream = repository.query(context) as ArtifactInputStream
             nodeMap[it[NODE_NAME] as String] = artifactInputStream
         }
-        artifactResourceWriter.write(ArtifactResource(nodeMap, useDisposition = true))
+        val srcRepo = RepositoryIdentify(artifactInfo.projectId, artifactInfo.repoName)
+        artifactResourceWriter.write(ArtifactResource(nodeMap, srcRepo, useDisposition = true))
     }
 
     companion object {

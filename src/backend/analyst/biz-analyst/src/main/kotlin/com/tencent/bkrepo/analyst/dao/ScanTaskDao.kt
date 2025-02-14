@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.analyst.dao
 
+import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.tencent.bkrepo.analyst.model.TScanTask
 import com.tencent.bkrepo.analyst.pojo.ScanTaskStatus
@@ -226,6 +227,10 @@ class ScanTaskDao : ScannerSimpleMongoDao<TScanTask>() {
             .where(TScanTask::planId.name).isEqualTo(planId)
             .and(TScanTask::status.name).inValues(status)
         return exists(Query(criteria))
+    }
+
+    fun deleteByPlanId(id: String): DeleteResult {
+        return remove(Query(TScanTask::planId.isEqualTo(id)))
     }
 
     fun countStatus(status: ScanTaskStatus): Long {

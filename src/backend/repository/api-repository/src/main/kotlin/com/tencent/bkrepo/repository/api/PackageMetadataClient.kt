@@ -33,14 +33,20 @@ package com.tencent.bkrepo.repository.api
 
 import com.tencent.bkrepo.common.api.constant.REPOSITORY_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 
 /**
  * 节点元数据服务接口
@@ -51,9 +57,22 @@ import org.springframework.web.bind.annotation.RequestMapping
 @RequestMapping("/service/metadata/package")
 @Deprecated("replace with PackageMetadataService")
 interface PackageMetadataClient {
+    @ApiOperation("查询元数据列表")
+    @GetMapping("/{projectId}/{repoName}")
+    fun listMetadata(
+        @ApiParam(value = "所属项目", required = true)
+        @PathVariable projectId: String,
+        @ApiParam(value = "仓库名称", required = true)
+        @PathVariable repoName: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String
+    ): Response<Map<String, Any>>
 
     @ApiOperation("创建/更新元数据列表")
     @PostMapping("/save")
     fun saveMetadata(@RequestBody request: PackageMetadataSaveRequest): Response<Void>
 
+    @ApiOperation("删除元数据")
+    @DeleteMapping("/delete")
+    fun deleteMetadata(@RequestBody request: PackageMetadataDeleteRequest): Response<Void>
 }

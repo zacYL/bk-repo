@@ -29,7 +29,6 @@ package com.tencent.bkrepo.conan
 
 import com.tencent.bkrepo.common.service.condition.MicroService
 import org.springframework.boot.runApplication
-
 /**
  * conan registry
  */

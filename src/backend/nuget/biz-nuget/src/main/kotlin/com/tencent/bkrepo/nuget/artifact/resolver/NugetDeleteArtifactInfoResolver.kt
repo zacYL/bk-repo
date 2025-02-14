@@ -3,7 +3,7 @@ package com.tencent.bkrepo.nuget.artifact.resolver
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.nuget.constant.ID
 import com.tencent.bkrepo.nuget.constant.PACKAGE_KEY
 import com.tencent.bkrepo.nuget.constant.VERSION
@@ -40,7 +40,7 @@ class NugetDeleteArtifactInfoResolver : ArtifactInfoResolver {
                 val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
                 val id = attributes[ID].toString().trim()
                 val version = attributes[VERSION].toString().trim()
-                NugetDeleteArtifactInfo(projectId, repoName, PackageKeys.ofNuget(id), version)
+                NugetDeleteArtifactInfo(projectId, repoName, PackageKeys.ofNuget(id.toLowerCase()), version)
             }
         }
     }

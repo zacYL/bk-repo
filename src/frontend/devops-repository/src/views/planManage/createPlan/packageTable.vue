@@ -5,7 +5,7 @@
             v-model="selectedRepoName"
             searchable
             :disabled="disabled"
-            :placeholder="$t('selectRepoPlaceHolder')"
+            :placeholder="$t('selectRepoPlaceholder')"
             @change="packageConstraints = []">
             <bk-option-group
                 v-for="(list, type) in repoGroupList"
@@ -19,7 +19,7 @@
                 </bk-option>
             </bk-option-group>
         </bk-select>
-        <bk-button v-show="!disabled && selectedRepoName" class="mt10" icon="plus" @click="showAddDialog = true">{{ $t('addArtifact') }}</bk-button>
+        <bk-button v-show="!disabled && selectedRepoName" class="mt10" icon="plus" @click="showAddDialog = true">{{$t('addArtifact')}}</bk-button>
         <div class="mt10 package-list" v-show="packageConstraints.length">
             <div class="pl10 pr10 package-item flex-between-center" v-for="(pkg, ind) in packageConstraints" :key="pkg.fid">
                 <div class="flex-align-center">
@@ -47,7 +47,9 @@
         components: { packageDialog },
         props: {
             initData: Array,
-            disabled: Boolean
+            disabled: Boolean,
+            targetStore: String,
+            targetProject: String
         },
         data () {
             return {
@@ -57,14 +59,14 @@
             }
         },
         computed: {
-            ...mapState(['repoListAll']),
+            ...mapState(['repoReadListAll']),
             projectId () {
                 return this.$route.params.projectId
             },
             repoGroupList () {
-                return this.repoListAll
+                return this.repoReadListAll
                     .filter(r => {
-                        return ['DOCKER', 'MAVEN', 'NPM'].includes(r.type)
+                        return ['DOCKER', 'MAVEN', 'NPM', 'GRADLE', 'GO', 'COCOAPODS'].includes(r.type) && r.category !== 'REMOTE' && r.category !== 'VIRTUAL'
                     })
                     .reduce((target, repo) => {
                         if (!target[repo.type]) target[repo.type] = []
@@ -73,14 +75,14 @@
                     }, {})
             },
             selectedRepo () {
-                return this.repoListAll.find(v => v.name === this.selectedRepoName) || {}
+                return this.repoReadListAll.find(v => v.name === this.selectedRepoName) || {}
             }
         },
         watch: {
             initData: {
                 handler (data) {
-                    const { remoteRepoName, remoteProjectId, repoType, packageConstraints = [] } = JSON.parse(JSON.stringify(data))[0] || {}
-                    this.selectedRepoName = remoteRepoName
+                    const { remoteRepoName, remoteProjectId, repoType, packageConstraints = [], localRepoName } = JSON.parse(JSON.stringify(data))[0] || {}
+                    this.selectedRepoName = localRepoName
                     this.packageConstraints = packageConstraints.map(pkg => ({
                         ...pkg,
                         key: pkg.packageKey,
@@ -89,6 +91,7 @@
                         fid: remoteProjectId + remoteRepoName + pkg.packageKey
                     }))
                 },
+                deep: true,
                 immediate: true
             }
         },
@@ -101,8 +104,8 @@
                 return new Promise((resolve, reject) => {
                     const replicaTaskObjects = [{
                         localRepoName: this.selectedRepoName,
-                        remoteProjectId: this.projectId,
-                        remoteRepoName: this.selectedRepoName,
+                        remoteProjectId: this.targetProject || this.projectId,
+                        remoteRepoName: this.targetStore || this.selectedRepoName,
                         repoType: this.selectedRepo.type,
                         packageConstraints: this.packageConstraints.map(pkg => ({ packageKey: pkg.key, versions: pkg.versions }))
                     }]

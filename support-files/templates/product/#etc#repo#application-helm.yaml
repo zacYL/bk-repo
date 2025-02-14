@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Helm Service
+  cloud:
+    stream:
+      function:
+        definition: remoteRepo;artifactEvent
+      bindings:
+        remoteRepo-in-0:
+          destination: bkrepo_artifact_repo
+          group: bkrepo_sub
+          binder: pulsar
+        artifactEvent-in-0:
+          group: helm
+          destination: artifactEvent
+          binder: pulsar
+server:
+  port: __BK_REPO_HELM_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: helm
+helm:
+  domain: ${cluster.self.url}/helm

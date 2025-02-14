@@ -42,47 +42,51 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
 import com.tencent.bkrepo.common.artifact.audit.REPO_EDIT_ACTION
 import com.tencent.bkrepo.common.artifact.audit.REPO_RESOURCE
+import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
+import com.tencent.bkrepo.npm.constants.USER_API_PREFIX
 import com.tencent.bkrepo.npm.pojo.NpmDomainInfo
-import com.tencent.bkrepo.npm.pojo.user.PackageVersionInfo
-import com.tencent.bkrepo.npm.pojo.user.request.PackageDeleteRequest
-import com.tencent.bkrepo.npm.pojo.user.request.PackageVersionDeleteRequest
-import com.tencent.bkrepo.npm.service.NpmWebService
-import com.tencent.bkrepo.npm.utils.NpmUtils
+import com.tencent.bkrepo.npm.pojo.user.NpmPackageVersionInfo
+import com.tencent.bkrepo.npm.service.NpmClientService
+import com.tencent.bkrepo.npm.service.impl.NpmWebService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestAttribute
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 
 @Api("npm 用户接口")
-@RequestMapping("/ext")
-@Suppress("MVCPathVariableInspection")
+@RequestMapping(USER_API_PREFIX)
 @RestController
 class UserNpmController(
-    private val npmWebService: NpmWebService
+    private val npmWebService: NpmWebService,
+    private val npmClientService: NpmClientService
 ) {
-
 
     @Permission(ResourceType.REPO, PermissionAction.READ)
     @ApiOperation("查询包的版本详情")
     @GetMapping("/version/detail/{projectId}/{repoName}")
     fun detailVersion(
-        @RequestAttribute
-        userId: String,
+        @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String,
         @ApiParam(value = "包版本", required = true)
         @RequestParam version: String
-    ): Response<PackageVersionInfo> {
-        return ResponseBuilder.success(npmWebService.detailVersion(artifactInfo, packageKey, version))
+    ): Response<NpmPackageVersionInfo> {
+        return ResponseBuilder.success(npmWebService.getVersionDetail(userId, artifactInfo))
     }
 
     @AuditEntry(
@@ -106,20 +110,13 @@ class UserNpmController(
     @ApiOperation("删除仓库下的包")
     @DeleteMapping("/package/delete/{projectId}/{repoName}")
     fun deletePackage(
-        @RequestAttribute
-        userId: String,
+        @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @ApiParam(value = "包名称", required = true)
         @RequestParam packageKey: String
     ): Response<Void> {
-        with(artifactInfo) {
-            val pkgName = NpmUtils.resolveNameByRepoType(packageKey)
-            val deleteRequest = PackageDeleteRequest(
-                projectId, repoName, pkgName, userId
-            )
-            npmWebService.deletePackage(this, deleteRequest)
-            return ResponseBuilder.success()
-        }
+        npmWebService.deletePackage(userId, artifactInfo)
+        return ResponseBuilder.success()
     }
 
     @AuditEntry(
@@ -145,22 +142,15 @@ class UserNpmController(
     @ApiOperation("删除仓库下的包版本")
     @DeleteMapping("/version/delete/{projectId}/{repoName}")
     fun deleteVersion(
-        @RequestAttribute
-        userId: String,
+        @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @ApiParam(value = "包名称", required = true)
         @RequestParam packageKey: String,
         @ApiParam(value = "包版本", required = true)
         @RequestParam version: String
     ): Response<Void> {
-        with(artifactInfo) {
-            val pkgName = NpmUtils.resolveNameByRepoType(packageKey)
-            val deleteRequest = PackageVersionDeleteRequest(
-                projectId, repoName, pkgName, version, userId
-            )
-            npmWebService.deleteVersion(this, deleteRequest)
-            return ResponseBuilder.success()
-        }
+        npmWebService.deleteVersion(userId, artifactInfo)
+        return ResponseBuilder.success()
     }
 
     @ApiOperation("获取npm域名地址")
@@ -168,4 +158,40 @@ class UserNpmController(
     fun getRegistryDomain(): Response<NpmDomainInfo> {
         return ResponseBuilder.success(npmWebService.getRegistryDomain())
     }
+
+    @ApiOperation("移动包版本")
+    @PostMapping("/version/move")
+    fun moveVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        npmWebService.moveCopyVersion(request, true)
+        return ResponseBuilder.success()
+    }
+
+    @ApiOperation("复制包版本")
+    @PostMapping("/version/copy")
+    fun copyVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        npmWebService.moveCopyVersion(request, false)
+        return ResponseBuilder.success()
+    }
+
+    @PostMapping("/upload/{projectId}/{repoName}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun upload(
+
+        @PathVariable
+        projectId: String,
+
+        @PathVariable
+        repoName: String,
+
+        @RequestPart(value = "file")
+        file: MultipartFile
+
+    ): Response<Boolean> {
+        npmClientService.upload(projectId, repoName, file)
+        return ResponseBuilder.success()
+    }
+
 }

@@ -5,27 +5,11 @@
             <bk-input
                 v-model.trim="projectInput"
                 class="w250"
-                :placeholder="$t('projectNameOrIdPlaceHolder')"
+                :placeholder="$t('projectNameOrIdPlaceholder')"
                 clearable
                 right-icon="bk-icon icon-search"
-                style="margin-left: auto;margin-right: 10px"
                 @change="handlerPaginationChange()">
             </bk-input>
-            <div class="sort-tool flex-align-center">
-                <bk-select
-                    style="width:170px;"
-                    v-model="property"
-                    :clearable="true"
-                    @change="queryProjects">
-                    <bk-option id="name" :name="$t('projectNameSorting')"></bk-option>
-                    <bk-option id="createdDate" :name="$t('creatTimeSorting')"></bk-option>
-                </bk-select>
-                <bk-popover :content="focusContent + ' ' + `${direction === 'ASC' ? $t('desc') : $t('asc')}`" placement="top">
-                    <div class="ml10 sort-order flex-center" @click="changeDirection">
-                        <Icon :name="`order-${direction.toLowerCase()}`" size="16"></Icon>
-                    </div>
-                </bk-popover>
-            </div>
         </div>
         <bk-table
             class="mt10"
@@ -46,17 +30,17 @@
             <bk-table-column :label="$t('projectDescription')" show-overflow-tooltip>
                 <template #default="{ row }">{{row.description || '/'}}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdDate')">
+            <bk-table-column :label="$t('createdDate')" show-overflow-tooltip>
                 <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdBy')">
+            <bk-table-column :label="$t('createdBy')" show-overflow-tooltip>
                 <template #default="{ row }">
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('bkPermissionGeneration')" show-overflow-tooltip v-if="iamStatus">
+            <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }">
-                    <bk-button theme="primary" @click="createPermission(row.name)" v-if="row.rbacFlag === false">{{ $t('generate') }}</bk-button>
+                    <bk-button theme="primary" text @click="handleClickDelete(row.id)">{{$t('delete')}}</bk-button>
                 </template>
             </bk-table-column>
         </bk-table>
@@ -67,22 +51,25 @@
             show-total-count
             :current.sync="pagination.current"
             :limit="pagination.limit"
-            :count="pagination.total"
+            :count="projectList.length"
             :limit-list="pagination.limitList"
             @change="current => handlerPaginationChange({ current })"
             @limit-change="limit => handlerPaginationChange({ limit })">
         </bk-pagination>
         <project-info-dialog ref="projectInfoDialog"></project-info-dialog>
+        <delete-confirm-dialog :config="deleteConfirmDialogConfig" @confirm="handleClickConfirm" />
     </div>
 </template>
 <script>
     import projectInfoDialog from './projectInfoDialog'
+    import deleteConfirmDialog from './deleteConfirmDialog'
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     export default {
         name: 'projectManage',
         components: {
-            projectInfoDialog
+            projectInfoDialog,
+            deleteConfirmDialog
         },
         data () {
             return {
@@ -90,32 +77,28 @@
                 pagination: {
                     current: 1,
                     limit: 20,
-                    limitList: [10, 20, 40],
-                    total: 0
+                    limitList: [10, 20, 40]
                 },
-                focusContent: this.$t('toggle'),
-                direction: this.$route.query.direction || 'DESC',
-                filterProjectList: [],
-                property: 'createdDate',
-                iamStatus: false
+                deleteConfirmDialogConfig: {
+                    isShow: false,
+                    confirmName: ''
+                }
             }
         },
         computed: {
-            ...mapState(['projectList', 'userList'])
-        },
-        created () {
-            this.queryProjects()
-            this.getIamPermissionStatus().then(res => {
-                this.iamStatus = res
-            })
+            ...mapState(['projectList', 'userList']),
+            filterProjectList () {
+                return this.projectList.filter(project => {
+                    return Boolean(~project.id.indexOf(this.projectInput) || ~project.name.indexOf(this.projectInput))
+                }).slice((this.pagination.current - 1) * this.pagination.limit, this.pagination.current * this.pagination.limit)
+            }
         },
         methods: {
-            ...mapActions(['refreshIamPermission', 'getIamPermissionStatus', 'queryProjectList', 'getProjectList']),
             formatDate,
+            ...mapActions(['delProjectByName', 'getProjectList']),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.queryProjects()
             },
             showProjectDialog (project = {}) {
                 const { id = '', name = '', description = '' } = project
@@ -136,45 +119,22 @@
                     }
                 })
             },
-            changeDirection () {
-                this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'
-                this.queryProjects()
+            // 点击删除按钮显示弹框
+            handleClickDelete (name) {
+                this.deleteConfirmDialogConfig = {
+                    isShow: true,
+                    confirmName: name
+                }
             },
-            queryProjects () {
-                this.queryProjectList({
-                    sortProperty: this.property,
-                    direction: this.direction
-                }).then(
-                    res => {
-                        res.forEach(project => {
-                            project.id = project.name
-                            project.name = project.displayName
-                        })
-                        this.setPageData(res)
-                    }
-                )
-            },
-            setPageData (res) {
-                this.pagination.total = res.filter(project => {
-                    return Boolean(~project.id.indexOf(this.projectInput) || ~project.name.indexOf(this.projectInput))
-                }).length
-                this.filterProjectList = res.filter(project => {
-                    return Boolean(~project.id.indexOf(this.projectInput) || ~project.name.indexOf(this.projectInput))
-                }).slice((this.pagination.current - 1) * this.pagination.limit, this.pagination.current * this.pagination.limit)
-            },
-            createPermission (projectId) {
-                this.refreshIamPermission({ projectId: projectId }).then(res => {
-                    if (res === true) {
-                        this.$bkMessage({
-                            theme: 'success',
-                            message: this.$t('permissionsGeneratedSuccessTip')
-                        })
-                    } else {
-                        this.$bkMessage({
-                            theme: 'error',
-                            message: this.$t('permissionsGeneratedFailTip')
-                        })
-                    }
+            // 点击删除确认调用接口
+            handleClickConfirm (name) {
+                this.delProjectByName({ name }).then(() => {
+                    this.deleteConfirmDialogConfig.isShow = false
+                    this.getProjectList()
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('delete') + this.$t('space') + this.$t('success')
+                    })
                 })
             }
         }

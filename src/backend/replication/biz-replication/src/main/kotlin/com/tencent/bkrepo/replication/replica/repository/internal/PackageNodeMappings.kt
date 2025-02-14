@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -29,10 +29,6 @@ package com.tencent.bkrepo.replication.replica.repository.internal
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
-import com.tencent.bkrepo.replication.replica.repository.internal.type.DockerPackageNodeMapper
-import com.tencent.bkrepo.replication.replica.repository.internal.type.HelmPackageNodeMapper
-import com.tencent.bkrepo.replication.replica.repository.internal.type.MavenPackageNodeMapper
-import com.tencent.bkrepo.replication.replica.repository.internal.type.NpmPackageNodeMapper
 import com.tencent.bkrepo.replication.replica.repository.internal.type.PackageNodeMapper
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -45,10 +41,9 @@ object PackageNodeMappings {
     private val mappers = mutableMapOf<RepositoryType, PackageNodeMapper>()
 
     init {
-        addMapper(SpringContextUtils.getBean(MavenPackageNodeMapper::class.java))
-        addMapper(NpmPackageNodeMapper())
-        addMapper(SpringContextUtils.getBean(HelmPackageNodeMapper::class.java))
-        addMapper(SpringContextUtils.getBean(DockerPackageNodeMapper::class.java))
+        SpringContextUtils.getBeansOfType(PackageNodeMapper::class.java).forEach { (_, mapper) ->
+            addMapper(mapper)
+        }
     }
 
     private fun addMapper(mapper: PackageNodeMapper) {

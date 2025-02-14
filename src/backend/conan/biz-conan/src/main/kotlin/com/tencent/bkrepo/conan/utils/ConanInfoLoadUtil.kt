@@ -50,11 +50,13 @@ object ConanInfoLoadUtil {
             settings = valueLoad(parser["settings"].orEmpty()),
             options = valueLoad(parser["options"].orEmpty()),
             requires = parser["requires"].orEmpty(),
-            recipeHash = parser["recipe_hash"]?.first().orEmpty()
-        )
+            recipeHash = parser["recipe_hash"]?.first().orEmpty(),
+        ).apply {
+            content = generateContent(this)
+        }
     }
 
-    private fun configParser(file: File, allowFields: List<String> = listOf()): Map<String, List<String>> {
+    private fun configParser(file: File): Map<String, List<String>> {
         val lines = FileUtils.readLines(file, StandardCharsets.UTF_8)
         val pattern = Regex("^\\[([a-z_]{2,50})]")
         var currentLines: MutableList<String>? = null
@@ -69,7 +71,7 @@ object ConanInfoLoadUtil {
                 field = m.groups[1]?.value
             }
             if (field != null) {
-                if (allowFields.isEmpty() || allowFields.contains(field)) {
+                if (allowFields.contains(field)) {
                     currentLines = mutableListOf()
                     result[field] = currentLines
                 } else {
@@ -96,5 +98,19 @@ object ConanInfoLoadUtil {
             result[values[0]] = values[1]
         }
         return result
+    }
+
+    private fun generateContent(conanInfo: ConanInfo): String {
+        val settingsBuilder = StringBuilder("[settings]\n")
+        conanInfo.settings.forEach { (key, value) ->
+            settingsBuilder.append("$key=$value\n")
+        }
+
+        val optionsBuilder = StringBuilder("[options]\n")
+        conanInfo.options.forEach { (key, value) ->
+            optionsBuilder.append("$key=$value\n")
+        }
+
+        return "${settingsBuilder.toString().trim()}\n\n${optionsBuilder.toString().trim()}"
     }
 }

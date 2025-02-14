@@ -40,7 +40,7 @@ function getLsLocale () {
 function setLsLocale (locale) {
     if (typeof cookies.set === 'function') {
         cookies.remove(LS_KEY, { domain: BK_CI_DOMAIN, path: '/' })
-        cookies.set(LS_KEY, localeAliasMap[locale], { domain: BK_CI_DOMAIN, path: '/', expires: 366 })
+        cookies.set(LS_KEY, localeAliasMap[locale], { domain: BK_CI_DOMAIN, path: '/' })
     }
 }
 
@@ -69,7 +69,7 @@ export default (r) => {
             crossdomain: true
         }).then(response => {
             const messages = response.data
-
+            
             i18n.setLocaleMessage(locale, {
                 ...i18n.messages[locale],
                 [module]: messages
@@ -93,10 +93,10 @@ export default (r) => {
             Vue.prototype.$ajax.defaults.headers.common['Accept-Language'] = localeLang
         }
         document.querySelector('html').setAttribute('lang', localeLang)
-
+        
         return localeLang
     }
-
+ 
     return {
         i18n,
         setLocale,
@@ -113,7 +113,7 @@ function importAll (r) {
     const localeList = []
     const messages = r.keys().reduce((acc, key) => {
         const mod = r(key)
-
+        
         const matchLocaleKey = key.match(/\/([\w-]+)?\.json$/)
         const localeKey = (matchLocaleKey ? matchLocaleKey[1] : '')
         if (localeKey) {

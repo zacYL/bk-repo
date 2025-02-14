@@ -45,6 +45,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PopulatedPackageVersion
 import com.tencent.bkrepo.common.metadata.search.packages.PackageSearchInterpreter
+import com.tencent.bkrepo.common.metadata.search.versions.PackageVersionSearchInterpreter
 import com.tencent.bkrepo.common.metadata.service.packages.impl.PackageServiceImpl
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Conditional
@@ -63,12 +64,14 @@ class CenterPackageServiceImpl(
     packageDao: PackageDao,
     packageVersionDao: PackageVersionDao,
     packageSearchInterpreter: PackageSearchInterpreter,
+    packageVersionSearchInterpreter: PackageVersionSearchInterpreter,
     private val clusterProperties: ClusterProperties
 ) : PackageServiceImpl(
     repositoryDao,
     packageDao,
     packageVersionDao,
     packageSearchInterpreter,
+    packageVersionSearchInterpreter,
 ) {
     override fun buildPackage(request: PackageVersionCreateRequest): TPackage {
         return super.buildPackage(request).also { addSrcClusterToResource(it) }

@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.auth.pojo.enums
 
 enum class RoleType {
+    SYSTEM,
     PROJECT,
     REPO
 }

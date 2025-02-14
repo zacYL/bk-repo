@@ -30,6 +30,6 @@ package com.tencent.bkrepo.analyst.exception
 import com.tencent.bkrepo.analyst.message.ScannerMessageCode
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 
-class LicenseNotFoundException (
-    licenseId:String
-): NotFoundException(ScannerMessageCode.LICENSE_NOT_FOUND, licenseId)
+class LicenseNotFoundException(
+    licenseId: String
+) : NotFoundException(ScannerMessageCode.LICENSE_NOT_FOUND, licenseId)

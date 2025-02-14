@@ -38,7 +38,47 @@ enum class PermissionAction {
     DOWNLOAD,
     VIEW,
     UPDATE,
-    DELETE;
+    DELETE,
+    /**
+     * 新增平台制品库菜单权限动作
+     */
+    ACCESS,
+    /**
+     * 新增分发计划额外权限动作
+     */
+    CREATE,
+    ENABLE,
+    EXECUTE,
+    COPY,
+    /**
+     * 新增仓库控制权限
+     */
+    REPO_DELETE,
+    /**
+     * 新增动作权限
+     */
+    SHARE,
+    FORBID,
+    LOCK,
+
+    /*canway extend
+      从4.3.1 开始不再使用
+     */
+    REPO_MANAGE,
+    FOLDER_MANAGE,
+    ARTIFACT_COPY,
+    ARTIFACT_RENAME,
+    ARTIFACT_MOVE,
+    ARTIFACT_SHARE,
+    ARTIFACT_DOWNLOAD,
+    ARTIFACT_READWRITE,
+    ARTIFACT_READ,
+    ARTIFACT_DELETE,
+    ARTIFACT_UPDATE;
 
     fun id() = this.name.toLowerCase()
+}
+
+fun convertEnumListToStringList(enumList: List<PermissionAction>): List<String> {
+    return enumList.map { it.name.toLowerCase() }
 }

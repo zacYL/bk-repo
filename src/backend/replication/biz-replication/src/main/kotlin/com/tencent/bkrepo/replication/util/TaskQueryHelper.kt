@@ -58,7 +58,8 @@ object TaskQueryHelper {
         sortDirection: Sort.Direction? = null
     ): Query {
         val criteria = where(TReplicaTask::projectId).isEqualTo(projectId)
-        name?.takeIf { it.isNotBlank() }?.apply { criteria.and(TReplicaTask::name).regex("^$this") }
+        name?.takeIf { it.isNotBlank() }?.apply {
+            criteria.and(TReplicaTask::name).regex("^${EscapeUtils.escapeRegex(this)}") }
         lastExecutionStatus?.apply { criteria.and(TReplicaTask::lastExecutionStatus).isEqualTo(this) }
         enabled?.apply { criteria.and(TReplicaTask::enabled).isEqualTo(this) }
         val query = Query(criteria)

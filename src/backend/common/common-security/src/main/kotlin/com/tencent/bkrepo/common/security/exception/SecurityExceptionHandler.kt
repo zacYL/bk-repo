@@ -32,7 +32,10 @@
 package com.tencent.bkrepo.common.security.exception
 
 import com.tencent.bkrepo.common.api.constant.BASIC_AUTH_PROMPT
+import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.security.constant.ACCESS_FROM_WEB
+import com.tencent.bkrepo.common.security.constant.HEADER_API_TYPE
 import com.tencent.bkrepo.common.service.exception.AbstractExceptionHandler
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.springframework.core.Ordered
@@ -50,7 +53,13 @@ class SecurityExceptionHandler : AbstractExceptionHandler() {
      */
     @ExceptionHandler(AuthenticationException::class)
     fun handleException(exception: AuthenticationException): Response<*> {
-        HttpContextHolder.getResponse().setHeader(HttpHeaders.WWW_AUTHENTICATE, BASIC_AUTH_PROMPT)
-        return response(exception)
+        val webHeader = HttpContextHolder.getRequest().getHeader(HEADER_API_TYPE)
+        return if (webHeader == ACCESS_FROM_WEB) {
+            HttpContextHolder.getResponse().status = HttpStatus.UNAUTHORIZED.value
+            response(exception)
+        } else {
+            HttpContextHolder.getResponse().setHeader(HttpHeaders.WWW_AUTHENTICATE, BASIC_AUTH_PROMPT)
+            response(exception)
+        }
     }
 }

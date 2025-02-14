@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.service.metadata.MetadataService
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.cluster.ClusterMetadataClient
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import org.springframework.web.bind.annotation.RestController
@@ -61,7 +62,15 @@ class ClusterMetadataController(
     override fun addForbidMetadata(request: MetadataSaveRequest): Response<Void> {
         with(request) {
             permissionManager.checkNodePermission(PermissionAction.WRITE, projectId, repoName, fullPath)
-            metadataService.addForbidMetadata(this)
+            metadataService.addLimitMetadata(this, LimitType.FORBID)
+            return ResponseBuilder.success()
+        }
+    }
+
+    override fun addLimitMetadata(request: MetadataSaveRequest, limitType: LimitType): Response<Void> {
+        with(request) {
+            permissionManager.checkNodePermission(PermissionAction.WRITE, projectId, repoName, fullPath)
+            metadataService.addLimitMetadata(this, limitType)
             return ResponseBuilder.success()
         }
     }

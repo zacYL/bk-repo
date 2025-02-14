@@ -69,7 +69,7 @@ class UserStageController(
     }
 
     @ApiOperation("制品晋级")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
     @PostMapping("/upgrade/{projectId}/{repoName}")
     fun upgrade(
         @RequestAttribute userId: String,

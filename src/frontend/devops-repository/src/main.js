@@ -1,13 +1,19 @@
+/*
+ * @Date: 2024-11-01 22:08:22
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2025-01-09 17:35:35
+ * @FilePath: /artifact/src/frontend/devops-repository/src/main.js
+ */
+import Vue from 'vue'
 import App from '@/App'
 import createRouter from '@/router'
 import store from '@/store'
 import '@repository/utils/request'
-import Vue from 'vue'
 
-import createLocale from '@locale'
+import Icon from '@repository/components/Icon'
 import CanwayDialog from '@repository/components/CanwayDialog'
 import EmptyData from '@repository/components/EmptyData'
-import Icon from '@repository/components/Icon'
+import createLocale from '@locale'
 import { throttleMessage } from '@repository/utils'
 import cookies from 'js-cookie'
 
@@ -19,25 +25,27 @@ Vue.component('EmptyData', EmptyData)
 
 Vue.prototype.$setLocale = setLocale
 Vue.prototype.$bkMessage = throttleMessage(Vue.prototype.$bkMessage, 3500)
-// 全局存储当前国际化语言
+Vue.prototype.$isSbt = (data) => {
+    return data?.configuration?.settings?.display_repo_type === 'sbt'
+}
 Vue.prototype.currentLanguage = cookies.get('blueking_language') || 'zh-cn'
 
-document.title = i18n.t('webTitle')
+document.title = i18n.t('CPackWebTitle')
 
 Vue.mixin({
     methods: {
         // 特殊仓库名称替换
         replaceRepoName (name) {
-            if (MODE_CONFIG === 'ci') {
-                switch (name) {
-                    case 'custom':
-                        return this.$t('custom')
-                    case 'pipeline':
-                        return this.$t('pipeline')
-                    default:
-                        return name
-                }
-            }
+            // if (MODE_CONFIG === 'ci') {
+            //     switch (name) {
+            //         case 'custom':
+            //             return '自定义仓库'
+            //         case 'pipeline':
+            //             return '流水线仓库'
+            //         default:
+            //             return name
+            //     }
+            // }
             return name
         }
     }
@@ -50,7 +58,7 @@ window.repositoryVue = new Vue({
     components: {
         App
     },
-    template: '<App />'
+    template: '<App/>'
 })
 
 if (document.querySelector('#app')) window.repositoryVue.$mount('#app')

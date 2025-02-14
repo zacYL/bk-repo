@@ -49,7 +49,7 @@ import java.io.Serializable
 @JsonPropertyOrder(
     "_id", "_rev", "name", "description", "dist-tags", "versions", "_attachments"
 )
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true, value = ["contributors"])
 class NpmPackageMetaData : Serializable {
     @JsonProperty("_id")
     var id: String? = null
@@ -115,6 +115,8 @@ class NpmPackageMetaData : Serializable {
         }
     }
 
+	// 暂时忽略unpublished字段
+	@JsonIgnoreProperties("unpublished")
     class Time : Serializable {
         private var versions: MutableMap<String, String> = mutableMapOf()
 

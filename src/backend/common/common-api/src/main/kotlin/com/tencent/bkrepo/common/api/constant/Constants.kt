@@ -57,6 +57,11 @@ const val AUTHORITIES_KEY = "authorities"
 const val MS_REQUEST_KEY = "MSRequest"
 
 /**
+ * CI微服务调用请求标记key
+ */
+const val CI_MS_REQUEST_KEY = "CIMSRequest"
+
+/**
  * 匿名用户
  */
 const val ANONYMOUS_USER = "anonymous"
@@ -89,10 +94,33 @@ const val JOB_SERVICE_NAME = "\${service.prefix:}job\${service.suffix:}"
 const val SCHEDULE_SERVICE_NAME = "\${service.prefix:}job-schedule\${service.suffix:}"
 const val FS_SERVER_SERVICE_NAME = "\${service.prefix:}fs-server\${service.suffix:}"
 const val MAVEN_SERVICE_NAME = "\${service.prefix:}maven\${service.suffix:}"
+const val NPM_SERVICE_NAME = "\${service.prefix:repo-}npm\${service.suffix:}"
 const val ARCHIVE_SERVICE_NAME = "\${service.prefix:}archive\${service.suffix:}"
 const val OPDATA_SERVICE_NAME = "\${service.prefix:}opdata\${service.suffix:}"
 const val GENERIC_SERVICE_NAME = "\${service.prefix:}generic\${service.suffix:}"
 const val ROUTER_CONTROLLER_SERVICE_NAME = "\${service.prefix:}router-controller\${service.suffix:}"
+const val DOCKER_SERVICE_NAME = "\${service.prefix:repo-}docker\${service.suffix:}"
+const val PYPI_SERVICE_NAME = "\${service.prefix:repo-}pypi\${service.suffix:}"
+const val COMPOSER_SERVICE_NAME = "\${service.prefix:repo-}composer\${service.suffix:}"
+const val RPM_SERVICE_NAME = "\${service.prefix:repo-}rpm\${service.suffix:}"
+const val LICENSE_SERVICE_NAME = "\${service-prefix:}license\${service-suffix:}"
+
+/**
+ *  Devops Service Name
+ */
+const val DEVOPS_USER_MANAGER_SERVICE_NAME = "\${service.devops-prefix:}usermanager\${service.suffix:}"
+const val DEVOPS_PLATFORM_SERVICE_NAME = "\${service.devops-prefix:}platform\${service.suffix:}"
+const val DEVOPS_AUTH_SERVICE_NAME = "\${service.devops-prefix:}auth\${service.suffix:}"
+const val DEVOPS_PROJECT_SERVICE_NAME = "\${service.devops-prefix:}projectmanager\${service.suffix:}"
+
+/**
+ *  Headers used by Devops Service
+ */
+const val AUTH_HEADER_DEVOPS_UID = "X-DEVOPS-UID"
+const val AUTH_HEADER_DEVOPS_TENANT_ID = "X-DEVOPS-TENANT-ID"
+const val AUTH_HEADER_DEVOPS_ACCESS_TOKEN = "X-DEVOPS-ACCESS-TOKEN"
+const val AUTH_HEADER_DEVOPS_PROJECT_ID = "X-DEVOPS-PROJECT-ID"
+
 
 /**
  * 认证相关
@@ -121,6 +149,8 @@ const val COMMIT_EDGE_HEADER = "X-BKREPO-COMMIT-EDGE"
  */
 const val CLIENT_ADDRESS = "clientAddress"
 const val DOWNLOAD_SOURCE = "downloadSource"
+
+const val CPACK_PRODUCT_CODE = "CPack"
 
 /**
  * 用于标记访问来源，web或api

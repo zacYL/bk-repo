@@ -31,6 +31,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.job.api.JobClient
 import com.tencent.bkrepo.job.batch.base.ActiveProjectService
+import com.tencent.bkrepo.job.batch.task.clean.FileReferenceCleanupJob
 import com.tencent.bkrepo.job.pojo.JobDetail
 import com.tencent.bkrepo.job.service.SystemJobService
 import org.springframework.web.bind.annotation.RestController
@@ -38,10 +39,16 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class JobController(
     val systemJobService: SystemJobService,
+    private val fileReferenceCleanupJob: FileReferenceCleanupJob,
     private val activeProjectService: ActiveProjectService
     ) : JobClient {
     override fun detail(): Response<List<JobDetail>> {
         return ResponseBuilder.success(systemJobService.detail())
+    }
+
+    override fun fileReferenceClean(): Response<Boolean> {
+        fileReferenceCleanupJob.start()
+        return ResponseBuilder.success(true)
     }
 
     override fun downloadActiveProjects(): Response<MutableSet<String>> {

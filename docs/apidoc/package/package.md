@@ -105,33 +105,31 @@
 
   ```json
   {
-    "code": 0,
-    "message": null,
-    "data": {
-      {
-        "projectId" : "test",
-        "repoName" : "generic-local",
-        "name" : "test",
-        "key" : "com.tencent.bkrepo",
-        "type" : "MAVEN",
-        "latest" : "0.0.9",
-        "downloads" : 101,
-        "versions": 9,
-        "description": null,
-        "createdBy" : "admin",
-        "createdDate" : "2020-07-27T16:02:31.394",
-        "lastModifiedBy" : "admin",
-        "lastModifiedDate" : "2020-07-27T16:02:31.394",
-        "extension" : {
-            "appVersion": "4.2.4"
-        },
-        "historyVersion" : [
-            "7.8.10"
-        ]
-      }
-    },
-    "traceId":  null
-  }
+      "code": 0,
+      "message": null,
+      "data": {
+          "projectId" : "test",
+          "repoName" : "generic-local",
+          "name" : "test",
+          "key" : "com.tencent.bkrepo",
+          "type" : "MAVEN",
+          "latest" : "0.0.9",
+          "downloads" : 101,
+          "versions": 9,
+          "description": null,
+          "createdBy" : "admin",
+          "createdDate" : "2020-07-27T16:02:31.394",
+          "lastModifiedBy" : "admin",
+          "lastModifiedDate" : "2020-07-27T16:02:31.394",
+          "extension" : {
+              "appVersion": "4.2.4"
+          },
+          "historyVersion" : [
+              "7.8.10"
+          ]
+      },
+      "traceId":  null
+    }
   ```
 
 - record字段说明
@@ -592,6 +590,64 @@
 
 - 响应体
   [文件流]
+
+## 列表查询包所有版本
+
+- API: GET /repository/api/version/list/{projectId}/{repoName}?packageKey=gav://com.tencent:test&version=0.0.1&stageTag=release
+- API 名称: list_all_version
+- 功能说明：
+  - 中文：查询全部版本列表
+  - English：list all version
+- 请求体
+  此接口请求体为空
+- 请求字段说明
+
+  |字段|类型|是否必须|默认值|说明|Description|
+  |---|---|---|---|---|---|
+  |projectId|string|是|无|项目名称|project name|
+  |repoName|string|是|无|仓库名称|repo name|
+  |packageKey|string|否|无|包唯一key|package unique key|
+  |version|string|否|无|版本名称，前缀匹配|version name|
+  |stageTag|string|否|无|晋级标签， 逗号分隔|stage tag list|
+
+- 响应体
+
+  ```json
+  {
+    "code": 0,
+    "message": null,
+    "data": [
+        {
+          "name" : "0.0.9",
+          "size" : 1024,
+          "downloads" : 18,
+          "stageTag" : ["@prerelease", "@release"],
+          "metadata" : {
+            "key": "value"
+          },
+          "createdBy" : "admin",
+          "createdDate" : "2020-07-27T16:02:31.394",
+          "lastModifiedBy" : "admin",
+          "lastModifiedDate" : "2020-07-27T16:02:31.394"
+        }
+    ],
+    "traceId":  null
+  }
+  ```
+
+- records字段说明
+
+  |字段|类型|说明|Description|
+  |---|---|---|---|
+  |name|string|版本名称|version name|
+  |size|long|版本大小|version size|
+  |downloads|long|版本下载次数|download times|
+  |stageTag|list[string]|晋级阶段标签列表|stage tag list|
+  |metadata|object|元数据，key-value键值对|metadata|
+  |createdBy|string|创建者|create user|
+  |createdDate|string|创建时间|create time|
+  |lastModifiedBy|string|上次修改者|last modify user|
+  |lastModifiedDate|string|上次修改时间|last modify time|
 
 ## 公共说明
 

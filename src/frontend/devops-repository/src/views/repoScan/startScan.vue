@@ -1,6 +1,6 @@
 <template>
     <div class="start-scan-container">
-        <bk-form style="max-width: 1080px;" :label-width="120" :model="config" :rules="rules" ref="scanForm">
+        <bk-form style="max-width: 1080px;" :label-width="140" :model="config" :rules="rules" ref="scanForm">
             <bk-form-item :label="$t('schemeName')">
                 <span>{{ config.name }}</span>
             </bk-form-item>
@@ -24,7 +24,7 @@
                 </arti-table>
             </bk-form-item>
             <bk-form-item>
-                <bk-button style="width: 140px;" theme="primary" @click="save()">{{ $t('scanImmediately') }}</bk-button>
+                <bk-button theme="primary" @click="save()">{{$t('scanImmediately')}}</bk-button>
             </bk-form-item>
         </bk-form>
     </div>

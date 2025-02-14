@@ -12,36 +12,43 @@
                     v-model="planForm.executionStrategy"
                     @change="clearError">
                     <bk-radio value="IMMEDIATELY" :disabled="isDisabledExecutionStrategy || disabled">
-                        <span>{{ $t('executeImmediately') }}</span>
+                        <span class="label-span">{{$t('executeImmediately')}}</span>
                     </bk-radio>
                     <bk-radio value="SPECIFIED_TIME" :disabled="isDisabledExecutionStrategy || disabled">
                         <div class="flex-align-center">
-                            <span>{{ $t('designatedTime') }}</span>
+                            <span class="label-span" style="flex-shrink: 0;">{{$t('designatedTime')}}</span>
                             <bk-date-picker
+                                style="width: 180px;"
+                                class="ml10"
                                 v-if="planForm.executionStrategy === 'SPECIFIED_TIME'"
-                                class="ml10 w180"
                                 v-model="planForm.time"
                                 type="datetime"
                                 :disabled="disabled"
                                 :options="{
-                                    disabledDate: (date) => date < new Date()
+                                    disabledDate: (date) => checkDateIsValid(date)
                                 }">
                             </bk-date-picker>
                         </div>
                     </bk-radio>
-                    <bk-radio value="CRON_EXPRESSION" :disabled="isDisabledExecutionStrategy || disabled">
-                        <div class="flex-align-center">
-                            <span>{{ $t('timedExecution') }}</span>
-                            <template v-if="planForm.executionStrategy === 'CRON_EXPRESSION'">
-                                <bk-input v-if="disabled" class="ml10 w250" :value="planForm.cron" :disabled="disabled"></bk-input>
-                                <Cron v-else class="ml10" v-model="planForm.cron" />
-                            </template>
-                        </div>
-                    </bk-radio>
+                    <div class="mr20 flex-align-center">
+                        <bk-radio value="CRON_EXPRESSION" :disabled="isDisabledExecutionStrategy || disabled"
+                            style="margin-right: 0;">
+                            <div class="flex-align-center">
+                                <span class="label-span">{{$t('timedExecution')}}</span>
+                            </div>
+                        </bk-radio>
+                        <template v-if="planForm.executionStrategy === 'CRON_EXPRESSION'">
+                            <bk-input v-if="disabled" class="ml10 w180" :value="planForm.cron" :disabled="disabled"></bk-input>
+                            <Cron v-else class="ml10" v-model="planForm.cron" />
+                        </template>
+                    </div>
                     <bk-radio v-if="planForm.replicaObjectType === 'REPOSITORY'" value="REAL_TIME" :disabled="isDisabledRealTime || disabled">
-                        <span>{{ $t('realTimeSync') }}</span>
+                        <span class="label-span">{{$t('realTimeSync')}}</span>
                     </bk-radio>
                 </bk-radio-group>
+            </bk-form-item>
+            <bk-form-item v-if="planForm.executionStrategy === 'REAL_TIME' && planForm.replicaObjectType === 'REPOSITORY'" :label="$t('deleteArtifactSync')" :desc="$t('deleteArtifactSyncTips')">
+                <bk-switcher v-model="planForm.syncDeletion" :disabled="disabled" theme="primary"></bk-switcher>
             </bk-form-item>
             <bk-form-item :label="$t('conflictStrategy')" property="conflictStrategy">
                 <bk-radio-group v-model="planForm.conflictStrategy">
@@ -59,7 +66,16 @@
                     @change="changeReplicaObjectType">
                 </card-radio-group>
             </bk-form-item>
-            <bk-form-item :label="$t('syncObject')" :required="true" property="config" error-display-type="normal">
+            <bk-form-item
+                :label="$t('syncObject')"
+                :required="true"
+                property="config"
+                error-display-type="normal"
+                :desc="{
+                    content: $t('syncObjTips'),
+                    width: 500
+                }"
+                :desc-type="'icon'">
                 <template v-if="planForm.replicaObjectType === 'REPOSITORY'">
                     <repository-table
                         ref="planConfig"
@@ -72,6 +88,8 @@
                     <package-table
                         ref="planConfig"
                         :init-data="replicaTaskObjects"
+                        :target-project="planForm.targetProject"
+                        :target-store="planForm.targetStore"
                         :disabled="disabled"
                         @clearError="clearError">
                     </package-table>
@@ -80,11 +98,22 @@
                     <path-table
                         ref="planConfig"
                         :init-data="replicaTaskObjects"
+                        :target-project="planForm.targetProject"
+                        :target-store="planForm.targetStore"
                         :disabled="disabled"
                         @clearError="clearError">
                     </path-table>
                 </template>
             </bk-form-item>
+            <!-- 目标项目，目标路径 -->
+            <template v-if="['PACKAGE','PATH'].includes(planForm.replicaObjectType)">
+                <bk-form-item :label="$t('TargetProject')" property="targetProject" error-display-type="normal">
+                    <bk-input class="w480" v-model.trim="planForm.targetProject" maxlength="6" show-word-limit :disabled="disabled"></bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('TargetStore')" property="targetStore" error-display-type="normal">
+                    <bk-input class="w480" v-model.trim="planForm.targetStore" maxlength="31" show-word-limit :disabled="disabled"></bk-input>
+                </bk-form-item>
+            </template>
             <bk-form-item :label="$t('targetNode')" :required="true" property="remoteClusterIds" error-display-type="normal">
                 <bk-select
                     class="w480"
@@ -101,14 +130,10 @@
                     </bk-option>
                 </bk-select>
             </bk-form-item>
-            <template v-if="routeName !== 'createPlan'">
-                <bk-form-item :label="$t('creator') + planForm.creator " property="creator">
-                    {{ userList[planForm.createdBy] && userList[planForm.createdBy].name || planForm.createdBy }}
-                </bk-form-item>
-                <bk-form-item :label="$t('createdDate')" property="createdDate">
-                    {{ formatDate(planForm.createdDate) }}
-                </bk-form-item>
-            </template>
+            <bk-form-item :label="$t('creator')" v-if="routeName !== 'createPlan'">
+                {{ userList[planForm.createdBy] && userList[planForm.createdBy].name || planForm.createdBy }}
+            </bk-form-item>
+            <bk-form-item :label="$t('createdDate')" v-if="routeName !== 'createPlan'">{{ formatDate(planForm.createdDate) }}</bk-form-item>
             <bk-form-item :label="$t('description')">
                 <bk-input
                     class="w480"
@@ -119,6 +144,30 @@
                     :disabled="disabled">
                 </bk-input>
             </bk-form-item>
+            <template v-if="planForm.replicaObjectType === 'REPOSITORY'">
+                <bk-form-item>
+                    <bk-checkbox
+                        v-model="noRecordsCheck"
+                        :disabled="disabled">
+                        {{$t('noDistributionRecord')}}
+                    </bk-checkbox>
+                </bk-form-item>
+                <bk-form-item>
+                    <span>{{$t('planLogReserve')}}</span>
+                    <bk-input
+                        class="w180"
+                        :class="{ 'bk-form-item is-error': !Number(recordReserveDays) && errorRecordReserveDaysInfo }"
+                        type="number"
+                        :max="60"
+                        :min="1"
+                        v-model="recordReserveDays"
+                        :disabled="disabled"
+                        :placeholder="$t('planRecordReserveDaysInfo')"
+                        @blur="onBlurRecordReserveDays">
+                    </bk-input>
+                    <p class="form-error-tip" v-if="!Number(recordReserveDays) && errorRecordReserveDaysInfo">{{$t('planRecordReserveDaysInfo')}}</p>
+                </bk-form-item>
+            </template>
             <bk-form-item v-if="!disabled">
                 <bk-button @click="$emit('close')">{{$t('cancel')}}</bk-button>
                 <bk-button class="ml10" theme="primary" :loading="planForm.loading" @click="save">{{$t('confirm')}}</bk-button>
@@ -134,6 +183,7 @@
     import packageTable from './packageTable'
     import pathTable from './pathTable'
     import { formatDate } from '@repository/utils'
+
     export default {
         name: 'createPlan',
         components: { Cron, CardRadioGroup, repositoryTable, packageTable, pathTable },
@@ -160,14 +210,17 @@
                 planForm: {
                     loading: false,
                     name: '',
+                    syncDeletion: false,
                     executionStrategy: 'IMMEDIATELY',
                     replicaObjectType: 'REPOSITORY',
                     time: new Date(new Date().getTime() + 30 * 60 * 1000),
                     cron: '* * * * * ? *',
                     conflictStrategy: 'SKIP',
                     remoteClusterIds: [],
-                    creator: '',
-                    created_time: '',
+                    targetStore: '',
+                    targetProject: '',
+                    createdBy: '',
+                    createdDate: '',
                     description: ''
                 },
                 rules: {
@@ -206,7 +259,12 @@
                     config: [
                         {
                             validator: () => {
-                                return this.$refs.planConfig.getConfig()
+                                // 仓库 及 (制品、文件) 不共用校验
+                                const res
+                                    = ['PACKAGE', 'PATH'].includes(this.planForm.replicaObjectType)
+                                        ? this.$refs.planConfig.getConfig()
+                                        : this.$refs.planConfig.getConfigCheck() // 只校验长度
+                                return res
                             },
                             message: this.$t('configRule'),
                             trigger: 'blur'
@@ -218,9 +276,29 @@
                             message: this.$t('pleaseSelect') + this.$t('space') + this.$t('targetNode'),
                             trigger: 'blur'
                         }
+                    ],
+                    // 目标项目正则
+                    targetProject: [
+                        {
+                            regex: /^[a-z0-9]{6}$|^$/,
+                            message: this.$t('projectIdCheckTips'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    // 目标仓库正则
+                    targetStore: [
+                        {
+                            regex: /^[a-zA-Z][a-zA-Z0-9\-_]{1,31}$|^$/,
+                            message: this.$t('repoNamePlaceholder'),
+                            trigger: 'blur'
+                        }
                     ]
                 },
-                replicaTaskObjects: []
+                replicaTaskObjects: [],
+                noRecordsCheck: true,
+                recordReserveDays: 30,
+                errorRecordReserveDaysInfo: false,
+                init: false
             }
         },
         computed: {
@@ -241,11 +319,11 @@
              * */
             isDisabledExecutionStrategy () {
                 let isDisabled = false
-            
+
                 if (this.routeName === 'editPlan') {
                     const { executionStrategy } = this.planForm
                     const executionStatus = ['IMMEDIATELY', 'SPECIFIED_TIME', 'CRON_EXPRESSION'].includes(executionStrategy)
-                    
+
                     if (executionStrategy === 'REAL_TIME' && executionStatus === false) {
                         isDisabled = true
                         this.isDisabledRealTime = false
@@ -254,27 +332,69 @@
                         this.isDisabledRealTime = true
                     }
                 }
+
                 return isDisabled
             }
         },
+        watch: {
+            'planForm.executionStrategy' (val) {
+                if (val === 'REAL_TIME' && !this.init) {
+                    this.planForm.syncDeletion = false
+                }
+            },
+            'planForm.replicaObjectType' (val) {
+                if (val === 'REPOSITORY' && !this.init) {
+                    this.planForm.syncDeletion = false
+                }
+            },
+            'planForm.syncDeletion' (val) {
+                const planConfig = this.$refs.planConfig
+                if (!this.init) {
+                    if (val) {
+                        // 只支持二进制仓库
+                        if (planConfig.filterChange && planConfig.setInsertFilterRepoList) {
+                            this.$bkInfoDevopsConfirm({
+                                subTitle: this.$t('deleteArtifactSyncTips2'),
+                                theme: 'primary',
+                                confirmFn: () => {
+                                    planConfig.filterChange(v => v.type === 'GENERIC')
+                                    planConfig.setInsertFilterRepoList(['GENERIC'])
+                                },
+                                cancelFn: () => {
+                                    this.planForm.syncDeletion = false
+                                }
+                            })
+                        }
+                    } else {
+                        if (planConfig.setInsertFilterRepoList) {
+                            planConfig.setInsertFilterRepoList([])
+                        }
+                    }
+                }
+            }
+        },
         created () {
-            // 需要获取最新的节点列表
-            this.getClusterList()
-            this.getRepoListAll({ projectId: this.projectId })
+            this.getRepoListAll({ projectId: this.rowsData.projectId }) // 获取全部仓库列表
+            this.getReadRepoListAll({ projectId: this.rowsData.projectId }) // 获取可读仓库列表
             this.routeName !== 'createPlan' && this.handlePlanDetail()
         },
         methods: {
             ...mapActions([
+                'getReadRepoListAll',
                 'getRepoListAll',
                 'createPlan',
                 'getPlanDetail',
-                'updatePlan',
-                'getClusterList'
+                'updatePlan'
             ]),
+            checkDateIsValid (date) {
+                // date 对其的是当前日期的24点，因此判断小于时，需要判断是否等于小于当前日期的0点
+                return date <= (new Date().setHours(0, 0, 0, 0) - 24 * 60 * 60 * 1000)
+            },
             formatDate,
             handlePlanDetail () {
                 this.isLoading = true
                 this.getPlanDetail({
+                    projectId: this.projectId,
                     key: this.rowsData.planId
                 }).then(({
                     task: {
@@ -286,13 +406,17 @@
                         createdBy,
                         createdDate,
                         setting: {
+                            syncDeletion,
                             conflictStrategy,
                             executionStrategy,
                             executionPlan: { executeTime, cronExpression }
-                        }
+                        },
+                        notRecord,
+                        recordReserveDays
                     },
                     objects
                 }) => {
+                    this.init = true
                     this.planForm = {
                         ...this.planForm,
                         name,
@@ -309,21 +433,25 @@
                             }
                             : {}),
                         conflictStrategy,
-                        remoteClusterIds: this.checkClusterExist(remoteClusters.map(v => v.id)),
+                        remoteClusterIds: remoteClusters.map(v => v.id),
                         description,
                         createdBy,
-                        createdDate
+                        createdDate,
+                        syncDeletion
                     }
+                    // 回显目标项目及目标仓库
+                    if (['PACKAGE', 'PATH'].includes(this.planForm.replicaObjectType)) {
+                        this.planForm.targetProject = objects[0].remoteProjectId || ''
+                        this.planForm.targetStore = objects[0].remoteRepoName || ''
+                    }
+
                     this.replicaTaskObjects = objects
+                    this.noRecordsCheck = notRecord
+                    this.recordReserveDays = recordReserveDays
                 }).finally(() => {
+                    this.init = false
                     this.isLoading = false
                 })
-            },
-            // 判断当前选择的节点是否存在于节点列表中
-            checkClusterExist (arr) {
-                return arr.map(v => {
-                    return this.clusterList.map(v => v.id).includes(v) && v
-                }).filter(Boolean)
             },
             changeReplicaObjectType () {
                 this.replicaTaskObjects = []
@@ -333,18 +461,38 @@
             clearError () {
                 this.$refs.planForm.clearError()
             },
+            // 日志保留天数的离焦事件，用于校验输入是否符合规则
+            onBlurRecordReserveDays () {
+                if (isNaN(Number(this.recordReserveDays)) || this.recordReserveDays === null || this.recordReserveDays === '') {
+                    this.recordReserveDays = ''
+                    this.errorRecordReserveDaysInfo = true
+                } else {
+                    this.errorRecordReserveDaysInfo = false
+                }
+            },
             async save () {
-                // 保存时也需要校验
-                this.planForm.remoteClusterIds = this.checkClusterExist(this.planForm.remoteClusterIds)
+                if (this.planForm.remoteClusterIds.length > 0) {
+                    const clusterArr = this.clusterList.filter(v => v.type !== 'CENTER').map(v => v.id)
+                    this.planForm.remoteClusterIds = this.planForm.remoteClusterIds.map(v => {
+                        return clusterArr.includes(v) && v
+                    }).filter(Boolean)
+                }
                 await this.$refs.planForm.validate()
 
+                if (this.errorRecordReserveDaysInfo) return
                 if (this.planForm.loading) return
                 this.planForm.loading = true
-
-                const replicaTaskObjects = await this.$refs.planConfig.getConfig()
+                let replicaTaskObjects = []
+                try {
+                    replicaTaskObjects = await this.$refs.planConfig.getConfig()
+                } catch (error) {
+                    this.planForm.loading = false
+                    return
+                }
+                
                 const body = {
                     name: this.planForm.name,
-                    localProjectId: this.projectId,
+                    localProjectId: this.rowsData.projectId,
                     replicaObjectType: this.planForm.replicaObjectType,
                     replicaTaskObjects,
                     replicaType: this.planForm.executionStrategy === 'REAL_TIME' ? 'REAL_TIME' : 'SCHEDULED',
@@ -372,15 +520,27 @@
                                         : {})
                                 }
                             }
-                            : {})
+                            : {}),
+                        ...(
+                            this.planForm.executionStrategy === 'REAL_TIME'
+                                ? {
+                                    syncDeletion: this.planForm.syncDeletion
+                                }
+                                : {}
+                        )
                     },
                     remoteClusterIds: this.planForm.remoteClusterIds,
                     enabled: true,
                     description: this.planForm.description
                 }
+                if (this.planForm?.replicaObjectType === 'REPOSITORY') {
+                    body.notRecord = this.noRecordsCheck
+                    // 此时需要保证传参是 number 类型
+                    body.recordReserveDays = isNaN(Number(this.recordReserveDays)) ? 30 : Number(this.recordReserveDays)
+                }
                 const request = this.routeName === 'createPlan'
-                    ? this.createPlan({ body })
-                    : this.updatePlan({ body: { ...body, key: this.rowsData.planId } })
+                    ? this.createPlan({ projectId: this.projectId, body })
+                    : this.updatePlan({ projectId: this.projectId, body: { ...body, key: this.rowsData.planId } })
                 request.then(() => {
                     this.$bkMessage({
                         theme: 'success',
@@ -396,6 +556,17 @@
     }
 </script>
 <style lang="scss" scoped>
+// 滚动条 宽度和高度
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+// 滚动条的滑块
+::-webkit-scrollbar-thumb {
+    height: 8px;
+    border-radius: 20px;
+    background-color: #a5a5a5;
+}
 .create-node-container {
     height: 100%;
     background-color: white;

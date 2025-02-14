@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_package_page_{projectId}_{repoName}_repo-repository",
+  "name" : "分页查询包",
+  "desc" : "分页查询包",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-repository/api/package/page/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "reporepository",
+  "targetPath" : "/api/package/page/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "分页查询包_12bf9f41.md"
+}

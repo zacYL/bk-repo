@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_node_rename_{projectId}_{repoName}_{fullPath}_repo-repository",
+  "name" : "重命名文件或目录",
+  "desc" : "重命名文件或目录",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/repo-repository/api/node/rename/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "reporepository",
+  "targetPath" : "/api/node/rename/{projectId}/{repoName}/**",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "重命名文件或目录_217e7ce7.md"
+}

@@ -110,6 +110,11 @@ class DownloadInterceptorTest {
         assertDoesNotThrow { forbidInterceptor.intercept("test", packageVersion) }
         packageVersion = packageVersion.copy(metadata = mapOf(FORBID_STATUS to true))
         assertThrows<ArtifactDownloadForbiddenException> { forbidInterceptor.intercept("test", packageVersion) }
+        assertDoesNotThrow { NodeMetadataInterceptor(invalidRule).intercept(nodeDetail.projectId, nodeDetail) }
+        assertDoesNotThrow { NodeMetadataInterceptor(passRule).intercept(nodeDetail.projectId, nodeDetail) }
+        assertThrows<ArtifactDownloadForbiddenException> {
+            NodeMetadataInterceptor(forbiddenRule).intercept(nodeDetail.projectId, nodeDetail)
+        }
     }
 
     @Test

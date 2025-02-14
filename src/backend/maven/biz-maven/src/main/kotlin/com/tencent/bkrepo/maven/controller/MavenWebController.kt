@@ -72,8 +72,15 @@ class MavenWebController(
         scopeId = "#mavenArtifactInfo?.projectId",
         content = ActionAuditContent.REPO_PACKAGE_DELETE_CONTENT
     )
-    override fun deletePackage(mavenArtifactInfo: MavenDeleteArtifactInfo, packageKey: String): Response<Void> {
-        mavenService.delete(mavenArtifactInfo, packageKey, null)
+    @ApiOperation("maven jar 包删除接口")
+    @DeleteMapping(MavenArtifactInfo.MAVEN_EXT_PACKAGE_DELETE)
+    fun deletePackage(
+        @RequestAttribute userId: String,
+        @ArtifactPathVariable mavenArtifactInfo: MavenDeleteArtifactInfo,
+        @ApiParam(value = "包唯一Key", required = true)
+        @RequestParam packageKey: String
+    ): Response<Void> {
+        mavenService.deletePackage(userId, mavenArtifactInfo)
         return ResponseBuilder.success()
     }
 
@@ -96,33 +103,133 @@ class MavenWebController(
         scopeId = "#mavenArtifactInfo?.projectId",
         content = ActionAuditContent.REPO_PACKAGE_VERSION_DELETE_CONTENT
     )
-    override fun deleteVersion(
-        mavenArtifactInfo: MavenDeleteArtifactInfo,
-        packageKey: String,
-        version: String?
+    @ApiOperation("maven jar 包版本删除接口")
+    @DeleteMapping(MavenArtifactInfo.MAVEN_EXT_VERSION_DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
+    fun deleteVersion(
+        @RequestAttribute userId: String,
+        @ArtifactPathVariable mavenArtifactInfo: MavenDeleteArtifactInfo,
+        @ApiParam(value = "包唯一Key", required = true)
+        @RequestParam packageKey: String,
+        @ApiParam(value = "版本号", required = true)
+        @RequestParam version: String
     ): Response<Void> {
-        mavenService.delete(mavenArtifactInfo, packageKey, version)
+        mavenService.deleteVersion(userId, mavenArtifactInfo)
         return ResponseBuilder.success()
     }
 
-    override fun artifactDetail(
-        mavenArtifactInfo: MavenArtifactInfo,
-        packageKey: String,
-        version: String?
-    ): Response<Any?> {
-        return ResponseBuilder.success(mavenService.artifactDetail(mavenArtifactInfo, packageKey, version))
+    @ApiOperation("maven jar 版本详情接口")
+    @GetMapping(MavenArtifactInfo.MAVEN_EXT_DETAIL)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    fun artifactDetail(
+        @RequestAttribute userId: String,
+        @ArtifactPathVariable mavenArtifactInfo: MavenArtifactInfo,
+        @ApiParam(value = "包唯一Key", required = true)
+        @RequestParam packageKey: String,
+        @ApiParam(value = "版本号", required = true)
+        @RequestParam version: String
+    ): Response<MavenArtifactVersionData> {
+        return ResponseBuilder.success(mavenService.getVersionDetail(userId, mavenArtifactInfo))
     }
 
-    override fun gavc(
-        projectId: String,
-        pageNumber: Int,
-        pageSize: Int,
-        g: String?,
-        a: String?,
-        v: String?,
-        c: String?,
-        repos: String?
+    @ApiOperation("maven gavc 搜索接口")
+    @GetMapping("/search/gavc/{projectId}/{pageNumber}/{pageSize}")
+    fun gavc(
+        @PathVariable projectId: String,
+        @PathVariable pageNumber: Int,
+        @PathVariable pageSize: Int,
+        @RequestParam g: String?,
+        @RequestParam a: String?,
+        @RequestParam v: String?,
+        @RequestParam c: String?,
+        @RequestParam repos: String?
     ): Response<Page<MavenGAVCResponse.UriResult>> {
         return mavenExtService.gavc(projectId, pageNumber, pageSize, g, a, v, c, repos)
+    }
+
+    @ApiOperation("查询包的依赖项")
+    @GetMapping("/dependencies/{projectId}/{repoName}")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    fun dependencies(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String,
+        @RequestParam @Min(1) pageNumber: Int? = 1,
+        @RequestParam @Min(1) pageSize: Int? = 20
+    ): Response<Page<MavenDependency>> {
+        return mavenExtService.dependencies(
+            projectId,
+            repoName,
+            packageKey,
+            version,
+            pageNumber ?: 1,
+            pageSize ?: 20
+        )
+    }
+
+    @ApiOperation("查询仓库中依赖该制品的制品")
+    @GetMapping("/dependencies/reverse/{projectId}/{repoName}")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    fun dependenciesReverse(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String,
+        @RequestParam @Min(1) pageNumber: Int? = 1,
+        @RequestParam @Min(1) pageSize: Int? = 20
+    ): Response<Page<MavenVersionDependentsRelation>> {
+        return mavenExtService.dependenciesReverse(
+            projectId,
+            repoName,
+            packageKey,
+            version,
+            pageNumber ?: PAGE_NUMBER,
+            pageSize ?: PAGE_SIZE
+        )
+    }
+
+    @ApiOperation("查询包依赖的插件")
+    @GetMapping("/plugins/{projectId}/{repoName}")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    fun plugins(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String,
+        @RequestParam @Min(1) pageNumber: Int? = 1,
+        @RequestParam @Min(1) pageSize: Int? = 20
+    ): Response<Page<MavenPlugin>> {
+        return mavenExtService.plugins(
+            projectId,
+            repoName,
+            packageKey,
+            version,
+            pageNumber ?: PAGE_NUMBER,
+            pageSize ?: PAGE_SIZE
+        )
+    }
+
+    @ApiOperation("移动包版本")
+    @PostMapping("/version/move")
+    fun moveVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        mavenService.moveCopyVersion(request, true)
+        return ResponseBuilder.success()
+    }
+
+    @ApiOperation("复制包版本")
+    @PostMapping("/version/copy")
+    fun copyVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        mavenService.moveCopyVersion(request, false)
+        return ResponseBuilder.success()
+    }
+
+    companion object {
+        private const val PAGE_NUMBER = 1
+        private const val PAGE_SIZE = 20
     }
 }

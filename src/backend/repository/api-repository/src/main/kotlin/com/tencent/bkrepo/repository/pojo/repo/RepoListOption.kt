@@ -27,19 +27,24 @@
 
 package com.tencent.bkrepo.repository.pojo.repo
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("仓库列表选项")
 data class RepoListOption(
-    @ApiModelProperty("仓库名称(前缀匹配，忽略大小写)", required = false)
+    @ApiModelProperty("仓库名称(模糊匹配，忽略大小写)", required = false)
     val name: String? = null,
     @ApiModelProperty("仓库类型", required = false)
     val type: String? = null,
     @ApiModelProperty("仓库类别", required = false)
-    val category: String? = null,
+    val category: List<String>? = null,
     @ApiModelProperty("是否可展示的仓库", required = false)
     val display: Boolean? = true,
     @ApiModelProperty("包含的仓库列表，不受display限制", required = false)
     val include: String? = null,
+    @ApiModelProperty("动作权限类型", required = false)
+    val actions: List<PermissionAction>? = null,
+    @ApiModelProperty("动作权限类型", required = false)
+    val includePathAuthRepo: Boolean = true,
 )

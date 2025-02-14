@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Ivy Service
+  cloud:
+    stream:
+      function:
+        definition: artifactEvent
+      bindings:
+        artifactEvent-in-0:
+          group: ivy
+          destination: artifactEvent
+          binder: pulsar
+server:
+  port: __BK_REPO_IVY_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: ivy
+ivy:
+  domain: ${cluster.self.url}/ivy

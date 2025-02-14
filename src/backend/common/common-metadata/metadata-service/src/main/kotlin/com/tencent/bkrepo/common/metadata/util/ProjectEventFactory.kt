@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.common.metadata.util
 
 import com.tencent.bkrepo.common.artifact.event.project.ProjectCreatedEvent
+import com.tencent.bkrepo.common.artifact.event.project.ProjectDeletedEvent
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 
 /**
@@ -19,5 +20,9 @@ object ProjectEventFactory {
                 createPermission = createPermission
             )
         }
+    }
+
+    fun buildDeletedEvent(userId: String, name: String): ProjectDeletedEvent {
+        return ProjectDeletedEvent(projectId = name, userId = userId)
     }
 }

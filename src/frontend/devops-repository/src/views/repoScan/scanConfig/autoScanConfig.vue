@@ -2,7 +2,7 @@
     <bk-form style="max-width: 1080px;" :label-width="120" :model="config" :rules="rules" ref="scanForm">
         <bk-form-item :label="$t('autoScan')">
             <bk-switcher v-model="config.scanOnNewArtifact" size="small" theme="primary"></bk-switcher>
-            <div style="color:var(--fontSubsidiaryColor);">{{ $t('autoScanTip') }}</div>
+            <div style="color:var(--fontSubsidiaryColor);">{{$t('autoScanTip')}}</div>
         </bk-form-item>
         <bk-form-item :label="$t('repoScope')" :required="true" property="repo" error-display-type="normal">
             <repo-table

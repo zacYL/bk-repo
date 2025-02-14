@@ -7,17 +7,27 @@
             <bk-tab-panel render-directive="if" name="license" :label="$t('licenseManagement')">
                 <license-manage></license-manage>
             </bk-tab-panel>
+            <!-- <bk-tab-panel render-directive="if" name="whitelist" label="漏洞白名单">
+                <cve-white-list></cve-white-list>
+            </bk-tab-panel> -->
+            <bk-tab-panel render-directive="if" name="proxywhitelist" :label="$t('proxyWhiteList')">
+                <proxy-white-list></proxy-white-list>
+            </bk-tab-panel>
         </bk-tab>
     </div>
 </template>
 <script>
     import licenseManage from './licenseManage'
     import scannerManage from './scannerManage'
+    // import cveWhiteList from './cveWhiteList'
+    import proxyWhiteList from './proxyWhiteList'
     export default {
         name: 'securityConfig',
         components: {
             licenseManage,
-            scannerManage
+            scannerManage,
+            // cveWhiteList,
+            proxyWhiteList
         },
         data () {
             return { tabName: 'vuldb' }

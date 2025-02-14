@@ -31,13 +31,14 @@
 
 package com.tencent.bkrepo.common.artifact.repository.local
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.AbstractArtifactRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -56,38 +57,44 @@ abstract class LocalRepository : AbstractArtifactRepository() {
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
             val node = ArtifactContextHolder.getNodeDetail(artifactInfo)
             node?.let { downloadIntercept(context, it) }
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
 
     /**
-     * 拦截node下载
+     * 拦截node上传
      */
-    fun downloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {
+    fun uploadIntercept(context: ArtifactUploadContext, nodeDetail: NodeDetail) {
         with(context) {
             getInterceptors().forEach { it.intercept(projectId, nodeDetail) }
-
             // 拦截package下载
-            val packageKey = nodeDetail.packageName()?.let { PackageKeys.ofName(repo.type, it) }
+            val packageKey = nodeDetail.packageName()?.let { PackageKeys.ofName(repositoryDetail.type, it) }
             val version = nodeDetail.packageVersion()
             if (packageKey != null && version != null) {
                 packageService.findVersionByName(projectId, repoName, packageKey, version)?.let { packageVersion ->
-                    downloadIntercept(context, packageVersion)
+                    uploadIntercept(context, packageVersion)
                 }
             }
         }
     }
 
     /**
-     * 拦截package下载
+     * 拦截package上传
      * TODO NODE中统一存储packageKey与version元数据后可设置为private方法
      */
-    fun downloadIntercept(context: ArtifactDownloadContext, packageVersion: PackageVersion) {
+    fun uploadIntercept(context: ArtifactUploadContext, packageVersion: PackageVersion) {
         context.getPackageInterceptors().forEach { it.intercept(context.projectId, packageVersion) }
+    }
+
+
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
     }
 
     /**
@@ -105,4 +112,21 @@ abstract class LocalRepository : AbstractArtifactRepository() {
             operator = context.userId
         )
     }
+
+    /**
+     * 包版本文件路径集合
+     */
+    @Suppress("LongParameterList")
+    open fun getArtifactFullPaths(
+        projectId: String,
+        repoName: String,
+        key: String,
+        version: String,
+        manifestPath: String?,
+        artifactPath: String?
+    ): List<String> {
+        return artifactPath?.let { listOf(it) } ?: emptyList()
+    }
+
+    open fun updateIndex(projectId: String, repoName: String, key: String, version: String) = Unit
 }

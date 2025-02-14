@@ -27,15 +27,20 @@
 
 package com.tencent.bkrepo.npm.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.StringPool
+import com.github.zafarkhaja.semver.Version
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.UrlFormatter
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryId
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -47,18 +52,24 @@ import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
 import com.tencent.bkrepo.common.artifact.repository.migration.PackageMigrateDetail
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.query.enums.OperationType
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.ATTRIBUTE_OCTET_STREAM_SHA1
+import com.tencent.bkrepo.npm.constants.CREATED
 import com.tencent.bkrepo.npm.constants.HAR_FILE_EXT
 import com.tencent.bkrepo.npm.constants.HSP_FILE_EXT
+import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.METADATA
+import com.tencent.bkrepo.npm.constants.MODIFIED
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
-import com.tencent.bkrepo.npm.constants.NPM_PACKAGE_TGZ_FILE
 import com.tencent.bkrepo.npm.constants.OHPM_CHANGELOG_FILE_NAME
 import com.tencent.bkrepo.npm.constants.OHPM_README_FILE_NAME
 import com.tencent.bkrepo.npm.constants.RESOLVED_HSP
 import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
 import com.tencent.bkrepo.npm.constants.SIZE
+import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH
 import com.tencent.bkrepo.npm.handler.NpmDependentHandler
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
@@ -67,12 +78,15 @@ import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.enums.NpmOperationAction
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
 import com.tencent.bkrepo.npm.properties.NpmProperties
+import com.tencent.bkrepo.npm.service.NpmOperationService
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.npm.utils.OkHttpUtil
 import com.tencent.bkrepo.npm.utils.TimeUtil
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import okhttp3.Response
@@ -84,20 +98,23 @@ import java.io.InputStream
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Collections
+import java.util.*
 import kotlin.system.measureTimeMillis
 
 @Component
 class NpmLocalRepository(
     private val npmProperties: NpmProperties,
     private val okHttpUtil: OkHttpUtil,
-    private val npmDependentHandler: NpmDependentHandler
+    private val npmDependentHandler: NpmDependentHandler,
+    private val npmOperationService: NpmOperationService
 ) : LocalRepository() {
 
     override fun onUploadBefore(context: ArtifactUploadContext) {
         super.onUploadBefore(context)
         // 不为空说明上传的是tgz文件
         context.getStringAttribute("attachments.content_type")?.let {
+            // TODO: 需要抽象处理
+            packageVersion(context, null)?.let { uploadIntercept(context, it) }
             // 计算sha1并校验
             val calculatedSha1 = context.getArtifactFile().getInputStream().sha1()
             val uploadSha1 = context.getStringAttribute(ATTRIBUTE_OCTET_STREAM_SHA1)
@@ -106,14 +123,12 @@ class NpmLocalRepository(
             }
         }
     }
-
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         super.onDownloadBefore(context)
-        packageVersion(context)?.let { downloadIntercept(context, it) }
+        downloadIntercept(context, null)
     }
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
-        val name = context.getStringAttribute("name") ?: StringPool.EMPTY
         return NodeCreateRequest(
             projectId = context.projectId,
             repoName = context.repoName,
@@ -123,19 +138,22 @@ class NpmLocalRepository(
             sha256 = context.getArtifactSha256(),
             md5 = context.getArtifactMd5(),
             operator = context.userId,
-            overwrite = name != NPM_PACKAGE_TGZ_FILE
+            overwrite = true
         )
     }
 
-    override fun query(context: ArtifactQueryContext): InputStream? {
-        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)
+    override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
+        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!
+        if (ArtifactContextHolder.getUrlPath(this::javaClass.name)?.startsWith("/ext/") != true) {
+            context.getFullPathInterceptors().forEach { it.intercept(context.projectId, fullPath) }
+        }
         return this.onQuery(context) ?: run {
             logger.warn("Artifact [$fullPath] not found in repo [${context.projectId}/${context.repoName}]")
             null
         }
     }
 
-    private fun onQuery(context: ArtifactQueryContext): InputStream? {
+    private fun onQuery(context: ArtifactQueryContext): ArtifactInputStream? {
         val repositoryDetail = context.repositoryDetail
         val projectId = repositoryDetail.projectId
         val repoName = repositoryDetail.name
@@ -160,7 +178,7 @@ class NpmLocalRepository(
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
             with(packageInfo) {
                 val packageKey = NpmUtils.packageKeyByRepoType(first, repositoryDetail.type)
-                return PackageDownloadRecord(projectId, repoName, packageKey, second)
+                return PackageDownloadRecord(projectId, repoName, packageKey, second, userId)
             }
         }
     }
@@ -209,24 +227,20 @@ class NpmLocalRepository(
     }
 
     override fun remove(context: ArtifactRemoveContext) {
-        val repositoryDetail = context.repositoryDetail
-        val projectId = repositoryDetail.projectId
-        val repoName = repositoryDetail.name
-        val fullPath = context.getAttribute<List<*>>(NPM_FILE_FULL_PATH)
-        val userId = context.userId
-        fullPath?.forEach {
-            nodeService.deleteNode(NodeDeleteRequest(projectId, repoName, it.toString(), userId))
-            logger.info("delete artifact $it success in repo [${context.artifactInfo.getRepoIdentify()}].")
+        with(context) {
+            val npmArtifactInfo = artifactInfo as NpmArtifactInfo
+            val tarballPath = getStringAttribute(TARBALL_FULL_PATH)
+            val fullPaths = NpmUtils.getContentPathsToDelete(
+                npmArtifactInfo, tarballPath, context.repositoryDetail.type
+            )
+            nodeService.deleteNodes(NodesDeleteRequest(projectId, repoName, fullPaths, userId))
+            logger.info("delete artifact $fullPaths success in repo [$projectId/$repoName].")
         }
     }
 
-    private fun packageVersion(context: ArtifactDownloadContext): PackageVersion? {
-        with(context) {
-            val (packageName, packageVersion) =
-                NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
-            val packageKey = NpmUtils.packageKeyByRepoType(packageName, context.repositoryDetail.type)
-            return packageService.findVersionByName(projectId, repoName, packageKey, packageVersion)
-        }
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        return npmOperationService.packageVersion(context)
     }
 
     /**
@@ -252,6 +266,111 @@ class NpmLocalRepository(
                 "npm package migrate result"
             )
         }
+    }
+
+    override fun getArtifactFullPaths(
+        projectId: String,
+        repoName: String,
+        key: String,
+        version: String,
+        manifestPath: String?,
+        artifactPath: String?
+    ): List<String> {
+        require(artifactPath != null)
+        val repoType = ArtifactContextHolder.getRepoDetail(RepositoryId(projectId, repoName)).type
+        val name = NpmUtils.resolveNameByRepoType(key, repoType)
+        val versionMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(name, version)
+        if (nodeService.checkExist(ArtifactInfo(projectId, repoName, versionMetadataFullPath)) != true) {
+            throw NodeNotFoundException("$projectId/$repoName/$versionMetadataFullPath")
+        }
+        return listOf(artifactPath, versionMetadataFullPath)
+    }
+
+    /**
+     * TODO: 需要处理并发写入
+     */
+    override fun updateIndex(projectId: String, repoName: String, key: String, version: String) {
+        logger.info("update index for $projectId/$repoName/$key/$version")
+        val repo = ArtifactContextHolder.getRepoDetail(RepositoryId(projectId, repoName))
+        val name = NpmUtils.resolveNameByRepoType(key, repo.type)
+        val pkgMetadataFullPath = NpmUtils.getPackageMetadataPath(name)
+        val credential = repo.storageCredentials
+
+        // 获取版本索引
+        val verMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(name, version)
+        val verMetadataNode = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, verMetadataFullPath))
+            ?: throw NodeNotFoundException("$projectId/$repoName/$verMetadataFullPath")
+        val versionMetadata = storageManager.loadArtifactInputStream(verMetadataNode, credential).use {
+            JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
+        }
+        // 获取目标仓库已有的package索引
+        val packageExist = packageService.findPackageByKey(projectId, repoName, key) != null
+        val originalMetadata = if (packageExist) {
+            val originMetadataNode = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, pkgMetadataFullPath))
+                ?: throw NodeNotFoundException("$projectId/$repoName/$pkgMetadataFullPath")
+            storageManager.loadArtifactInputStream(originMetadataNode, credential).use {
+                JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
+            }
+        } else null
+        // 构建新的package索引
+        val artifactFile = buildNewMetadataFile(projectId, repoName, versionMetadata, originalMetadata)
+        val nodeCreateRequest = NodeCreateRequest(
+            projectId = projectId,
+            repoName = repoName,
+            fullPath = pkgMetadataFullPath,
+            folder = false,
+            size = artifactFile.getSize(),
+            sha256 = artifactFile.getFileSha256(),
+            md5 = artifactFile.getFileMd5(),
+            overwrite = true,
+            operator = SecurityUtils.getPrincipal()
+        )
+        storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, credential)
+        logger.info("success to update index for [$projectId/$repoName/$name/$version]")
+        super.updateIndex(projectId, repoName, key, version)
+    }
+
+    private fun buildNewMetadataFile(
+        projectId: String,
+        repoName: String,
+        versionMetadata: NpmVersionMetadata,
+        originalMetadata: NpmPackageMetaData?
+    ): ArtifactFile {
+        val name = versionMetadata.name!!
+        val version = versionMetadata.version!!
+        val current = TimeUtil.getGMTTime()
+        val packageMetadata = if (originalMetadata == null) {
+            NpmPackageMetaData().apply {
+                this.id = name
+                this.name = name
+                this.distTags = NpmPackageMetaData.DistTags().apply { set(LATEST, version) }
+                this.versions.map = mutableMapOf(version to versionMetadata)
+                this.time = NpmPackageMetaData.Time().apply {
+                    add(CREATED, current)
+                    add(MODIFIED, current)
+                    add(version, current)
+                }
+            }
+        } else {
+            originalMetadata.versions.map[version] = versionMetadata
+            originalMetadata.time.apply {
+                add(MODIFIED, current)
+                add(version, current)
+            }
+            val latest = originalMetadata.distTags.getMap()[LATEST]
+            if (latest == null || latest != version && Version.valueOf(latest) < Version.valueOf(version)) {
+                originalMetadata.distTags.set(LATEST, version)
+            }
+            originalMetadata
+        }
+        val oldTarball = versionMetadata.dist?.tarball!!
+        packageMetadata.versions.map[version]!!.dist?.tarball =
+            NpmUtils.buildPackageTgzTarball(
+                oldTarball, npmProperties.domain, npmProperties.tarball.prefix, npmProperties.returnRepoId, name,
+                NpmArtifactInfo(projectId, repoName, name, version)
+            )
+        val credential = ArtifactContextHolder.getRepoDetail(RepositoryId(projectId, repoName)).storageCredentials
+        return packageMetadata.toJsonString().byteInputStream().let { ArtifactFileFactory.build(it, credential) }
     }
 
     private fun doMigrate(context: ArtifactMigrateContext, packageName: String): PackageMigrateDetail {
@@ -559,7 +678,7 @@ class NpmLocalRepository(
         with(context) {
             var size = 0L
             var response: Response? = null
-            val fullPath = NpmUtils.getTgzPath(name, version, true, ext)
+            val fullPath = NpmUtils.getTarballFullPath(name, version, ext)
             // hit cache continue
             if (nodeService.checkExist(ArtifactInfo(projectId, repoName, fullPath))) {
                 logger.info(

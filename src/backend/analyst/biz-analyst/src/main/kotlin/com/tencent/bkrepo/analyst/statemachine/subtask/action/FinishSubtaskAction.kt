@@ -113,9 +113,13 @@ class FinishSubtaskAction(
             val scanner = scannerService.get(subtask.scanner)
             // 对扫描结果去重
             scanExecutorResult?.normalizeResult()
+            val scannerConverter = scanExecutorResult?.let { scannerConverters[ScannerConverter.name(scanner.type)]!! }
             val overview = scanExecutorResult?.let { overviewOf(subtask, it) } ?: emptyMap()
+            val vulRuleMatchOverview = scannerConverter?.convertVulRuleMatchOverview(scanExecutorResult!!).orEmpty()
+            logger.info("vulRuleMatchOverview of ${subtask.id}: $vulRuleMatchOverview")
+
             // 更新扫描任务结果
-            val updateScanTaskResultSuccess = updateScanTaskResult(subtask, targetState, overview)
+            val updateScanTaskResultSuccess = updateScanTaskResult(subtask, targetState, overview, vulRuleMatchOverview)
 
             if (updateScanTaskResultSuccess && targetState == SubScanTaskStatus.SUCCESS.name) {
                 // 扫描成功时更新扫描报告结果
@@ -140,7 +144,7 @@ class FinishSubtaskAction(
                 subtask.parentScanTaskId,
                 scanner,
                 overview,
-                subtask.startDateTime,
+                subtask.startDateTime!!,
                 now
             )
 
@@ -161,6 +165,7 @@ class FinishSubtaskAction(
         subTask: TSubScanTask,
         resultSubTaskStatus: String,
         overview: Map<String, Any?>,
+        vulRuleMatchOverview: Map<String, Any?>,
         modifiedBy: String? = null
     ): Boolean {
         val subTaskId = subTask.id!!
@@ -178,7 +183,10 @@ class FinishSubtaskAction(
         val qualityPass = if (subTask.scanQuality.isNullOrEmpty() || planId == null) {
             null
         } else {
-            overview.isEmpty() || scanQualityService.checkScanQualityRedLine(planId, overview as Map<String, Number>)
+            logger.info("check scan quality for $subTaskId")
+            overview.isEmpty() || scanQualityService.checkScanQualityRedLine(
+                planId, overview as Map<String, Number>, vulRuleMatchOverview as Map<String, Number>
+            )
         }
         logger.info("subTask[$subTaskId], qualityPass[$qualityPass]")
         archiveSubScanTaskDao.save(

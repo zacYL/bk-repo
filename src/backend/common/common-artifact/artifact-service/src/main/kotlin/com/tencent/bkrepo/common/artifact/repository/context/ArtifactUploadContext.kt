@@ -32,12 +32,18 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactFileMap
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.DownloadInterceptorType
 import com.tencent.bkrepo.common.artifact.constant.OCTET_STREAM
 import com.tencent.bkrepo.common.artifact.hash.HashAlgorithm
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.file.stream.StreamArtifactFile
+import com.tencent.bkrepo.common.metadata.interceptor.DownloadInterceptor
+import com.tencent.bkrepo.common.metadata.interceptor.DownloadInterceptorFactory
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import org.slf4j.LoggerFactory
 
 /**
  * 构件上传context，依赖源可根据需求继承
@@ -48,6 +54,7 @@ open class ArtifactUploadContext : ArtifactContext {
     private var artifactFile: ArtifactFile? = null
     val pipelineMetadata: MutableMap<String, String> = mutableMapOf()
 
+    // 修改此构造函数参数时，需要同步修改copy方法对应参数
     constructor(
         repo: RepositoryDetail,
         artifactFile: ArtifactFile,
@@ -69,6 +76,7 @@ open class ArtifactUploadContext : ArtifactContext {
         this.artifactFileMap = artifactFileMap
     }
 
+    // 修改此构造函数参数时，需要同步修改copy方法对应参数
     constructor(
         repo: RepositoryDetail,
         artifactFileMap: ArtifactFileMap,
@@ -79,9 +87,10 @@ open class ArtifactUploadContext : ArtifactContext {
 
     override fun copy(
         repositoryDetail: RepositoryDetail,
+        artifactInfoAttrMap: Map<String, Any?>?,
         instantiation: ((ArtifactInfo) -> ArtifactContext)?
     ): ArtifactContext {
-        return super.copy(repositoryDetail) { artifactInfo ->
+        return super.copy(repositoryDetail, artifactInfoAttrMap) { artifactInfo ->
             if (artifactFile != null) {
                 javaClass.getConstructor(
                     RepositoryDetail::class.java,
@@ -206,5 +215,26 @@ open class ArtifactUploadContext : ArtifactContext {
         if (uploadDigest != calculatedDigest) {
             throw ErrorCodeException(ArtifactMessageCode.DIGEST_CHECK_FAILED, "digest")
         }
+    }
+
+    // TODO: 需要与下载拦截器分离，抽象逻辑
+    @Suppress("UNCHECKED_CAST")
+    fun getInterceptors(): List<DownloadInterceptor<*, NodeDetail>> {
+        val interceptorList = mutableListOf<DownloadInterceptor<*, NodeDetail>>()
+        try {
+            listOf(DownloadInterceptorFactory.buildNodeInterceptor(DownloadInterceptorType.NODE_LOCK)!!)
+            logger.debug("get repo[${repositoryDetail.projectId}/${repositoryDetail.name}] upload interceptor: $interceptorList")
+        } catch (e: Exception) {
+            logger.warn("fail to get repo[${repositoryDetail.projectId}/${repositoryDetail.name}] upload interceptor: $e")
+        }
+        return interceptorList
+    }
+
+    fun getPackageInterceptors(): List<DownloadInterceptor<*, PackageVersion>> {
+        return listOf(DownloadInterceptorFactory.buildPackageInterceptor(DownloadInterceptorType.PACKAGE_LOCK)!!)
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(ArtifactUploadContext::class.java)
     }
 }

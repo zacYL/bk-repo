@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Query.query
 
 
-object UserQueryHelper {
+
     fun buildUserPasswordCheck(userId: String, pwd: String, hashPwd: String, sm3HashPwd: String): Query {
         val criteria = Criteria()
         criteria.orOperator(

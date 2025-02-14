@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__ext_version_delete_{projectId}_{repoName}_repo-oci",
+  "name" : "删除镜像的指定版本",
+  "desc" : "删除镜像的指定版本",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-oci/ext/version/delete/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repooci",
+  "targetPath" : "/ext/version/delete/{projectId}/{repoName}",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除镜像的指定版本_5478e7f7.md"
+}

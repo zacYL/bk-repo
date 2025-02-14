@@ -1,12 +1,15 @@
 package com.tencent.bkrepo.common.metadata.util
 
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.util.EscapeUtils
+import com.tencent.bkrepo.common.api.util.TimeUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.metadata.model.TOperateLog
+import com.tencent.bkrepo.common.metadata.model.TOperateLog.Companion.DESCRIPTION_KEY_FAIL_REASON
 import com.tencent.bkrepo.common.metadata.pojo.log.OpLogListOption
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLog
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLogResponse
@@ -18,10 +21,7 @@ import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.util.AntPathMatcher
-import java.text.SimpleDateFormat
 import java.time.LocalDateTime
-import java.time.ZoneId
-import java.util.TimeZone
 
 object OperateLogServiceHelper {
 
@@ -39,6 +39,18 @@ object OperateLogServiceHelper {
     val adminEvent = listOf(EventType.ADMIN_ADD.name, EventType.ADMIN_DELETE.name)
     val projectEvent = listOf(EventType.PROJECT_CREATED.name)
     val metadataEvent = listOf(EventType.METADATA_SAVED.name, EventType.METADATA_DELETED.name)
+    val vulRuleEvent = listOf(
+        EventType.VUL_RULE_ADD.name, EventType.VUL_RULE_ADD_BATCH.name,
+        EventType.VUL_RULE_REMOVE.name, EventType.VUL_RULE_REMOVE_BATCH.name
+    )
+    val eventTypes = ArrayList<String>().apply {
+        addAll(repositoryEvent)
+        addAll(packageEvent)
+        addAll(projectEvent)
+        addAll(metadataEvent)
+        addAll(vulRuleEvent)
+        add(EventType.REPOSITORY_CLEAN.name)
+    }
     val antPathMatcher = AntPathMatcher()
 
     fun buildLog(
@@ -77,37 +89,35 @@ object OperateLogServiceHelper {
 
     fun buildOperateLogPageQuery(
         type: String?,
+        eventType: List<String>?,
         projectId: String?,
         repoName: String?,
         operator: String?,
         startTime: String?,
         endTime: String?
     ): Query {
-        val criteria = if (type != null) {
+        val criteria = if (!eventType.isNullOrEmpty()) {
+            Criteria.where(TOperateLog::type.name).`in`(eventType)
+        } else if (type != null) {
             Criteria.where(TOperateLog::type.name).`in`(getEventList(type))
         } else {
             Criteria.where(TOperateLog::type.name).nin(nodeEvent)
         }
-
         projectId?.let { criteria.and(TOperateLog::projectId.name).`is`(projectId) }
-
         repoName?.let { criteria.and(TOperateLog::repoName.name).`is`(repoName) }
-
         operator?.let { criteria.and(TOperateLog::userId.name).`is`(operator) }
-        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-        sdf.timeZone = TimeZone.getTimeZone("GMT")
-        val localStart = if (startTime != null && startTime.isNotBlank()) {
-            val start = sdf.parse(startTime)
-            start.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+
+        val localStart = if (!startTime.isNullOrBlank()) {
+            TimeUtils.toSystemZoneTime(startTime)
         } else {
-            LocalDateTime.now()
+            TimeUtils.toSystemZoneTime(LocalDateTime.now().minusMonths(1))
         }
-        val localEnd = if (endTime != null && endTime.isNotBlank()) {
-            val end = sdf.parse(endTime)
-            end.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+        val localEnd = if (!endTime.isNullOrBlank()) {
+            TimeUtils.toSystemZoneTime(endTime)
         } else {
-            LocalDateTime.now().minusMonths(3L)
+            TimeUtils.toSystemZoneTime(LocalDateTime.now())
         }
+        require(localStart.isBefore(localEnd)) { throw IllegalArgumentException("startTime must before endTime") }
         criteria.and(TOperateLog::createdDate.name).gte(localStart).lte(localEnd)
         return Query(criteria).with(Sort.by(TOperateLog::createdDate.name).descending())
     }
@@ -117,7 +127,10 @@ object OperateLogServiceHelper {
             "PROJECT" -> repositoryEvent
             "PACKAGE" -> packageEvent
             "ADMIN" -> adminEvent
-            else -> listOf()
+            "REPO" -> repositoryEvent
+            "METADATA" -> metadataEvent
+            "VUL_RULE" -> vulRuleEvent
+            else -> throw ParameterInvalidException("resource type $resourceType not support")
         }
     }
 
@@ -144,7 +157,8 @@ object OperateLogServiceHelper {
             repoName = repoName,
             description = description,
             userId = userId,
-            clientAddress = clientAddress
+            clientAddress = clientAddress,
+            result = result
         )
     }
 
@@ -194,8 +208,9 @@ object OperateLogServiceHelper {
             operate = eventName(tOperateLog.type),
             userId = tOperateLog.userId,
             clientAddress = tOperateLog.clientAddress,
-            result = true,
-            content = content
+            result = tOperateLog.result,
+            content = content,
+            failReason = if (tOperateLog.result) null else tOperateLog.description[DESCRIPTION_KEY_FAIL_REASON] as? String
         )
     }
 

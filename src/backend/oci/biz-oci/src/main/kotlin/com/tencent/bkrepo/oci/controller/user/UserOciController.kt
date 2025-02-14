@@ -35,6 +35,7 @@ import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
+import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
 import com.tencent.bkrepo.common.artifact.audit.REPO_EDIT_ACTION
 import com.tencent.bkrepo.common.artifact.audit.REPO_RESOURCE
@@ -58,18 +59,26 @@ import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.response.OciImageResult
 import com.tencent.bkrepo.oci.pojo.response.OciTagResult
-import com.tencent.bkrepo.oci.pojo.user.PackageVersionInfo
+import com.tencent.bkrepo.oci.pojo.user.OciPackageVersionInfo
+import com.tencent.bkrepo.oci.service.OciBlobService
 import com.tencent.bkrepo.oci.service.OciOperationService
+import com.tencent.bkrepo.oci.service.impl.OciExtService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestAttribute
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.HandlerMapping
 import javax.servlet.http.HttpServletRequest
 
@@ -78,7 +87,9 @@ import javax.servlet.http.HttpServletRequest
 @RestController
 @RequestMapping("/ext")
 class UserOciController(
-    private val operationService: OciOperationService
+    private val ociBlobService: OciBlobService,
+    private val operationService: OciOperationService,
+    private val ociExtService: OciExtService
 ) {
 
     @ApiOperation("查询包的版本详情")
@@ -92,9 +103,9 @@ class UserOciController(
         @RequestParam packageKey: String,
         @ApiParam(value = "包版本", required = true)
         @RequestParam version: String
-    ): Response<PackageVersionInfo> {
+    ): Response<OciPackageVersionInfo> {
         return ResponseBuilder.success(
-            operationService.detailVersion(userId, artifactInfo, packageKey, version)
+            ociExtService.getVersionDetail(userId, artifactInfo)
         )
     }
 
@@ -124,7 +135,7 @@ class UserOciController(
         @ApiParam(value = "包唯一key", required = true)
         @RequestParam packageKey: String
     ): Response<Void> {
-        operationService.deletePackage(userId, artifactInfo)
+        ociExtService.deletePackage(userId, artifactInfo)
         return ResponseBuilder.success()
     }
 
@@ -158,7 +169,7 @@ class UserOciController(
         @ApiParam(value = "包版本", required = true)
         @RequestParam version: String
     ): Response<Void> {
-        operationService.deleteVersion(userId, artifactInfo)
+        ociExtService.deleteVersion(userId, artifactInfo)
         return ResponseBuilder.success()
     }
 
@@ -243,5 +254,46 @@ class UserOciController(
                 pageNumber = pageNumber
             )
         )
+    }
+
+    @PutMapping("/upload/{projectId}/{repoName}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun uploadImage(
+
+        @PathVariable
+        projectId: String,
+
+        @PathVariable
+        repoName: String,
+
+        @RequestParam
+        packageName: String,
+
+        @RequestParam
+        version: String,
+
+        @RequestPart(value = "file")
+        file: MultipartFile
+
+    ): Response<Boolean> {
+        ociBlobService.uploadImage(OciArtifactInfo(projectId, repoName, packageName, version), file)
+        return ResponseBuilder.success()
+    }
+
+    @ApiOperation("移动包版本")
+    @PostMapping("/version/move")
+    fun moveVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        ociExtService.moveCopyVersion(request, true)
+        return ResponseBuilder.success()
+    }
+
+    @ApiOperation("复制包版本")
+    @PostMapping("/version/copy")
+    fun copyVersion(
+        @RequestBody request: PackageVersionMoveCopyRequest,
+    ): Response<Void> {
+        ociExtService.moveCopyVersion(request, false)
+        return ResponseBuilder.success()
     }
 }

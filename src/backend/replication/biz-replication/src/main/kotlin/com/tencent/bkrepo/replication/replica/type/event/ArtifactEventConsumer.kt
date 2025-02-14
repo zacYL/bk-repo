@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -41,7 +41,8 @@ import org.springframework.stereotype.Component
 @Component
 class ArtifactEventConsumer(
     private val replicaTaskService: ReplicaTaskService,
-    private val eventBasedReplicaJobExecutor: EventBasedReplicaJobExecutor
+    private val eventBasedReplicaJobExecutor: EventBasedReplicaJobExecutor,
+    private val repositoryService: RepositoryService
 ) : EventConsumer() {
 
     private val executors = EventConsumerThreadPoolExecutor.instance
@@ -51,17 +52,43 @@ class ArtifactEventConsumer(
     override fun getAcceptTypes(): Set<EventType> {
         return setOf(
             EventType.NODE_CREATED,
+            EventType.NODE_MOVED,
+            EventType.NODE_COPIED,
             EventType.VERSION_CREATED,
-            EventType.VERSION_UPDATED
+            EventType.VERSION_UPDATED,
+            EventType.PROJECT_DELETED,
+            EventType.NODE_DELETED
         )
     }
 
     override fun action(event: ArtifactEvent) {
-        executors.execute( Runnable {
-            replicaTaskService.listRealTimeTasks(event.projectId, event.repoName).forEach {
-                eventBasedReplicaJobExecutor.execute(it, event)
+        // 删除项目下所有分发计划及记录
+        if (event.type == EventType.PROJECT_DELETED){
+            replicaTaskService.deleteByProjectId(event.projectId)
+        }
+
+        var projectId = event.projectId
+        var repoName = event.repoName
+        if (event.type == EventType.NODE_MOVED || event.type == EventType.NODE_COPIED) {
+            projectId = event.data["dstProjectId"].toString()
+            repoName = event.data["dstRepoName"].toString()
+            repositoryService.getRepoInfo(projectId, repoName)?.let {
+                require(it.type == RepositoryType.GENERIC) { return }
+            }
+        }
+
+        executors.execute {
+            replicaTaskService.listRealTimeTasks(projectId, repoName).forEach {
+                if (event.type == EventType.NODE_DELETED) {
+                    if (
+                        !it.task.setting.syncDeletion ||
+                        it.objects.none { obj -> obj.repoType == RepositoryType.GENERIC }
+                    ) return@forEach
+                    eventBasedReplicaJobExecutor.execute(
+                        it.copy(objects = it.objects.filter { obj -> obj.repoType == RepositoryType.GENERIC }), event
+                    )
+                } else eventBasedReplicaJobExecutor.execute(it, event)
             }
         }.trace()
-        )
     }
 }

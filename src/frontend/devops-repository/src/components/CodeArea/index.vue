@@ -41,12 +41,12 @@
                 copyToClipboard(this.codeList.join('\n')).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('copy') + this.$t('success')
+                        message: this.$t('copy') + this.$t('space') + this.$t('success')
                     })
                 }).catch(() => {
                     this.$bkMessage({
                         theme: 'error',
-                        message: this.$t('copy') + this.$t('fail')
+                        message: this.$t('copy') + this.$t('space') + this.$t('fail')
                     })
                 })
             }
@@ -81,8 +81,8 @@
     .code-copy {
         position: absolute;
         visibility: hidden;
-        top: 0;
-        right: 0;
+        top: 10px;
+        right: 10px;
     }
     &:hover {
         .code-copy {

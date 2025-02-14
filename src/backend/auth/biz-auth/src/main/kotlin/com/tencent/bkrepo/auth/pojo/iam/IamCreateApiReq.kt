@@ -31,10 +31,12 @@
 
 package com.tencent.bkrepo.auth.pojo.iam
 
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+
 @Suppress("ALL")
 data class IamCreateApiReq(
     val system: String,
-    val type: String,
+    val type: ResourceType,
     val id: String,
     val name: String,
     val creator: String,

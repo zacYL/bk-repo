@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.metadata.model
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.NetworkProxyConfiguration
 import java.time.LocalDateTime
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes
@@ -87,5 +88,18 @@ data class TProxyChannel(
     var createdBy: String,
     var createdDate: LocalDateTime,
     var lastModifiedBy: String,
-    var lastModifiedDate: LocalDateTime
+    var lastModifiedDate: LocalDateTime,
+
+    /**
+     * 网络代理配置
+     */
+    var networkProxy: NetworkProxyConfiguration? = null,
+    /**
+     * 远程请求连接超时时间，单位ms
+     */
+    var connectTimeout: Long = 10 * 1000L,
+    /**
+     * 远程请求读超时时间，单位ms
+     */
+    var readTimeout: Long = 10 * 1000L
 )

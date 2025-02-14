@@ -1,0 +1,15 @@
+{
+  "code" : "GET__ext_tag_{projectId}_{repoName}_{name}_repo-oci",
+  "name" : "分页查询指定镜像名称的版本",
+  "desc" : "分页查询指定镜像名称的版本",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-oci/ext/tag/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repooci",
+  "targetPath" : "/ext/tag/{projectId}/{repoName}/**",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "分页查询指定镜像名称的版本_5ae77f24.md"
+}

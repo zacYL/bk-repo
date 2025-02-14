@@ -1,0 +1,15 @@
+{
+  "code" : "GET__ext_search_gavc_{projectId}_{pageNumber}_{pageSize}_repo-maven",
+  "name" : "maven高级搜索",
+  "desc" : "maven高级搜索",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-maven/ext/search/gavc/{projectId}/{pageNumber}/{pageSize}",
+  "headers" : [ ],
+  "targetService" : "repomaven",
+  "targetPath" : "/ext/search/gavc/{projectId}/{pageNumber}/{pageSize}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "maven高级搜索_649330b3.md"
+}

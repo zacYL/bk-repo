@@ -32,7 +32,6 @@
 package com.tencent.bkrepo.common.metadata.service.packages.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
@@ -60,12 +59,10 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation.project
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
-import org.springframework.data.mongodb.core.query.and
-import org.springframework.data.mongodb.core.query.isEqualTo
-import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -82,7 +79,7 @@ class PackageDownloadsServiceImpl(
             checkPackageVersion(tPackage.id.orEmpty(), packageVersion)
 
             // update package downloads
-            val downloadsCriteria = downloadsCriteria(
+            val downloadsCriteria = PackageQueryHelper.recordCriteria(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageKey,
@@ -91,12 +88,16 @@ class PackageDownloadsServiceImpl(
             )
             val downloadsQuery = Query(downloadsCriteria)
             val downloadsUpdate = Update().inc(TPackageDownloads::count.name, 1)
+                .addToSet(TPackageDownloads::users.name, userId)
                 .setOnInsert(TPackageDownloads::name.name, tPackage.name)
+                .setOnInsert(TPackageDownloads::date.name, LocalDate.now().toString())
             packageDownloadsDao.upsert(downloadsQuery, downloadsUpdate)
+            packageDownloadsDao.find(downloadsQuery)
 
             // update package version
             val versionQuery = PackageQueryHelper.versionQuery(tPackage.id.orEmpty(), name = packageVersion)
             val versionUpdate = Update().inc(TPackageVersion::downloads.name, 1)
+            versionUpdate.set(TPackageVersion::recentlyUseDate.name, LocalDateTime.now())
             packageVersionDao.updateFirst(versionQuery, versionUpdate)
 
             // update package
@@ -112,7 +113,7 @@ class PackageDownloadsServiceImpl(
 
     override fun migrate(request: DownloadsMigrationRequest) {
         with(request) {
-            val criteria = downloadsCriteria(
+            val criteria = PackageQueryHelper.recordCriteria(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageKey,
@@ -147,7 +148,7 @@ class PackageDownloadsServiceImpl(
 
             val normalizedFromDate = if (fromDate?.isAfter(earliestDate) == true) fromDate!! else today
             val normalizedToDate = if (toDate?.isBefore(today) == true) toDate!! else today
-            val downloadsCriteria = downloadsCriteria(
+            val downloadsCriteria = PackageQueryHelper.recordCriteria(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageKey,
@@ -170,7 +171,7 @@ class PackageDownloadsServiceImpl(
 
             // today
             val today = LocalDate.now()
-            val todayCriteria = downloadsCriteria(
+            val todayCriteria = PackageQueryHelper.recordCriteria(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageKey,
@@ -180,7 +181,7 @@ class PackageDownloadsServiceImpl(
             val todayCount = getAggregationCount(todayCriteria)
 
             // this week
-            val thisWeekCriteria = downloadsCriteria(
+            val thisWeekCriteria = PackageQueryHelper.recordCriteria(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageKey,
@@ -191,7 +192,7 @@ class PackageDownloadsServiceImpl(
             val thisWeekCount = getAggregationCount(thisWeekCriteria)
 
             // this month
-            val thisMonthCriteria = downloadsCriteria(
+            val thisMonthCriteria = PackageQueryHelper.recordCriteria(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageKey,
@@ -226,37 +227,6 @@ class PackageDownloadsServiceImpl(
             project(COUNT).andExclude(ID)
         )
         return packageDownloadsDao.aggregate(aggregation, Count::class.java).uniqueMappedResult?.count ?: 0L
-    }
-
-    private fun downloadsCriteria(
-        projectId: String,
-        repoName: String,
-        packageKey: String,
-        packageVersion: String? = null,
-        eqDate: LocalDate? = null,
-        fromDate: LocalDate? = null,
-        toDate: LocalDate? = null
-    ): Criteria {
-        val criteria = where(TPackageDownloads::projectId).isEqualTo(projectId)
-            .and(TPackageDownloads::repoName).isEqualTo(repoName)
-            .and(TPackageDownloads::key).isEqualTo(packageKey)
-            .apply {
-                packageVersion?.let { and(TPackageDownloads::version).isEqualTo(it) }
-                eqDate?.let { and(DATE).isEqualTo(eqDate.toString()) }
-            }
-        if (fromDate != null && toDate != null) {
-            if (fromDate.isAfter(toDate)) {
-                throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "date range")
-            }
-            val fromDateString = fromDate.toString()
-            val toDateString = toDate.toString()
-            if (fromDate.isEqual(toDate)) {
-                criteria.and(DATE).isEqualTo(fromDateString)
-            } else {
-                criteria.and(DATE).gte(fromDateString).lte(toDateString)
-            }
-        }
-        return criteria
     }
 
     private fun buildDateRangeMap(from: LocalDate, to: LocalDate): HashMap<String, Long> {

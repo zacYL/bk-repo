@@ -1,0 +1,462 @@
+{
+  "commonNotifyMessageTemplateJson": [
+    {
+      "id" : "4de8953368b743789a2c45ca4281e115",
+      "templateCode" : "ARTIFACT_SCAN_FINISH_TEMPLATE",
+      "templateName" : "制品扫描任务完成",
+      "notifyTypeScope" : [ "RTX", "EMAIL", "FEISHU", "DINGTALK" ],
+      "priority" : "1",
+      "source" : 0,
+      "module" : "CPack"
+    }, {
+      "id" : "575a06a0ddd346fd88d3f90d38546f62",
+      "templateCode" : "ARTIFACT_REPLICA_FAIL_TEMPLATE",
+      "templateName" : "制品分发任务失败",
+      "notifyTypeScope" : [ "RTX", "EMAIL", "FEISHU", "DINGTALK" ],
+      "priority" : "1",
+      "source" : 0,
+      "module" : "CPack"
+    }, {
+      "id" : "671d2f35682b46d18e7f0c2d5cca751e",
+      "templateCode" : "ARTIFACT_SCAN_STOPPED_TEMPLATE",
+      "templateName" : "制品扫描任务中止",
+      "notifyTypeScope" : [ "RTX", "EMAIL", "FEISHU", "DINGTALK" ],
+      "priority" : "1",
+      "source" : 0,
+      "module" : "CPack"
+    }, {
+      "id" : "bddfb5bf50de4642a76adbb93c744727",
+      "templateCode" : "ARTIFACT_REPLICA_FINISH_TEMPLATE",
+      "templateName" : "制品分发任务成功",
+      "notifyTypeScope" : [ "RTX", "EMAIL", "FEISHU", "DINGTALK" ],
+      "priority" : "1",
+      "source" : 0,
+      "module" : "CPack"
+    }, {
+      "id" : "cb4ae3c9659b45538a8e0f3212b033e7",
+      "templateCode" : "ARTIFACT_REPLICA_START_TEMPLATE",
+      "templateName" : "制品分发任务开始",
+      "notifyTypeScope" : [ "RTX", "EMAIL", "FEISHU", "DINGTALK" ],
+      "priority" : "1",
+      "source" : 0,
+      "module" : "CPack"
+    }
+  ],
+  "rtxNotifyMessageTemplateJson": [
+    {
+      "id" : "882f3d4714334b4689ab68d588ea381c",
+      "commonTemplateId" : "4de8953368b743789a2c45ca4281e115",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品扫描任务已完成。\n\n任务详情：\n方案名称：#{name}\n完成时间：#{completionTime}\n\n扫描报告已生成，请查看详细的扫描结果：\n#{url}\n\n感谢您的使用！",
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "23bae4b5d66b4d0689d3e370fdff80d4",
+      "commonTemplateId" : "671d2f35682b46d18e7f0c2d5cca751e",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品扫描任务已被中止。\n\n任务详情：\n方案名称：#{name}\n中止时间：#{completionTime}\n终止人：#{operator}\n\n查看详情：#{url}\n\n感谢您的使用！",
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "709626167e61444686cafdac775279b8",
+      "commonTemplateId" : "cb4ae3c9659b45538a8e0f3212b033e7",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品分发任务已开始执行。\n\n任务详情：\n任务名称：#{name}\n分发详情：同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}\n开始时间：#{time}\n跳转链接：#{url}\n\n请耐心等待分发完成。\n\n感谢您的使用！",
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "e745920d00604332aaa264b04a8b63e4",
+      "commonTemplateId" : "575a06a0ddd346fd88d3f90d38546f62",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品分发任务执行失败。\n\n任务详情：\n任务名称：#{name}\n分发详情：同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}\n失败时间：#{time}\n跳转链接：#{url}\n",
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "68d8908b281d4f4ebee74d1378a74b72",
+      "commonTemplateId" : "bddfb5bf50de4642a76adbb93c744727",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品分发任务执行成功。\n\n任务详情：\n任务名称：#{name}\n分发详情：同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}\n完成时间：#{time}\n跳转链接：#{url}\n\n感谢您的使用！",
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    },
+    {
+      "id" : "46a3002bbc5b4469be7e184fed5ca9d3",
+      "commonTemplateId" : "4de8953368b743789a2c45ca4281e115",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User,\n\nThe artifact scanning task has been completed.\n\nTask Details:\n\nPlan Name: #{name}\nCompletion Time: #{completionTime}\nThe scan report has been generated. Please check the detailed scan results: #{url}\n\nThank you for using our service!",
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "df13fee58b9442da96f929f816067c5e",
+      "commonTemplateId" : "671d2f35682b46d18e7f0c2d5cca751e",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User,\n\nThe artifact scanning task has been stopped.\n\nTask Details:\n\nPlan Name: #{name}\nCompletion Time: #{completionTime}\nTerminator：#{operator}\n\nView details：#{url}\n\nThank you for using our service!",
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "9f4e5a5d9e0f48acb953d6f89b66016d",
+      "commonTemplateId" : "cb4ae3c9659b45538a8e0f3212b033e7",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User,\n\nThe artifact distribution task has begun execution.\n\nTask Details:\n\nTask Name: #{name}\nDistribution Details: Synchronization Type - #{replicaType}, Target Nodes - #{remoteClusters}, Synchronization Repository - #{localRepo}\nStart Time: #{time}\nRedirect Link: #{url}\nPlease be patient while the distribution completes.\n\nThank you for using our service!",
+      "sender": "DevOps",
+      "module": "CPack",
+      "language": "en"
+    },
+    {
+      "id": "047b076d4e764be5b4ba5cc40f6ab135",
+      "commonTemplateId": "575a06a0ddd346fd88d3f90d38546f62",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User,\n\nThe artifact distribution task failed to be executed.\n\nTask Details:\n\nTask Name: #{name}\nDistribution Details: Synchronization Type - #{replicaType}, Target Nodes - #{remoteClusters}, Synchronization Repository - #{localRepo}\nStart Time: #{time}\nRedirect Link: #{url}",
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "f2dcc455b1884331a966057d917da106",
+      "commonTemplateId" : "bddfb5bf50de4642a76adbb93c744727",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User,\n\nThe artifact distribution task has been completed.\n\nTask Details:\n\nTask Name: #{name}\nDistribution Details: Synchronization Type - #{replicaType}, Target Nodes - #{remoteClusters}, Synchronization Repository - #{localRepo}\nStart Time: #{time}\nRedirect Link: #{url}\n\nThank you for using our service!",
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "en"
+    }
+  ],
+  "emailNotifyMessageTemplateJson": [
+    {
+      "id" : "022612527f7a4bf6af9ca2b926e62be1",
+      "commonTemplateId" : "bddfb5bf50de4642a76adbb93c744727",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "【CPack通知】制品分发任务执行成功",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> 【CPack通知】制品分发任务执行成功 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> 蓝鲸DevOps平台的通知推送 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">尊敬的用户，您好！<br><br>制品分发任务已执行成功。</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">任务名称：</span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">分发详情：</span>同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">完成时间：</span>#{time}<br><br><br> <a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">查看详情</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> 如有任何问题，可随时联系蓝盾助手。 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> 你收到此邮件，是因为你关注了[#{name}]任务，或其他人@了你 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "15be23a36b4b467197a16ba37e0d93d8",
+      "commonTemplateId" : "4de8953368b743789a2c45ca4281e115",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "【CPack通知】制品扫描任务已完成",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> 【CPack通知】制品扫描任务已完成 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> 蓝鲸DevOps平台的通知推送 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">尊敬的用户，您好！<br><br>制品扫描任务已完成。</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">方案名称：</span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">完成时间：</span>#{completionTime}<br><br> 扫描报告已生成，请查看详细的 <a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">扫描结果</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>。\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> 如有任何问题，可随时联系蓝盾助手。 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> 你收到此邮件，是因为你关注了[#{name}]方案，或其他人@了你 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "327e46b650ce42c7b524b3c29d40995a",
+      "commonTemplateId" : "671d2f35682b46d18e7f0c2d5cca751e",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "【CPack通知】制品扫描任务已中止",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> 【CPack通知】制品扫描任务已中止 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> 蓝鲸DevOps平台的通知推送 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">尊敬的用户，您好！<br><br>制品扫描任务已被中止。</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">方案名称：</span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">终止时间：</span>#{completionTime}<br><br><span style=\"text-align: left; font-weight: bold;\">中止人：</span>#{operator}<br><br><a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">查看详情</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> 如有任何问题，可随时联系蓝盾助手。 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> 你收到此邮件，是因为你关注了[#{name}]方案，或其他人@了你 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "4f57d858ac954c2e87feb620449cee0e",
+      "commonTemplateId" : "cb4ae3c9659b45538a8e0f3212b033e7",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "【CPack通知】制品分发任务开始",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> 【CPack通知】制品分发任务已开始执行 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> 蓝鲸DevOps平台的通知推送 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">尊敬的用户，您好！<br><br>制品分发任务已开始执行。</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">任务名称：</span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">分发详情：</span>同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">开始时间：</span>#{time}<br><br> 请耐心等待分发完成。<br><br><br> <a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">查看详情</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> 如有任何问题，可随时联系蓝盾助手。 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> 你收到此邮件，是因为你关注了[#{name}]任务，或其他人@了你 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "d694ea1f94db495cbcfdaa3c7322fee8",
+      "commonTemplateId" : "575a06a0ddd346fd88d3f90d38546f62",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "【CPack通知】制品分发任务失败",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> 【CPack通知】制品分发任务执行失败 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> 蓝鲸DevOps平台的通知推送 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">尊敬的用户，您好！<br><br>制品分发任务执行失败。</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">任务名称：</span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">分发详情：</span>同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">失败时间：</span>#{time}<br><br><br> <a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">查看详情</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> 如有任何问题，可随时联系蓝盾助手。 </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> 你收到此邮件，是因为你关注了[#{name}]任务，或其他人@了你 </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "cn"
+    },
+    {
+      "id" : "87f8f59f313340ed8ebace5b98bca084",
+      "commonTemplateId" : "bddfb5bf50de4642a76adbb93c744727",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "[CPack Alert]The artifact distribution task has been completed.",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> [CPack Alert]The artifact distribution task has been completed. </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> Notification push from BlueKing DevOps platform </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">Dear User!<br><br>The artifact distribution task has been completed.</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">Task Name: </span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">Distribution Details: </span>Synchronization Type-#{replicaType}, Target Nodes-#{remoteClusters}, Synchronization Repository-#{localRepo}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">Completion Time: </span>#{time}<br><br><br> <a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">View details</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> If you have any questions, feel free to contact the BlueShield Assistant. </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> You received this email because you are following the [#{name}] task </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "3d1b6e9a8d26407d80acd020cd17aef8",
+      "commonTemplateId" : "4de8953368b743789a2c45ca4281e115",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "[CPack Alert]The artifact scanning task has been completed.",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> [CPack Alert]The artifact scanning task has been completed. </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> Notification push from BlueKing DevOps platform </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">Dear User!<br><br>The artifact scanning task has been completed.</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">Plan Name: </span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">Completion Time: </span>#{completionTime}<br><br> The scan report has been generated.Please check the detailed <a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">scan results</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>。\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> If you have any questions, feel free to contact the BlueShield Assistant. </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> You received this email because you are following the [#{name}] plan </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "12d66879335b47afaa526ece4f334f98",
+      "commonTemplateId" : "671d2f35682b46d18e7f0c2d5cca751e",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "[CPack Alert]The artifact scanning task has been stopped.",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> [CPack Alert]The artifact scanning task has been stopped. </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> Notification push from BlueKing DevOps platform </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">Dear User!<br><br>The artifact scanning task has been stopped.</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">Plan Name: </span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">Completion Time: </span>#{completionTime}<br><br><span style=\"text-align: left; font-weight: bold;\">Terminator:</span>#{operator}<br><br><a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">View details</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> If you have any questions, feel free to contact the BlueShield Assistant. </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> You received this email because you are following the [#{name}] plan </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "585c9cf9e6144df987ea17f8fe1a6af7",
+      "commonTemplateId" : "cb4ae3c9659b45538a8e0f3212b033e7",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "[CPack Alert]The artifact distribution task begins.",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> [CPack Alert]The artifact distribution task has begun execution. </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> Notification push from BlueKing DevOps platform </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">Dear User!<br><br>The artifact distribution task has begun execution.</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">Task Name: </span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">Distribution Details: </span>Synchronization Type-#{replicaType}, Target Nodes-#{remoteClusters}, Synchronization Repository-#{localRepo}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">Start time: </span>#{time}<br><br> Please be patient while the distribution completes.<br><br><br> <a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">View details</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> If you have any questions, feel free to contact the BlueShield Assistant. </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> You received this email because you are following the [#{name}] task </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "e43d13da293f44ceaebc1a009279d343",
+      "commonTemplateId" : "575a06a0ddd346fd88d3f90d38546f62",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "[CPack Alert]The artifact distribution task failed to be executed.",
+      "body" : "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n\t<tbody>\n\t\t<tr>\n\t\t\t<td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n\t\t\t\t<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"956\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" bgcolor=\"#f9f8f6\" class=\"layout layout-table root-table\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t<tbody>\n\t\t\t\t\t\t\t\t\t\t<tr style=\"height: 64px; background: #555;\">\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 24px;\" width=\"60\" align=\"center\"></td>\n\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-left: 6px;\"></td>\n\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t</tbody>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t<td valign=\"top\" align=\"center\" style=\"padding: 24px;\" bgcolor=\"#f9f8f6\">\n\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border: 1px solid #e6e6e6;\">\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-title\" style=\"padding: 20px 36px; line-height: 1.5; border-bottom: 1px solid #e6e6e6; background: #fff; font-size: 22px;\"> [CPack Alert]The artifact distribution task failed to be executed. </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t<td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n\t\t\t\t\t\t\t\t\t\t\t<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n\t\t\t\t\t\t\t\t\t\t\t\t<tr>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\"> Notification push from BlueKing DevOps platform </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"email-information\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td class=\"table-info\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"item-value\" style=\"margin-top: 4px; line-height: 1.5;\"><span style=\"text-align: left;font-size: 16px;\">Dear User!<br><br>The artifact distribution task failed to be executed.</span><br><br><br><span style=\"text-align: left; font-weight: bold;\">Task Name: </span>#{name}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">Distribution Details: </span>Synchronization Type-#{replicaType}, Target Nodes-#{remoteClusters}, Synchronization Repository-#{localRepo}<br><br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"text-align: left; font-weight: bold;\">Failed time: </span>#{time}<br><br><br> <a href=\"#{url}\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<font color=\"blue\">View details</font>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"info-remark\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"text-align: right; line-height: 24px; color: #707070;\"></td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t\t<tr class=\"prompt-tips\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\"> If you have any questions, feel free to contact the BlueShield Assistant. </td>\n\t\t\t\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t\t<tr class=\"email-footer\">\n\t\t\t\t\t\t\t\t\t\t<td style=\" padding: 20px 0 20px 36px; border-top: 1px solid #e6e6e6; background: #fff; color: #c7c7c7;\"> You received this email because you are following the [#{name}] task </td>\n\t\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</td>\n\t\t</tr>\n\t</tbody>\n</table>",
+      "bodyFormat" : 1,
+      "emailType" : 1,
+      "sender" : "DevOps",
+      "module" : "CPack",
+      "language" : "en"
+    }
+  ],
+  "feishuNotifyMessageTemplateJson": [
+    {
+      "id" : "f46a4368f9cf4575815cee5d014c0773",
+      "commonTemplateId" : "4de8953368b743789a2c45ca4281e115",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"您好！制品扫描任务已完成。\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"方案名称-#{name}，完成时间-#{completionTime}\"\n    }, \n\t{ \n\t\t\"tag\":\"a\", \n\t\t\"href\":\"#{url}\", \n\t\t\"text\":\"扫描结果\" \n\t}\n]",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "c9f33a0a389a42b0beedd12bb973ff1e",
+      "commonTemplateId" : "671d2f35682b46d18e7f0c2d5cca751e",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"您好！制品扫描任务已中止。\"\n    }, \n   {\n        \"tag\": \"text\",\n        \"text\": \"方案名称-#{name}，中止时间-#{completionTime}，中止人-#{operator}\"\n    }, \n   { \n\t\"tag\":\"a\", \n\t\"href\":\"#{url}\", \n\t\"text\":\"方案详情\" \n   }\n]",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "c0e7db2cce6d430886e8e526d994b558",
+      "commonTemplateId" : "cb4ae3c9659b45538a8e0f3212b033e7",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"您好！制品分发任务已开始。\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"任务名称-#{name}，开始时间-#{time}\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"分发详情：同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}\"\n    }, \n\t{ \n\t\t\"tag\":\"a\", \n\t\t\"href\":\"#{url}\", \n\t\t\"text\":\"查看详情\" \n\t}\n]",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "41d70d1ca1d8446ba3a2b9a112206888",
+      "commonTemplateId" : "575a06a0ddd346fd88d3f90d38546f62",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"制品分发任务执行失败。\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"任务名称-#{name}，结束时间-#{time}\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"分发详情：同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}\"\n    }, \n\t{ \n\t\t\"tag\":\"a\", \n\t\t\"href\":\"#{url}\", \n\t\t\"text\":\"查看详情\" \n\t}\n]",
+      "module" : "CPack",
+      "language" : "cn"
+    }, {
+      "id" : "4c436ae156d54213b3c46a8342c8556d",
+      "commonTemplateId" : "bddfb5bf50de4642a76adbb93c744727",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"您好！制品分发任务已执行成功。\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"任务名称-#{name}，完成时间-#{time}\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"分发详情：同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}\"\n    }, \n\t{ \n\t\t\"tag\":\"a\", \n\t\t\"href\":\"#{url}\", \n\t\t\"text\":\"查看详情\" \n\t}\n]",
+      "module" : "CPack",
+      "language" : "cn"
+    },
+    {
+      "id" : "8664818644424f3ebf7953fc9eb6f5e9",
+      "commonTemplateId" : "4de8953368b743789a2c45ca4281e115",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"Hello! The artifact scanning task has been completed.\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"Plan Name-#{name}, Completion Time-#{completionTime}\"\n    }, \n\t{ \n\t\t\"tag\":\"a\", \n\t\t\"href\":\"#{url}\", \n\t\t\"text\":\"Scan Result\" \n\t}\n]",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "72062aeda79b4e93be481f8e8b3eb1ce",
+      "commonTemplateId" : "671d2f35682b46d18e7f0c2d5cca751e",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"Hello! The artifact scanning task has been stopped.\"\n    }, \n   {\n        \"tag\": \"text\",\n        \"text\": \"Plan Name-#{name}, Completion Time-#{completionTime}, Terminator-#{operator}\"\n    }, \n   { \n\t\"tag\":\"a\", \n\t\"href\":\"#{url}\", \n\t\"text\":\"Plan Detail\" \n   }\n]",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "39397e28ceb84f4eabbdbc8b47508d8f",
+      "commonTemplateId" : "cb4ae3c9659b45538a8e0f3212b033e7",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"Hello! The artifact distribution task has begun execution.\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"Task Name-#{name}, Start Time-#{time}\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"Distribution Details: Synchronization Type-#{replicaType}, Target Nodes-#{remoteClusters}, Synchronization Repository-#{localRepo}\"\n    }, \n\t{ \n\t\t\"tag\":\"a\", \n\t\t\"href\":\"#{url}\", \n\t\t\"text\":\"View details\" \n\t}\n]",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "a42d2c8628c14bb0a3d5817ba95f5d35",
+      "commonTemplateId" : "575a06a0ddd346fd88d3f90d38546f62",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"The artifact distribution task failed to be executed.\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"Task Name-#{name}, Failed Time-#{time}\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"Distribution Details: Synchronization Type-#{replicaType}, Target Nodes-#{remoteClusters}, Synchronization Repository-#{localRepo}\"\n    }, \n\t{ \n\t\t\"tag\":\"a\", \n\t\t\"href\":\"#{url}\", \n\t\t\"text\":\"View details\" \n\t}\n]",
+      "module" : "CPack",
+      "language" : "en"
+    }, {
+      "id" : "fa4d44127d6542b791620162d12a7d05",
+      "commonTemplateId" : "bddfb5bf50de4642a76adbb93c744727",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "[\n    {\n        \"tag\": \"text\",\n        \"text\": \"Hello! The artifact distribution task has been completed.\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"Task Name-#{name}, Completion Time-#{time}\"\n    }, \n{\n        \"tag\": \"text\",\n        \"text\": \"Distribution Details: Synchronization Type-#{replicaType}, Target Nodes-#{remoteClusters}, Synchronization Repository-#{localRepo}\"\n    }, \n\t{ \n\t\t\"tag\":\"a\", \n\t\t\"href\":\"#{url}\", \n\t\t\"text\":\"View details\" \n\t}\n]",
+      "module" : "CPack",
+      "language" : "en"
+    }
+  ],
+  "dingTalkNotifyMessageTemplateJson": [
+    {
+      "id" : "67fd0354869541578c1bd313fd6852e4",
+      "commonTemplateId" : "671d2f35682b46d18e7f0c2d5cca751e",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品扫描任务已被中止。\n\n任务详情：\n方案名称：#{name}\n完成时间：#{completionTime}\n中止人：#{operator}\n\n[查看详情](#{url})\n\n感谢您的使用！",
+      "bodyFormat" : 2,
+      "language" : "cn"
+    }, {
+      "id" : "82b628d887bd48da9958a628d8482821",
+      "commonTemplateId" : "bddfb5bf50de4642a76adbb93c744727",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品分发任务已执行成功。\n\n任务详情：\n任务名称：#{name}\n分发详情：同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}\n完成时间：#{time}\n跳转链接：#{url}\n\n感谢您的使用！",
+      "bodyFormat" : 2,
+      "language" : "cn"
+    }, {
+      "id" : "c60d5d7294b646e1b21e107d079b785b",
+      "commonTemplateId" : "4de8953368b743789a2c45ca4281e115",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品扫描任务已完成。\n\n任务详情：\n方案名称：#{name}\n完成时间：#{completionTime}\n\n扫描报告已生成，请查看详细的[扫描结果](#{url})。\n\n感谢您的使用！",
+      "bodyFormat" : 2,
+      "language" : "cn"
+    }, {
+      "id" : "d3b1dc2efd164382824aad6b407d8e3c",
+      "commonTemplateId" : "575a06a0ddd346fd88d3f90d38546f62",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品分发任务执行失败。\n\n任务详情：\n任务名称：#{name}\n分发详情：同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}\n失败时间：#{time}\n\n[查看详情](#{url})",
+      "bodyFormat" : 2,
+      "language" : "cn"
+    }, {
+      "id" : "f9308ea97516436b8fced158db2452de",
+      "commonTemplateId" : "cb4ae3c9659b45538a8e0f3212b033e7",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "蓝鲸DevOps平台-CPack通知",
+      "body" : "尊敬的用户，您好！\n制品分发任务已开始执行。\n\n任务详情：\n任务名称：#{name}\n分发详情：同步类型-#{replicaType}，目标节点-#{remoteClusters}，同步仓库-#{localRepo}\n开始时间：#{time}\n跳转链接：#{url}\n\n请耐心等待分发完成。\n\n感谢您的使用！",
+      "bodyFormat" : 2,
+      "language" : "cn"
+    },
+    {
+      "id" : "081711fe13e54e34833a415676c1b37d",
+      "commonTemplateId" : "671d2f35682b46d18e7f0c2d5cca751e",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User!\nThe artifact scanning task has been stopped.\n\nTask Details:\nPlan Name: #{name}\nCompletion Time: #{completionTime}\nTerminator: #{operator}\n\n[View details](#{url})\n\nThank you for using our service!",
+      "bodyFormat" : 2,
+      "language" : "en"
+    }, {
+      "id" : "5414aabb75f74ef5a6e1aac69789b908",
+      "commonTemplateId" : "bddfb5bf50de4642a76adbb93c744727",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User!\nThe artifact distribution task has been completed.\n\nTask Details:\nTask Name: #{name}\nDistribution Details: Synchronization Type - #{replicaType}, Target Nodes - #{remoteClusters}, Synchronization Repository - #{localRepo}.\nCompletion Time: #{time}\nRedirect Link: #{url}\n\nThank you for using our service!",
+      "bodyFormat" : 2,
+      "language" : "en"
+    }, {
+      "id" : "7078557c89494b95b2652c60c916c790",
+      "commonTemplateId" : "4de8953368b743789a2c45ca4281e115",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User!\nThe artifact scanning task has been completed.\n\nTask Details:\nPlan Name: #{name}\nCompletion Time: #{completionTime}\n\nThe scan report has been generated. Please check the detailed [scan results](#{url}).\n\nThank you for using our service!",
+      "bodyFormat" : 2,
+      "language" : "en"
+    }, {
+      "id" : "f20ea84236c3426abdf23410ae655524",
+      "commonTemplateId" : "575a06a0ddd346fd88d3f90d38546f62",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User!\nThe artifact distribution task failed to be executed.\n\nTask Details:\nTask Name: #{name}\nDistribution Details: Synchronization Type - #{replicaType}, Target Nodes - #{remoteClusters}, Synchronization Repository - #{localRepo}.\nFailed Time#{time}\n\n[View details](#{url})",
+      "bodyFormat" : 2,
+      "language" : "en"
+    }, {
+      "id" : "ed8cab3a31224afa87a8de6ca1e3489e",
+      "commonTemplateId" : "cb4ae3c9659b45538a8e0f3212b033e7",
+      "creator" : "admin",
+      "modifior" : "admin",
+      "title" : "BlueKing DevOps Platform - CPack Alert",
+      "body" : "Dear User!\nThe artifact distribution task has begun execution.\n\nTask Details:\nTask Name: #{name}\nDistribution Details: Synchronization Type - #{replicaType}, Target Nodes - #{remoteClusters}, Synchronization Repository - #{localRepo}.\nStart Time: #{time}\nRedirect Link: #{url}\n\nPlease be patient while the distribution completes.\n\nThank you for using our service!",
+      "bodyFormat" : 2,
+      "language" : "en"
+    }
+  ]
+}

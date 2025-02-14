@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -58,20 +58,25 @@ class EventBasedReplicaService(
                 }
             }
             when (event.type) {
-                EventType.NODE_CREATED -> {
+                EventType.NODE_CREATED,
+                EventType.NODE_MOVED,
+                EventType.NODE_COPIED -> {
                     // 只有非third party集群支持该消息
                     if (context.remoteCluster.type == ClusterNodeType.REMOTE)
                         throw UnsupportedOperationException()
+                    val fullPath = if (event.type == EventType.NODE_CREATED) event.resourceKey else {
+                        val dstParentPath = event.data["dstFullPath"].toString()
+                        val name = PathUtils.resolveName(event.resourceKey)
+                        PathUtils.combineFullPath(dstParentPath, name)
+                    }
                     val pathConstraint = PathConstraint(event.resourceKey)
                     replicaByPathConstraint(this, pathConstraint)
                 }
-                EventType.VERSION_CREATED -> {
-                    val packageKey = event.data["packageKey"].toString()
-                    val packageVersion = event.data["packageVersion"].toString()
-                    val packageConstraint = PackageConstraint(packageKey, listOf(packageVersion))
-                    replicaByPackageConstraint(this, packageConstraint)
+                EventType.NODE_DELETED -> {
+                    val pathConstraint = PathConstraint(event.resourceKey)
+                    deleteByPathConstraint(this, pathConstraint)
                 }
-                EventType.VERSION_UPDATED -> {
+                EventType.VERSION_CREATED, EventType.VERSION_UPDATED -> {
                     val packageKey = event.data["packageKey"].toString()
                     val packageVersion = event.data["packageVersion"].toString()
                     val packageConstraint = PackageConstraint(packageKey, listOf(packageVersion))

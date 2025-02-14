@@ -44,4 +44,8 @@ dependencies {
     implementation(project(":common:common-statemachine"))
     implementation("io.kubernetes:client-java:${Versions.KubernetesClient}")
     testImplementation("org.mockito.kotlin:mockito-kotlin")
+    constraints {
+        implementation("org.bitbucket.b_c:jose4j:${Versions.Jose4j}")
+        implementation("org.apache.poi:poi-ooxml:5.3.0")
+    }
 }

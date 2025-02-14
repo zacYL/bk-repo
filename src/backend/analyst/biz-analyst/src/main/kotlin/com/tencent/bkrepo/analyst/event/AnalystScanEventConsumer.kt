@@ -28,13 +28,16 @@
 package com.tencent.bkrepo.analyst.event
 
 import com.tencent.bkrepo.analyst.dao.ScanPlanDao
+import com.tencent.bkrepo.analyst.dao.SubScanTaskDao
 import com.tencent.bkrepo.analyst.pojo.AutoScanConfiguration
 import com.tencent.bkrepo.analyst.pojo.ScanTriggerType
 import com.tencent.bkrepo.analyst.pojo.TaskMetadata
 import com.tencent.bkrepo.analyst.pojo.request.ScanRequest
+import com.tencent.bkrepo.analyst.pojo.request.SubScanTaskQuery
 import com.tencent.bkrepo.analyst.pojo.rule.RuleArtifact
 import com.tencent.bkrepo.analyst.pojo.rule.RuleArtifact.Companion.RULE_FIELD_LATEST_VERSION
 import com.tencent.bkrepo.analyst.service.ProjectScanConfigurationService
+import com.tencent.bkrepo.analyst.service.ScanPlanService
 import com.tencent.bkrepo.analyst.service.ScanService
 import com.tencent.bkrepo.analyst.service.ScannerService
 import com.tencent.bkrepo.analyst.service.SpdxLicenseService
@@ -42,12 +45,14 @@ import com.tencent.bkrepo.analyst.utils.RuleConverter
 import com.tencent.bkrepo.common.analysis.pojo.scanner.Scanner
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.event.packages.VersionCreatedEvent
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.query.matcher.RuleMatcher
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
@@ -66,6 +71,9 @@ import org.springframework.stereotype.Component
 class AnalystScanEventConsumer(
     private val spdxLicenseService: SpdxLicenseService,
     private val scanService: ScanService,
+    private val scanPlanService: ScanPlanService,
+    private val repositoryService: RepositoryService,
+    private val subScanTaskDao: SubScanTaskDao,
     private val scannerService: ScannerService,
     private val scanPlanDao: ScanPlanDao,
     private val projectScanConfigurationService: ProjectScanConfigurationService,
@@ -81,10 +89,32 @@ class AnalystScanEventConsumer(
         EventType.VERSION_UPDATED
     )
 
+    /**
+     * 删除制品事件
+     */
+    private val delEventType = setOf(
+        EventType.NODE_DELETED,
+        EventType.VERSION_DELETED
+    )
+
     fun accept(event: ArtifactEvent) {
+        if (event.type == EventType.PROJECT_DELETED) {
+            scanPlanDao.list(event.projectId).forEach {
+                scanService.stopScanPlan(event.projectId, it.id!!)
+                scanPlanService.delete(event.projectId, it.id!!)
+            }
+            logger.info("delete scan plan by projectId:[${event.projectId}] success")
+        }
+
+        if (delEventType.contains(event.type)) {
+            stopScanTask(event)
+            return
+        }
+
         if (!acceptTypes.contains(event.type)) {
             return
         }
+        logger.info("accept event event[${event.toJsonString()}]")
 
         executor.execute {
             when (event.type) {
@@ -94,6 +124,47 @@ class AnalystScanEventConsumer(
                 }
                 EventType.VERSION_CREATED, EventType.VERSION_UPDATED -> scanOnVersionCreated(event)
                 else -> throw UnsupportedOperationException()
+            }
+        }
+    }
+
+    /**
+     * 删除制品，stop正在扫描的任务
+     */
+    private fun stopScanTask(event: ArtifactEvent) {
+        getScanTaskQuery(event)?.let { query ->
+            logger.info("del artifact, task query:${query.toJsonString()}")
+            val subScanTaskList = subScanTaskDao.findByQuery(query)
+            subScanTaskList.forEach {
+                scanService.stopSubtask(it.projectId, it.id!!)
+            }
+        }
+    }
+
+    private fun getScanTaskQuery(event: ArtifactEvent): SubScanTaskQuery? {
+        with(event) {
+            return when (type) {
+                EventType.VERSION_DELETED -> {
+                    SubScanTaskQuery(
+                        projectId = projectId,
+                        repoName = repoName,
+                        repoType = data[VersionCreatedEvent::packageType.name].toString(),
+                        packageKey = data[VersionCreatedEvent::packageKey.name].toString(),
+                        version = data[VersionCreatedEvent::packageVersion.name].toString(),
+                    )
+                }
+                EventType.NODE_DELETED -> {
+                    val repoInfo = repositoryService.getRepoInfo(projectId, repoName)
+                    if (repoInfo?.type != RepositoryType.GENERIC) return null
+                    val fullPath = resourceKey
+                    SubScanTaskQuery(
+                        projectId = projectId,
+                        repoName = repoName,
+                        repoType = RepositoryType.GENERIC.name,
+                        fullPath = fullPath
+                    )
+                }
+                else -> null
             }
         }
     }
@@ -139,9 +210,10 @@ class AnalystScanEventConsumer(
                 .forEach {
                     val request = ScanRequest(
                         planId = it.id!!,
-                        rule = RuleConverter.convert(projectId, repoName, resourceKey)
+                        rule = RuleConverter.convert(projectId, repoName, resourceKey),
+                        force = true
                     )
-                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, it.lastModifiedBy)
+                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, userId)
                     hasScanTask = true
                 }
         }
@@ -180,9 +252,11 @@ class AnalystScanEventConsumer(
                     val packageVersion = data[VersionCreatedEvent::packageVersion.name] as String
                     val request = ScanRequest(
                         planId = it.id!!,
-                        rule = RuleConverter.convert(projectId, repoName, packageKey, packageVersion)
+                        rule = RuleConverter.convert(projectId, repoName, packageKey, packageVersion),
+                        force = true
                     )
-                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, it.lastModifiedBy)
+                    logger.info("package auto scan request:${request.toJsonString()}")
+                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, userId)
                     hasScanTask = true
                 }
         }

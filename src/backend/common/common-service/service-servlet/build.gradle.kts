@@ -55,4 +55,6 @@ dependencies {
     api("com.github.ulisesbocchio:jasypt-spring-boot-starter:${Versions.Jasypt}")
 
     api(project(":common:common-service:service-base"))
+    compileOnly("com.tongweb.springboot:tongweb-spring-boot-starter-2.x")
+    api("jakarta.validation:jakarta.validation-api")
 }

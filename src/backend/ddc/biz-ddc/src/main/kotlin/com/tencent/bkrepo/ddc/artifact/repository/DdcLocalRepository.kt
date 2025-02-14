@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
@@ -374,7 +375,8 @@ class DdcLocalRepository(
                         ByteArrayInputStream(ref.inlineBlob),
                         Range.full(ref.inlineBlob!!.size.toLong())
                     )
-                    ArtifactResource(ais, artifactInfo.getResponseName()).apply {
+                    val srcRepo = RepositoryIdentify(projectId, repoName)
+                    ArtifactResource(ais, artifactInfo.getResponseName(), srcRepo).apply {
                         contentType = responseType
                         ddcMeterBinder.refLoadTimer.record(System.nanoTime() - startTime, NANOSECONDS)
                     }
@@ -417,7 +419,8 @@ class DdcLocalRepository(
             }
 
             val blobInputStream = blobService.loadBlob(blob)
-            val resource = ArtifactResource(blobInputStream, artifactInfo.getResponseName())
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            val resource = ArtifactResource(blobInputStream, artifactInfo.getResponseName(), srcRepo)
             resource.contentType = responseType
             return resource
         }
@@ -450,7 +453,8 @@ class DdcLocalRepository(
             } else {
                 val range = Range.full(refInlineBlob.size.toLong())
                 val ais = ArtifactInputStream(ByteArrayInputStream(refInlineBlob), range)
-                ArtifactResource(ais, artifactInfo.getResponseName()).apply { contentType = responseType }
+                val srcRepo = RepositoryIdentify(projectId, repoName)
+                ArtifactResource(ais, artifactInfo.getResponseName(), srcRepo).apply { contentType = responseType }
             }
         }
     }
@@ -487,7 +491,10 @@ class DdcLocalRepository(
         with(context) {
             return try {
                 val blobInputStream = blobService.loadBlob(blob)
-                ArtifactResource(blobInputStream, artifactInfo.getResponseName()).apply { contentType = responseType }
+                val srcRepo = RepositoryIdentify(projectId, repoName)
+                ArtifactResource(blobInputStream, artifactInfo.getResponseName(), srcRepo).apply {
+                    contentType = responseType
+                }
             } catch (e: BlobNotFoundException) {
                 null
             }

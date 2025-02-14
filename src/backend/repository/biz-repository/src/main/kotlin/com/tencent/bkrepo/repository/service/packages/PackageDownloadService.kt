@@ -1,5 +1,8 @@
 package com.tencent.bkrepo.repository.service.packages
 
+import com.tencent.bkrepo.common.query.model.QueryModel
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+
 interface PackageDownloadService {
 
     /**
@@ -17,4 +20,6 @@ interface PackageDownloadService {
         versionName: String,
         realIpAddress: String? = null
     )
+
+    fun exportPackage(queryModel: QueryModel): StreamingResponseBody
 }

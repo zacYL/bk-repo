@@ -1,19 +1,34 @@
-import { rootPath } from '@blueking/sub-saas'
 import createLocale from '@locale'
+
+export const findTargetObj = (targetList, value, key = 'id') => {
+    return targetList.find(item => item[key] === value)
+}
 /**
  *  转换文件大小
  */
 export function convertFileSize (size, unit = 'B') {
-    const arr = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    const arr = ['B', 'KB', 'MB', 'GB', 'TB']
     const index = arr.findIndex(v => v === unit)
     if (size > 1024) {
-        if (arr[index + 1]) {
-            return convertFileSize(size / 1024, arr[index + 1])
-        } else {
-            return `${index ? size.toFixed(2) : size}${unit}`
-        }
+        return convertFileSize(size / 1024, arr[index + 1])
     } else {
         return `${index ? size.toFixed(2) : size}${unit}`
+    }
+}
+/**
+ * 将string类型的文件大小转化为xxx B，并转化为纯数字
+ * @param {*} size 文件大小，string类型
+ * @returns 文件大小为 xxx，单位为B，但最后返回的不带单位
+ */
+export function convertFileByteSize (size) {
+    const arr = ['TB', 'GB', 'MB', 'KB', 'B']
+    if (typeof size === 'string') {
+        const index = arr.findIndex(v => size.includes(v))
+        if (index < arr.length - 1) {
+            return convertFileByteSize(size.replace(/[a-zA-Z]/g, '') * 1024 + arr[index + 1])
+        } else {
+            return size.replace(/[a-zA-Z]/g, '')
+        }
     }
 }
 
@@ -79,6 +94,14 @@ export function formatDate (ms) {
         prezero(time.getSeconds())}`
 }
 
+export function formatSimpleDate (ms) {
+    if (!ms) return ms || '/'
+    const time = new Date(ms)
+    return `${time.getFullYear()}-${
+        prezero(time.getMonth() + 1)}-${
+        prezero(time.getDate())}`
+}
+
 // 加载先于main.js,初次渲染Vue.prototype.$ajax.defaults为空，二次渲染于main.js，此时Vue.prototype.$ajax.defaults不为空，此时添加报文头
 const { i18n } = createLocale(require.context('@locale/repository/', false, /\.json$/))
 
@@ -92,7 +115,7 @@ export function formatDuration (duration, unit = 's', target = []) {
     if (!duration) return duration || '/'
     duration = Math.floor(Number(duration))
     const { label, deno, next } = durationMap[unit]
-    const current = duration % deno ? `${duration % deno}${label}` : ''
+    const current = duration % deno ? `${duration % deno} ${label}` : ''
     duration = Math.floor(duration / deno)
     if (!duration) {
         return [current, ...target].slice(0, 2).join('') || i18n.t('lessOneSecondTip')
@@ -132,4 +155,26 @@ export function copyToClipboard (text) {
     // }
 }
 
-export const routeBase = rootPath === '/' ? '/ui' : rootPath
+/**
+ * 判断当前输入的值是否为null或空字符串或undefined
+ * @param {value}
+ */
+export function checkValueIsNullOrEmpty (value) {
+    return value === null || value === undefined || value?.length === 0
+}
+
+/**
+ * @description: 流文件下载
+ * @param {*} res
+ * @return {*}
+ */
+export const blobFileDownload = (res) => {
+    const content = res.headers['content-disposition'].split(';')
+    const fileName = decodeURIComponent(content[1].split('=')[1])
+    const createFileUrl = window.URL.createObjectURL(res.data)
+    const aTag = document.createElement('a')
+    aTag.setAttribute('href', createFileUrl)
+    aTag.setAttribute('download', fileName)
+    aTag.click()
+    window.URL.revokeObjectURL(createFileUrl)
+}

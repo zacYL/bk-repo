@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.pojo.repo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
@@ -67,10 +68,18 @@ data class RepositoryInfo(
     val lastModifiedBy: String,
     @ApiModelProperty("上次修改日期")
     val lastModifiedDate: String,
+    @ApiModelProperty("在权限中心是否有查看权限")
+    val hasPermission: Boolean = true,
+    @ApiModelProperty("对当前用户的最高权限")
+    var permission: String? = null,
+    @ApiModelProperty("制品数量")
+    var artifacts: Long? = null,
     @ApiModelProperty("仓库配额")
     val quota: Long?,
     @ApiModelProperty("仓库已使用容量")
     val used: Long?,
     @ApiModelProperty("是否展示")
-    val display: Boolean
+    val display: Boolean,
+    @ApiModelProperty("覆盖策略")
+    val coverStrategy: CoverStrategy? = null,
 )

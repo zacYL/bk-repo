@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.repository.pojo.repo
 
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
@@ -52,6 +53,8 @@ data class RepoUpdateRequest(
     val configuration: RepositoryConfiguration? = null,
     @ApiModelProperty("仓库配额", required = false)
     val quota: Long? = null,
+    @ApiModelProperty("覆盖策略", required = false)
+    val coverStrategy: CoverStrategy? = null,
     @ApiModelProperty("操作用户", required = true)
     val operator: String,
     @ApiModelProperty("是否展示", required = true)

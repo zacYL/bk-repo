@@ -75,6 +75,8 @@ enum class AuthMessageCode(private val businessCode: Int, private val key: Strin
     AUTH_ACCOUT_FORAUTH_NOT_PERM(37, "auth.account.forauth.not-perm"),
     AUTH_ENTITY_USER_NOT_EXIST(38, "auth.entity.user.not-exist"),
     AUTH_PROXY_NOT_EXIST(39,"auth.proxy.not-exist"),
+    AUTH_USER_LOCKED(40, "auth.user.locked"),
+    AUTH_USER_FORAUTH_NOT_EXIST(41, "auth.user.forauth.notexist"),
     ;
 
     override fun getBusinessCode() = businessCode

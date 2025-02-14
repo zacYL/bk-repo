@@ -27,11 +27,8 @@
 
 package com.tencent.bkrepo.webhook.executor
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
-import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.service.otel.util.AsyncUtils.trace
 import com.tencent.bkrepo.webhook.config.WebHookProperties
 import com.tencent.bkrepo.webhook.constant.AssociationType
@@ -64,15 +61,6 @@ class WebhookArtifactEventConsumer(
         ThreadPoolExecutor.CallerRunsPolicy()
     )
 
-    private val systemWebHookCache = CacheBuilder.newBuilder()
-        .maximumSize(100)
-        .expireAfterWrite(10, TimeUnit.MINUTES)
-        .build<EventType, List<TWebHook>>(CacheLoader.from { _ ->
-            webHookDao.findByAssociationTypeAndAssociationId(
-                AssociationType.SYSTEM, null
-            )
-        })
-
     fun accept(message: Message<ArtifactEvent>) {
         logger.info("accept artifact event: ${message.payload}, header: ${message.headers}")
         val task = Runnable { triggerWebHooks(message.payload) }.trace()
@@ -85,8 +73,7 @@ class WebhookArtifactEventConsumer(
         if (!checkIfNeedTrigger(event)) {
             return
         }
-
-        webHookList.addAll(systemWebHookCache.get(event.type))
+        webHookList.addAll(webHookDao.findByAssociationTypeAndAssociationId(AssociationType.SYSTEM, null))
 
         if (event.projectId.isNotBlank()) {
             webHookList.addAll(

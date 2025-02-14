@@ -1,24 +1,17 @@
 <template>
-    <bk-dialog v-model="previewDialog.show"
+    <canway-dialog
+        v-model="previewDialog.show"
+        :title="previewDialog.title"
         :width="dialogWidth"
-        :show-footer="false"
-        :title="($t('preview') + '-' + previewDialog.title)">
-        <span
-            v-for="(item, index) in breadcrumbList"
-            :key="item.name"
-            class="breadcrumb-list"
-        >
-            <span
-                :class="{ 'breadcrumb-item': true, 'hover-cursor': index !== breadcrumbList.length - 1 }"
-                @click="handleBreadcrumbItemClick(item, index)">{{ item.name }} </span>
-            <span v-if="index !== breadcrumbList.length - 1" class="mr10">/</span>
-        </span>
+        height-num="705"
+        @cancel="previewDialog.show = false">
+        <breadcrumb style="height:20px;" :list="breadcrumb"></breadcrumb>
         <bk-table
-            v-bkloading="{ isLoading: previewDialog.isLoading }"
-            :data="curData"
-            @row-dblclick="openFolder"
-            style="margin-top: 10px;"
-        >
+            class="mt5"
+            height="450"
+            v-bkloading="{ isLoading }"
+            :data="curPageData"
+            @row-dblclick="openFolder">
             <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip>
                 <template #default="{ row }">
                     <Icon class="table-svg" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
@@ -27,183 +20,181 @@
             </bk-table-column>
             <bk-table-column :label="$t('size')" width="90" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <span v-if="row.size > -1">
-                        {{ convertFileSize(row.size || 0) }}
-                    </span>
-                    <span v-else>{{ $t('unknownSize') }}</span>
+                    {{ row.folder ? '/' : (row.size > -1 ? convertFileSize(row.size) : $t('unknownSize')) }}
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="100">
-                <template #default="{ row, $index }">
-                    <div v-if="!row.folder" v-bk-tooltips="{ disabled: getBtnDisabled(row.name), content: $t('supportPreview') }">
-                        <bk-button class="mr10" :ext-cls="!getBtnDisabled(row.name) ? 'preview-btn' : ''" text :disabled="!getBtnDisabled(row.name)" @click="handlerPreview(row)">{{ $t('preview') }}</bk-button>
+                <template #default="{ row }">
+                    <bk-button v-if="row.folder" text @click="openFolder(row)">{{$t('openBtn')}}</bk-button>
+                    <div v-else v-bk-tooltips="{ disabled: handlerPreview(row), content: $t('supportPreview') }">
+                        <bk-button text :disabled="!handlerPreview(row)" @click="handlerPreview(row, true)">
+                            {{ $t('preview') }}
+                        </bk-button>
                     </div>
-                    <bk-button v-else text @click="openFolder(row, null, null, $index)">{{ $t('openBtn')}}</bk-button>
                 </template>
             </bk-table-column>
         </bk-table>
         <bk-pagination
             class="p10"
             size="small"
+            align="right"
             :show-limit="false"
-            @change="current => handlePageChange(current)"
             :current.sync="pagination.current"
-            :count="pagination.count">
+            :count="paginationCount">
         </bk-pagination>
-    </bk-dialog>
+        <template #footer>
+            <bk-button theme="primary" @click="previewDialog.show = false">{{ $t('confirm') }}</bk-button>
+        </template>
+    </canway-dialog>
 </template>
 
 <script>
+    import Breadcrumb from '@repository/components/Breadcrumb'
     import { convertFileSize } from '@repository/utils'
     import { mapActions } from 'vuex'
     import { getIconName } from '@repository/store/publicEnum'
-
     export default {
-        name: 'previewBasicFileDialog',
-        props: {
-            data: {
-                type: Array,
-                default: () => []
-            }
-        },
+        name: 'compressedFileTable',
+        components: { Breadcrumb },
         data () {
             return {
-                breadcrumbList: [],
-                cacheData: [],
-                curData: [],
+                isLoading: false,
+                compressedData: [],
+                selectedTreeNode: {},
                 pagination: {
                     current: 1,
-                    count: 0,
                     limit: 10
                 },
                 previewDialog: {
                     show: false,
                     title: '',
-                    isLoading: false,
-                    path: ''
+                    projectId: '',
+                    repoName: '',
+                    fullPath: ''
                 },
-                dialogWidth: window.innerWidth - 400
+                dialogWidth: window.innerWidth - 600
             }
         },
         computed: {
-            projectId () {
-                return this.$route.params.projectId
+            curPageData () {
+                if (!this.selectedTreeNode.children) return []
+                return this.selectedTreeNode.children
+                    .sort((a, b) => {
+                        if (a.folder === b.folder) {
+                            return a.name.charCodeAt() - b.name.charCodeAt()
+                        } else {
+                            return b.folder - a.folder
+                        }
+                    })
+                    .slice(
+                        (this.pagination.current - 1) * this.pagination.limit,
+                        this.pagination.current * this.pagination.limit
+                    )
             },
-            repoName () {
-                return this.$route.query.repoName
-            }
-        },
-        watch: {
-            data: {
-                handler (val) {
-                    this.previewDialog.isLoading = false
-                    this.pagination.current = 1
-                    this.pagination.count = val.length
-                    this.curData = this.getDataByPage(this.data, this.pagination.current)
-                    this.breadcrumbList = [{
-                        name: this.previewDialog.title,
-                        index: -1,
-                        data: this.curData
-                    }]
-                },
-                deep: true
+            paginationCount () {
+                if (!this.selectedTreeNode.children) return 0
+                return this.selectedTreeNode.children.length
+            },
+            breadcrumb () {
+                if (!this.compressedData[0]) return []
+                const breadcrumb = [{
+                    name: this.previewDialog.title,
+                    value: this.compressedData[0],
+                    cilckHandler: item => {
+                        this.openFolder(item.value)
+                    }
+                }]
+                let node = this.compressedData[0].children
+                const road = this.selectedTreeNode.filePath.split('/').filter(Boolean)
+                road.forEach(name => {
+                    const temp = node.find(o => o.name === name)
+                    breadcrumb.push({
+                        name,
+                        value: temp,
+                        cilckHandler: item => {
+                            this.openFolder(item.value)
+                        }
+                    })
+                    node = temp.children
+                })
+                return breadcrumb
             }
         },
         methods: {
-            ...mapActions([
-                'previewBasicFile'
-            ]),
             getIconName,
             convertFileSize,
+            ...mapActions([
+                'previewCompressedFileList'
+            ]),
             setData (data) {
+                const { show, projectId, repoName, fullPath } = data
                 this.previewDialog = {
+                    ...this.previewDialog,
                     ...data
                 }
-                this.breadcrumbList = []
-                this.curData = []
-                this.pagination.count = 0
-            },
-
-            getDataByPage (list, page) {
-                this.pagination.count = list.length
-                let startIndex = (page - 1) * this.pagination.limit
-                let endIndex = page * this.pagination.limit
-                if (startIndex < 0) {
-                    startIndex = 0
-                }
-                if (endIndex > list.length) {
-                    endIndex = list.length
-                }
-                this.curData = []
-                return list.slice(startIndex, endIndex)
-            },
-
-            handlePageChange (page) {
-                this.pagination.current = page
-                const list = this.breadcrumbList.length === 1 ? this.data : this.cacheData
-                this.curData = this.getDataByPage(list, page)
-            },
-
-            handlerPreview (row) {
-                this.$emit('show-preview', {
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    path: this.previewDialog.path,
-                    filePath: row.filePath
+                if (!show) return
+                this.isLoading = true
+                this.previewCompressedFileList({
+                    projectId,
+                    repoName,
+                    fullPath
+                }).then(res => {
+                    this.compressedData = this.createTreeData(res)
+                    this.selectedTreeNode = this.compressedData[0]
+                    this.pagination.current = 1
+                }).finally(() => {
+                    this.isLoading = false
                 })
             },
-            openFolder (row, event, column, rowIndex) {
+            createTreeData (arrayData) {
+                const rootNode = [{
+                    name: this.previewDialog.title,
+                    folder: true,
+                    filePath: '',
+                    children: []
+                }]
+                arrayData.forEach(file => {
+                    let pointNode = rootNode[0].children
+                    let index = 0
+                    const names = file.name.split('/')
+                    names.forEach(name => {
+                        index++
+                        let temp = pointNode.find(o => o.name === name)
+                        if (!temp) {
+                            if (index === names.length) {
+                                temp = { name, filePath: file.name, folder: false, size: file.size }
+                            } else {
+                                temp = { name, children: [], filePath: names.slice(0, index).join('/'), folder: true }
+                            }
+                            pointNode.push(temp)
+                        }
+                        pointNode = temp.children
+                    })
+                })
+                return rootNode
+            },
+            handlerPreview (row, excute = false) {
+                const ext = row.name.replace(/^.+\.([^.]+)$/, '$1')
+                const basicEnable = [
+                    'txt', 'sh', 'bat', 'json', 'yaml', 'md',
+                    'xml', 'log', 'ini', 'properties', 'toml'
+                ].includes(ext)
+                if (basicEnable) {
+                    excute && this.$emit('show-preview', {
+                        name: row.filePath,
+                        projectId: this.previewDialog.projectId,
+                        repoName: this.previewDialog.repoName,
+                        fullPath: this.previewDialog.fullPath,
+                        filePath: row.filePath
+                    })
+                    return true
+                }
+                return false
+            },
+            openFolder (row) {
                 if (!row.folder) return
-                this.cacheData = this.curData[rowIndex].children
-                this.curData = this.getDataByPage(this.cacheData, this.pagination.current)
-                this.breadcrumbList.push({
-                    name: row.name,
-                    index: rowIndex,
-                    data: this.curData
-                })
-            },
-            handleBreadcrumbItemClick (row, index) {
-                this.pagination.current = 1
-                if (row.index === -1) {
-                    this.curData = this.getDataByPage(this.data, 1)
-                    this.breadcrumbList = [{
-                        name: this.previewDialog.title,
-                        index: -1
-                    }]
-                } else {
-                    this.curData = row.data
-                    this.breadcrumbList = this.breadcrumbList.slice(0, index + 1)
-                }
-            },
-            getBtnDisabled (name) {
-                return name.endsWith('txt')
-                    || name.endsWith('sh')
-                    || name.endsWith('bat')
-                    || name.endsWith('json')
-                    || name.endsWith('yaml')
-                    || name.endsWith('xml')
-                    || name.endsWith('log')
-                    || name.endsWith('ini')
-                    || name.endsWith('log')
-                    || name.endsWith('properties')
-                    || name.endsWith('toml')
+                this.selectedTreeNode = row
             }
         }
     }
 </script>
-
-<style lang="scss">
-    .preview-btn {
-        &:hover {
-            color: #dcdee5 !important;
-        }
-    }
-    .breadcrumb-list {
-        .hover-cursor {
-            cursor: pointer;
-            &:hover {
-                color: #699df4;
-            }
-        }
-    }
-</style>

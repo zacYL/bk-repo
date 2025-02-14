@@ -74,5 +74,9 @@ data class PackageVersion(
     @ApiModelProperty("清单文件路径")
     val manifestPath: String? = null,
     @ApiModelProperty("集群名")
-    val clusterNames: Set<String>? = null
+    val clusterNames: Set<String>? = null,
+    @ApiModelProperty("最近使用时间时间")
+    var recentlyUseDate: LocalDateTime?,
+    @ApiModelProperty("包版本序列号")
+    val ordinal: Long
 )

@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.api.util
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
@@ -78,6 +79,8 @@ object JsonUtils {
         disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
     }
+
+    val objectMapperWithCompactOutput: ObjectMapper = objectMapper.copy().disable(SerializationFeature.INDENT_OUTPUT)
 }
 
 /**
@@ -100,3 +103,5 @@ inline fun <reified T> String.readJsonString(): T = JsonUtils.objectMapper.readV
 inline fun <reified T> InputStream.readJsonString(): T = JsonUtils.objectMapper.readValue(this, jacksonTypeRef<T>())
 
 fun String.jsonCompress() = this.replace("\\s|\\t|\\r|\\n".toRegex(), "")
+
+fun Any.toCompactJsonString() = JsonUtils.objectMapperWithCompactOutput.writeValueAsString(this).orEmpty()

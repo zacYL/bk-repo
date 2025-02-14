@@ -53,7 +53,11 @@ class PackageSearchInterpreter(
     private val permissionManager: PermissionManager,
     private val repoNameRuleInterceptor: RepoNameRuleInterceptor,
     private val repoTypeRuleInterceptor: RepoTypeRuleInterceptor,
-    private val localDatetimeRuleInterceptor: LocalDatetimeRuleInterceptor
+    private val localDatetimeRuleInterceptor: LocalDatetimeRuleInterceptor,
+    private val metadataRuleInterceptor: MetadataRuleInterceptor,
+    private val versionNameRuleInterceptor: VersionNameRuleInterceptor,
+    private val versionMetadataRuleInterceptor: VersionMetadataRuleInterceptor,
+    private val versionChecksumRuleInterceptor: VersionChecksumRuleInterceptor,
 ) : CommonQueryInterpreter(permissionManager) {
 
     @PostConstruct
@@ -62,8 +66,11 @@ class PackageSearchInterpreter(
         addModelInterceptor(SelectFieldInterceptor())
         addRuleInterceptor(repoTypeRuleInterceptor)
         addRuleInterceptor(repoNameRuleInterceptor)
-        addRuleInterceptor(MetadataRuleInterceptor())
+        addRuleInterceptor(metadataRuleInterceptor)
+        addRuleInterceptor(versionMetadataRuleInterceptor)
         addRuleInterceptor(localDatetimeRuleInterceptor)
+        addRuleInterceptor(versionNameRuleInterceptor)
+        addRuleInterceptor(versionChecksumRuleInterceptor)
     }
 
     override fun initContext(queryModel: QueryModel, mongoQuery: Query): QueryContext {

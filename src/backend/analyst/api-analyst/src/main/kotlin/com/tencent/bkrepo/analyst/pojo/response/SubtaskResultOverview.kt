@@ -67,6 +67,8 @@ data class SubtaskResultOverview(
     val medium: Long = 0,
     @ApiModelProperty("低危漏洞数")
     val low: Long = 0,
+    @ApiModelProperty("CVE白名单漏洞数")
+    val white: Long = 0,
     @ApiModelProperty("漏洞总数")
     val total: Long = 0,
     @ApiModelProperty("完成时间")

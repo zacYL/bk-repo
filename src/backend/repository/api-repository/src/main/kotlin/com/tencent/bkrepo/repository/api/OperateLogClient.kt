@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.metadata.pojo.log.OpLogListOption
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLog
+import com.tencent.bkrepo.common.metadata.pojo.log.event.EventCreateRequest
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.cloud.openfeign.FeignClient
@@ -68,4 +69,8 @@ interface OperateLogClient {
     @PostMapping("/list")
     fun list(@RequestBody option: OpLogListOption): Response<Page<OperateLog>>
 
+    @PostMapping("/event")
+    fun saveEvent(
+        @RequestBody request: EventCreateRequest
+    ): Response<Boolean>
 }

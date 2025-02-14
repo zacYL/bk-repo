@@ -35,5 +35,8 @@ data class MavenGAVC(
     val groupId: String,
     val artifactId: String,
     val version: String,
-    val classifier: String?
+    val classifier: String?,
+    val packaging: String = "jar",
+    val modelVersion: String ?= null,
+    val name: String ?= null
 )

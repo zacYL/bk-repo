@@ -34,6 +34,8 @@ dependencies {
     api(project(":common:common-fdtp"))
     api(project(":common:common-artifact:artifact-service"))
     implementation("org.quartz-scheduler:quartz")
+    implementation(project(":common:common-notify:notify-service"))
+
     testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
     testImplementation("org.mockito.kotlin:mockito-kotlin")
     testImplementation("io.mockk:mockk")

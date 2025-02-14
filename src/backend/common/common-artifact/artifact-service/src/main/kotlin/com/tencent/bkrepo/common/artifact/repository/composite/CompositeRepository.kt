@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.artifact.repository.composite
 
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
@@ -58,6 +59,7 @@ import java.time.format.DateTimeFormatter
 /**
  * 组合仓库抽象逻辑
  */
+@Deprecated("组合仓库模式转变为虚拟仓库模式", replaceWith = ReplaceWith("VirtualRepository"))
 @Service
 class CompositeRepository(
     private val localRepository: LocalRepository,
@@ -87,6 +89,7 @@ class CompositeRepository(
     }
 
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        whitelistInterceptor(context)
         localRepository.onDownloadBefore(context)
     }
 
@@ -153,11 +156,16 @@ class CompositeRepository(
     /**
      * 遍历代理仓库列表，执行[action]操作，当遇到代理仓库[action]操作返回非`null`时，立即返回结果[R]
      */
-    private fun <R> mapFirstProxyRepo(context: ArtifactContext, action: (ArtifactContext) -> R?): R? {
+    fun <R> mapFirstProxyRepo(context: ArtifactContext, action: (ArtifactContext) -> R?): R? {
         val proxyChannelList = getProxyChannelList(context)
         for (setting in proxyChannelList) {
             try {
-                action(getContextFromProxyChannel(context, setting))?.let { return it }
+                action(getContextFromProxyChannel(context, setting))?.let {
+                    // 无论请求是否成功, 都会返回kotlin.Unit
+                    if (it != Unit) { return it }
+                }
+            } catch (downloadException: ArtifactNotInWhitelistException) {
+                throw ArtifactNotInWhitelistException()
             } catch (ignored: Exception) {
                 logger.warn("Failed to execute map with channel ${setting.name}", ignored)
             }
@@ -198,14 +206,14 @@ class CompositeRepository(
     /**
      * 获取代理源设置列表
      */
-    private fun getProxyChannelList(context: ArtifactContext): List<ProxyChannelSetting> {
+    protected fun getProxyChannelList(context: ArtifactContext): List<ProxyChannelSetting> {
         return context.getCompositeConfiguration().proxy.channelList
     }
 
     /**
      * 根据原始上下文[context]以及代理源设置[setting]生成新的[ArtifactContext]
      */
-    private fun getContextFromProxyChannel(
+    protected fun getContextFromProxyChannel(
         context: ArtifactContext,
         setting: ProxyChannelSetting
     ): ArtifactContext {
@@ -219,6 +227,7 @@ class CompositeRepository(
         // 构造proxyConfiguration
         val remoteConfiguration = convertConfig(proxyChannel)
         val remoteRepoDetail = convert(remoteConfiguration, context.repositoryDetail)
+        context.putAttribute("proxyChannelName", setting.name)
         return context.copy(remoteRepoDetail)
     }
 
@@ -242,6 +251,7 @@ class CompositeRepository(
                 lastModifiedBy = repositoryDetail.lastModifiedBy,
                 lastModifiedDate = repositoryDetail.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                 quota = repositoryDetail.quota,
+                coverStrategy = repositoryDetail.coverStrategy,
                 used = repositoryDetail.used,
                 oldCredentialsKey = repositoryDetail.oldCredentialsKey
             )
@@ -252,6 +262,9 @@ class CompositeRepository(
             remoteConfiguration.url = tProxyChannel.url
             remoteConfiguration.credentials.username = tProxyChannel.username
             remoteConfiguration.credentials.password = tProxyChannel.password
+            remoteConfiguration.network.proxy = tProxyChannel.networkProxy
+            remoteConfiguration.network.connectTimeout = tProxyChannel.connectTimeout
+            remoteConfiguration.network.readTimeout = tProxyChannel.readTimeout
             return remoteConfiguration
         }
     }

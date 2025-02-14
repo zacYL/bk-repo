@@ -55,4 +55,8 @@ class ProjectDao : SimpleMongoDao<TProject>() {
     fun findByDisplayName(displayName: String): TProject? {
         return this.findOne(Query(TProject::displayName.isEqualTo(displayName)))
     }
+
+    fun deleteById(projectId: String){
+        this.remove(Query(TProject::name.isEqualTo(projectId)))
+    }
 }

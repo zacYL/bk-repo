@@ -51,8 +51,8 @@ import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeDeletedPointL
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeDeletedPointListQueryBySha256
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeDeletedPointQuery
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeListQuery
-import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeQuery
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeRestoreUpdate
+import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeTreeCriteria
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.fs.server.constant.FS_ATTR_KEY
 import com.tencent.bkrepo.repository.pojo.node.NodeDeletedPoint
@@ -62,6 +62,7 @@ import com.tencent.bkrepo.repository.pojo.node.NodeRestoreResult
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.FindAndModifyOptions
+import org.springframework.data.mongodb.core.query.Query
 import java.time.Instant
 import java.time.ZoneId
 
@@ -175,7 +176,7 @@ open class NodeRestoreSupport(
             val query = nodeDeletedPointQuery(projectId, repoName, fullPath, deletedTime)
             val option = FindAndModifyOptions()
             option.returnNew(false)
-            val deletedNode = nodeDao.findAndModify(query, nodeRestoreUpdate(), option, TNode::class.java)
+            val deletedNode = nodeDao.findAndModify(query, nodeRestoreUpdate(operator), option, TNode::class.java)
             if (deletedNode?.sha256 == FAKE_SHA256 || deletedNode?.metadata?.find { it.key == FS_ATTR_KEY } != null) {
                 try {
                     blockNodeService.restoreBlocks(
@@ -200,11 +201,11 @@ open class NodeRestoreSupport(
         userId: String
     ) {
         with(node) {
-            val query = nodeQuery(projectId, repoName, fullPath)
+            val query = Query(nodeTreeCriteria(projectId, repoName, fullPath))
             if (node.sha256 == FAKE_SHA256 || node.metadata?.find { it.key == FS_ATTR_KEY } != null) {
                 blockNodeService.deleteBlocks(projectId, repoName, fullPath)
             }
-            nodeDao.updateFirst(query, NodeQueryHelper.nodeDeleteUpdate(userId))
+            nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(userId))
         }
     }
 
@@ -241,7 +242,7 @@ open class NodeRestoreSupport(
     private fun fastRestoreFolder(context: RestoreContext, node: TNode) {
         with(context) {
             val query = nodeDeletedFolderQuery(projectId, repoName, node.fullPath, deletedTime, true)
-            val updateResult = nodeDao.updateMulti(query, nodeRestoreUpdate())
+            val updateResult = nodeDao.updateMulti(query, nodeRestoreUpdate(operator))
             restoreCount += updateResult.modifiedCount
         }
     }

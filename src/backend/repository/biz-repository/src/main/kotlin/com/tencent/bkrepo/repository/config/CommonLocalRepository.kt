@@ -31,8 +31,12 @@
 
 package com.tencent.bkrepo.repository.config
 
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import org.springframework.stereotype.Component
 
 /**
@@ -42,5 +46,16 @@ import org.springframework.stereotype.Component
 class CommonLocalRepository : LocalRepository() {
     override fun onDownloadRedirect(context: ArtifactDownloadContext): Boolean {
         return redirectManager.redirect(context)
+    }
+
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        with(context) {
+            val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, artifactInfo.getArtifactFullPath()))
+            node?.let { getNodeInterceptors().forEach { it.intercept(projectId, node) } }
+            val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
+            val responseName = artifactInfo.getResponseName()
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
+        }
     }
 }

@@ -33,7 +33,7 @@ dependencies {
     implementation(project(":common:common-api"))
     api(project(":common:common-artifact:artifact-service"))
     implementation(project(":common:common-artifact:artifact-api"))
-    api("com.alibaba:easyexcel:3.1.1")
+    api("com.alibaba:easyexcel:${Versions.Easyexcel}")
     api(project(":common:common-metadata:metadata-api"))
     compileOnly("org.springframework.cloud:spring-cloud-openfeign-core")
 }

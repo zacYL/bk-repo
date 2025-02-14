@@ -30,10 +30,10 @@
 package com.tencent.bkrepo.analyst.utils
 
 import com.tencent.bkrepo.analyst.message.ScannerMessageCode
+import com.tencent.bkrepo.analyst.model.ScanPlanExport
 import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
 import com.tencent.bkrepo.analyst.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.analyst.model.TScanPlan
-import com.tencent.bkrepo.analyst.model.ScanPlanExport
 import com.tencent.bkrepo.analyst.model.TScanTask
 import com.tencent.bkrepo.analyst.pojo.LeakType
 import com.tencent.bkrepo.analyst.pojo.ScanPlan
@@ -59,7 +59,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Locale
+import java.util.*
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
@@ -259,6 +259,10 @@ object ScanPlanConverter {
         }
     }
 
+    /*
+    当一个制品有多个扫描方案，在扫描、异常、完成时，仅显示一个标签，标签优先级由高到低为：
+    正在扫描＞质量规则未通过＞扫描异常＞质量规则通过＞未设置质量规则＞扫描中止
+     */
     fun artifactStatus(status: List<String>): String {
         require(status.isNotEmpty())
         var maxStatus: ScanStatus? = null
@@ -382,7 +386,7 @@ object ScanPlanConverter {
 
     private fun convertToSubScanTaskStatus(status: ScanStatus): List<SubScanTaskStatus> {
         return when (status) {
-            ScanStatus.INIT -> listOf(SubScanTaskStatus.CREATED, SubScanTaskStatus.PULLED)
+            ScanStatus.INIT -> listOf(SubScanTaskStatus.BLOCKED, SubScanTaskStatus.CREATED, SubScanTaskStatus.PULLED)
             ScanStatus.RUNNING -> listOf(SubScanTaskStatus.EXECUTING)
             ScanStatus.STOP -> listOf(SubScanTaskStatus.STOPPED)
             ScanStatus.FAILED -> listOf(

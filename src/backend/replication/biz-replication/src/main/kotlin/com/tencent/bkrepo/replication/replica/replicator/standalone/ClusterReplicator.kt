@@ -49,7 +49,9 @@ import com.tencent.bkrepo.replication.replica.replicator.Replicator
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
@@ -68,6 +70,7 @@ import java.util.concurrent.TimeUnit
  * 独立集群 同步到 独立集群 的同步实现类
  */
 @Component
+@ConditionalOnNotDevops
 class ClusterReplicator(
     private val localDataManager: LocalDataManager,
     private val artifactReplicationHandler: ClusterArtifactReplicationHandler,
@@ -93,11 +96,13 @@ class ClusterReplicator(
             // 外部集群仓库没有project/repoName
             if (remoteProjectId.isNullOrBlank()) return
             val localProject = localDataManager.findProjectById(localProjectId)
+            val combineName = "${localProject.displayName}---$remoteProjectId"
+            val displayName = if (combineName.length > 100) combineName.substring(0, 100) else combineName
             val request = ProjectCreateRequest(
                 name = remoteProjectId,
-                displayName = remoteProjectId,
+                displayName = displayName,
                 description = localProject.description,
-                operator = localProject.createdBy
+                operator = SYSTEM_USER
             )
             artifactReplicaClient!!.replicaProjectCreateRequest(request)
         }
@@ -109,6 +114,16 @@ class ClusterReplicator(
             if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return
             val localRepo = localDataManager.findRepoByName(localProjectId, localRepoName, localRepoType.name)
             val key = buildRemoteRepoCacheKey(cluster, remoteProjectId, remoteRepoName)
+            // 兼容仓库拆分
+            val configuration = if (localRepo.category == RepositoryCategory.LOCAL &&
+                localRepo.configuration is CompositeConfiguration) {
+                val compositeConfiguration = localRepo.configuration as CompositeConfiguration
+                LocalConfiguration(compositeConfiguration.webHook, compositeConfiguration.cleanStrategy).apply {
+                    this.settings = compositeConfiguration.settings
+                }
+            } else {
+                localRepo.configuration
+            }
             context.remoteRepo = remoteRepoCache.getOrPut(key) {
                 val request = RepoCreateRequest(
                     projectId = remoteProjectId,
@@ -117,10 +132,18 @@ class ClusterReplicator(
                     category = localRepo.category,
                     public = localRepo.public,
                     description = localRepo.description,
-                    configuration = localRepo.configuration,
+                    configuration = configuration,
                     operator = localRepo.createdBy
                 )
                 artifactReplicaClient!!.replicaRepoCreateRequest(request).data!!
+                if (remoteRepo.type != remoteRepoType) {
+                    throw ErrorCodeException(
+                        ArtifactMessageCode.REPOSITORY_EXISTED,
+                        "$remoteProjectId/$remoteRepoName",
+                        status = HttpStatus.CONFLICT
+                    )
+                }
+                context.remoteRepo = remoteRepo
             }
         }
     }
@@ -155,8 +178,14 @@ class ClusterReplicator(
                 }
                 replicaFile(context, node.nodeInfo)
             }
-            val packageMetadata = packageVersion.packageMetadata as MutableList<MetadataModel>
-            packageMetadata.add(MetadataModel(SOURCE_TYPE, ArtifactChannel.REPLICATION))
+            // filter system reserve metadata
+            val packageMetadata = packageVersion.packageMetadata.filter {
+                it.key !in RESERVED_KEY
+            } as MutableList<MetadataModel>
+            if (packageMetadata.none { it.key == SOURCE_TYPE }) {
+                packageMetadata.add(MetadataModel(SOURCE_TYPE, ArtifactChannel.REPLICATION, system = true, display = true))
+            }
+            val manifestPath = if (packageSummary.type == PackageType.DOCKER) packageVersion.manifestPath else null
             // 包数据
             val request = PackageVersionCreateRequest(
                 projectId = remoteProjectId,
@@ -167,13 +196,14 @@ class ClusterReplicator(
                 packageDescription = packageSummary.description,
                 versionName = packageVersion.name,
                 size = packageVersion.size,
-                manifestPath = packageVersion.manifestPath,
+                manifestPath = manifestPath,
                 artifactPath = packageVersion.contentPath,
                 stageTag = packageVersion.stageTag,
                 packageMetadata = packageMetadata,
                 extension = packageVersion.extension,
                 overwrite = true,
-                createdBy = packageVersion.createdBy
+                createdBy = SYSTEM_USER,
+                operator = SYSTEM_USER
             )
             artifactReplicaClient!!.replicaPackageVersionCreatedRequest(request)
         }
@@ -275,12 +305,41 @@ class ClusterReplicator(
         }
     }
 
+    override fun deleteNode(context: ReplicaContext, fullPath: String) {
+        with(context) {
+            retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) {
+                if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return
+                logger.info(
+                    "The deletion of node [$localProjectId/$localRepoName/$fullPath] " +
+                            "will sync to the remote repo [$remoteProjectId/$remoteRepoName]"
+                )
+                val nodeDeleteRequest = NodeDeleteRequest(
+                    projectId = remoteProjectId,
+                    repoName = remoteRepoName,
+                    fullPath = fullPath,
+                    operator = SYSTEM_USER
+                )
+                if (artifactReplicaClient!!.replicaNodeDeleteRequest(nodeDeleteRequest).isNotOk())
+                    throw RuntimeException(
+                        "request of deletion of node [$remoteProjectId/$remoteRepoName/$fullPath] failed!"
+                    )
+            }
+        }
+    }
+
     private fun buildNodeCreateRequest(context: ReplicaContext, node: NodeInfo): NodeCreateRequest? {
         with(context) {
             // 外部集群仓库没有project/repoName
             if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return null
             // 查询元数据
-            val metadata = if (task.setting.includeMetadata) node.nodeMetadata else emptyList()
+            val metadata = if (task.setting.includeMetadata) {
+                // filter system reserve metadata
+                node.nodeMetadata?.filter {
+                    it.key !in RESERVED_KEY
+                }
+            } else {
+                emptyList()
+            }
             return NodeCreateRequest(
                 projectId = remoteProjectId,
                 repoName = remoteRepoName,
@@ -291,11 +350,11 @@ class ClusterReplicator(
                 sha256 = node.sha256!!,
                 md5 = node.md5!!,
                 nodeMetadata = metadata,
-                operator = node.createdBy,
-                createdBy = node.createdBy,
-                createdDate = LocalDateTime.parse(node.createdDate, DateTimeFormatter.ISO_DATE_TIME),
-                lastModifiedBy = node.lastModifiedBy,
-                lastModifiedDate = LocalDateTime.parse(node.lastModifiedDate, DateTimeFormatter.ISO_DATE_TIME)
+                operator = SYSTEM_USER,
+                createdBy = SYSTEM_USER,
+                createdDate = LocalDateTime.now(),
+                lastModifiedBy = SYSTEM_USER,
+                lastModifiedDate = LocalDateTime.now()
             )
         }
     }

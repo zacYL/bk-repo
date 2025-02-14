@@ -41,6 +41,7 @@ import com.tencent.bkrepo.common.artifact.audit.NODE_DOWNLOAD_ACTION
 import com.tencent.bkrepo.common.artifact.audit.NODE_RESOURCE
 import com.tencent.bkrepo.common.artifact.audit.NODE_CREATE_ACTION
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
+import com.tencent.bkrepo.pypi.artifact.PypiPackageArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.service.PypiService
 import io.swagger.annotations.Api
@@ -119,7 +120,7 @@ class PypiResourceController(
         content = ActionAuditContent.NODE_DOWNLOAD_CONTENT
     )
     @GetMapping(PypiArtifactInfo.PYPI_PACKAGES_MAPPING_URI)
-    fun packages(artifactInfo: PypiArtifactInfo) {
+    fun packages(artifactInfo: PypiPackageArtifactInfo) {
         logger.info("packages pypi package: $artifactInfo")
         pypiService.packages(artifactInfo)
     }

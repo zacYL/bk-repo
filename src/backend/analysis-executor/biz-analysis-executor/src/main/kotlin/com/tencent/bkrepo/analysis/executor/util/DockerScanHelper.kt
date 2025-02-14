@@ -31,6 +31,7 @@ import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback.Adapter
 import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.Frame
+import com.github.dockerjava.api.model.HostConfig
 import com.tencent.bkrepo.analysis.executor.configuration.ScannerExecutorProperties
 import com.tencent.bkrepo.analysis.executor.pojo.ScanExecutorTask
 import com.tencent.bkrepo.common.analysis.pojo.scanner.utils.DockerUtils
@@ -39,6 +40,7 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.utils.DockerUtils.removeC
 import com.tencent.bkrepo.common.analysis.pojo.scanner.utils.DockerUtils.startContainer
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.net.InetAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
@@ -62,6 +64,7 @@ class DockerScanHelper(
         // 创建容器
         val maxFileSize = maxFileSize(scannerInputFile.length())
         val hostConfig = DockerUtils.dockerHostConfig(binds, maxFileSize, task.scanner.limitMem)
+        extraHosts(hostConfig)
         val containerId = dockerClient.createContainer(
             image = image,
             hostConfig = hostConfig,
@@ -86,6 +89,15 @@ class DockerScanHelper(
             taskContainerIdMap.remove(task.taskId)
             dockerClient.removeContainer(containerId, CommonUtils.buildLogMsg(task, "remove container failed"))
         }
+    }
+
+    private fun extraHosts(hostConfig: HostConfig) {
+        val host = scannerExecutorProperties.baseHost
+        if (host.isEmpty()) {
+            return
+        }
+        val address = InetAddress.getByName(host)
+        hostConfig.withExtraHosts("$host:${address.hostAddress}")
     }
 
     fun stop(taskId: String): Boolean {
@@ -129,7 +141,7 @@ class DockerScanHelper(
 
     companion object {
         private val logger = LoggerFactory.getLogger(DockerScanHelper::class.java)
-        private const val CONTAINER_LOG_LINES = 50
+        private const val CONTAINER_LOG_LINES = 5000
         private const val CONTAINER_LOG_TIMEOUT_SECONDS = 5L
     }
 }

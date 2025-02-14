@@ -27,10 +27,14 @@
 
 package com.tencent.bkrepo.common.artifact.repository.core
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import com.tencent.bk.audit.context.ActionAuditContext
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
 import com.tencent.bkrepo.common.artifact.event.ArtifactDownloadedEvent
 import com.tencent.bkrepo.common.artifact.event.ArtifactResponseEvent
@@ -38,11 +42,14 @@ import com.tencent.bkrepo.common.artifact.event.ArtifactUploadedEvent
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.event.packages.VersionDownloadEvent
+import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.metrics.ArtifactMetrics
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -54,12 +61,17 @@ import com.tencent.bkrepo.common.artifact.repository.redirect.DownloadRedirectMa
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.metadata.cpack.service.PackageAccessRuleService
+import com.tencent.bkrepo.common.metadata.service.log.OperateLogService
 import com.tencent.bkrepo.common.metadata.service.node.NodeSearchService
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.packages.PackageDownloadsService
 import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
+import com.tencent.bkrepo.common.metadata.service.whitelist.RemotePackageWhitelistService
+import com.tencent.bkrepo.common.metadata.service.whitelist.WhitelistSwitchService
+import com.tencent.bkrepo.common.metadata.util.PackageAccessRuleUtils.matchRule
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -68,18 +80,23 @@ import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.common.stream.event.supplier.MessageSupplier
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageAccessRule
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
-import java.util.Locale
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 /**
  * 构件仓库抽象类
  */
 // TooGenericExceptionCaught: 需要捕捉文件传输阶段网络、IO等无法预知的异常
 // LateinitUsage: AbstractArtifactRepository有大量子类，使用构造器注入将造成不便
-@Suppress("TooGenericExceptionCaught", "LateinitUsage")
+@Suppress("TooGenericExceptionCaught", "LateinitUsage", "TooManyFunctions")
 abstract class AbstractArtifactRepository : ArtifactRepository {
 
     @Autowired
@@ -116,10 +133,32 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     private lateinit var taskAsyncExecutor: ThreadPoolTaskExecutor
 
     @Autowired
+    lateinit var operateLogService: OperateLogService
+
+    @Autowired
     lateinit var messageSupplier: MessageSupplier
 
     @Autowired
     lateinit var redirectManager: DownloadRedirectManager
+
+    @Autowired
+    lateinit var whitelistSwitchService: WhitelistSwitchService
+
+    @Autowired
+    lateinit var remotePackageWhitelistService: RemotePackageWhitelistService
+
+    @Autowired
+    lateinit var packageAccessRuleService: PackageAccessRuleService
+
+    private val packageAccessRuleCache = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .refreshAfterWrite(30L, TimeUnit.SECONDS)
+        .expireAfterWrite(60L, TimeUnit.SECONDS)
+        .build(
+            CacheLoader.from<Pair<String, String>, List<PackageAccessRule>> {
+                packageAccessRuleService.getMatchedRules(it.first, it.second, null)
+            }
+        )
 
     override fun upload(context: ArtifactUploadContext) {
         try {
@@ -149,6 +188,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
             }
             this.onDownloadSuccess(context, artifactResponse, throughput)
         } catch (exception: ArtifactResponseException) {
+            context.response.status = exception.status.value
             val principal = SecurityUtils.getPrincipal()
             val artifactInfo = context.artifactInfo
             val message = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
@@ -190,6 +230,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 上传前回调
      */
     open fun onUploadBefore(context: ArtifactUploadContext) {
+        coverStrategy(context)
         artifactMetrics.uploadingCount.incrementAndGet()
     }
 
@@ -221,9 +262,39 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 下载前回调
      */
     open fun onDownloadBefore(context: ArtifactDownloadContext) {
+        with(context) {
+            if (repositoryDetail.type.supportPackage) {
+                checkPackageAccessRule(
+                    projectId,
+                    PackageType.valueOf(repositoryDetail.type.name),
+                    artifactInfo.getPackageFullName(),
+                    artifactInfo.getArtifactVersion()
+                )
+            }
+        }
         // 控制浏览器直接下载，或打开预览
         context.useDisposition = context.request.getParameter(PARAM_DOWNLOAD)?.toBoolean() ?: false
         artifactMetrics.downloadingCount.incrementAndGet()
+    }
+
+    /**
+     * 制品是否禁用
+     */
+    private fun isForbidden(context: ArtifactDownloadContext): Boolean {
+        nodeService.getNodeDetail(
+            ArtifactInfo(
+                context.artifactInfo.projectId,
+                context.artifactInfo.repoName,
+                context.artifactInfo.getArtifactFullPath()
+            )
+        )?.let {
+            it.nodeMetadata.forEach { meta ->
+                if (meta.key == FORBID_STATUS && meta.value == true) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     /**
@@ -231,6 +302,17 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      */
     open fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         throw MethodNotAllowedException()
+    }
+
+    open fun whitelistInterceptor(context: ArtifactDownloadContext) {
+        return
+    }
+
+    /**
+     * 仓库覆盖策略
+     */
+    open fun coverStrategy(context: ArtifactUploadContext) {
+        return
     }
 
     /**
@@ -241,10 +323,20 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         artifactResource: ArtifactResource,
         throughput: Throughput
     ) {
-        if (artifactResource.channel == ArtifactChannel.LOCAL) {
+        if (artifactResource.channel == ArtifactChannel.LOCAL ||
+            (
+                artifactResource.channel == ArtifactChannel.PROXY &&
+                context.repo.category != RepositoryCategory.COMPOSITE
+            )
+        ) {
             buildDownloadRecord(context, artifactResource)?.let {
-                taskAsyncExecutor.execute { packageDownloadsService.record(it) }
-                publishPackageDownloadEvent(context, it)
+                val packageVersion = packageService.findVersionByName(
+                    it.projectId, it.repoName, it.packageKey, it.packageVersion
+                )
+                if (packageVersion != null) {
+                    taskAsyncExecutor.execute { packageDownloadsService.record(it) }
+                    publishPackageDownloadEvent(context, it)
+                }
             }
         }
         if (throughput != Throughput.EMPTY) {
@@ -337,6 +429,62 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         return false
     }
 
+    fun downloadIntercept(context: ArtifactDownloadContext, node: NodeDetail?) {
+        node?.let { nodeDownloadIntercept(context, node) }
+        // TODO: node中统一存储packageName与version元数据后可移除此处的package下载拦截
+        if (context.getAndRemoveAttribute<Boolean>(PACKAGE_DOWNLOAD_INTERCEPTED_FLAG) == true) return
+        packageVersion(context, node)?.let { packageVersion -> packageDownloadIntercept(context, packageVersion) }
+    }
+
+    open fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        return null
+    }
+
+    /**
+     * 拦截node下载
+     */
+    protected fun nodeDownloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {
+        with(context) {
+            getNodeInterceptors().forEach { it.intercept(projectId, nodeDetail) }
+            // 拦截package下载
+            val packageKey = nodeDetail.packageName()?.let { PackageKeys.ofName(repo.type, it) }
+            val version = nodeDetail.packageVersion()
+            if (packageKey != null && version != null) {
+                packageService.findVersionByName(projectId, repoName, packageKey, version)?.let { packageVersion ->
+                    packageDownloadIntercept(context, packageVersion)
+                    putAttribute(PACKAGE_DOWNLOAD_INTERCEPTED_FLAG, true)
+                }
+            }
+        }
+    }
+
+    /**
+     * 拦截package下载
+     * TODO NODE中统一存储packageName与packageVersion元数据后可设置为private方法
+     */
+    fun packageDownloadIntercept(context: ArtifactDownloadContext, packageVersion: PackageVersion) {
+        context.getPackageInterceptors().forEach { it.intercept(context.projectId, packageVersion) }
+    }
+
+    protected fun checkPackageAccessRule(projectId: String, type: PackageType, fullName: String, version: String?) {
+        if (version.isNullOrBlank()) return
+        val (passRules, forbidRules) = packageAccessRuleCache.get(Pair(projectId, type.name))
+            .filter {
+                // filter Rule
+                if (fullName.contains(":")) {
+                    it.key.equals(fullName, ignoreCase = true) ||
+                            it.key.equals(fullName.substringBefore(":") + ":*", ignoreCase = true)
+                } else it.key.equals(fullName, ignoreCase = true)
+            }
+            .partition { it.pass }
+        passRules.forEach { if (matchRule(type, version, it.version, it.versionRuleType)) return }
+        forbidRules.forEach {
+            if (matchRule(type, version, it.version, it.versionRuleType)) {
+                throw ArtifactDownloadForbiddenException(projectId)
+            }
+        }
+    }
+
     private fun publishPackageDownloadEvent(context: ArtifactDownloadContext, record: PackageDownloadRecord) {
         if (context.repositoryDetail.type != RepositoryType.GENERIC) {
             val packageType = context.repositoryDetail.type.name
@@ -359,5 +507,6 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     companion object {
         private val logger = LoggerFactory.getLogger(AbstractArtifactRepository::class.java)
         private const val BINDING_OUT_NAME = "artifactEvent-out-0"
+        private const val PACKAGE_DOWNLOAD_INTERCEPTED_FLAG = "package_download_intercept_pass"
     }
 }

@@ -152,7 +152,7 @@
             </div>
         </div>
         <div slot="footer">
-            <bk-button @click.stop.prevent="cancel">{{ $t('cancel') }}</bk-button>
+            <bk-button @click.stop.prevent="btnCancel">{{ $t('cancel') }}</bk-button>
             <bk-button
                 class="ml10"
                 theme="primary"
@@ -206,6 +206,11 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'groupID',
                             trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
+                            trigger: 'blur'
                         }
                     ],
                     version: [
@@ -213,12 +218,22 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'Version',
                             trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
+                            trigger: 'blur'
                         }
                     ],
                     artifactId: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'artifactID',
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
                             trigger: 'blur'
                         }
                     ]
@@ -229,12 +244,22 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'Package Name',
                             trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
+                            trigger: 'blur'
                         }
                     ],
                     version: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'Version',
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
                             trigger: 'blur'
                         }
                     ]
@@ -380,6 +405,10 @@
                 this.uploadPercent = 0
                 this.currentFileName = ''
                 this.errorMsg = ''
+            },
+            btnCancel () {
+                this.onAbortUpload()
+                this.cancel()
             },
             cancel () {
                 this.$emit('cancel', false)

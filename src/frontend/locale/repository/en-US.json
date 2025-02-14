@@ -227,6 +227,7 @@
     "modify": "Modify",
     "chineseName": "Cn name",
     "userIdPlaceholder": "English letters, numbers, _, -,@, starting with a letter",
+    "fieldDescription": "This field only accepts uppercase and lowercase letters, numbers, and hyphens. No other characters are allowed.",
     "email": "Email",
     "deleteUserTitle": "Confirm user deletion {0} ?",
     "pwdPlaceholder": "8-32 characters in length, must contain uppercase and lowercase letters, numbers, and special characters (except spaces)",

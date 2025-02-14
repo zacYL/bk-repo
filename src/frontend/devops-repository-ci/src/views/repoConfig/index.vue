@@ -942,6 +942,12 @@
                         settings: {
                             system: this.repoBaseInfo.system,
                             interceptors: interceptors.length ? interceptors : undefined,
+                            // sbt settings 需要新增标识
+                            ...(this.$isSbt(this.repoBaseInfo)
+                                ? {
+                                    display_repo_type: 'sbt'
+                                }
+                                : {}),
                             ...(
                                 this.repoType === 'rpm'
                                     ? {

@@ -82,4 +82,5 @@ object Versions {
     const val Easyexcel = "4.0.3"
     const val Tika = "2.9.2"
     const val ivy = "2.5.2"
+    const val Xnio = "3.8.14.Final"
 }

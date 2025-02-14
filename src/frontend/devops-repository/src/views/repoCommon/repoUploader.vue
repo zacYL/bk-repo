@@ -206,6 +206,11 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'groupID',
                             trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
+                            trigger: 'blur'
                         }
                     ],
                     version: [
@@ -213,12 +218,22 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'Version',
                             trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
+                            trigger: 'blur'
                         }
                     ],
                     artifactId: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'artifactID',
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
                             trigger: 'blur'
                         }
                     ]
@@ -235,6 +250,11 @@
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'Version',
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
                             trigger: 'blur'
                         }
                     ]

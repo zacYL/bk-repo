@@ -135,8 +135,7 @@ open class AbstractNpmService : ArtifactService() {
 				it.readText().replace(tarballRegex) { matchRes ->
 					val originTarball = matchRes.groupValues[1]
 					val newTarball = NpmUtils.buildPackageTgzTarball(
-//						originTarball, npmProperties.domain, npmProperties.tarball.prefix,
-						originTarball, "http://localhost:25907", "http://localhost:25907",
+						originTarball, npmProperties.domain, npmProperties.tarball.prefix,
 						artifactInfo.packageName, artifactInfo
 					)
 					matchRes.value.replace(originTarball, newTarball)

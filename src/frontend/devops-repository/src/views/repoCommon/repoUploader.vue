@@ -244,6 +244,11 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'Package Name',
                             trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9-_]+$/,
+                            message: this.$t('fieldDescription'),
+                            trigger: 'blur'
                         }
                     ],
                     version: [

@@ -391,8 +391,15 @@
                         }
                     }
                 }).catch(error => {
-                    // error &&  this.errorMsg = error.message || error.error || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'
-                    this.errorMsg = error.message || error.error || error
+                    if (uploadType === 'pomUpload') {
+                        this.$bkMessage({
+                            theme: 'error',
+                            message: error?.message || this.$t('fileUploadErrorInfo')
+                        })
+                    } else {
+                        // error &&  this.errorMsg = error.message || error.error || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'
+                        this.errorMsg = error?.message || error?.error || error || this.$t('fileUploadErrorInfo')
+                    }
                 }).finally(() => {
                     this.isLoading = false
                 })

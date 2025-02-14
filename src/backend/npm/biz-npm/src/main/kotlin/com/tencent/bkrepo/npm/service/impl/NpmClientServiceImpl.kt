@@ -103,6 +103,7 @@ import com.tencent.bkrepo.npm.utils.BeanUtils
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.npm.utils.TimeUtil
 import com.tencent.bkrepo.repository.api.MetadataClient
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import org.apache.commons.codec.binary.Base64
@@ -575,12 +576,17 @@ class NpmClientServiceImpl(
         val version = versionMetadata.version.orEmpty()
         with(artifactInfo) {
             // 判断包版本是否存在 如果该版本先前发布过，也不让再次发布该版本
-            if (packageVersionExist(projectId, repoName, packageKey, version) ||
-                packageHistoryVersionExist(projectId, repoName, packageKey, version)) {
+            val coverStrategy = ArtifactContextHolder.getRepoDetailOrNull()?.coverStrategy ?: CoverStrategy.DISABLE
+            logger.info("projectId[$projectId] npm repo[$repoName] coverStrategy[$coverStrategy]")
+            if ((packageVersionExist(projectId, repoName, packageKey, version) ||
+                        packageHistoryVersionExist(projectId, repoName, packageKey, version)) &&
+                coverStrategy == CoverStrategy.UNCOVER) {
                 throw NpmArtifactExistException(
-                    "You cannot publish over the previously published versions: ${versionMetadata.version}."
+                    "You cannot publish over the previously published versions: ${versionMetadata.version}." +
+                            "projectId[$projectId] repo[$repoName] cover strategy uncover."
                 )
             }
+            logger.info("user [$userId] deploying npm package [$packageKey/$version] into repo [$projectId/$repoName]")
         }
 
         if (artifactFile == null) {

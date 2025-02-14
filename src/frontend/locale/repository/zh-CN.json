@@ -1136,6 +1136,7 @@
     "deleteProjectErrorInfo":"项目名称不匹配",
     "noProjectInfo":"您没有参与任何项目，请联系管理员为您关联项目",
     "noGenericDataUploadInfo":"你没有任何仓库的文件上传权限，无法{option}文件。",
+    "fileUploadErrorInfo": "服务器异常，文件上传失败",
     "moveOrCopy":"移动或复制",
     "clickInfo":"点击",
     "accessTokenPlaceholder":"请输入访问令牌，生成指引",

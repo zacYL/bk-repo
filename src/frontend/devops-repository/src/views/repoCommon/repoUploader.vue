@@ -152,7 +152,7 @@
             </div>
         </div>
         <div slot="footer">
-            <bk-button @click.stop.prevent="cancel">{{ $t('cancel') }}</bk-button>
+            <bk-button @click.stop.prevent="btnCancel">{{ $t('cancel') }}</bk-button>
             <bk-button
                 class="ml10"
                 theme="primary"
@@ -380,6 +380,10 @@
                 this.uploadPercent = 0
                 this.currentFileName = ''
                 this.errorMsg = ''
+            },
+            btnCancel () {
+                this.onAbortUpload()
+                this.cancel()
             },
             cancel () {
                 this.$emit('cancel', false)

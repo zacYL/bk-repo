@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
@@ -131,7 +132,8 @@ class NpmWebService(
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteVersion(userId: String, artifactInfo: ArtifactInfo) {
         with(artifactInfo as NpmArtifactInfo) {
-            val packageKey = NpmUtils.resolveNameByRepoType(packageName)
+            val repoType = ArtifactContextHolder.getRepoDetail()!!.type
+            val packageKey = NpmUtils.packageKey(packageName, repoType == RepositoryType.OHPM)
             val packageInfo = packageClient.findPackageByKey(projectId, repoName, packageKey).data
                 ?: throw PackageNotFoundException(packageKey)
             // 如果删除最后一个版本直接删除整个包

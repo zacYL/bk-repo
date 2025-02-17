@@ -50,8 +50,7 @@ const storeObject = {
             email: '',
             phone: '',
             admin: false,
-            manage: false,
-            displayName: ''
+            manage: false
         },
         domain: {
             docker: '',

@@ -228,7 +228,7 @@
     "modify": "修改",
     "chineseName": "中文名",
     "userIdPlaceholder": "英文字母、数字、_、-,@，以字母开头",
-    "fieldDescription": "该字段只接受大小写字母、数字和中划线。不允许使用其他字符。",
+    "fieldDescription": "该字段只接受大小写字母、数字、小数点和中划线，不允许使用其他字符，不能以小数点开头。",
     "email": "邮箱",
     "deleteUserTitle": "确认删除用户 {0} ?",
     "pwdPlaceholder": "长度8-32位，必须包含大小写字母、数字、特殊字符（除空格）",

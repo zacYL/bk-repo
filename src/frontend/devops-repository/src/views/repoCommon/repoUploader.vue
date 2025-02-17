@@ -208,7 +208,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9-_]+$/,
+                            regex: /^[a-zA-Z0-9-_]+(\.[a-zA-Z0-9-_]+)*$/,
                             message: this.$t('fieldDescription'),
                             trigger: 'blur'
                         }
@@ -220,7 +220,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9-_]+$/,
+                            regex: /^[a-zA-Z0-9-_]+(\.[a-zA-Z0-9-_]+)*$/,
                             message: this.$t('fieldDescription'),
                             trigger: 'blur'
                         }
@@ -232,7 +232,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9-_]+$/,
+                            regex: /^[a-zA-Z0-9-_]+(\.[a-zA-Z0-9-_]+)*$/,
                             message: this.$t('fieldDescription'),
                             trigger: 'blur'
                         }
@@ -246,7 +246,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9-_]+$/,
+                            regex: /^[a-zA-Z0-9-_]+(\.[a-zA-Z0-9-_]+)*$/,
                             message: this.$t('fieldDescription'),
                             trigger: 'blur'
                         }
@@ -258,7 +258,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9-_]+$/,
+                            regex: /^[a-zA-Z0-9-_]+(\.[a-zA-Z0-9-_]+)*$/,
                             message: this.$t('fieldDescription'),
                             trigger: 'blur'
                         }

@@ -46,22 +46,24 @@ class NpmPackageNodeMapper : PackageNodeMapper {
         packageVersion: PackageVersion,
         type: RepositoryType
     ): List<String> {
+        val extension: String
         val name = if (type == RepositoryType.OHPM) {
+            extension = "tgz"
             PackageKeys.resolveOhpm(packageSummary.key)
         } else {
+            extension = "har"
             PackageKeys.resolveNpm(packageSummary.key)
         }
         val version = packageVersion.name
-        //todo ohpm文件后缀兼容
         return listOf(
-            NPM_PKG_TGZ_FULL_PATH.format(name, name, version),
+            NPM_PKG_TGZ_FULL_PATH.format(name, name, version, extension),
             NPM_PKG_VERSION_METADATA_FULL_PATH.format(name, name, version),
             NPM_PKG_METADATA_FULL_PATH.format(name)
         )
     }
 
     companion object {
-        const val NPM_PKG_TGZ_FULL_PATH = "/%s/-/%s-%s.tgz"
+        const val NPM_PKG_TGZ_FULL_PATH = "/%s/-/%s-%s.%s"
         const val NPM_PKG_VERSION_METADATA_FULL_PATH = "/.npm/%s/%s-%s.json"
         const val NPM_PKG_METADATA_FULL_PATH = "/.npm/%s/package.json"
     }

@@ -125,7 +125,7 @@ export default {
                         main: [
                             {
                                 subTitle: this.$t('dockerPushGuideSubTitle1'),
-                                codeList: [`docker tag ${this.dependInputValue3 || '<LOCAL_IMAGE_TAG>'} ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
+                                codeList: [`docker tag ${this.dependInputValue3 || '<IMAGE_ID>'} ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
                             },
                             {
                                 subTitle: this.$t('dockerPushGuideSubTitle2'),
@@ -613,7 +613,7 @@ export default {
                             subTitle: this.$t('ivyCreditGuideSubTitle1'),
                             codeList: [
                                 '<ivysettings>',
-                                `   <credentials host="${location.host}" realm="Authentication Required" 
+                                `   <credentials host="${location.host}" realm="Authentication Required"
     username="${this.userName || 'userId'}" passwd="${this.accessToken || 'PERSONAL_ACCESS_TOKEN'}"/>`,
                                 '</ivysettings>'
                             ]
@@ -665,16 +665,16 @@ export default {
                 const obj = findTargetObj(this.metadataDataList, 'qualifiedExtraAttributes', 'key')?.value || {}
                 return Object.keys(obj).map(key => `${key}="${obj[key]}"`).join(' ')
             }
-            
+
             const getDependencyCode = () => {
                 const org = findTargetObj(this.metadataDataList, 'org', 'key')?.value || ''
                 const name = findTargetObj(this.metadataDataList, 'name', 'key')?.value || ''
                 const rev = findTargetObj(this.metadataDataList, 'rev', 'key')?.value || ''
                 const branch = findTargetObj(this.metadataDataList, 'branch', 'key')?.value || ''
-            
+
                 return `<dependency org="${org}" name="${name}" rev="${rev}" ${branch ? `branch="${branch}" ` : ''}${getQualifiedExtraAttributesText()} />`
             }
-            
+
             return [
                 {
                     main: [

@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
 import com.tencent.bkrepo.common.metadata.dao.repo.RepositoryDao
+import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.pojo.node.NodeRestoreOption
 import com.tencent.bkrepo.common.metadata.pojo.node.NodeRestoreRequest
 import com.tencent.bkrepo.common.metadata.pojo.node.RestoreContext
@@ -92,6 +93,7 @@ class EdgeNodeServiceImpl(
     override val routerControllerProperties: RouterControllerProperties,
     override val blockNodeService: BlockNodeService,
     override val projectService: ProjectService,
+    override val permissionManager: PermissionManager,
     val archiveClient: ArchiveClient,
 ) : EdgeNodeBaseService(
     nodeDao,
@@ -106,7 +108,8 @@ class EdgeNodeServiceImpl(
     routerControllerProperties,
     blockNodeService,
     projectService,
-    clusterProperties
+    permissionManager,
+    clusterProperties,
 ) {
     override fun countFileNodeByList(projectId: String, repoName: String, fullPathList: List<String>): Long {
         return NodeStatsSupport(this).countFileNodeByList(projectId, repoName, fullPathList)

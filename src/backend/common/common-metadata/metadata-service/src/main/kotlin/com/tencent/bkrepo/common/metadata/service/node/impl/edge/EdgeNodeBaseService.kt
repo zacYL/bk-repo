@@ -42,6 +42,7 @@ import com.tencent.bkrepo.repository.api.cluster.ClusterNodeClient
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
 import com.tencent.bkrepo.common.metadata.model.TNode
+import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateAccessDateRequest
@@ -63,6 +64,7 @@ abstract class EdgeNodeBaseService(
     override val routerControllerProperties: RouterControllerProperties,
     override val blockNodeService: BlockNodeService,
     override val projectService: ProjectService,
+    override val permissionManager: PermissionManager,
     open val clusterProperties: ClusterProperties,
 ) : NodeBaseService(
     nodeDao,
@@ -76,7 +78,8 @@ abstract class EdgeNodeBaseService(
     routerControllerClient,
     routerControllerProperties,
     blockNodeService,
-    projectService
+    projectService,
+    permissionManager,
 ) {
 
     val centerNodeClient: ClusterNodeClient by lazy {

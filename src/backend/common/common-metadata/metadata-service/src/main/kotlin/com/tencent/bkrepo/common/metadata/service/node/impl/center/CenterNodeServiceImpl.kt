@@ -42,6 +42,7 @@ import com.tencent.bkrepo.common.metadata.dao.repo.RepositoryDao
 import com.tencent.bkrepo.common.metadata.model.TMetadata
 import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.common.metadata.model.TRepository
+import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.pojo.node.RestoreContext
 import com.tencent.bkrepo.common.metadata.service.blocknode.BlockNodeService
 import com.tencent.bkrepo.common.metadata.service.file.FileReferenceService
@@ -88,6 +89,7 @@ class CenterNodeServiceImpl(
     override val routerControllerProperties: RouterControllerProperties,
     override val blockNodeService: BlockNodeService,
     override val projectService: ProjectService,
+    override val permissionManager: PermissionManager,
     val clusterProperties: ClusterProperties,
     val archiveClient: ArchiveClient,
 ) : NodeServiceImpl(
@@ -103,6 +105,7 @@ class CenterNodeServiceImpl(
     routerControllerProperties,
     blockNodeService,
     projectService,
+    permissionManager,
     archiveClient,
 ) {
 

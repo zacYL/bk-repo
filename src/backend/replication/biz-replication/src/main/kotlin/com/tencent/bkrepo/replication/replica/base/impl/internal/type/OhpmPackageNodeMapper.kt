@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2025 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -29,14 +29,16 @@ package com.tencent.bkrepo.replication.replica.base.impl.internal.type
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.replication.replica.base.impl.internal.type.NpmPackageNodeMapper.Companion.NPM_PKG_METADATA_FULL_PATH
+import com.tencent.bkrepo.replication.replica.base.impl.internal.type.NpmPackageNodeMapper.Companion.NPM_PKG_VERSION_METADATA_FULL_PATH
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.springframework.stereotype.Component
 
 @Component
-class NpmPackageNodeMapper : PackageNodeMapper {
+class OhpmPackageNodeMapper : PackageNodeMapper {
 
-    override fun type() = RepositoryType.NPM
+    override fun type() = RepositoryType.OHPM
     override fun extraType(): RepositoryType? {
         return null
     }
@@ -46,18 +48,16 @@ class NpmPackageNodeMapper : PackageNodeMapper {
         packageVersion: PackageVersion,
         type: RepositoryType
     ): List<String> {
-        val name = PackageKeys.resolveNpm(packageSummary.key)
+        val name = PackageKeys.resolveOhpm(packageSummary.key)
         val version = packageVersion.name
         return listOf(
-            NPM_PKG_TGZ_FULL_PATH.format(name, name, version),
+            OHPM_PKG_HAR_FULL_PATH.format(name, name, version),
             NPM_PKG_VERSION_METADATA_FULL_PATH.format(name, name, version),
             NPM_PKG_METADATA_FULL_PATH.format(name)
         )
     }
 
     companion object {
-        const val NPM_PKG_TGZ_FULL_PATH = "/%s/-/%s-%s.tgz"
-        const val NPM_PKG_VERSION_METADATA_FULL_PATH = "/.npm/%s/%s-%s.json"
-        const val NPM_PKG_METADATA_FULL_PATH = "/.npm/%s/package.json"
+        const val OHPM_PKG_HAR_FULL_PATH = "/%s/-/%s-%s.har"
     }
 }

@@ -32,4 +32,5 @@ dependencies {
     api("com.tencent.devops:devops-pulsar")
     api("commons-io:commons-io")
     api("net.jodah:typetools:0.6.2")
+    api("org.springframework.cloud:spring-cloud-starter-stream-rabbit")
 }

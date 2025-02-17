@@ -92,7 +92,7 @@ class UserPackageMetadataController(
                 repoName = repoName,
                 packageKey = packageKey,
                 version = version,
-                versionMetadata = metadataSaveRequest.versionMetadata,
+                versionMetadata = metadataSaveRequest.versionMetadata?.map { it.copy(system = false) },
                 metadata = metadataSaveRequest.metadata,
                 operator = userId
             )
@@ -165,28 +165,6 @@ class UserPackageMetadataController(
             )
         }
         packageMetadataService.deleteMetadata(request)
-        return ResponseBuilder.success()
-    }
-
-    @ApiOperation("保存元数据")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
-    @PostMapping("/{projectId}/{repoName}")
-    fun saveMetadata(
-        @RequestAttribute userId: String,
-        @PathVariable projectId: String,
-        @PathVariable repoName: String,
-        @RequestBody metadataSaveRequest: UserPackageMetadataSaveRequest
-    ): Response<Void> {
-        val request = with(metadataSaveRequest) {
-            PackageMetadataSaveRequest(
-                projectId = projectId,
-                repoName = repoName,
-                packageKey = packageKey,
-                version = version,
-                versionMetadata = metadataSaveRequest.versionMetadata?.map { it.copy(system = false) }
-            )
-        }
-        packageMetadataService.saveMetadata(request)
         return ResponseBuilder.success()
     }
 }

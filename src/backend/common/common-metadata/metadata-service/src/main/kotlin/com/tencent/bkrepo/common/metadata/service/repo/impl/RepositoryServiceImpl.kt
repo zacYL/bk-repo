@@ -29,12 +29,9 @@ package com.tencent.bkrepo.common.metadata.service.repo.impl
 
 import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
-import com.tencent.bkrepo.common.api.constant.HttpHeaders
-import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.api.util.AuthenticationUtil
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
@@ -54,9 +51,7 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfig
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.dao.repo.RepositoryDao
-import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.common.metadata.model.TRepository
-import com.tencent.bkrepo.common.metadata.service.node.NodeSearchService
 import com.tencent.bkrepo.common.metadata.service.project.ProjectService
 import com.tencent.bkrepo.common.metadata.service.recycle.RecycleBinService
 import com.tencent.bkrepo.common.metadata.service.repo.ProxyChannelService
@@ -90,8 +85,6 @@ import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion
 import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.enums.OperationType
-import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.cluster.condition.DefaultCondition
@@ -100,8 +93,6 @@ import com.tencent.bkrepo.common.stream.event.supplier.MessageSupplier
 import com.tencent.bkrepo.repository.constant.SYSTEM_REPO
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
-import com.tencent.bkrepo.repository.pojo.repo.ConnectionStatusInfo
-import com.tencent.bkrepo.repository.pojo.repo.RemoteUrlRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
@@ -124,9 +115,6 @@ import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.net.SocketTimeoutException
-import java.net.URL
-import java.net.UnknownHostException
 import java.time.LocalDateTime
 
 /**
@@ -138,7 +126,6 @@ import java.time.LocalDateTime
 class RepositoryServiceImpl(
     val repositoryDao: RepositoryDao,
     private val projectService: ProjectService,
-    private val nodeSearchService: NodeSearchService,
     private val recycleBinService: RecycleBinService,
     private val storageCredentialService: StorageCredentialService,
     private val proxyChannelService: ProxyChannelService,
@@ -811,31 +798,6 @@ class RepositoryServiceImpl(
                     params = arrayOf("rule", "reserveDays must be an integer")
                 )
             }
-        }
-    }
-
-    /**
-     * 检查页面填写的【目录】 在当前 projectId  repoName 是否存在
-     */
-    @Deprecated("")
-    private fun checkPath(queryRule: Rule.QueryRule, projectId: String, repoName: String) {
-        if (queryRule.field == TNode::path.name) {
-            val path = queryRule.value.toString()
-            if (path == "/") return
-            val projectIdRule = Rule.QueryRule(TNode::projectId.name, projectId)
-            val repoNameRule = Rule.QueryRule(TNode::repoName.name, repoName)
-            val folderRule = Rule.QueryRule(TNode::folder.name, true)
-            val fullPathRule = Rule.QueryRule(TNode::fullPath.name, path)
-            val queryFullPath = Rule.NestedRule(mutableListOf(projectIdRule, repoNameRule, folderRule, fullPathRule))
-            val queryModel = QueryModel(
-                page = PageLimit(1, DEFAULT_PAGE_SIZE),
-                sort = null,
-                select = null,
-                rule = queryFullPath
-            )
-            val queryResult = nodeSearchService.search(queryModel).records
-            if (queryResult == null || queryResult.isEmpty())
-                throw ErrorCodeException(CommonMessageCode.DIRECTORY_NOT_EXIST, path)
         }
     }
 

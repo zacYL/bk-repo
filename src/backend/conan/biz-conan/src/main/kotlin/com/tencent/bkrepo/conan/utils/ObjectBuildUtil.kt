@@ -30,11 +30,13 @@ package com.tencent.bkrepo.conan.utils
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_TYPE
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.conan.constant.CHANNEL
 import com.tencent.bkrepo.conan.constant.DEFAULT_REVISION_V1
+import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.NAME
 import com.tencent.bkrepo.conan.constant.REVISION
 import com.tencent.bkrepo.conan.constant.USERNAME
@@ -57,6 +59,7 @@ import com.tencent.bkrepo.conan.utils.ConanPathUtils.buildReferenceWithoutVersio
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.getPackageRevisionsFile
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.getRecipeRevisionsFile
 import com.tencent.bkrepo.conan.utils.TimeFormatUtil.convertToUtcTime
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
@@ -184,10 +187,10 @@ object ObjectBuildUtil {
                 refStr = refStr,
                 operator = userId,
                 revision = revision ?: DEFAULT_REVISION_V1,
-                dateStr = convertToUtcTime(LocalDateTime.now()),
                 pRefStr = pRefStr,
                 pRevPath = pRevPath,
-                pRevision = pRevision
+                pRevision = pRevision,
+                dateStr = convertToUtcTime(LocalDateTime.now()),
             )
         }
     }
@@ -277,6 +280,23 @@ object ObjectBuildUtil {
                 lastModifiedBy = lastModifiedBy,
                 lastModifiedDate = lastModifiedDate
             )
+        }
+    }
+
+
+    fun buildDownloadRecordRequest(context: ArtifactDownloadContext): PackageDownloadRecord? {
+        with(context) {
+            val conanArtifactInfo = artifactInfo as ConanArtifactInfo
+            val fullPath = PathUtils.generateFullPath(conanArtifactInfo)
+            return if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
+                PackageDownloadRecord(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = PackageKeys.ofConan(conanArtifactInfo.name),
+                    packageVersion = conanArtifactInfo.version,
+                    userId = userId
+                )
+            } else null
         }
     }
 }

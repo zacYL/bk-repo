@@ -72,7 +72,7 @@ class ConanVirtualRepository : VirtualRepository() {
         val repoList = virtualConfiguration.repositoryList
         // 分隔出本地仓库和远程仓库
         val repoCategoryMap = repoList.map {
-            repositoryClient.getRepoDetail(context.projectId, it.name).data!!
+            repositoryService.getRepoDetail(context.projectId, it.name)!!
         }.groupBy { it.category }
 
         val recipeRepoMap = mutableMapOf<String, String>()
@@ -119,7 +119,7 @@ class ConanVirtualRepository : VirtualRepository() {
                 redisOperation.get(it)
             }?.let { it ->
                 logger.info("recipe $cacheKey is in cache, redirect to repo $it")
-                val subRepoDetail = repositoryClient.getRepoDetail(repo.projectId, it).data!!
+                val subRepoDetail = repositoryService.getRepoDetail(repo.projectId, it)!!
                 val repository = ArtifactContextHolder.getRepository(subRepoDetail.category)
                 val subContext = generateSubContext(context, subRepoDetail)
                 require(subContext is ArtifactDownloadContext)

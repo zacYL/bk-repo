@@ -115,7 +115,9 @@ class ConanLocalRepository : LocalRepository() {
             commonService.getNodeDetail(projectId, repoName, PathUtils.buildReference(conanFileReference))
             return commonService.getLastRevision(projectId, repoName, conanFileReference)
                 ?: throw ConanFileNotFoundException(
-                    ConanMessageCode.CONAN_FILE_NOT_FOUND, PathUtils.buildReference(conanFileReference), getRepoIdentify()
+                    ConanMessageCode.CONAN_FILE_NOT_FOUND,
+                    PathUtils.buildReference(conanFileReference),
+                    getRepoIdentify()
                 )
         }
     }
@@ -161,25 +163,31 @@ class ConanLocalRepository : LocalRepository() {
      */
     override fun onUploadSuccess(context: ArtifactUploadContext) {
         super.onUploadSuccess(context)
-        val fullPath = generateFullPath(context.artifactInfo as ConanArtifactInfo)
-        val artifactInfo = context.artifactInfo as ConanArtifactInfo
+        handleConanArtifactUpload(
+            context.artifactInfo as ConanArtifactInfo, context.userId, context.getArtifactFile().getSize()
+        )
+    }
+
+
+    fun handleConanArtifactUpload(artifactInfo: ConanArtifactInfo, userId: String, size: Long = 0) {
+        val fullPath = generateFullPath(artifactInfo)
         if (fullPath.endsWith(CONAN_MANIFEST) && artifactInfo.packageId.isNullOrEmpty()) {
             //  package version size 为manifest文件大小
             createVersion(
                 artifactInfo = artifactInfo,
-                userId = context.userId,
-                size = context.getArtifactFile().getSize()
+                userId = userId,
+                size = size
             )
             publishEvent(
                 ConanRecipeUploadEvent(
-                    ObjectBuildUtil.buildConanRecipeUpload(artifactInfo, context.userId)
+                    ObjectBuildUtil.buildConanRecipeUpload(artifactInfo, userId)
                 )
             )
         }
         if (fullPath.endsWith(CONAN_MANIFEST) && !artifactInfo.packageId.isNullOrEmpty()) {
             publishEvent(
                 ConanPackageUploadEvent(
-                    ObjectBuildUtil.buildConanPackageUpload(artifactInfo, context.userId)
+                    ObjectBuildUtil.buildConanPackageUpload(artifactInfo, userId)
                 )
             )
         }
@@ -188,7 +196,7 @@ class ConanLocalRepository : LocalRepository() {
     /**
      * 创建包版本
      */
-    fun createVersion(
+    private fun createVersion(
         userId: String,
         artifactInfo: ConanArtifactInfo,
         size: Long,
@@ -226,6 +234,7 @@ class ConanLocalRepository : LocalRepository() {
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context.artifactInfo as ConanArtifactInfo) {
             val fullPath = generateFullPath(this)
+            context.getFullPathInterceptors().forEach { it.intercept(projectId, fullPath) }
             logger.info("File $fullPath will be downloaded in repo $projectId|$repoName")
             val node = nodeService.getNodeDetail(ArtifactInfo(context.projectId, context.repoName, fullPath))
             node?.let {

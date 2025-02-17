@@ -5,13 +5,13 @@ import com.tencent.bkrepo.common.api.pojo.ClusterNodeType
 import com.tencent.bkrepo.common.metadata.aop.LogOperateAspect
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.dao.log.OperateLogDao
+import com.tencent.bkrepo.common.metadata.dao.log.OperateLogMigrateDao
 import com.tencent.bkrepo.common.metadata.interceptor.ProjectUsageStatisticsInterceptor
 import com.tencent.bkrepo.common.metadata.properties.OperateProperties
 import com.tencent.bkrepo.common.metadata.properties.ProjectUsageStatisticsProperties
 import com.tencent.bkrepo.common.metadata.service.log.impl.CommitEdgeOperateLogServiceImpl
 import com.tencent.bkrepo.common.metadata.service.log.impl.OperateLogServiceImpl
 import com.tencent.bkrepo.common.metadata.service.project.ProjectUsageStatisticsService
-import com.tencent.bkrepo.common.operate.service.dao.OperateLogMigrateDao
 import com.tencent.bkrepo.common.service.cluster.properties.ClusterProperties
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty

@@ -74,6 +74,9 @@ class ProxyChannelServiceImpl(
                 tProxyChannel.url = url
                 tProxyChannel.username = username
                 tProxyChannel.password = pw
+                tProxyChannel.networkProxy = networkProxy
+                tProxyChannel.connectTimeout = connectTimeout
+                tProxyChannel.readTimeout = readTimeout
                 proxyChannelDao.save(tProxyChannel)
             }
         }

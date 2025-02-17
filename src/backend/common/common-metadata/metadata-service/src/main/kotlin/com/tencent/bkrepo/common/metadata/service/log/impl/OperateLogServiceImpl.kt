@@ -47,7 +47,7 @@ import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.getEventL
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.match
 import com.tencent.bkrepo.common.metadata.util.OperateLogServiceHelper.transfer
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
-import com.tencent.bkrepo.common.operate.service.dao.OperateLogMigrateDao
+import com.tencent.bkrepo.common.metadata.dao.log.OperateLogMigrateDao
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query

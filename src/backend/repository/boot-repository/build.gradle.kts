@@ -1,3 +1,5 @@
+import com.tencent.devops.utils.findPropertyOrNull
+
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
@@ -31,5 +33,7 @@
 
 dependencies {
     implementation(project(":repository:biz-repository"))
-    implementation(project(":common:common-license-canway"))
+    if (findPropertyOrNull("canway.lse.enable").toBoolean()) {
+        implementation(project(":common:common-license-canway"))
+    }
 }

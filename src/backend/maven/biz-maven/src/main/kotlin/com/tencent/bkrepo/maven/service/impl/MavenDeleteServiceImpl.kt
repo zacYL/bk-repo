@@ -44,7 +44,7 @@ class MavenDeleteServiceImpl(
         packageClient.deleteVersion(projectId, repoName, packageKey, version)
         val artifactPath = MavenUtil.extractPath(packageKey) + "/$version"
         // 需要删除对应的metadata表记录
-        val (artifactId, groupId) = MavenUtil.extractGrounpIdAndArtifactId(packageKey)
+        val (artifactId, groupId) = MavenUtil.extractGroupIdAndArtifactId(packageKey)
         val mavenGAVC = MavenGAVC(groupId, artifactId, version, null)
         mavenMetadataService.delete(projectId, repoName, mavenGAVC)
         val request = NodeDeleteRequest(

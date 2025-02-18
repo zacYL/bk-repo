@@ -29,8 +29,13 @@ package com.tencent.bkrepo.maven.service.impl
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
+import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
+import com.tencent.bkrepo.common.artifact.manager.StorageManager
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -330,7 +335,7 @@ class MavenServiceImpl(
     private fun updateMetadata(repo: RepositoryDetail, model: Model) {
         // 查询maven-metadata.xml是否存在
         val metadataPath = model.toMetadataUri()
-        val metadataNode = nodeService.getNodeDetail(repo.projectId, repo.name, metadataPath).data
+        val metadataNode = nodeService.getNodeDetail(MavenArtifactInfo(repo.projectId, repo.name, metadataPath))
         val mavenMetadata = if (metadataNode != null) {
             val metadata = storageManager.loadArtifactInputStream(metadataNode, null)?.use { inputStream ->
                 MetadataXpp3Reader().read(inputStream)

@@ -76,6 +76,12 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
         return findOne(Query(criteria))
     }
 
+    fun findTasksByName(name: String,type:String): TBackupTask? {
+        val criteria = Criteria().and(TBackupTask::name.name).isEqualTo(name)
+        criteria.and(TBackupTask::type.name).isEqualTo(type)
+        return findOne(Query(criteria))
+    }
+
     fun find(option: BackupTaskOption, pageRequest: PageRequest): List<TBackupTask> {
         with(option) {
             val criteria = Criteria()

@@ -13,4 +13,6 @@ interface DataBackupService {
     fun executeTask(taskId: String)
 
     fun findTasks(option: BackupTaskOption, pageRequest: PageRequest): Page<BackupTask>
+
+    fun getTaskDetail(taskId: String): BackupTask
 }

@@ -279,6 +279,7 @@ class BackupNodeDataHandler(
                 .and(BackupNodeInfo::projectId.name).isEqualTo(record.projectId)
                 .and(BackupNodeInfo::fullPath.name).isEqualTo(record.fullPath)
                 .and(BackupNodeInfo::id.name).isEqualTo(record.id)
+                .and(BackupNodeInfo::deleted.name).isEqualTo(null)
         )
     }
 

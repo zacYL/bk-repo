@@ -71,9 +71,16 @@ class DataBackupServiceImpl(
         return Pages.ofResponse(pageRequest, count, records)
     }
 
+    override fun getTaskDetail(taskId: String): BackupTask {
+        return backupTaskDao.findTasksById(taskId)?.toDto() ?: throw BadRequestException(
+            CommonMessageCode.PARAMETER_INVALID,
+            "taskId"
+        )
+    }
+
     private fun contentCheck(request: BackupTaskRequest) {
         with(request) {
-
+            duplicateNameCheck(request.name,request.type)
             if (content == null || content!!.projects.isNullOrEmpty()) {
                 logger.warn("backup content [$content] is illegal!")
                 throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, BackupTaskRequest::content.name)
@@ -130,6 +137,14 @@ class DataBackupServiceImpl(
             lastModifiedBy = SecurityUtils.getUserId(),
             backupSetting = request.backupSetting
         )
+    }
+
+    private fun duplicateNameCheck(name: String, type: String) {
+        if (type== DATA_RECORDS_BACKUP){
+            if (backupTaskDao.findTasksByName(name, type) != null) {
+                throw BadRequestException(CommonMessageCode.RESOURCE_EXISTED, name)
+            }
+        }
     }
 
     companion object {

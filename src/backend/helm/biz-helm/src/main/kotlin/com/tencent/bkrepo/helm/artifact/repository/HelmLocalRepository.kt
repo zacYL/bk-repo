@@ -123,11 +123,16 @@ class HelmLocalRepository(
             if (fullPath != HelmUtils.getIndexCacheYamlFullPath()) {
                 helmOperationService.checkNodePermission(fullPath)
             }
-            val isExist = nodeService.checkExist(ArtifactInfo(projectId, repoName, fullPath))
+	    val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, fullPath))
             val isOverwrite = isOverwrite(fullPath, isForce)
             putAttribute(OVERWRITE, isOverwrite)
-            if (isExist && !isOverwrite) {
+            if (node !=null && !isOverwrite) {
                 throw HelmFileAlreadyExistsException(HelmMessageCode.HELM_FILE_ALREADY_EXISTS, fullPath.trimStart('/'))
+            }
+            // TODO: 需要抽象处理
+            node?.let {
+                uploadIntercept(context, node)
+                packageVersion(context, node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
             }
         }
     }
@@ -177,6 +182,7 @@ class HelmLocalRepository(
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         val fullPath = context.getStringAttribute(FULL_PATH)!!
+        context.getFullPathInterceptors().forEach { it.intercept(context.projectId, fullPath) }
         context.artifactInfo.setArtifactMappingUri(fullPath)
         val node = ArtifactContextHolder.getNodeDetail(context.artifactInfo)
         node?.let {

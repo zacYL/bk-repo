@@ -1,18 +1,21 @@
-package com.tencent.bkrepo.repository.listener
+package com.tencent.bkrepo.common.metadata.listener
 
 import com.tencent.bkrepo.common.artifact.event.packages.VersionCreatedEvent
 import com.tencent.bkrepo.common.artifact.event.packages.VersionDownloadEvent
 import com.tencent.bkrepo.common.artifact.event.packages.VersionUpdatedEvent
+import com.tencent.bkrepo.common.metadata.condition.SyncCondition
+import com.tencent.bkrepo.common.metadata.dao.packages.PackageUploadsDao
+import com.tencent.bkrepo.common.metadata.model.TPackageUploadRecord
 import com.tencent.bkrepo.common.metadata.service.packages.PackageDownloadsService
-import com.tencent.bkrepo.repository.dao.PackageUploadsDao
-import com.tencent.bkrepo.repository.model.TPackageUploadRecord
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import org.springframework.context.annotation.Conditional
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 
 @Component
+@Conditional(SyncCondition::class)
 class VersionTransferListener(
     private val packageUploadsDao: PackageUploadsDao,
     private val packageDownloadsService: PackageDownloadsService

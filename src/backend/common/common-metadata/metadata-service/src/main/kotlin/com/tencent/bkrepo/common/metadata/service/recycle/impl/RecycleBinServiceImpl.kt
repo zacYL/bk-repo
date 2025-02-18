@@ -2,6 +2,7 @@ package com.tencent.bkrepo.common.metadata.service.recycle.impl
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ROOT_DELETED_NODE
+import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
 import com.tencent.bkrepo.common.metadata.model.TMetadata
 import com.tencent.bkrepo.common.metadata.model.TNode
@@ -10,6 +11,7 @@ import com.tencent.bkrepo.common.metadata.util.MetadataUtils.buildExpiredDeleted
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeDeletedPointQuery
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeDeletedQuery
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeTreeCriteria
+import org.springframework.context.annotation.Conditional
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.isEqualTo
@@ -19,6 +21,7 @@ import java.time.Instant
 import java.time.ZoneId
 
 @Service
+@Conditional(SyncCondition::class)
 class RecycleBinServiceImpl(
     private val nodeDao: NodeDao
 ) : RecycleBinService {

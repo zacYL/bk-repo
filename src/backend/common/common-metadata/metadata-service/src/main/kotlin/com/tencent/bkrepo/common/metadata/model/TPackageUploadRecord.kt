@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.model
+package com.tencent.bkrepo.common.metadata.model
 
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes

@@ -102,7 +102,6 @@ allprojects {
             }
             dependency("org.springframework:spring-webmvc:${Versions.SpringWebmvc}")
             dependency("org.springframework:spring-beans:${Versions.SpringBeans}")
-            dependency("org.springframework:spring-web:${Versions.SpringWeb}")
             dependencySet("org.springframework.boot:${Versions.SpringBootAutoconfigure}") {
                 entry("spring-boot-autoconfigure")
                 entry("spring-boot-actuator-autoconfigure")

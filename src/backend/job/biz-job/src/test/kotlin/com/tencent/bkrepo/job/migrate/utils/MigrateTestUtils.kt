@@ -87,6 +87,7 @@ object MigrateTestUtils {
         used = null,
         oldCredentialsKey = oldCredentialsKey,
         storageCredentials = storageCredentials,
+        coverStrategy = null,
     )
 
     fun MigrateFailedNodeDao.insertFailedNode(fullPath: String = "/a/b/c.txt"): TMigrateFailedNode {

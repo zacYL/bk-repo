@@ -36,6 +36,7 @@ import com.tencent.bkrepo.common.artifact.constant.PAAS_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.query.enums.OperationType
@@ -48,11 +49,13 @@ import com.tencent.bkrepo.common.query.model.Rule.QueryRule
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
+import org.springframework.context.annotation.Conditional
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.stereotype.Component
 
 @Component
+@Conditional(SyncCondition::class)
 class ProjectIdRuleInterceptor(
     private val nodePermissionService: NodePermissionService,
     private val repositoryService: RepositoryService,

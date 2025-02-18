@@ -47,8 +47,10 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.AuthenticationUtil
 import com.tencent.bkrepo.common.api.util.BasicAuthUtils
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
@@ -62,7 +64,6 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
-import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.innercos.http.HttpMethod
 import com.tencent.bkrepo.oci.constant.CATALOG_REQUEST
@@ -100,17 +101,17 @@ import com.tencent.bkrepo.oci.util.OciResponseUtils
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import java.io.InputStream
+import java.net.URL
+import java.util.concurrent.TimeUnit
+import java.util.regex.Pattern
+import javax.ws.rs.core.UriBuilder
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.io.InputStream
-import java.net.URL
-import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
-import javax.ws.rs.core.UriBuilder
 
 @Component
 class OciRegistryRemoteRepository(
@@ -154,10 +155,10 @@ class OciRegistryRemoteRepository(
         with(context.artifactInfo as OciManifestArtifactInfo) {
             val version = if (isValidDigest) OciDigest(reference).fileName() else reference
             val dockerPackageKey = PackageKeys.ofDocker(packageName)
-            return packageClient.findVersionByName(projectId, repoName, dockerPackageKey, version).data
+            return packageService.findVersionByName(projectId, repoName, dockerPackageKey, version)
                 ?: run {
                     val ociPackageKey = PackageKeys.ofOci(packageName)
-                    packageClient.findVersionByName(projectId, repoName, ociPackageKey, version).data
+                    packageService.findVersionByName(projectId, repoName, ociPackageKey, version)
                 }
         }
     }
@@ -184,14 +185,14 @@ class OciRegistryRemoteRepository(
         val downloadUrl = createRemoteDownloadUrl(context, property)
         logger.info("Remote request $downloadUrl will be sent")
         val tokenKey = buildTokenCacheKey(
-            context.getStringAttribute(PROXY_URL)!!,remoteConfiguration.credentials.username, property.imageName
+            context.getStringAttribute(PROXY_URL)!!, remoteConfiguration.credentials.username, property.imageName
         )
         val request = buildRequest(downloadUrl, remoteConfiguration, tokenCache.getIfPresent(tokenKey))
         try {
             httpClient!!.newCall(request).execute().use {
                 if (it.isSuccessful) return onResponse(context, it)
-                if (it.code() != HttpStatus.UNAUTHORIZED.value) {
-                    logger.warn("response code is ${it.code()} for url $downloadUrl")
+                if (it.code != HttpStatus.UNAUTHORIZED.value) {
+                    logger.warn("response code is ${it.code} for url $downloadUrl")
                     return null
                 }
                 return doRequestWithToken(
@@ -232,7 +233,7 @@ class OciRegistryRemoteRepository(
             addBasicInterceptor = false,
             token = token
         )
-        clientCache.getIfPresent(remoteConfiguration)!!.newCall(requestWithToken).execute().use {responseWithAuth ->
+        clientCache.getIfPresent(remoteConfiguration)!!.newCall(requestWithToken).execute().use { responseWithAuth ->
             return if (checkResponse(responseWithAuth)) {
                 onResponse(context, responseWithAuth)
             } else null
@@ -281,7 +282,7 @@ class OciRegistryRemoteRepository(
         val username = configuration.credentials.username
         val password = configuration.credentials.password
         if (username != null && password != null) {
-            val credentials =  BasicAuthUtils.encode(username, password)
+            val credentials = BasicAuthUtils.encode(username, password)
             this.header(HttpHeaders.AUTHORIZATION, credentials)
         }
         return this
@@ -325,6 +326,7 @@ class OciRegistryRemoteRepository(
                     imageName = artifactInfo.packageName
                 )
             }
+
             is OciTagArtifactInfo -> {
                 val artifactInfo = context.artifactInfo as OciTagArtifactInfo
                 if (artifactInfo.packageName.isBlank()) {
@@ -346,6 +348,7 @@ class OciRegistryRemoteRepository(
                     )
                 }
             }
+
             is OciManifestArtifactInfo -> {
                 val artifactInfo = context.artifactInfo as OciManifestArtifactInfo
                 RemoteRequestProperty(
@@ -354,6 +357,7 @@ class OciRegistryRemoteRepository(
                     imageName = artifactInfo.packageName
                 )
             }
+
             else -> RemoteRequestProperty(url = url, imageName = StringPool.EMPTY)
         }
     }
@@ -374,7 +378,7 @@ class OciRegistryRemoteRepository(
      */
     private fun createCatalogUrl(property: RemoteRequestProperty): String {
         with(property) {
-           return UrlFormatter.buildUrl(url, DOCKER_CATALOG_SUFFIX, params)
+            return UrlFormatter.buildUrl(url, DOCKER_CATALOG_SUFFIX, params)
         }
     }
 
@@ -405,7 +409,7 @@ class OciRegistryRemoteRepository(
         }
         val scope = getScope(proxyUrl, imageName)
         val authProperty = AuthenticationUtil.parseWWWAuthenticateHeader(wwwAuthenticate, scope)
-        if (authProperty == null)  {
+        if (authProperty == null) {
             logger.warn("Auth url can not be parsed from header $wwwAuthenticate!")
             return null
         }
@@ -424,8 +428,8 @@ class OciRegistryRemoteRepository(
                 } catch (ignore: Exception) {
                     StringPool.EMPTY
                 }
-                val errMsg =  "Could not get token from auth service," +
-                    " code is ${it.code} and response is $error"
+                val errMsg = "Could not get token from auth service," +
+                        " code is ${it.code} and response is $error"
                 logger.warn(errMsg)
                 throw ErrorCodeException(
                     OciMessageCode.OCI_REMOTE_CREDENTIALS_INVALID,
@@ -441,6 +445,7 @@ class OciRegistryRemoteRepository(
                     "Could not get token from auth service, please check your remote configuration!"
                 )
             }
+        }
     }
 
     private fun getScope(remoteUrl: String, imageName: String): String {
@@ -475,7 +480,7 @@ class OciRegistryRemoteRepository(
     override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
         logger.info("Remote download response will be processed")
         response.header(CONTENT_TYPE)?.let { context.putAttribute(CONTENT_TYPE, it) }
-        val artifactFile = createTempFile(response.body()!!)
+        val artifactFile = createTempFile(response.body!!)
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
         val node = cacheArtifact(context, artifactFile)
@@ -566,9 +571,9 @@ class OciRegistryRemoteRepository(
         if (
             ociArtifactInfo is OciManifestArtifactInfo &&
             (
-                contentType?.startsWith(DOCKER_DISTRIBUTION_MANIFEST_LIST_V2) == true ||
-                contentType?.startsWith(IMAGE_INDEX_MEDIA_TYPE) == true
-            )
+                    contentType?.startsWith(DOCKER_DISTRIBUTION_MANIFEST_LIST_V2) == true ||
+                            contentType?.startsWith(IMAGE_INDEX_MEDIA_TYPE) == true
+                    )
         ) {
             ociArtifactInfo.isFat = true
         }

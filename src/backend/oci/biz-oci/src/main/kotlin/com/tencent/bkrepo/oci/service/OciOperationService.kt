@@ -186,9 +186,5 @@ interface OciOperationService {
         userId: String = SecurityUtils.getUserId()
     )
 
-    fun loadManifestList(
-        sha256: String,
-        size: Long,
-        storageCredentials: StorageCredentials?
-    ): ManifestList?
+    fun loadManifestList(node: NodeDetail, storageCredentials: StorageCredentials?): ManifestList?
 }

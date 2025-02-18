@@ -34,7 +34,6 @@ package com.tencent.bkrepo.common.metadata.permission
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.api.ServiceExternalPermissionClient
 import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.auth.api.ServiceUserClient
@@ -69,7 +68,6 @@ import com.tencent.bkrepo.repository.constant.NODE_DETAIL_LIST_KEY
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
-import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -116,12 +114,6 @@ open class PermissionManager(
         }
         CacheBuilder.newBuilder().maximumSize(1).expireAfterWrite(2, TimeUnit.MINUTES).build(cacheLoader)
     }
-
-    private val userAuthPathCache = CacheBuilder.newBuilder()
-        .maximumSize(1000)
-        .refreshAfterWrite(30L, TimeUnit.SECONDS)
-        .expireAfterWrite(60L, TimeUnit.SECONDS)
-        .build(CacheLoader.from<UserAuthPathOption, Map<String, List<String>>> { getUserAuthPath(it) })
 
     /**
      * 校验项目权限
@@ -631,21 +623,6 @@ open class PermissionManager(
                 logger.warn("search admin user cache error: ${e.message}")
                 userResource.userInfoById(userId).data?.admin == true
             }
-        }
-    }
-
-
-    fun getUserAuthPathCache(option: UserAuthPathOption): Map<String, List<String>> {
-        return try {
-            userAuthPathCache.get(option)
-        } catch (e: UncheckedExecutionException) {
-            throw e.cause ?: e
-        }
-    }
-
-    private fun getUserAuthPath(option: UserAuthPathOption): Map<String, List<String>> {
-        with(option) {
-            return permissionResource.getAuthRepoPaths(userId, projectId, repoNames, action).data ?: emptyMap()
         }
     }
 

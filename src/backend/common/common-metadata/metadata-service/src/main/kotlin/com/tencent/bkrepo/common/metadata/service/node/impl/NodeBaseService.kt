@@ -54,9 +54,9 @@ import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
 import com.tencent.bkrepo.common.metadata.dao.repo.RepositoryDao
 import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.common.metadata.model.TRepository
-import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.service.blocknode.BlockNodeService
 import com.tencent.bkrepo.common.metadata.service.file.FileReferenceService
+import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.project.ProjectService
 import com.tencent.bkrepo.common.metadata.service.repo.QuotaService
@@ -119,7 +119,7 @@ abstract class NodeBaseService(
     open val routerControllerProperties: RouterControllerProperties,
     open val blockNodeService: BlockNodeService,
     open val projectService: ProjectService,
-    open val permissionManager: PermissionManager,
+    open val nodePermissionService: NodePermissionService,
 ) : NodeService {
 
     init {
@@ -564,7 +564,7 @@ abstract class NodeBaseService(
     }
 
     fun getUserAuthPath(projectId: String, repoName: String, userId: String, action: PermissionAction): List<String> {
-        return permissionManager.getUserAuthPathCache(
+        return nodePermissionService.getUserAuthPathCache(
             UserAuthPathOption(
                 userId, projectId, listOf(repoName), action
             )

@@ -35,12 +35,12 @@ import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
 import com.tencent.bkrepo.common.metadata.dao.repo.RepositoryDao
-import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.pojo.node.NodeRestoreOption
 import com.tencent.bkrepo.common.metadata.pojo.node.NodeRestoreRequest
 import com.tencent.bkrepo.common.metadata.pojo.node.RestoreContext
 import com.tencent.bkrepo.common.metadata.service.blocknode.BlockNodeService
 import com.tencent.bkrepo.common.metadata.service.file.FileReferenceService
+import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.common.metadata.service.node.impl.NodeArchiveSupport
 import com.tencent.bkrepo.common.metadata.service.node.impl.NodeCompressSupport
 import com.tencent.bkrepo.common.metadata.service.node.impl.NodeDeleteSupport
@@ -93,7 +93,7 @@ class EdgeNodeServiceImpl(
     override val routerControllerProperties: RouterControllerProperties,
     override val blockNodeService: BlockNodeService,
     override val projectService: ProjectService,
-    override val permissionManager: PermissionManager,
+    override val nodePermissionService: NodePermissionService,
     val archiveClient: ArchiveClient,
 ) : EdgeNodeBaseService(
     nodeDao,
@@ -108,7 +108,7 @@ class EdgeNodeServiceImpl(
     routerControllerProperties,
     blockNodeService,
     projectService,
-    permissionManager,
+    nodePermissionService,
     clusterProperties,
 ) {
     override fun countFileNodeByList(projectId: String, repoName: String, fullPathList: List<String>): Long {

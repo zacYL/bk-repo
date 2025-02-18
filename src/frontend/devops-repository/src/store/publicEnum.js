@@ -33,9 +33,9 @@ export const repoSupportEnum = [
 // 远程仓库支持创建的仓库
 export const remoteRepoSupportEnum = [
     { label: 'Generic', value: 'generic' },
+    ...repoSupportEnum,
     { label: 'Cocoapods', value: 'cocoapods' },
-    { label: 'Ohpm', value: 'ohpm' },
-    ...repoSupportEnum
+    { label: 'Ohpm', value: 'ohpm' }
 ]
 
 // 文件类型

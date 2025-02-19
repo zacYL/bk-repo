@@ -5,6 +5,7 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.storage.core.StorageProperties
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.repository.api.NodeClient
@@ -20,7 +21,8 @@ import org.springframework.stereotype.Service
 class NpmReplicaService(
     private val nodeClient: NodeClient,
     private val repoClient: RepositoryClient,
-    private val storageManager: StorageManager
+    private val storageManager: StorageManager,
+    private val storageProperties: StorageProperties,
 ) {
 
     /**
@@ -56,11 +58,11 @@ class NpmReplicaService(
     ) {
         val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, packageJsonPath).data as NodeDetail
         val indexFileInputStream =
-            storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
+            storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials?: storageProperties.defaultStorageCredentials()) ?: return
 
         indexFileInputStream.use {
             val packageMetaData = JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
-            val tarball = "$domain/$projectId/$repoName/$packageFilePath"
+            val tarball = "$domain/npm/$projectId/$repoName/$packageFilePath"
             packageMetaData.versions.map[version]?.dist?.tarball = tarball
             // 重新上传
             val inputStream = JsonUtils.objectMapper.writeValueAsString(packageMetaData).byteInputStream()

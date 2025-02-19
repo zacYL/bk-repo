@@ -60,7 +60,7 @@ class CocoapodsReplicaService(
                 ?: throw IllegalArgumentException("domain is missing or not a string")
 
             // 目标地址
-            val sourcePath = "$domain/$projectId/$repoName/$packageFilePath"
+            val sourcePath = "$domain/cocoapods/$projectId/$repoName/$packageFilePath"
             when (type) {
                 1 -> handleForPodSpec(indexFileInputStream, sourcePath, repoDetail, indexFilePath)
                 2 -> handleForPodSpecJson(indexFileInputStream, sourcePath, repoDetail, indexFilePath)

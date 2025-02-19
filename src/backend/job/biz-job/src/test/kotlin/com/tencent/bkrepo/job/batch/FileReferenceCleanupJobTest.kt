@@ -151,6 +151,7 @@ class FileReferenceCleanupJobTest : JobBaseTest() {
                 oldCredentialsKey = null,
                 quota = 0,
                 used = 0,
+                coverStrategy = null,
             )
         )
         fileReferenceCleanupJobProperties.expectedNodes = 50_000

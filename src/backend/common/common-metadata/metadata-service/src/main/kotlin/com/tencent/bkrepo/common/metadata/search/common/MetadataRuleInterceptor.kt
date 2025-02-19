@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.metadata.search.common
 
+import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
@@ -38,6 +39,7 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.repository.constant.METADATA_PREFIX
 import com.tencent.bkrepo.common.metadata.model.TMetadata
 import com.tencent.bkrepo.common.metadata.model.TNode
+import org.springframework.context.annotation.Conditional
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Component
 import java.util.Locale
@@ -48,6 +50,7 @@ import java.util.Locale
  * 条件构造器中传入元数据的条件是`metadata.key=value`，需要适配成mongodb的查询条件
  */
 @Component
+@Conditional(SyncCondition::class)
 class MetadataRuleInterceptor : QueryRuleInterceptor {
 
     override fun match(rule: Rule): Boolean {

@@ -155,7 +155,8 @@ class DeletedNodeCleanupJobTest @Autowired constructor(
         folder = false,
         sha256 = UT_SHA256,
         deleted = LocalDateTime.now().minusDays(1L),
-        clusterNames = null
+        clusterNames = null,
+        metadata = emptyList(),
     )
 
     private fun createRepo() {

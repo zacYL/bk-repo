@@ -2,10 +2,12 @@ package com.tencent.bkrepo.common.metadata.search.packages
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.dao.packages.PackageVersionDao
 import com.tencent.bkrepo.common.metadata.model.TPackageVersion
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
+import org.springframework.context.annotation.Conditional
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Component
 
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component
  * 版本号规则拦截器
  */
 @Component
+@Conditional(SyncCondition::class)
 class VersionNameRuleInterceptor(
     override val packageVersionDao: PackageVersionDao
 ) : VersionRuleInterceptor(packageVersionDao) {

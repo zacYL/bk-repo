@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.common.metadata.listener
+package com.tencent.bkrepo.repository.listener
 
 import com.tencent.bkrepo.common.artifact.event.project.ProjectUpdatedEvent
 import com.tencent.bkrepo.common.metadata.service.project.ProjectService

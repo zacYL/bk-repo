@@ -6,6 +6,7 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.EscapeUtils
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.dao.whitelist.RemotePackageWhitelistDao
 import com.tencent.bkrepo.common.metadata.exception.WhitelistNotFoundException
 import com.tencent.bkrepo.common.metadata.model.TRemotePackageWhitelist
@@ -18,6 +19,7 @@ import com.tencent.bkrepo.repository.pojo.whitelist.RemotePackageWhitelist
 import com.tencent.bkrepo.repository.pojo.whitelist.UpdateRemotePackageWhitelistRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Conditional
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
 @Service
+@Conditional(SyncCondition::class)
 class RemotePackageWhitelistServiceImpl(
     private val remotePackageWhitelistDao: RemotePackageWhitelistDao,
     private val mongoTemplate: MongoTemplate

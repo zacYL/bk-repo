@@ -31,4 +31,6 @@
 
 dependencies {
     implementation(project(":lfs:biz-lfs"))
+    // 为了修复漏洞升级yaml版本后，相关类缺少构造函数导致编译失败，需要单独引入yaml相关类，升级spring版本后删除common-api依赖
+    implementation(project(":common:common-api"))
 }

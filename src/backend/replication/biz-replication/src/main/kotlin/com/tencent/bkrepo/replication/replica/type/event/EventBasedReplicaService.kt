@@ -30,6 +30,8 @@ package com.tencent.bkrepo.replication.replica.type.event
 import com.tencent.bkrepo.common.api.constant.retry
 import com.tencent.bkrepo.common.api.pojo.ClusterNodeType
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
 import com.tencent.bkrepo.replication.constant.RETRY_COUNT
 import com.tencent.bkrepo.replication.manager.LocalDataManager
@@ -46,14 +48,16 @@ import org.springframework.stereotype.Component
 @Component
 class EventBasedReplicaService(
     replicaRecordService: ReplicaRecordService,
-    localDataManager: LocalDataManager
-) : AbstractReplicaService(replicaRecordService, localDataManager) {
+    localDataManager: LocalDataManager,
+    permissionManager: PermissionManager,
+) : AbstractReplicaService(replicaRecordService, localDataManager, permissionManager) {
 
     override fun replica(context: ReplicaContext) {
         with(context) {
             // 同步仓库
             retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) {
                 if (task.setting.automaticCreateRemoteRepo) {
+                    replicator.replicaProject(this)
                     replicator.replicaRepo(this)
                 }
             }

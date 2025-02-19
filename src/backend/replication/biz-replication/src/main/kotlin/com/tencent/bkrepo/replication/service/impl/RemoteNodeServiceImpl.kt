@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.service.impl
 
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.ClusterNodeType
@@ -302,7 +303,7 @@ class RemoteNodeServiceImpl(
             val replicaTaskObjects = buildReplicaTaskObjects(
                 repoName, repositoryDetail.type, replicaObjectType, request
             )
-            var task = replicaTaskService.getByTaskName(NAME.format(projectId, repoName, name))
+            var task = replicaTaskService.getByTaskName(NAME.format(projectId, repoName, name), projectId)
             if (task == null) {
                 val taskCreateRequest = ReplicaTaskCreateRequest(
                     name = NAME.format(projectId, repoName, name),
@@ -513,7 +514,9 @@ class RemoteNodeServiceImpl(
 
     private fun deleteByTaskName(taskName: String) {
         logger.info("Task $taskName will be deleted!")
-        replicaTaskService.getByTaskName(taskName)?.let {
+        val projectId = taskName.split(StringPool.SLASH).firstOrNull()
+            ?: throw ErrorCodeException(CommonMessageCode.REQUEST_DENIED, taskName)
+        replicaTaskService.getByTaskName(taskName, projectId)?.let {
             if (it.status!! != ReplicaStatus.COMPLETED && it.replicaType != ReplicaType.RUN_ONCE) {
                 logger.warn("The name $taskName of runonce task is still running")
                 throw ErrorCodeException(CommonMessageCode.REQUEST_DENIED, taskName)

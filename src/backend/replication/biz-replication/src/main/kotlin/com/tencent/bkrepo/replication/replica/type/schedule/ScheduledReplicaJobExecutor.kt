@@ -31,7 +31,9 @@ import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.ReplicaOverview
+import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskInfo
+import com.tencent.bkrepo.replication.replica.context.ReplicaExecutionContext
 import com.tencent.bkrepo.replication.replica.executor.AbstractReplicaJobExecutor
 import com.tencent.bkrepo.replication.service.ClusterNodeService
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
@@ -73,6 +75,7 @@ class ScheduledReplicaJobExecutor(
             taskDetail = replicaTaskService.getDetailByTaskKey(task.key)
             sendReplicaNotify(taskDetail, START)
             // 计算待同步的制品数
+	    // TODO 这个查询有性能问题
             val count = replicaTaskService.countArtifactToReplica(taskDetail) * task.remoteClusters.size
             // 初始化同步进度缓存
             ReplicaExecutionContext.initProgress(task.key, count)

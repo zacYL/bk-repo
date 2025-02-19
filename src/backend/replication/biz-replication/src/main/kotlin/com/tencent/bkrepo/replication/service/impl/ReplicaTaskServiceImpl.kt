@@ -60,6 +60,7 @@ import com.tencent.bkrepo.replication.pojo.task.request.ReplicaTaskCreateRequest
 import com.tencent.bkrepo.replication.pojo.task.request.ReplicaTaskUpdateRequest
 import com.tencent.bkrepo.replication.pojo.task.request.TaskPageParam
 import com.tencent.bkrepo.replication.pojo.task.setting.ExecutionStrategy
+import com.tencent.bkrepo.replication.replica.context.ReplicaExecutionContext
 import com.tencent.bkrepo.replication.replica.type.edge.EdgePullReplicaExecutor
 import com.tencent.bkrepo.replication.replica.type.schedule.ReplicaTaskScheduler
 import com.tencent.bkrepo.replication.replica.type.schedule.ReplicaTaskScheduler.Companion.JOB_DATA_TASK_KEY
@@ -73,20 +74,21 @@ import com.tencent.bkrepo.replication.util.TaskQueryHelper.buildListQuery
 import com.tencent.bkrepo.replication.util.TaskQueryHelper.taskObjectQuery
 import com.tencent.bkrepo.replication.util.TaskQueryHelper.taskQueryByType
 import com.tencent.bkrepo.replication.util.TaskQueryHelper.undoScheduledTaskQuery
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import org.bson.types.ObjectId
 import org.quartz.JobBuilder
 import org.quartz.JobKey
 import org.quartz.TriggerBuilder
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Service
 class ReplicaTaskServiceImpl(
@@ -199,7 +201,7 @@ class ReplicaTaskServiceImpl(
                 replicaObjectType = replicaObjectType,
                 replicaType = replicaType,
                 setting = setting,
-                remoteClusters = clusterNodes.map { ClusterNodeName(id = it.id, name = it.name) }.toSet(),
+                remoteClusters = clusterNodes.map { ClusterNodeName(id = it.id!!, name = it.name) }.toSet(),
                 status = when (replicaType) {
                     ReplicaType.SCHEDULED, ReplicaType.EDGE_PULL -> ReplicaStatus.WAITING
                     else -> ReplicaStatus.REPLICATING
@@ -220,7 +222,6 @@ class ReplicaTaskServiceImpl(
                 executionTimes = 0L,
                 enabled = enabled,
                 record = record,
-                notRecord = notRecord,
                 recordReserveDays = recordReserveDays,
                 createdBy = userId,
                 createdDate = LocalDateTime.now(),
@@ -354,6 +355,7 @@ class ReplicaTaskServiceImpl(
                 ExecutionStrategy.IMMEDIATELY -> {
                     Preconditions.checkArgument(setting.executionPlan.executeImmediately, "executeImmediately")
                 }
+
                 ExecutionStrategy.SPECIFIED_TIME -> {
                     val executeTime = setting.executionPlan.executeTime
                     Preconditions.checkNotBlank(executeTime, "executeTime")
@@ -361,6 +363,7 @@ class ReplicaTaskServiceImpl(
                         Preconditions.checkArgument(it.isAfter(LocalDateTime.now()), "executeTime")
                     }
                 }
+
                 ExecutionStrategy.CRON_EXPRESSION -> {
                     val cronExpression = setting.executionPlan.cronExpression
                     Preconditions.checkNotBlank(cronExpression, "cronExpression")
@@ -386,6 +389,7 @@ class ReplicaTaskServiceImpl(
                     }
                 }
             }
+
             ReplicaObjectType.PACKAGE -> {
                 if (replicaTaskObjects.size != 1) {
                     throw ErrorCodeException(CommonMessageCode.REQUEST_CONTENT_INVALID)
@@ -397,6 +401,7 @@ class ReplicaTaskServiceImpl(
                     pkg.versions?.forEach { version -> Preconditions.checkNotBlank(version, "versions") }
                 }
             }
+
             ReplicaObjectType.PATH -> {
                 if (replicaTaskObjects.size != 1) {
                     throw ErrorCodeException(CommonMessageCode.REQUEST_CONTENT_INVALID)
@@ -483,11 +488,11 @@ class ReplicaTaskServiceImpl(
                 name = name,
                 status = when (tReplicaTask.replicaType) {
                     ReplicaType.REAL_TIME -> ReplicaStatus.REPLICATING
-                    ReplicaType.SCHEDULED -> ReplicaStatus.WAITING
+                    else -> ReplicaStatus.WAITING
                 },
                 lastExecutionStatus = when (tReplicaTask.replicaType) {
                     ReplicaType.REAL_TIME -> ExecutionStatus.RUNNING
-                    ReplicaType.SCHEDULED -> null
+                    else -> null
                 },
                 lastExecutionTime = null,
                 nextExecutionTime = null,
@@ -561,7 +566,6 @@ class ReplicaTaskServiceImpl(
                 lastModifiedBy = userId,
                 lastModifiedDate = LocalDateTime.now(),
                 record = record,
-                notRecord = notRecord,
                 recordReserveDays = recordReserveDays
             )
             // 创建replicaObject
@@ -651,6 +655,7 @@ class ReplicaTaskServiceImpl(
             // 同步对象类型不为仓库时，只会有一个同步对象
             ReplicaObjectType.PACKAGE ->
                 taskDetail.objects.first().packageConstraints?.sumOf { it.versions?.size?.toLong() ?: 0 } ?: 0
+
             ReplicaObjectType.PATH -> {
                 val pathConstraints = taskDetail.objects.first().pathConstraints
                 if (!pathConstraints.isNullOrEmpty()) {
@@ -689,14 +694,13 @@ class ReplicaTaskServiceImpl(
                     executionTimes = it.executionTimes,
                     enabled = it.enabled,
                     record = it.record,
-                    notRecord = it.notRecord,
                     recordReserveDays = it.recordReserveDays,
                     createdBy = it.createdBy,
                     createdDate = it.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy = it.lastModifiedBy,
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     currentProgress = ReplicaExecutionContext.getCurrentProgress(it.key),
-                    artifactCount = ReplicaExecutionContext.getArtifactCount(it.key)
+                    artifactCount = ReplicaExecutionContext.getArtifactCount(it.key),
                 )
             }
         }

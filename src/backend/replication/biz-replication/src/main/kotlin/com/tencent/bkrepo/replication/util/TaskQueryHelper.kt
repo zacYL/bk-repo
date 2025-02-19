@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.util
 
+import com.tencent.bkrepo.common.api.util.EscapeUtils
 import com.tencent.bkrepo.replication.model.TReplicaObject
 import com.tencent.bkrepo.replication.model.TReplicaTask
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus

@@ -42,7 +42,6 @@ import com.tencent.bkrepo.replication.service.BlobChunkedService
 import com.tencent.bkrepo.replication.util.BlobChunkedResponseUtils.buildBlobUploadPatchResponse
 import com.tencent.bkrepo.replication.util.BlobChunkedResponseUtils.buildBlobUploadUUIDResponse
 import com.tencent.bkrepo.replication.util.BlobChunkedResponseUtils.uploadResponse
-import com.tencent.bkrepo.replication.util.HttpUtils.getRangeInfo
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -88,13 +87,14 @@ class BlobChunkedServiceImpl(
         val lengthOfAppendFile = storageService.findLengthOfAppendFile(uuid, credentials)
         logger.info("current length of append file is $lengthOfAppendFile and range is $range")
         val (patchLen, status) = when (ChunkedUploadUtils.chunkedRequestCheck(
-                    lengthOfAppendFile = lengthOfAppendFile,
-                    range = range,
-                    contentLength = length
-                )) {
+            lengthOfAppendFile = lengthOfAppendFile,
+            range = range,
+            contentLength = length
+        )) {
             ChunkedUploadUtils.RangeStatus.ILLEGAL_RANGE -> {
                 Pair(length.toLong(), HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
             }
+
             ChunkedUploadUtils.RangeStatus.READY_TO_APPEND -> {
                 val patchLen = storageService.append(
                     appendId = uuid,
@@ -103,14 +103,16 @@ class BlobChunkedServiceImpl(
                 )
                 logger.info(
                     "Part of file with sha256 $sha256 in repo $projectId|$repoName " +
-                        "has been uploaded, size of append file is $patchLen and uuid: $uuid"
+                            "has been uploaded, size of append file is $patchLen and uuid: $uuid"
                 )
                 Pair(patchLen, HttpStatus.ACCEPTED)
             }
+
             else -> {
                 logger.info(
                     "Part of file with sha256 $sha256 in repo $projectId|$repoName " +
-                        "already appended, size of append file is $lengthOfAppendFile and uuid: $uuid")
+                            "already appended, size of append file is $lengthOfAppendFile and uuid: $uuid"
+                )
                 Pair(lengthOfAppendFile, HttpStatus.ACCEPTED)
             }
         }
@@ -152,7 +154,7 @@ class BlobChunkedServiceImpl(
         }
         logger.info(
             "The file with sha256 $sha256 in repo $projectId|$repoName has been uploaded with uuid: $uuid," +
-                " received sha256 of file is ${fileInfo.sha256}"
+                    " received sha256 of file is ${fileInfo.sha256}"
         )
         // 没传递 size， 校验合并的文件生成的 sha256 与传递的 sha256 是否一致
         if (size == null && fileInfo.sha256 != sha256) {
@@ -169,11 +171,10 @@ class BlobChunkedServiceImpl(
         )
     }
 
-    private fun buildLocationUrl(uuid: String, projectId: String, repoName: String) : String {
+    private fun buildLocationUrl(uuid: String, projectId: String, repoName: String): String {
         val path = BOLBS_UPLOAD_FIRST_STEP_URL_STRING.format(projectId, repoName)
-        return serviceName+path+uuid
+        return serviceName + path + uuid
     }
-
 
 
     companion object {

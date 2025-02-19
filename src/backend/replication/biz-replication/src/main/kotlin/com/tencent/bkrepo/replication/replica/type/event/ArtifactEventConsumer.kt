@@ -29,6 +29,8 @@ package com.tencent.bkrepo.replication.replica.type.event
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.service.otel.util.AsyncUtils.trace
 import com.tencent.bkrepo.replication.replica.executor.EventConsumerThreadPoolExecutor
 import com.tencent.bkrepo.replication.service.ReplicaTaskService
@@ -46,6 +48,7 @@ class ArtifactEventConsumer(
 ) : EventConsumer() {
 
     private val executors = EventConsumerThreadPoolExecutor.instance
+
     /**
      * 允许接收的事件类型
      */
@@ -63,7 +66,7 @@ class ArtifactEventConsumer(
 
     override fun action(event: ArtifactEvent) {
         // 删除项目下所有分发计划及记录
-        if (event.type == EventType.PROJECT_DELETED){
+        if (event.type == EventType.PROJECT_DELETED) {
             replicaTaskService.deleteByProjectId(event.projectId)
         }
 
@@ -78,17 +81,20 @@ class ArtifactEventConsumer(
         }
 
         executors.execute {
-            replicaTaskService.listRealTimeTasks(projectId, repoName).forEach {
-                if (event.type == EventType.NODE_DELETED) {
-                    if (
-                        !it.task.setting.syncDeletion ||
-                        it.objects.none { obj -> obj.repoType == RepositoryType.GENERIC }
-                    ) return@forEach
-                    eventBasedReplicaJobExecutor.execute(
-                        it.copy(objects = it.objects.filter { obj -> obj.repoType == RepositoryType.GENERIC }), event
-                    )
-                } else eventBasedReplicaJobExecutor.execute(it, event)
-            }
-        }.trace()
+            Runnable {
+                replicaTaskService.listRealTimeTasks(projectId, repoName).forEach {
+                    if (event.type == EventType.NODE_DELETED) {
+                        if (
+                            !it.task.setting.syncDeletion ||
+                            it.objects.none { obj -> obj.repoType == RepositoryType.GENERIC }
+                        ) return@forEach
+                        eventBasedReplicaJobExecutor.execute(
+                            it.copy(objects = it.objects.filter { obj -> obj.repoType == RepositoryType.GENERIC }),
+                            event
+                        )
+                    } else eventBasedReplicaJobExecutor.execute(it, event)
+                }
+            }.trace()
+        }
     }
 }

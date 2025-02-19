@@ -53,6 +53,7 @@ import com.tencent.bkrepo.common.storage.pojo.FileInfo
 import com.tencent.bkrepo.replication.constant.MD5
 import com.tencent.bkrepo.replication.constant.NODE_FULL_PATH
 import com.tencent.bkrepo.replication.constant.SIZE
+import com.tencent.bkrepo.repository.api.GlobalConfigClient
 import com.tencent.bkrepo.repository.constant.SHARDING_COUNT
 import com.tencent.bkrepo.repository.pojo.config.ConfigType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
@@ -91,6 +92,7 @@ class LocalDataManager(
     private val storageCredentialService: StorageCredentialService,
     private val storageProperties: StorageProperties,
     private val mongoTemplate: MongoTemplate,
+    private val globalConfigClient: GlobalConfigClient
 ) {
 
     /**

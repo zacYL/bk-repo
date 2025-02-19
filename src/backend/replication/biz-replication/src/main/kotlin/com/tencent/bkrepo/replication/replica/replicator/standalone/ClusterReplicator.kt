@@ -30,10 +30,17 @@ package com.tencent.bkrepo.replication.replica.replicator.standalone
 import com.google.common.base.Throwables
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.retry
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
+import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.service.cluster.ClusterInfo
+import com.tencent.bkrepo.common.service.condition.ConditionalOnNotDevops
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.constant.DEFAULT_VERSION
 import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
@@ -46,6 +53,7 @@ import com.tencent.bkrepo.replication.replica.repository.internal.PackageNodeMap
 import com.tencent.bkrepo.replication.replica.context.FilePushContext
 import com.tencent.bkrepo.replication.replica.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.replicator.Replicator
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -96,6 +104,7 @@ class ClusterReplicator(
             // 外部集群仓库没有project/repoName
             if (remoteProjectId.isNullOrBlank()) return
             val localProject = localDataManager.findProjectById(localProjectId)
+	    // TODO 需要根据配置决定是否保留原有命名
             val combineName = "${localProject.displayName}---$remoteProjectId"
             val displayName = if (combineName.length > 100) combineName.substring(0, 100) else combineName
             val request = ProjectCreateRequest(
@@ -116,7 +125,8 @@ class ClusterReplicator(
             val key = buildRemoteRepoCacheKey(cluster, remoteProjectId, remoteRepoName)
             // 兼容仓库拆分
             val configuration = if (localRepo.category == RepositoryCategory.LOCAL &&
-                localRepo.configuration is CompositeConfiguration) {
+                localRepo.configuration is CompositeConfiguration
+            ) {
                 val compositeConfiguration = localRepo.configuration as CompositeConfiguration
                 LocalConfiguration(compositeConfiguration.webHook, compositeConfiguration.cleanStrategy).apply {
                     this.settings = compositeConfiguration.settings
@@ -124,6 +134,8 @@ class ClusterReplicator(
             } else {
                 localRepo.configuration
             }
+
+            // TODO 需要根据配置决定分发仓库、项目创建人是system还是保持一样
             context.remoteRepo = remoteRepoCache.getOrPut(key) {
                 val request = RepoCreateRequest(
                     projectId = remoteProjectId,
@@ -133,17 +145,17 @@ class ClusterReplicator(
                     public = localRepo.public,
                     description = localRepo.description,
                     configuration = configuration,
-                    operator = localRepo.createdBy
+                    operator = SYSTEM_USER
                 )
-                artifactReplicaClient!!.replicaRepoCreateRequest(request).data!!
-                if (remoteRepo.type != remoteRepoType) {
+                val createdRemoteRepo = artifactReplicaClient!!.replicaRepoCreateRequest(request).data!!
+                if (createdRemoteRepo.type != remoteRepoType) {
                     throw ErrorCodeException(
                         ArtifactMessageCode.REPOSITORY_EXISTED,
                         "$remoteProjectId/$remoteRepoName",
                         status = HttpStatus.CONFLICT
                     )
                 }
-                context.remoteRepo = remoteRepo
+                createdRemoteRepo
             }
         }
     }
@@ -185,8 +197,9 @@ class ClusterReplicator(
             if (packageMetadata.none { it.key == SOURCE_TYPE }) {
                 packageMetadata.add(MetadataModel(SOURCE_TYPE, ArtifactChannel.REPLICATION, system = true, display = true))
             }
-            val manifestPath = if (packageSummary.type == PackageType.DOCKER) packageVersion.manifestPath else null
+            val manifestPath = if (packageSummary.type == PackageType.DOCKER || packageSummary.type == PackageType.OCI) packageVersion.manifestPath else null
             // 包数据
+	    // TODO 用户信息最好根据配置决定是否保留原始数据
             val request = PackageVersionCreateRequest(
                 projectId = remoteProjectId,
                 repoName = remoteRepoName,
@@ -340,6 +353,7 @@ class ClusterReplicator(
             } else {
                 emptyList()
             }
+	     // TODO 用户信息最好根据配置决定是否保留原始数据
             return NodeCreateRequest(
                 projectId = remoteProjectId,
                 repoName = remoteRepoName,

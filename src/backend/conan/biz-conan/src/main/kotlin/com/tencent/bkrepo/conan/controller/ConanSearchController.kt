@@ -42,7 +42,6 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.SEARCH
 import com.tencent.bkrepo.conan.service.ConanSearchService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 

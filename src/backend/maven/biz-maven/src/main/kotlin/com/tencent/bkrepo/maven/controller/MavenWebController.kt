@@ -35,25 +35,43 @@ import com.tencent.bk.audit.annotations.ActionAuditRecord
 import com.tencent.bk.audit.annotations.AuditAttribute
 import com.tencent.bk.audit.annotations.AuditEntry
 import com.tencent.bk.audit.annotations.AuditInstanceRecord
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
 import com.tencent.bkrepo.common.artifact.audit.REPO_EDIT_ACTION
 import com.tencent.bkrepo.common.artifact.audit.REPO_RESOURCE
+import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.maven.api.MavenWebResource
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
+import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
+import com.tencent.bkrepo.maven.pojo.MavenDependency
+import com.tencent.bkrepo.maven.pojo.MavenPlugin
+import com.tencent.bkrepo.maven.pojo.MavenVersionDependentsRelation
 import com.tencent.bkrepo.maven.pojo.response.MavenGAVCResponse
 import com.tencent.bkrepo.maven.service.MavenExtService
 import com.tencent.bkrepo.maven.service.MavenService
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
+import javax.validation.constraints.Min
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestAttribute
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class MavenWebController(
     private val mavenService: MavenService,
     private val mavenExtService: MavenExtService
-) : MavenWebResource {
+) {
 
     @AuditEntry(
         actionId = REPO_EDIT_ACTION

@@ -32,9 +32,11 @@ import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.manager.LocalDataManager
+import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
 import com.tencent.bkrepo.replication.pojo.request.ReplicaObjectType
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
+import com.tencent.bkrepo.replication.replica.context.ReplicaExecutionContext
 import com.tencent.bkrepo.replication.replica.executor.AbstractReplicaJobExecutor
 import com.tencent.bkrepo.replication.service.ClusterNodeService
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
@@ -59,10 +61,33 @@ class EventBasedReplicaJobExecutor(
      */
     fun execute(taskDetail: ReplicaTaskDetail, event: ArtifactEvent) {
         if (!replicaObjectCheck(taskDetail, event)) return
+        sendReplicaNotify(taskDetail, START)
         val task = taskDetail.task
+        var status = ExecutionStatus.SUCCESS
         val taskRecord: ReplicaRecordInfo = replicaRecordService.findOrCreateLatestRecord(task.key)
+        val fullResourceKey = when(event.type) {
+            EventType.NODE_COPIED,
+            EventType.NODE_MOVED -> {
+                val dstProjectId = event.data["dstProjectId"].toString()
+                val dstRepoName = event.data["dstRepoName"].toString()
+                val dstParentPath = event.data["dstFullPath"].toString()
+                val name = PathUtils.resolveName(event.resourceKey)
+                "$dstProjectId/$dstRepoName/$dstParentPath/$name"
+            }
+            else -> event.getFullResourceKey()
+        }
         try {
+            // 待同步的制品数量
+            val count = 1L * task.remoteClusters.size
+            // 初始化或更新同步进度缓存
+            ReplicaExecutionContext.getArtifactCount(task.key)?.run {
+                ReplicaExecutionContext.increaseArtifactCount(task.key, count)
+            } ?: ReplicaExecutionContext.initProgress(task.key, count)
             val results = task.remoteClusters.map { submit(taskDetail, taskRecord, it, event) }.map { it.get() }
+            val failedResults = results.filter { it.status == ExecutionStatus.FAILED }
+            if (failedResults.isNotEmpty()) {
+                status = ExecutionStatus.FAILED
+            }
             val replicaOverview = getResultsSummary(results).replicaOverview
             taskRecord.replicaOverview?.let { overview ->
                 replicaOverview.success += overview.success
@@ -70,9 +95,11 @@ class EventBasedReplicaJobExecutor(
                 replicaOverview.conflict += overview.conflict
             }
             replicaRecordService.updateRecordReplicaOverview(taskRecord.id, replicaOverview)
-            logger.info("Replica ${event.getFullResourceKey()} completed.")
+            logger.info("Replica $fullResourceKey completed.")
         } catch (exception: Exception) {
             logger.error("Replica ${event.getFullResourceKey()}} failed: $exception", exception)
+        } finally {
+            sendReplicaNotify(taskDetail, status.name)
         }
     }
 

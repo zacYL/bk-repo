@@ -28,17 +28,24 @@
 package com.tencent.bkrepo.replication.replica.type
 
 import com.google.common.base.Throwables
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.pojo.ClusterNodeType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.metadata.constant.FAKE_SHA256
+import com.tencent.bkrepo.common.metadata.permission.PermissionManager
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.stream.event.supplier.MessageSupplier
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.metrics.ReplicationRecord
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.request.RecordDetailInitialRequest
+import com.tencent.bkrepo.replication.pojo.request.ActionType
 import com.tencent.bkrepo.replication.pojo.request.PackageVersionExistCheckRequest
+import com.tencent.bkrepo.replication.pojo.request.ReplicaObjectType
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskInfo
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
 import com.tencent.bkrepo.replication.pojo.task.objects.PathConstraint
@@ -46,16 +53,20 @@ import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy
 import com.tencent.bkrepo.replication.pojo.task.setting.ErrorStrategy
 import com.tencent.bkrepo.replication.replica.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.context.ReplicaExecutionContext
+import com.tencent.bkrepo.replication.replica.type.event.ReplicaEvent
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
 import com.tencent.bkrepo.replication.util.ReplicationMetricsRecordUtil.convertToReplicationRecordDetailMetricsRecord
 import com.tencent.bkrepo.replication.util.ReplicationMetricsRecordUtil.toJson
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
+import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
+import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * 同步服务抽象类
@@ -64,9 +75,12 @@ import java.time.LocalDateTime
 @Suppress("TooGenericExceptionCaught")
 abstract class AbstractReplicaService(
     private val replicaRecordService: ReplicaRecordService,
-    private val localDataManager: LocalDataManager
+    private val localDataManager: LocalDataManager,
+    private val permissionManager: PermissionManager,
 ) : ReplicaService {
 
+    @Autowired
+    private lateinit var eventSupplier: MessageSupplier
     /**
      * 同步 task Object
      */
@@ -193,12 +207,48 @@ abstract class AbstractReplicaService(
         }
     }
 
+
+    /**
+     * 同步删除节点
+     */
+    protected fun deleteByPathConstraint(replicaContext: ReplicaContext, constraint: PathConstraint) {
+        val replicaExecutionContext = initialExecutionContext(
+            context = replicaContext,
+            artifactName = constraint.path!!,
+            actionType = ActionType.DELETE
+        )
+        with(replicaExecutionContext) {
+            try {
+                replicaContext.replicator.deleteNode(replicaContext, constraint.path!!)
+            } catch (throwable: Throwable) {
+                setErrorStatus(this, throwable)
+            } finally {
+                updateTaskProgressCache(replicaExecutionContext.taskKey)
+                completeRecordDetail(replicaExecutionContext)
+            }
+        }
+    }
+
     /**
      * 同步路径
      * 采用广度优先遍历
      */
     private fun replicaByPath(replicaContext: ReplicaContext, node: NodeInfo) {
         with(replicaContext) {
+            val userAuthPath = permissionManager.getUserAuthPathCache(
+                UserAuthPathOption(
+                    replicaContext.task.createdBy,
+                    node.projectId,
+                    listOf(node.repoName),
+                    PermissionAction.READ
+                )
+            )[node.repoName]
+
+            check(!userAuthPath.isNullOrEmpty()) { "node fullPath[${node.fullPath}] no read permission" }
+
+            check(userAuthPath.any() { node.fullPath.startsWith(PathUtils.toFullPath(it)) }) { "node fullPath[${node.fullPath}] no read permission" }
+
+
             if (!node.folder) {
                 // 存在冲突：记录冲突策略
                 // 外部集群仓库没有project/repoName
@@ -214,7 +264,8 @@ abstract class AbstractReplicaService(
                     artifactName = node.fullPath,
                     conflictStrategy = conflictStrategy,
                     size = node.size,
-                    sha256 = node.sha256
+                    sha256 = node.sha256,
+                    actionType = getActionType(this)
                 )
                 replicaFile(replicaExecutionContext, node)
                 return
@@ -280,7 +331,7 @@ abstract class AbstractReplicaService(
         replicaContext.replicator.replicaPackage(replicaContext, packageSummary)
         // 同步package功能： 对应内部集群配置是当version不存在时则同步全部的package version
         // 而对于外部集群配置而言，当version不存在时，则不进行同步
-        val versions = versionNames?.map {
+        var versions = versionNames?.map {
             localDataManager.findPackageVersion(
                 projectId = replicaContext.localProjectId,
                 repoName = replicaContext.localRepoName,
@@ -299,6 +350,8 @@ abstract class AbstractReplicaService(
                 )
             }
         }
+        // version 排序，保证分发后的顺序一致
+        versions = versions.sortedBy { it.createdDate }
         versions.forEach {
             // 存在冲突：记录冲突策略
             // 外部集群仓库没有project/repoName
@@ -346,7 +399,30 @@ abstract class AbstractReplicaService(
                 when (context.detail.conflictStrategy) {
                     ConflictStrategy.SKIP -> false
                     ConflictStrategy.FAST_FAIL -> throw IllegalArgumentException("File[$fullPath] conflict.")
-                    else -> replicator.replicaPackageVersion(replicaContext, packageSummary, version)
+                    else -> {
+                        replicator.replicaPackageVersion(replicaContext, packageSummary, version)
+
+                        //仅针对Cocoapods制品同步，发送消息给Cocoapods服务，通知处理包文件索引
+                        if (packageSummary.type == PackageType.COCOAPODS) {
+                            //构建消息对象，传入的参数是有关同步接收方节点的信息
+                            val event = ReplicaEvent(
+                                projectId = replicaContext.remoteProjectId!!,
+                                repoName = replicaContext.remoteRepoName!!,
+                                fullPath = version.contentPath!!,
+                                cluster = replicaContext.cluster,
+                                repoType = RepositoryType.COCOAPODS,
+                                packageType = PackageType.COCOAPODS,
+                                userId = SecurityUtils.getUserId()
+                            )
+                            logger.info("send cocoapods replica event[$event]")
+                            eventSupplier.delegateToSupplier(
+                                data = event,
+                                topic = BINDING_OUT_NAME,
+                                key = event.getFullResourceKey()
+                            )
+                        }
+                        true
+                    }
                 }
             }
         }
@@ -377,7 +453,8 @@ abstract class AbstractReplicaService(
                     throw throwable
                 }
             } finally {
-                if (context.replicaContext.task.record == false) {
+                updateTaskProgressCache(context.taskKey)
+                if (context.replicaContext.task.record == false && replicaContext.task.replicaObjectType == ReplicaObjectType.REPOSITORY) {
                     replicaRecordService.deleteRecordDetailById(detail.id)
                 } else {
                     completeRecordDetail(context)
@@ -460,7 +537,8 @@ abstract class AbstractReplicaService(
         version: String? = null,
         conflictStrategy: ConflictStrategy? = null,
         size: Long? = null,
-        sha256: String? = null
+        sha256: String? = null,
+        actionType: ActionType? = null
     ): ReplicaExecutionContext {
         // 创建详情
         val request = RecordDetailInitialRequest(
@@ -474,7 +552,8 @@ abstract class AbstractReplicaService(
             version = version,
             conflictStrategy = conflictStrategy,
             size = size,
-            sha256 = sha256
+            sha256 = sha256,
+            actionType = actionType
         )
         val recordDetail = replicaRecordService.initialRecordDetail(request)
         return ReplicaExecutionContext(context, recordDetail)
@@ -504,8 +583,29 @@ abstract class AbstractReplicaService(
         }
     }
 
+    private fun updateTaskProgressCache(taskKey: String) {
+        val currentProgress = ReplicaExecutionContext.increaseProgress(taskKey)
+        val artifactCount = ReplicaExecutionContext.getArtifactCount(taskKey)
+        if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
+            ReplicaExecutionContext.removeProgress(taskKey)
+        }
+    }
+
+    private fun getActionType(context: ReplicaContext): ActionType? {
+        with(context) {
+            return if (!eventExists()) null else {
+                when (event.type) {
+                    EventType.NODE_MOVED -> ActionType.MOVE
+                    EventType.NODE_COPIED -> ActionType.COPY
+                    else -> null
+                }
+            }
+        }
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(AbstractReplicaService::class.java)
         private const val PAGE_SIZE = 1000
+        private const val BINDING_OUT_NAME = "artifactEvent-out-0"
     }
 }

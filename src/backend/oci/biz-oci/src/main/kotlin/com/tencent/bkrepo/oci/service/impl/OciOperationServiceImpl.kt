@@ -31,10 +31,10 @@ import com.tencent.bk.audit.context.ActionAuditContext
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.StringPool
-import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.StreamUtils.readText
+import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
@@ -48,7 +48,6 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHold
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
-import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.metadata.service.metadata.MetadataService
 import com.tencent.bkrepo.common.metadata.service.metadata.PackageMetadataService
 import com.tencent.bkrepo.common.metadata.service.node.NodeSearchService
@@ -56,6 +55,7 @@ import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.metadata.service.repo.StorageCredentialService
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HeaderUtils
@@ -80,10 +80,10 @@ import com.tencent.bkrepo.oci.constant.OCI_MANIFEST_LIST
 import com.tencent.bkrepo.oci.constant.OCI_NODE_FULL_PATH
 import com.tencent.bkrepo.oci.constant.OCI_NODE_SIZE
 import com.tencent.bkrepo.oci.constant.OCI_PACKAGE_NAME
-import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_VERSION
 import com.tencent.bkrepo.oci.constant.OS
+import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.constant.PROXY_URL
 import com.tencent.bkrepo.oci.constant.REPO_TYPE
 import com.tencent.bkrepo.oci.constant.VARIANT
@@ -128,6 +128,12 @@ import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import com.tencent.bkrepo.repository.pojo.search.PackageQueryBuilder
 import com.tencent.devops.plugin.api.PluginManager
 import com.tencent.devops.plugin.api.applyExtension
+import java.nio.charset.Charset
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.*
+import javax.servlet.http.HttpServletRequest
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -137,12 +143,6 @@ import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
-import java.nio.charset.Charset
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.util.Locale
-import javax.servlet.http.HttpServletRequest
 
 @Service
 class OciOperationServiceImpl(
@@ -209,11 +209,7 @@ class OciOperationServiceImpl(
                 deleteNode(projectId, repoName, "${StringPool.SLASH}$packageName", userId)
             } else {
                 //删除package下所有版本
-                packageService.deletePackage(
-                    projectId,
-                    repoName,
-                    packageKey
-                )
+                packageService.deletePackage(projectId, repoName, packageKey)
                 // 删除package目录
                 deleteNode(projectId, repoName, "${StringPool.SLASH}$packageName", userId)
             }
@@ -252,8 +248,10 @@ class OciOperationServiceImpl(
         with(artifactInfo) {
             val manifestFolder = OciLocationUtils.buildManifestVersionFolderPath(packageName, version)
             val blobsFolder = OciLocationUtils.blobVersionFolderLocation(version, packageName)
-            logger.info("Will delete blobsFolder [$blobsFolder] and manifestFolder $manifestFolder " +
-                    "in package $packageName|$version in repo [$projectId/$repoName]")
+            logger.info(
+                "Will delete blobsFolder [$blobsFolder] and manifestFolder $manifestFolder " +
+                        "in package $packageName|$version in repo [$projectId/$repoName]"
+            )
             // 删除manifestFolder
             deleteNode(projectId, repoName, manifestFolder, userId)
             // 删除blobs
@@ -329,11 +327,7 @@ class OciOperationServiceImpl(
         var history = listOf<History>()
         if (nodeDetail.name == OCI_MANIFEST_LIST) {
             // manifestList
-            loadManifestList(
-                nodeDetail.sha256!!,
-                nodeDetail.size,
-                repoDetail.storageCredentials
-            )?.let { manifestList ->
+            loadManifestList(nodeDetail, repoDetail.storageCredentials)?.let { manifestList ->
                 manifestList.manifests.forEach { manifest ->
                     val map = manifest.platform
                     os.add(
@@ -342,7 +336,7 @@ class OciOperationServiceImpl(
                 }
             }
         } else {
-            val manifest = loadManifest(nodeDetail.sha256!!, nodeDetail.size, repoDetail.storageCredentials)
+            val manifest = loadManifest(nodeDetail, repoDetail.storageCredentials)
             // config
             manifest?.config?.digest?.let { configDigest ->
                 val configNode = getImageNodeDetail(
@@ -539,34 +533,28 @@ class OciOperationServiceImpl(
             repoName = ociArtifactInfo.repoName,
             version = ociArtifactInfo.reference,
             fullPath = nodeDetail.fullPath,
-            mediaType = mediaType!!,
+            mediaType = mediaType,
             digestList = digestList,
             sourceType = sourceType
         )
     }
 
-    private fun loadManifest(
-        node: NodeDetail,
-        storageCredentials: StorageCredentials?
-    ): ManifestSchema2? {
+    private fun loadManifest(node: NodeDetail, storageCredentials: StorageCredentials?): ManifestSchema2? {
         return try {
             val manifestBytes = storageManager.loadFullArtifactInputStream(node, storageCredentials)!!.readText()
             OciUtils.stringToManifestV2(manifestBytes)
         } catch (e: Exception) {
-            logger.error("load manifest error, sha256:$sha256, exception:$e")
+            logger.error("load manifest error, sha256:${node.sha256}, exception:$e")
             null
         }
     }
 
-    override fun loadManifestList(
-        node: NodeDetail,
-        storageCredentials: StorageCredentials?
-    ): ManifestList? {
+    override fun loadManifestList(node: NodeDetail, storageCredentials: StorageCredentials?): ManifestList? {
         return try {
             val manifestBytes = storageManager.loadFullArtifactInputStream(node, storageCredentials)!!.readText()
             OciUtils.stringToManifestList(manifestBytes)
         } catch (e: Exception) {
-            logger.error("load manifest list error, sha256:$sha256")
+            logger.error("load manifest list error, sha256:${node.sha256}")
             null
         }
     }
@@ -633,13 +621,12 @@ class OciOperationServiceImpl(
             metadata = metadata,
             userId = SecurityUtils.getUserId()
         )
-        try{
+        try {
             metadataService.saveMetadata(metadataSaveRequest)
         } catch (ignore: Exception) {
             // 并发情况下会出现节点找不到问题
         }
     }
-
 
 
     /**
@@ -654,7 +641,7 @@ class OciOperationServiceImpl(
     ): Boolean {
         logger.info(
             "Will start to sync blobs and config info from manifest ${ociArtifactInfo.getArtifactFullPath()} " +
-                "to blobs in repo ${ociArtifactInfo.getRepoIdentify()}."
+                    "to blobs in repo ${ociArtifactInfo.getRepoIdentify()}."
         )
         // existFlag 判断manifest里的所有blob是否都已经创建节点
         // size 整个镜像blob汇总的大小
@@ -909,7 +896,7 @@ class OciOperationServiceImpl(
         if (result.records.isEmpty()) {
             logger.warn(
                 "Could not find $digestStr " +
-                    "in repo $projectId|$repoName"
+                        "in repo $projectId|$repoName"
             )
             return null
         }
@@ -930,7 +917,7 @@ class OciOperationServiceImpl(
         return when (artifactInfo) {
             is OciManifestArtifactInfo -> {
                 // 根据类型解析实际存储路径，manifest获取路径有tag/digest
-                if (artifactInfo.isValidDigest){
+                if (artifactInfo.isValidDigest) {
                     return getNodeByDigest(
                         projectId = artifactInfo.projectId,
                         repoName = artifactInfo.repoName,
@@ -940,6 +927,7 @@ class OciOperationServiceImpl(
                 }
                 return "/${artifactInfo.packageName}/${artifactInfo.reference}/manifest.json"
             }
+
             is OciBlobArtifactInfo -> {
                 val digestStr = artifactInfo.digest ?: StringPool.EMPTY
                 return getNodeByDigest(
@@ -948,6 +936,7 @@ class OciOperationServiceImpl(
                     digestStr = digestStr
                 )?.fullPath
             }
+
             else -> null
         }
     }
@@ -1133,7 +1122,7 @@ class OciOperationServiceImpl(
                 ArtifactInfo(repoInfo.projectId, repoInfo.name, oldDockerFullPath)
             ) ?: return false
         }
-        val refreshedMetadat = manifestNode.nodeMetadata.firstOrNull { it.key == BLOB_PATH_REFRESHED_KEY}
+        val refreshedMetadat = manifestNode.nodeMetadata.firstOrNull { it.key == BLOB_PATH_REFRESHED_KEY }
         if (refreshedMetadat != null) {
             logger.info("$manifestPath has been refreshed, ignore it")
             return true
@@ -1161,10 +1150,6 @@ class OciOperationServiceImpl(
     }
 
 
-
-
-
-
     private fun buildImagePackagePullContext(
         projectId: String,
         repoName: String,
@@ -1175,33 +1160,39 @@ class OciOperationServiceImpl(
             is RemoteConfiguration -> {
                 try {
                     val remoteUrl = UrlFormatter.addProtocol(config.url)
-                    result.add(ImagePackagePullContext(
-                        projectId = projectId,
-                        repoName = repoName,
-                        remoteUrl = remoteUrl,
-                        userName = config.credentials.username,
-                        password = config.credentials.password
-                    ))
+                    result.add(
+                        ImagePackagePullContext(
+                            projectId = projectId,
+                            repoName = repoName,
+                            remoteUrl = remoteUrl,
+                            userName = config.credentials.username,
+                            password = config.credentials.password
+                        )
+                    )
                 } catch (e: Exception) {
                     logger.warn("illegal remote url ${config.url} for repo $projectId|$repoName")
                 }
             }
+
             is CompositeConfiguration -> {
                 config.proxy.channelList.forEach {
                     try {
                         val remoteUrl = UrlFormatter.addProtocol(it.url)
-                        result.add(ImagePackagePullContext(
-                            projectId = projectId,
-                            repoName = repoName,
-                            remoteUrl = remoteUrl,
-                            userName = it.username,
-                            password = it.password
-                        ))
+                        result.add(
+                            ImagePackagePullContext(
+                                projectId = projectId,
+                                repoName = repoName,
+                                remoteUrl = remoteUrl,
+                                userName = it.username,
+                                password = it.password
+                            )
+                        )
                     } catch (e: Exception) {
                         logger.warn("illegal proxy url ${it.url} for repo $projectId|$repoName")
                     }
                 }
             }
+
             else -> throw UnsupportedOperationException()
         }
         return result

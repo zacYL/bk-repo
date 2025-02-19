@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.oci.constant.OCI_PACKAGE_NAME
 import com.tencent.bkrepo.oci.constant.OCI_PROJECT_ID
@@ -74,6 +75,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.HandlerMapping
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 @Suppress("MVCPathVariableInspection")
 @Api("oci产品接口")
@@ -233,6 +235,12 @@ class UserOciController(
 
     ): Response<Boolean> {
         ociBlobService.uploadImage(OciArtifactInfo(projectId, repoName, packageName, version), file)
+        with(HttpContextHolder.getResponse()) {
+            status = HttpServletResponse.SC_OK
+            setHeader("Docker-Content-Digest", "")
+            setHeader("Docker-Distribution-Api-Version", "")
+            setHeader("Location", "")
+        }
         return ResponseBuilder.success()
     }
 

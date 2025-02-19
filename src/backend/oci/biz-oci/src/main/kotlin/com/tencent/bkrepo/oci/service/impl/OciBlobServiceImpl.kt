@@ -290,7 +290,7 @@ class OciBlobServiceImpl(
      *
      * 该函数负责从每个manifest中解析config和layer并一同处理上传
      *
-     * @param manifests 旧版的manifest
+     * @param manifest 新版的manifest
      * @param artifactInfo 镜像的相关信息，包括名称、摘要等
      * @param blobs 包含所有镜像层数据的字典，键为层的摘要值，值为层的数据
      */
@@ -520,13 +520,8 @@ class OciBlobServiceImpl(
     private fun getLayer(digest: String, blobs: Map<String, ByteArray>): ByteArray {
         val sha256 = "blobs/${digest.replace(":", "/")}"
         return blobs[sha256] ?: run {
-            // 可能是第二种打包方式
-            val sha256 = digest
-            return@run blobs[sha256] ?: run {
-                // 如果第二种方式也没有找到，则记录警告并抛出异常
-                logger.warn("The content of $sha256 is null")
-                throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
-            }
+            logger.warn("The content of $sha256 is null")
+            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
         }
     }
 

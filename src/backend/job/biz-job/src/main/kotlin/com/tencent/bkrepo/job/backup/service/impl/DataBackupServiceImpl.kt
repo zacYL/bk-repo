@@ -29,6 +29,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDateTime
+import java.util.regex.Pattern
 
 @Service
 class DataBackupServiceImpl(
@@ -80,7 +81,8 @@ class DataBackupServiceImpl(
 
     private fun contentCheck(request: BackupTaskRequest) {
         with(request) {
-            duplicateNameCheck(request.name,request.type)
+            isValidLinuxPath(request.storeLocation)
+            duplicateNameCheck(request.name, request.type)
             if (content == null || content!!.projects.isNullOrEmpty()) {
                 logger.warn("backup content [$content] is illegal!")
                 throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, BackupTaskRequest::content.name)
@@ -98,6 +100,7 @@ class DataBackupServiceImpl(
             }
         }
     }
+
 
     private fun storeLocationHandler(type: String, targetFile: Path) {
         when (type) {
@@ -140,10 +143,24 @@ class DataBackupServiceImpl(
     }
 
     private fun duplicateNameCheck(name: String, type: String) {
-        if (type== DATA_RECORDS_BACKUP){
+        if (type == DATA_RECORDS_BACKUP) {
             if (backupTaskDao.findTasksByName(name, type) != null) {
                 throw BadRequestException(CommonMessageCode.RESOURCE_EXISTED, name)
             }
+        }
+    }
+
+    fun isValidLinuxPath(path: String) {
+        val pattern = Pattern.compile("^\\/([a-zA-Z0-9+, ._-]+\\/)*[a-zA-Z0-9+, ._-]+$")
+        val matcher = pattern.matcher(path)
+        if (!matcher.matches()) throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, path)
+
+        if (path.length > 4096) throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, path)
+
+        val parts = path.split("/")
+        parts.forEach {
+            if (it == "." || it == "..") throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, path)
+            if (it.length > 256) throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, path)
         }
     }
 

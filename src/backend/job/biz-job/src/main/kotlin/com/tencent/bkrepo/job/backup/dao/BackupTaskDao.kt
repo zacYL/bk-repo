@@ -103,7 +103,10 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
             type?.let { criteria.and(TBackupTask::type.name).isEqualTo(it) }
             state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
             repoNames?.let { criteria.and("content.projects.repoList").regex(repoNames, "i") }
-            projectIds?.let { criteria.and("content.projects.projectId").`in`(projectIds) }
+            name?.let { criteria.and(TBackupTask::name.name).regex(name, "i") }
+            if (!projectIds.isNullOrEmpty()){
+                criteria.and("content.projects.projectId").`in`(projectIds)
+            }
             return count(Query(criteria))
         }
     }

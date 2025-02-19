@@ -237,9 +237,10 @@ class UserOciController(
         ociBlobService.uploadImage(OciArtifactInfo(projectId, repoName, packageName, version), file)
         with(HttpContextHolder.getResponse()) {
             status = HttpServletResponse.SC_OK
-            setHeader("Docker-Content-Digest", "")
-            setHeader("Docker-Distribution-Api-Version", "")
-            setHeader("Location", "")
+            setHeader("Docker-Content-Digest", null)
+            setHeader("Docker-Distribution-Api-Version", null)
+            setHeader("Location", null)
+            setHeader("Content-Length", null)
         }
         return ResponseBuilder.success()
     }

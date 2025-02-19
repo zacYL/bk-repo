@@ -105,4 +105,4 @@ const val OHPM_DEPRECATE = "deprecate"
 const val OHPM_CHANGELOG_FILE_NAME = "changelog.md"
 const val OHPM_README_FILE_NAME = "readme.md"
 
-const val NPM_REPLICA_RESOLVE = "/replica/resolve"
+const val NPM_REPLICA_RESOLVE = "/replica/resolve/{projectId}/{repoName}"

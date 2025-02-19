@@ -59,7 +59,7 @@ class EventConsumer(
                 MediaType.parse(MediaTypes.APPLICATION_JSON),
                 event.toJsonString()
             )
-            val url = "$domain/npm$NPM_REPLICA_RESOLVE"
+            val url = "$domain/npm$NPM_REPLICA_RESOLVE/$projectId/$repoName"
             val request = Request.Builder()
                 .url(url)
                 .post(requestBody)

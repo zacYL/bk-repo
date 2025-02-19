@@ -82,6 +82,7 @@ class NpmReplicaService(
             storageManager.storeArtifactFile(packageJsonNode, artifactFile, repoDetail.storageCredentials)
             artifactFile.delete()
         }
+        logger.info("update index file success")
     }
 
     private fun store(artifactFile: ArtifactFile, repoDetail: RepositoryDetail, indexFilePath: String) {

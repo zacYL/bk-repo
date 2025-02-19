@@ -1313,6 +1313,205 @@
         "nodeType" : "API",
         "sort" : 1737630225046,
         "unShelve" : true
+      },{
+        "code": "DELETE__api_package_delete_{projectId}_{repoName}",
+        "name": "DELETE__api_package_delete_{projectId}_{repoName}",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "DELETE__api_storage_credentials_{credentialKey}",
+        "name": "DELETE__api_storage_credentials_{credentialKey}",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "DELETE__api_version_delete_{projectId}_{repoName}",
+        "name": "DELETE__api_version_delete_{projectId}_{repoName}",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_metadata_{projectId}_{repoName}_**",
+        "name": "GET__api_metadata_{projectId}_{repoName}_**",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_node_detail_{projectId}_{repoName}_**",
+        "name": "GET__api_node_detail_{projectId}_{repoName}_**",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_package_info_{projectId}_{repoName}",
+        "name": "GET__api_package_info_{projectId}_{repoName}",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_package_search_overview",
+        "name": "GET__api_package_search_overview",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_project_list",
+        "name": "GET__api_project_list",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_project_search",
+        "name": "GET__api_project_search",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_project_statistics_download_rank",
+        "name": "GET__api_project_statistics_download_rank",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_project_statistics_node_summary",
+        "name": "GET__api_project_statistics_node_summary",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_repo_exist_{projectId}_{repoName}",
+        "name": "GET__api_repo_exist_{projectId}_{repoName}",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_repo_list_{projectId}",
+        "name": "GET__api_repo_list_{projectId}",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_software_node_search_overview",
+        "name": "GET__api_software_node_search_overview",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "GET__api_software_package_search_overview",
+        "name": "GET__api_software_package_search_overview",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_metadata_package_forbid_{projectId}_{repoName}",
+        "name": "POST__api_metadata_package_forbid_{projectId}_{repoName}",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_metadata_{projectId}_{repoName}_**",
+        "name": "POST__api_metadata_{projectId}_{repoName}_**",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_node_rename_{projectId}_{repoName}_**",
+        "name": "POST__api_node_rename_{projectId}_{repoName}_**",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_node_search",
+        "name": "POST__api_node_search",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_node_update_{projectId}_{repoName}_**",
+        "name": "POST__api_node_update_{projectId}_{repoName}_**",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_node_{projectId}_{repoName}_**",
+        "name": "POST__api_node_{projectId}_{repoName}_**",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_package_search",
+        "name": "POST__api_package_search",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_repo_update_{projectId}_{repoName}",
+        "name": "POST__api_repo_update_{projectId}_{repoName}",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_share_batch",
+        "name": "POST__api_share_batch",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
+      },
+      {
+        "code": "POST__api_software_package_search",
+        "name": "POST__api_software_package_search",
+        "configJsonPath": "",
+        "nodeType": "API",
+        "sort": 1,
+        "unShelve": true
       } ]
     }
     ]

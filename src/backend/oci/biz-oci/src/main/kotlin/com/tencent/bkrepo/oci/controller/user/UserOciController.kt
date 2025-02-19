@@ -242,7 +242,7 @@ class UserOciController(
             setHeader("Location", null)
             setHeader("Content-Length", null)
         }
-        return ResponseBuilder.success()
+        return ResponseBuilder.success(true)
     }
 
     @ApiOperation("移动包版本")

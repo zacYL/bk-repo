@@ -53,8 +53,6 @@ import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaExecutionContext
 import com.tencent.bkrepo.replication.replica.event.ReplicaEvent
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
@@ -209,7 +207,9 @@ abstract class AbstractReplicaService(
 
             check(!userAuthPath.isNullOrEmpty()) { "node fullPath[${node.fullPath}] no read permission" }
 
-            check(userAuthPath.any() { node.fullPath.startsWith(PathUtils.toFullPath(it)) }) { "node fullPath[${node.fullPath}] no read permission" }
+            check(userAuthPath.any {
+                node.fullPath.startsWith(PathUtils.toFullPath(it))
+            }) { "node fullPath[${node.fullPath}] no read permission" }
 
             if (!node.folder) {
                 // 外部集群仓库没有project/repoName
@@ -222,7 +222,9 @@ abstract class AbstractReplicaService(
                     artifactReplicaClient!!.checkNodeExist(remoteProjectId, remoteRepoName, node.fullPath).data == true
                 ) {
                     task.setting.conflictStrategy
-                } else null
+                } else {
+                    null
+                }
                 // 初始化分发记录详情 & 记录 artifactName
                 val replicaExecutionContext = initialExecutionContext(
                     context = replicaContext,
@@ -268,8 +270,8 @@ abstract class AbstractReplicaService(
             } finally {
                 updateTaskProgressCache(context.taskKey)
                 // 记录每一个制品的同步记录详情，如果不记录，则删除初始化记录
-                if (replicaContext.task.replicaObjectType == ReplicaObjectType.REPOSITORY
-                    && replicaContext.task.notRecord
+                if (replicaContext.task.replicaObjectType == ReplicaObjectType.REPOSITORY &&
+                    replicaContext.task.notRecord
                 ) {
                     replicaRecordService.deleteRecordDetailById(detail.id)
                 } else {
@@ -320,7 +322,9 @@ abstract class AbstractReplicaService(
                 val conflictStrategy =
                     if (artifactReplicaClient!!.checkPackageVersionExist(checkRequest).data == true) {
                         task.setting.conflictStrategy
-                    } else null
+                    } else {
+                        null
+                    }
                 val replicaExecutionContext = initialExecutionContext(
                     context = replicaContext,
                     artifactName = packageSummary.name,
@@ -350,25 +354,7 @@ abstract class AbstractReplicaService(
                         // not conflict or overwrite
                         replicator.replicaPackageVersion(replicaContext, packageSummary, version)
 
-                        //仅针对Cocoapods制品同步，发送消息给Cocoapods服务，通知处理包文件索引
-                        if (packageSummary.type == PackageType.COCOAPODS) {
-                            //构建消息对象，传入的参数是有关同步接收方节点的信息
-                            val event = ReplicaEvent(
-                                projectId = replicaContext.remoteProjectId!!,
-                                repoName = replicaContext.remoteRepoName!!,
-                                fullPath = version.contentPath!!,
-                                cluster = replicaContext.cluster,
-                                repoType = RepositoryType.COCOAPODS,
-                                packageType = PackageType.COCOAPODS,
-                                userId = SecurityUtils.getUserId()
-                            )
-                            logger.info("send cocoapods replica event[$event]")
-                            eventSupplier.delegateToSupplier(
-                                event = event,
-                                topic = BINDING_OUT_NAME,
-                                key = event.getFullResourceKey()
-                            )
-                        }
+                        sendEventIfNecessary(packageSummary, version)
                     }
                 }
                 return
@@ -380,14 +366,40 @@ abstract class AbstractReplicaService(
             } finally {
                 updateTaskProgressCache(context.taskKey)
                 // 记录每一个制品的同步记录详情，如果不记录，则删除初始化记录
-                if (replicaContext.task.replicaObjectType == ReplicaObjectType.REPOSITORY
-                    && replicaContext.task.notRecord
+                if (replicaContext.task.replicaObjectType == ReplicaObjectType.REPOSITORY &&
+                    replicaContext.task.notRecord
                 ) {
                     replicaRecordService.deleteRecordDetailById(detail.id)
                 } else {
                     completeRecordDetail(context)
                 }
             }
+        }
+    }
+
+    private fun ReplicaExecutionContext.sendEventIfNecessary(packageSummary: PackageSummary, version: PackageVersion) {
+        val repoTypes = listOf(PackageType.COCOAPODS, PackageType.OHPM, PackageType.NPM)
+        if (repoTypes.contains(packageSummary.type)) {
+            // 构建消息对象，传入的参数是有关同步接收方节点的信息
+            val event = ReplicaEvent(
+                projectId = replicaContext.remoteProjectId!!,
+                repoName = replicaContext.remoteRepoName!!,
+                fullPath = version.contentPath!!,
+                cluster = replicaContext.cluster,
+                packageType = packageSummary.type,
+                userId = SecurityUtils.getUserId(),
+                packageName = packageSummary.name,
+                packageVersion = version.name
+            )
+            logger.info(
+                "send replica event,projectId [${event.projectId}], repoName [${event.repoName}]," +
+                    "fullPath [${event.fullPath}]"
+            )
+            eventSupplier.delegateToSupplier(
+                event = event,
+                topic = BINDING_OUT_NAME,
+                key = event.getFullResourceKey()
+            )
         }
     }
 
@@ -453,7 +465,9 @@ abstract class AbstractReplicaService(
 
     private fun getActionType(context: ReplicaContext): ActionType? {
         with(context) {
-            return if (!eventExists()) null else {
+            return if (!eventExists()) {
+                null
+            } else {
                 when (event.type) {
                     EventType.NODE_MOVED -> ActionType.MOVE
                     EventType.NODE_COPIED -> ActionType.COPY

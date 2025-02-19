@@ -32,7 +32,6 @@ import com.tencent.bkrepo.cocoapods.artifact.CocoapodsProperties
 import com.tencent.bkrepo.cocoapods.constant.COCOAPODS_REPLICA_RESOLVE
 import com.tencent.bkrepo.cocoapods.constant.LOCK_PREFIX
 import com.tencent.bkrepo.cocoapods.pool.EventHandlerThreadPoolExecutor
-import com.tencent.bkrepo.cocoapods.service.CocoapodsReplicaService
 import com.tencent.bkrepo.cocoapods.service.CocoapodsSpecsService
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
@@ -47,7 +46,6 @@ import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import okhttp3.MediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.slf4j.LoggerFactory
@@ -100,7 +98,7 @@ class RemoteEventJobExecutor(
      * 提交任务到线程池执行
      * @param action 执行函数
      */
-    protected fun submit(
+    private fun submit(
         action: () -> Unit,
     ): Future<ExecutionResult> {
         return threadPoolExecutor.submit<ExecutionResult> {

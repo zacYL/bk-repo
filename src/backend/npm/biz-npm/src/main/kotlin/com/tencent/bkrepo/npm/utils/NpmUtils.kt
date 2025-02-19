@@ -86,7 +86,6 @@ object NpmUtils {
         name, delimiter, if (repeatedScope) name else name.substringAfterLast("/"), version, getContentFileExt(ohpm)
     )
 
-
     fun getTgzPath(name: String, version: String, pathWithDash: Boolean = true, ext: String = FILE_SUFFIX): String {
         return if (pathWithDash) {
             NPM_PKG_TGZ_FULL_PATH.format(name, name, version, ext)
@@ -161,7 +160,7 @@ object NpmUtils {
      * name with scope tarball like this: http://domain/@scope/demo/-/demo-1.0.0.tgz
      * name without scope tarball like this: http://domain/demo/-/demo-1.0.0.tgz
      */
-    private fun getTgzSuffix(oldTarball: String, name: String): String{
+    private fun getTgzSuffix(oldTarball: String, name: String): String {
         val firstNameIndex = oldTarball.indexOfAny(listOf("/$name/$DELIMITER_HYPHEN/", "/$name/$DELIMITER_DOWNLOAD/"))
         return oldTarball.substring(firstNameIndex + 1)
     }
@@ -174,7 +173,7 @@ object NpmUtils {
         domain: String,
         tarballPrefix: String,
         name: String,
-        artifactInfo: ArtifactInfo
+        artifactInfo: ArtifactInfo,
     ): String {
         val tgzSuffix = getTgzSuffix(oldTarball, name)
         val npmPrefixHeader = HeaderUtils.getHeader(NPM_TGZ_TARBALL_PREFIX)
@@ -200,7 +199,7 @@ object NpmUtils {
 
     fun packageKeyByRepoType(
         name: String,
-        repoType: RepositoryType = ArtifactContextHolder.getRepoDetail()!!.type
+        repoType: RepositoryType = ArtifactContextHolder.getRepoDetail()!!.type,
     ): String {
         return if (repoType == RepositoryType.OHPM) {
             PackageKeys.ofOhpm(name)
@@ -217,7 +216,7 @@ object NpmUtils {
 
     fun resolveNameByRepoType(
         packageKey: String,
-        repoType: RepositoryType = ArtifactContextHolder.getRepoDetail()!!.type
+        repoType: RepositoryType = ArtifactContextHolder.getRepoDetail()!!.type,
     ): String {
         return if (repoType == RepositoryType.OHPM) {
             PackageKeys.resolveOhpm(packageKey)
@@ -230,7 +229,7 @@ object NpmUtils {
         name: String,
         version: String,
         pathWithDash: Boolean = true,
-        repoType: RepositoryType = ArtifactContextHolder.getRepoDetail()!!.type
+        repoType: RepositoryType = ArtifactContextHolder.getRepoDetail()!!.type,
     ): String {
         val ext = getContentFileExt(repoType == RepositoryType.OHPM)
         return getTgzPath(name, version, pathWithDash, ext)

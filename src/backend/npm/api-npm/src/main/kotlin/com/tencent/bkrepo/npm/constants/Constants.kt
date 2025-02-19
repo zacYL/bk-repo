@@ -33,7 +33,8 @@ package com.tencent.bkrepo.npm.constants
 
 import com.tencent.bkrepo.common.api.constant.StringPool
 
-const val REPO_TYPE = "NPM"
+const val NPM_REPO_TYPE = "NPM"
+const val OHPM_REPO_TYPE = "OHPM"
 
 const val APPLICATION_OCTET_STEAM = "mime_type"
 
@@ -103,3 +104,5 @@ const val OHPM_DEFAULT_ARTIFACT_TYPE = "original"
 const val OHPM_DEPRECATE = "deprecate"
 const val OHPM_CHANGELOG_FILE_NAME = "changelog.md"
 const val OHPM_README_FILE_NAME = "readme.md"
+
+const val NPM_REPLICA_RESOLVE = "/replica/resolve"

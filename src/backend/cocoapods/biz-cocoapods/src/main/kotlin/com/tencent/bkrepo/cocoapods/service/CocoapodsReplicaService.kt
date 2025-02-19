@@ -1,7 +1,6 @@
 package com.tencent.bkrepo.cocoapods.service
 
 import com.google.gson.JsonParser
-import com.tencent.bkrepo.cocoapods.artifact.CocoapodsProperties
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
 import com.tencent.bkrepo.cocoapods.utils.CocoapodsUtil
 import com.tencent.bkrepo.common.api.util.toJsonString
@@ -10,13 +9,10 @@ import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
-import com.tencent.bkrepo.common.security.util.SecurityUtils
-import com.tencent.bkrepo.common.storage.filesystem.FileSystemClient
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -24,13 +20,12 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.InputStreamReader
-import kotlin.math.log
 
 @Service
 class CocoapodsReplicaService(
     private val nodeClient: NodeClient,
     private val repoClient: RepositoryClient,
-    private val storageManager: StorageManager
+    private val storageManager: StorageManager,
 ) {
 
     /**
@@ -41,8 +36,8 @@ class CocoapodsReplicaService(
         logger.info("Cocoapods-Event: resolveIndexFile, event:[$event]")
         with(event) {
 
-            val packageFilePath = data["fullPath"] as? String?:
-            throw IllegalArgumentException("fullPath is missing or not a string")
+            val packageFilePath = data["fullPath"] as? String
+                ?: throw IllegalArgumentException("fullPath is missing or not a string")
 
             val indexFilePath = getIndexFilePath(projectId, repoName, packageFilePath)
 
@@ -58,17 +53,14 @@ class CocoapodsReplicaService(
                 .getNodeDetail(projectId, repoName, indexFilePath)
                 .data as NodeDetail
 
-            //索引源文件InputStream
+            // 索引源文件InputStream
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
-            val domain = data["domain"] as? String?:
-            throw IllegalArgumentException("domain is missing or not a string")
+            val domain = data["domain"] as? String
+                ?: throw IllegalArgumentException("domain is missing or not a string")
 
-            //目标地址,ex:"http://bkrepo.indecpack7.com/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
-            val sourcePath = "${domain}/${projectId}/${repoName}/${packageFilePath}"
-
-            logger.info("replace with sourcePath: $sourcePath")
-
+            // 目标地址
+            val sourcePath = "$domain/$projectId/$repoName/$packageFilePath"
             when (type) {
                 1 -> handleForPodSpec(indexFileInputStream, sourcePath, repoDetail, indexFilePath)
                 2 -> handleForPodSpecJson(indexFileInputStream, sourcePath, repoDetail, indexFilePath)
@@ -86,7 +78,7 @@ class CocoapodsReplicaService(
         inputStream: ArtifactInputStream,
         sourcePath: String,
         repoDetail: RepositoryDetail,
-        indexFilePath: String
+        indexFilePath: String,
     ) {
         val jsonStr = JsonParser.parseReader(InputStreamReader(inputStream)).toJsonString()
         val newJsonStr = CocoapodsUtil.updatePodspecJsonSource(jsonStr, sourcePath)
@@ -129,7 +121,7 @@ class CocoapodsReplicaService(
         inputStream: ArtifactInputStream,
         sourcePath: String,
         repoDetail: RepositoryDetail,
-        indexFilePath: String
+        indexFilePath: String,
     ) {
         val specStr = getSpecStr(inputStream)
         val newSpecStr = CocoapodsUtil.updatePodspecSource(specStr, sourcePath)
@@ -158,11 +150,10 @@ class CocoapodsReplicaService(
      */
     private fun getIndexFilePath(projectId: String, repoName: String, packageFilePath: String): String {
         val split = packageFilePath.split('/')
-        val orgName = split[1]
         val artifactName = split[2]
         val versionName = split[3]
-        val specsPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec"
-        val jsonPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec.json"
+        val specsPath = "/.specs/$artifactName/$versionName/$artifactName.podspec"
+        val jsonPath = "/.specs/$artifactName/$versionName/$artifactName.podspec.json"
         val pathList: List<String> =
             nodeClient.listExistFullPath(projectId, repoName, listOf(specsPath, jsonPath)).data.orEmpty()
         if (pathList.isEmpty()) return ""

@@ -2,12 +2,11 @@ package com.tencent.bkrepo.common.devops.util.http
 
 import com.tencent.bkrepo.common.service.pojo.ApiResponse
 import com.tencent.bkrepo.common.service.util.HttpUtils
-import okhttp3.MediaType
+import java.util.concurrent.TimeUnit
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
-import java.util.concurrent.TimeUnit
+import okhttp3.RequestBody.Companion.toRequestBody
 
 object SimpleHttpUtils {
     private val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
@@ -33,7 +32,7 @@ object SimpleHttpUtils {
     }
 
     fun doPost(url: String, body: String, retry: Int = defaultRetry, acceptCode: Set<Int> = setOf()): ApiResponse {
-        val requestBody = RequestBody.create(mediaType, body)
+        val requestBody = body.toRequestBody(mediaType)
         val request = Request.Builder().url(url).post(requestBody).build()
         return HttpUtils.doRequest(okHttpClient, request, retry, acceptCode)
     }

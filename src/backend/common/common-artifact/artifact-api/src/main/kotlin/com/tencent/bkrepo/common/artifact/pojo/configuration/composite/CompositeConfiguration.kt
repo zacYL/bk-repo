@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.common.artifact.pojo.configuration.composite
 
-import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCleanStrategy
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty

@@ -48,11 +48,11 @@ import com.tencent.bkrepo.replication.constant.RETRY_COUNT
 import com.tencent.bkrepo.replication.enums.WayOfPushArtifact
 import com.tencent.bkrepo.replication.exception.ArtifactPushException
 import com.tencent.bkrepo.replication.manager.LocalDataManager
-import com.tencent.bkrepo.replication.replica.replicator.base.internal.ClusterArtifactReplicationHandler
-import com.tencent.bkrepo.replication.replica.repository.internal.PackageNodeMappings
 import com.tencent.bkrepo.replication.replica.context.FilePushContext
 import com.tencent.bkrepo.replication.replica.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.replicator.Replicator
+import com.tencent.bkrepo.replication.replica.replicator.base.internal.ClusterArtifactReplicationHandler
+import com.tencent.bkrepo.replication.replica.repository.internal.PackageNodeMappings
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -65,13 +65,12 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateR
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import java.time.LocalDateTime
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 
 /**
  * 集群数据同步类
@@ -104,7 +103,7 @@ class ClusterReplicator(
             // 外部集群仓库没有project/repoName
             if (remoteProjectId.isNullOrBlank()) return
             val localProject = localDataManager.findProjectById(localProjectId)
-	    // TODO 需要根据配置决定是否保留原有命名
+            // TODO 需要根据配置决定是否保留原有命名
             val combineName = "${localProject.displayName}---$remoteProjectId"
             val displayName = if (combineName.length > 100) combineName.substring(0, 100) else combineName
             val request = ProjectCreateRequest(
@@ -195,11 +194,20 @@ class ClusterReplicator(
                 it.key !in RESERVED_KEY
             } as MutableList<MetadataModel>
             if (packageMetadata.none { it.key == SOURCE_TYPE }) {
-                packageMetadata.add(MetadataModel(SOURCE_TYPE, ArtifactChannel.REPLICATION, system = true, display = true))
+                packageMetadata.add(
+                    MetadataModel(
+                        SOURCE_TYPE,
+                        ArtifactChannel.REPLICATION,
+                        system = true,
+                        display = true
+                    )
+                )
             }
-            val manifestPath = if (packageSummary.type == PackageType.DOCKER || packageSummary.type == PackageType.OCI) packageVersion.manifestPath else null
+            val manifestPath =
+                if (packageSummary.type == PackageType.DOCKER || packageSummary.type == PackageType.OCI)
+                    packageVersion.manifestPath else null
             // 包数据
-	    // TODO 用户信息最好根据配置决定是否保留原始数据
+            // TODO 用户信息最好根据配置决定是否保留原始数据
             val request = PackageVersionCreateRequest(
                 projectId = remoteProjectId,
                 repoName = remoteRepoName,
@@ -239,7 +247,7 @@ class ClusterReplicator(
                         // 1. 同步文件数据
                         logger.info(
                             "The file [${node.fullPath}] with sha256 [${node.sha256}] " +
-                                "will be pushed to the remote server ${cluster.name}, try the $retry time!"
+                                    "will be pushed to the remote server ${cluster.name}, try the $retry time!"
                         )
                         try {
                             artifactReplicationHandler.blobPush(
@@ -256,16 +264,16 @@ class ClusterReplicator(
                         } catch (throwable: Throwable) {
                             logger.warn(
                                 "File replica push error $throwable, trace is " +
-                                    "${Throwables.getStackTraceAsString(throwable)}!"
+                                        "${Throwables.getStackTraceAsString(throwable)}!"
                             )
                             // 当不支持分块上传时，降级为普通上传
                             // 兼容接口不存在时，会返回401
                             if (
                                 throwable is ArtifactPushException &&
                                 (
-                                    throwable.code == HttpStatus.METHOD_NOT_ALLOWED.value ||
-                                        throwable.code == HttpStatus.UNAUTHORIZED.value
-                                    )
+                                        throwable.code == HttpStatus.METHOD_NOT_ALLOWED.value ||
+                                                throwable.code == HttpStatus.UNAUTHORIZED.value
+                                        )
                             ) {
                                 type = WayOfPushArtifact.PUSH_WITH_DEFAULT.value
                                 downGrade = true
@@ -305,8 +313,10 @@ class ClusterReplicator(
                 TimeUnit.SECONDS.sleep(1)
                 costTime++
             }
-            logger.info("the result of storage consistency check for $sha256 is $checkResult," +
-                            " costTime: $costTime seconds")
+            logger.info(
+                "the result of storage consistency check for $sha256 is $checkResult," +
+                        " costTime: $costTime seconds"
+            )
         }
     }
 
@@ -353,7 +363,7 @@ class ClusterReplicator(
             } else {
                 emptyList()
             }
-	     // TODO 用户信息最好根据配置决定是否保留原始数据
+            // TODO 用户信息最好根据配置决定是否保留原始数据
             return NodeCreateRequest(
                 projectId = remoteProjectId,
                 repoName = remoteRepoName,

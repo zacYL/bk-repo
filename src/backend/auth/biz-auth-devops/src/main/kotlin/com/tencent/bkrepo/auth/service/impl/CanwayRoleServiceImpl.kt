@@ -1,12 +1,12 @@
 package com.tencent.bkrepo.auth.service.impl
 
 import com.tencent.bkrepo.auth.*
+import com.tencent.bkrepo.auth.dao.UserDao
+import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.model.TRole
 import com.tencent.bkrepo.auth.pojo.CanwayRoleRequest
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.Role
-import com.tencent.bkrepo.auth.repository.RoleRepository
-import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -29,14 +29,13 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 
 
-
 class CanwayRoleServiceImpl(
     private val roleRepository: RoleRepository,
     userService: UserService,
-    userRepository: UserRepository,
+    userDao: UserDao,
     private val mongoTemplate: MongoTemplate,
     permissionService: PermissionService
-) : CpackRoleServiceImpl(roleRepository, userService, userRepository, mongoTemplate, permissionService) {
+) : CpackRoleServiceImpl(roleRepository, userService, userDao, mongoTemplate, permissionService) {
 
     @Autowired
     lateinit var devopsConf: DevopsConf
@@ -54,7 +53,7 @@ class CanwayRoleServiceImpl(
 
     private fun checkGroups(groups: List<CanwayGroup>?) {
         groups?.forEach { group ->
-            roleRepository.findTRoleById(group.id).apply {
+            roleRepository.findFirstById(group.id).apply {
                 if (this == null) {
                     roleRepository.insert(
                         TRole(
@@ -99,20 +98,23 @@ class CanwayRoleServiceImpl(
         logger.info("inquire [tenantId:${tenantId}] ")
         val uri = String.format(groupApi)
         val requestUrl = getRequestUrl(uri)
-        val owner = CanwayRoleRequest.Owner(TENANT_SCOPECODE,tenantId)
-        val responseContent = SimpleHttpUtils.doPost(requestUrl,CanwayRoleRequest(owner).toJsonString()).content
-        val groupResponse=responseContent.readJsonString<CanwayResponse<List<CanwayTenantGroupResponse>>>().data ?: listOf()
+        val owner = CanwayRoleRequest.Owner(TENANT_SCOPECODE, tenantId)
+        val responseContent = SimpleHttpUtils.doPost(requestUrl, CanwayRoleRequest(owner).toJsonString()).content
+        val groupResponse =
+            responseContent.readJsonString<CanwayResponse<List<CanwayTenantGroupResponse>>>().data ?: listOf()
         if (groupResponse.isEmpty()) return listOf()
-        val groupInformations=devopsClient.groupInformationByGroupIds(CanwayUserGroupRequest(groupIds=groupResponse.map { it.id })) ?: listOf()
-        val canwayGroup= mutableListOf<CanwayGroup>()
-        groupResponse.forEach {group->
+        val groupInformations =
+            devopsClient.groupInformationByGroupIds(CanwayUserGroupRequest(groupIds = groupResponse.map { it.id }))
+                ?: listOf()
+        val canwayGroup = mutableListOf<CanwayGroup>()
+        groupResponse.forEach { group ->
             if (group.deleted) return@forEach
             canwayGroup.add(CanwayGroup(
-                id=group.id,
-                name=group.name,
-                description= group.desc,
-                tenantCode= group.ownerId,
-                users=groupInformations.filter { group.id==it.userGroupId }.map { it.userId }
+                id = group.id,
+                name = group.name,
+                description = group.desc,
+                tenantCode = group.ownerId,
+                users = groupInformations.filter { group.id == it.userGroupId }.map { it.userId }
             ))
         }
         return canwayGroup

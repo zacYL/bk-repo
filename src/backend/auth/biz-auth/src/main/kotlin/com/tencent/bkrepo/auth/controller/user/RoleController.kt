@@ -92,7 +92,11 @@ class RoleController @Autowired constructor(
     @DeleteMapping("/delete/{id}")
     fun deleteRole(@PathVariable id: String): Response<Boolean> {
         val role = roleService.detail(id) ?: return ResponseBuilder.success(false)
-        preCheckProjectAdmin(role.projectId)
+        if (role.projectId == null) {
+            preCheckUserAdmin()
+        } else {
+            preCheckProjectAdmin(role.projectId)
+        }
         roleService.deleteRoleById(id)
         return ResponseBuilder.success(true)
     }
@@ -101,7 +105,11 @@ class RoleController @Autowired constructor(
     @GetMapping("/detail/{id}")
     fun detail(@PathVariable id: String): Response<Role?> {
         val role = roleService.detail(id) ?: return ResponseBuilder.success(null)
-        preCheckProjectAdmin(role.projectId)
+        if (role.projectId == null) {
+            preCheckUserAdmin()
+        } else {
+            preCheckProjectAdmin(role.projectId)
+        }
         return ResponseBuilder.success(role)
     }
 
@@ -129,7 +137,11 @@ class RoleController @Autowired constructor(
     @GetMapping("/users/{id}")
     fun listUserByRole(@PathVariable id: String): Response<Set<UserResult>> {
         val role = roleService.detail(id) ?: return ResponseBuilder.success(emptySet())
-        preCheckProjectAdmin(role.projectId)
+        if (role.projectId == null) {
+            preCheckUserAdmin()
+        } else {
+            preCheckProjectAdmin(role.projectId)
+        }
         return ResponseBuilder.success(roleService.listUserByRoleId(id))
     }
 
@@ -141,7 +153,11 @@ class RoleController @Autowired constructor(
         @RequestBody updateRoleRequest: UpdateRoleRequest
     ): Response<Boolean> {
         val role = roleService.detail(id) ?: return ResponseBuilder.success(false)
-        preCheckProjectAdmin(role.projectId)
+        if (role.projectId == null) {
+            preCheckUserAdmin()
+        } else {
+            preCheckProjectAdmin(role.projectId)
+        }
         return ResponseBuilder.success(roleService.updateRoleInfo(id, updateRoleRequest))
     }
 

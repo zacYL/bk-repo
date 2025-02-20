@@ -1,10 +1,6 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.api.CanwayCustomMigrationClient
-import com.tencent.bkrepo.auth.api.CanwayCustomPermissionClient
-import com.tencent.bkrepo.auth.api.CanwayCustomRoleClient
-import com.tencent.bkrepo.auth.api.CanwayProjectClient
-import com.tencent.bkrepo.auth.api.ServicePermissionResource
+import com.tencent.bkrepo.auth.api.*
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
@@ -27,7 +23,6 @@ import com.tencent.bkrepo.auth.pojo.CanwayBkrepoPermission
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.general.ScopeDTO
-import com.tencent.bkrepo.auth.pojo.migration.ActionDeleteDTO
 import com.tencent.bkrepo.auth.pojo.permission.AnyResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
@@ -62,10 +57,10 @@ import com.tencent.bkrepo.common.devops.REPO_PATH_RESOURCECODE
 import com.tencent.bkrepo.common.devops.REPO_PATH_SCOPE_CODE
 import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.common.devops.SEARCH_RESOURCECODE
+import com.tencent.bkrepo.common.metadata.service.project.ProjectService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.repository.api.ProjectClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import net.canway.devops.auth.api.custom.CanwayCustomResourceTypeClient
 import net.canway.devops.auth.pojo.resource.action.ResourceActionVO
 import org.slf4j.Logger
@@ -73,26 +68,28 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.util.*
 
 @Service
 class ExtPermissionServiceImpl(
     private val permissionService: PermissionService,
-    private val projectClient: ProjectClient,
-    private val repositoryClient: RepositoryClient,
+    private val projectClient: ProjectService,
+    private val repositoryClient: RepositoryService,
     private val canwayCustomPermissionClient: CanwayCustomPermissionClient,
     private val canwayCustomRoleClient: CanwayCustomRoleClient,
     private val canwayProjectClient: CanwayProjectClient,
-    private val servicePermissionResource: ServicePermissionResource,
+    private val servicePermissionResource: ServicePermissionClient,
     private val canwayCustomResourceTypeClient: CanwayCustomResourceTypeClient,
     private val devOpsAuthGeneral: DevOpsAuthGeneral,
     private val canwayCustomMigrationClient: CanwayCustomMigrationClient,
 ) {
+
     @Suppress("TooGenericExceptionCaught")
     fun migHistoryPermissionData() {
         // 加载全部项目
-        val projectList = projectClient.listProject().data ?: return
+        val projectList = projectClient.listProject()
         for (project in projectList) {
-            val repoList = repositoryClient.listRepo(project.name).data ?: return
+            val repoList = repositoryClient.listRepo(project.name)
             for (repo in repoList) {
                 // 加载原仓库内置权限
                 val builtinPermissions = permissionService.listPermission(project.name, repo.name)
@@ -119,7 +116,7 @@ class ExtPermissionServiceImpl(
     @Suppress("TooGenericExceptionCaught")
     fun migrateToDevOps() {
         // 获取所有项目
-        val projectList = projectClient.listProject().data ?: listOf()
+        val projectList = projectClient.listProject()
         // 每个项目创建角色（查看者、使用者与仓库管理者）
         projectList.forEach { project ->
             try {
@@ -141,12 +138,12 @@ class ExtPermissionServiceImpl(
                 val projectRepoManagerRoleList = mutableListOf<SubjectDTO>()
 
                 // 查询项目下所有仓库的内置权限
-                val allRepo = repositoryClient.listRepo(projectId = project.name).data?.map { it.name } ?: listOf()
+                val allRepo = repositoryClient.listRepo(projectId = project.name).map { it.name }
                 allRepo.forEach { repoName ->
-                    val repoPermission = servicePermissionResource.listRepoBuiltinPermission(
+                    val repoPermission = permissionService.listBuiltinPermission(
                         projectId = project.name,
                         repoName = repoName
-                    ).data ?: listOf()
+                    )
                     // 仓库管理员加入用户与用户组
                     projectRepoManagerIdList.addAll(
                         repoPermission.filter { it.permName == AUTH_BUILTIN_ADMIN }
@@ -281,7 +278,7 @@ class ExtPermissionServiceImpl(
 
     @Transactional(rollbackFor = [Throwable::class])
     fun updateRepoPathCollectionResourceType(userId: String, request: UpdateRepoPathResourceTypeRequest) {
-        val permission = permissionService.findPermissionById(request.permissionId)
+        val permission = permissionService.getPermission(request.permissionId)
             ?: throw ErrorCodeException(AuthMessageCode.AUTH_PERMISSION_NOT_EXIST)
         checkRepoPathPermissionParam(
             userId,
@@ -315,7 +312,7 @@ class ExtPermissionServiceImpl(
     }
 
     fun deleteRepoPathCollectionResourceType(userId: String, request: DeleteRepoPathResourceTypeRequest) {
-        val permission = permissionService.findPermissionById(request.permissionId)
+        val permission = permissionService.getPermission(request.permissionId)
             ?: throw ErrorCodeException(AuthMessageCode.AUTH_PERMISSION_NOT_EXIST)
         hasSetRepoPermission(request.projectId, permission.repos.first(), userId)
         logger.info("userId $userId deleteRepoPathResourceType")
@@ -332,16 +329,16 @@ class ExtPermissionServiceImpl(
         request: ListRepoPathInstanceRequest
     ): List<RepoPathResourceTypeInstance> {
         val permission = permissionService.listNodePermission(request.projectId, request.repo)
-        val repoMap = repositoryClient.listRepo(request.projectId).data?.associateBy { it.name } ?: emptyMap()
+        val repoMap = repositoryClient.listRepo(request.projectId).associateBy { it.name }
         return permission.groupBy { it.repos.first() }.map { group ->
             RepoPathResourceTypeInstance(
                 group.key,
-                repoMap[group.key]?.type?.name?.toLowerCase() ?: "",
+                repoMap[group.key]?.type?.name?.lowercase(Locale.getDefault()) ?: "",
                 group.value.map { RepoPathItem(it.id!!, it.permName) }
             )
         }.filter {
             // 路径授权只考虑二进制仓库
-            it.repoType == RepositoryType.GENERIC.name.toLowerCase()
+            it.repoType == RepositoryType.GENERIC.name.lowercase()
         }
     }
 
@@ -535,19 +532,19 @@ class ExtPermissionServiceImpl(
             listOf(
                 AnyResourcePermissionSaveDTO(
                     resourceCode = RESOURCECODE,
-                    actionCode = PermissionAction.ACCESS.name.toLowerCase()
+                    actionCode = PermissionAction.ACCESS.id()
                 ),
                 AnyResourcePermissionSaveDTO(
                     resourceCode = RESOURCECODE,
-                    actionCode = PermissionAction.READ.name.toLowerCase()
+                    actionCode = PermissionAction.READ.id()
                 ),
                 AnyResourcePermissionSaveDTO(
                     resourceCode = CATELOG_RESOURCECODE,
-                    actionCode = PermissionAction.VIEW.name.toLowerCase()
+                    actionCode = PermissionAction.VIEW.id()
                 ),
                 AnyResourcePermissionSaveDTO(
                     resourceCode = SEARCH_RESOURCECODE,
-                    actionCode = PermissionAction.VIEW.name.toLowerCase()
+                    actionCode = PermissionAction.VIEW.id()
                 ),
             )
         )
@@ -557,23 +554,23 @@ class ExtPermissionServiceImpl(
                     listOf(
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.WRITE.name.toLowerCase()
+                            actionCode = PermissionAction.WRITE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.UPDATE.name.toLowerCase()
+                            actionCode = PermissionAction.UPDATE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.SHARE.name.toLowerCase()
+                            actionCode = PermissionAction.SHARE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.FORBID.name.toLowerCase()
+                            actionCode = PermissionAction.FORBID.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.LOCK.name.toLowerCase()
+                            actionCode = PermissionAction.LOCK.id()
                         )
                     )
                 )
@@ -584,39 +581,39 @@ class ExtPermissionServiceImpl(
                     listOf(
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.WRITE.name.toLowerCase()
+                            actionCode = PermissionAction.WRITE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.UPDATE.name.toLowerCase()
+                            actionCode = PermissionAction.UPDATE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.CREATE.name.toLowerCase()
+                            actionCode = PermissionAction.CREATE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.DELETE.name.toLowerCase()
+                            actionCode = PermissionAction.DELETE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.MANAGE.name.toLowerCase()
+                            actionCode = PermissionAction.MANAGE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.REPO_DELETE.name.toLowerCase()
+                            actionCode = PermissionAction.REPO_DELETE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.SHARE.name.toLowerCase()
+                            actionCode = PermissionAction.SHARE.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.FORBID.name.toLowerCase()
+                            actionCode = PermissionAction.FORBID.id()
                         ),
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
-                            actionCode = PermissionAction.LOCK.name.toLowerCase()
+                            actionCode = PermissionAction.LOCK.id()
                         )
                     )
                 )

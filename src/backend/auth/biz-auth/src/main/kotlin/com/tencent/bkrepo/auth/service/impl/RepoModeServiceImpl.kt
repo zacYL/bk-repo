@@ -69,7 +69,7 @@ class RepoModeServiceImpl(
         var controlMode = AccessControlMode.DEFAULT
         var officeDenyGroupSet = emptySet<String>()
         var bkiamv3Check = false
-        if (permissionDao.listByResourceAndRepo(ResourceType.NODE.name, projectId, repoName).isNotEmpty()) {
+        if (permissionDao.listByResourceAndRepo(ResourceType.NODE, projectId, repoName).isNotEmpty()) {
             controlMode = AccessControlMode.DIR_CTRL
         }
         val result = repoAuthDao.findOneByProjectRepo(projectId, repoName)

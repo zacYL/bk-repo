@@ -29,10 +29,11 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.auth.controller
+package com.tencent.bkrepo.auth.controller.user
 
 import com.tencent.bkrepo.auth.constant.AUTH_API_USER_PREFIX
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
+import com.tencent.bkrepo.auth.controller.OpenResource
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.pojo.enums.AuthPermissionType
 import com.tencent.bkrepo.auth.pojo.token.Token
@@ -44,7 +45,6 @@ import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
-import com.tencent.bkrepo.auth.resource.OpenResourceImpl
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
@@ -57,6 +57,7 @@ import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.util.JwtUtils
 import com.tencent.bkrepo.common.security.util.RsaUtils
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import io.swagger.annotations.ApiOperation
@@ -64,7 +65,6 @@ import javax.servlet.http.Cookie
 import org.bouncycastle.crypto.CryptoException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -76,6 +76,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.RequestHeader
+import java.util.Base64
 
 @RestController
 @RequestMapping(AUTH_API_USER_PREFIX)
@@ -84,13 +85,16 @@ class UserController @Autowired constructor(
     private val roleService: RoleService,
     private val jwtProperties: JwtAuthProperties,
     permissionService: PermissionService
-) : OpenResourceImpl(permissionService) {
+) : OpenResource(permissionService) {
 
     private val signingKey = JwtUtils.createSigningKey(jwtProperties.secretKey)
 
     @ApiOperation("创建用户")
     @PostMapping("/create")
     fun createUser(@RequestBody request: CreateUserRequest): Response<Boolean> {
+        preCheckUserAdmin()
+        // 限制创建为admin用户
+        request.admin = false
         userService.createUser(request)
         return ResponseBuilder.success(true)
     }
@@ -98,7 +102,9 @@ class UserController @Autowired constructor(
     @ApiOperation("创建项目用户")
     @PostMapping("/create/project")
     fun createUserToProject(@RequestBody request: CreateUserToProjectRequest): Response<Boolean> {
-        checkUserPermission(AuthPermissionType.PROJECT, request.projectId, null)
+        // 限制创建为admin用户
+        request.admin = false
+        preCheckUserInProject(AuthPermissionType.PROJECT, request.projectId, null)
         userService.createUserToProject(request)
         val createRoleRequest = buildProjectAdminRequest(request.projectId)
         val roleId = roleService.createRole(createRoleRequest)
@@ -109,7 +115,9 @@ class UserController @Autowired constructor(
     @ApiOperation("创建仓库用户")
     @PostMapping("/create/repo")
     fun createUserToRepo(@RequestBody request: CreateUserToRepoRequest): Response<Boolean> {
-        checkUserPermission(AuthPermissionType.PROJECT, request.projectId, null)
+        // 限制创建为admin用户
+        request.admin = false
+        preCheckUserInProject(AuthPermissionType.PROJECT, request.projectId, null)
         userService.createUserToRepo(request)
         val createRoleRequest = buildRepoAdminRequest(request.projectId, request.repoName)
         val roleId = roleService.createRole(createRoleRequest)
@@ -120,22 +128,19 @@ class UserController @Autowired constructor(
     @ApiOperation("用户列表")
     @GetMapping("/list")
     fun listUser(@RequestBody rids: List<String>?): Response<List<UserResult>> {
+        if (rids != null && rids.isNotEmpty()) {
+            preCheckUserAdmin()
+        }
         val result = userService.listUser(rids.orEmpty()).map {
             UserResult(it.userId, it.name)
         }
         return ResponseBuilder.success(result)
     }
 
-    @ApiOperation("权限用户列表")
-    @GetMapping("/listall")
-    fun listAllUser(@RequestBody rids: List<String>?): Response<List<User>> {
-        return ResponseBuilder.success(userService.listUser(rids.orEmpty()))
-    }
-
     @ApiOperation("删除用户")
     @DeleteMapping("/{uid}")
     fun deleteById(@PathVariable uid: String): Response<Boolean> {
-        checkUserId(uid)
+        preCheckUserOrAssetUser(uid, userService.getRelatedUserById(SecurityUtils.getUserId()))
         userService.deleteById(uid)
         return ResponseBuilder.success(true)
     }
@@ -143,14 +148,18 @@ class UserController @Autowired constructor(
     @ApiOperation("用户详情")
     @GetMapping("/detail/{uid}")
     fun detail(@PathVariable uid: String): Response<User?> {
-        checkUserId(uid)
+        preCheckContextUser(uid)
         return ResponseBuilder.success(userService.getUserById(uid))
     }
 
     @ApiOperation("更新用户信息")
-    @PutMapping("/{uid}")
+    @PutMapping("/update/info/{uid}")
     fun updateById(@PathVariable uid: String, @RequestBody request: UpdateUserRequest): Response<Boolean> {
-        checkUserId(uid)
+        preCheckContextUser(uid)
+        if (request.admin != null && request.admin) {
+            preCheckUserAdmin()
+            preCheckPlatformPermission()
+        }
         userService.updateUserById(uid, request)
         return ResponseBuilder.success(true)
     }
@@ -158,6 +167,7 @@ class UserController @Autowired constructor(
     @ApiOperation("新增用户所属角色")
     @PostMapping("/role/{uid}/{rid}")
     fun addUserRole(@PathVariable uid: String, @PathVariable rid: String): Response<User?> {
+        preCheckContextUser(uid)
         val result = userService.addUserToRole(uid, rid)
         return ResponseBuilder.success(result)
     }
@@ -165,6 +175,7 @@ class UserController @Autowired constructor(
     @ApiOperation("删除用户所属角色")
     @DeleteMapping("/role/{uid}/{rid}")
     fun removeUserRole(@PathVariable uid: String, @PathVariable rid: String): Response<User?> {
+        preCheckContextUser(uid)
         val result = userService.removeUserFromRole(uid, rid)
         return ResponseBuilder.success(result)
     }
@@ -172,6 +183,7 @@ class UserController @Autowired constructor(
     @ApiOperation("批量新增用户所属角色")
     @PatchMapping("/role/add/{rid}")
     fun addUserRoleBatch(@PathVariable rid: String, @RequestBody request: List<String>): Response<Boolean> {
+        preCheckUserAdmin()
         userService.addUserToRoleBatch(request, rid)
         return ResponseBuilder.success(true)
     }
@@ -179,6 +191,7 @@ class UserController @Autowired constructor(
     @ApiOperation("批量删除用户所属角色")
     @PatchMapping("/role/delete/{rid}")
     fun deleteUserRoleBatch(@PathVariable rid: String, @RequestBody request: List<String>): Response<Boolean> {
+        preCheckUserAdmin()
         userService.removeUserFromRoleBatch(request, rid)
         return ResponseBuilder.success(true)
     }
@@ -191,13 +204,7 @@ class UserController @Autowired constructor(
         @RequestParam expiredAt: String?,
         @RequestParam projectId: String?
     ): Response<Token?> {
-        checkUserId(uid)
-        // add user to project first
-        projectId?.let {
-            val createRoleRequest = buildProjectAdminRequest(projectId)
-            val roleId = roleService.createRole(createRoleRequest)
-            userService.addUserToRole(uid, roleId!!)
-        }
+        preCheckUserOrAssetUser(uid, userService.getRelatedUserById(SecurityUtils.getUserId()))
         // add user token
         val result = userService.addUserToken(uid, name, expiredAt)
         return ResponseBuilder.success(result)
@@ -206,7 +213,7 @@ class UserController @Autowired constructor(
     @ApiOperation("查询用户token列表")
     @GetMapping("/list/token/{uid}")
     fun listUserToken(@PathVariable("uid") uid: String): Response<List<TokenResult>> {
-        checkUserId(uid)
+        preCheckContextUser(uid)
         val result = userService.listUserToken(uid)
         return ResponseBuilder.success(result)
     }
@@ -214,7 +221,7 @@ class UserController @Autowired constructor(
     @ApiOperation("删除用户token")
     @DeleteMapping("/token/{uid}/{name}")
     fun deleteToken(@PathVariable uid: String, @PathVariable name: String): Response<Boolean> {
-        checkUserId(uid)
+        preCheckContextUser(uid)
         val result = userService.removeToken(uid, name)
         return ResponseBuilder.success(result)
     }
@@ -222,7 +229,7 @@ class UserController @Autowired constructor(
     @ApiOperation("校验用户token")
     @PostMapping("/token")
     fun checkToken(@RequestParam uid: String, @RequestParam token: String): Response<Boolean> {
-        checkUserId(uid)
+        preCheckContextUser(uid)
         userService.findUserByUserToken(uid, token) ?: return ResponseBuilder.success(false)
         return ResponseBuilder.success(true)
     }
@@ -256,26 +263,20 @@ class UserController @Autowired constructor(
         return ResponseBuilder.success(true)
     }
 
-    @ApiOperation("独立部署模式下，获取用户信息")
+    @ApiOperation("获取用户信息")
     @GetMapping("/info")
     fun userInfo(
-        @CookieValue(value = "bkrepo_ticket") bkrepoToken: String?,
-        @RequestHeader("x-bkrepo-uid") bkUserId: String?
+        @RequestHeader("x-bkrepo-uid") bkUserId: String?,
+        @RequestHeader("x-bkrepo-display-name") displayName: String?,
+        @RequestHeader("x-bkrepo-tenant-id") tenantId: String?,
     ): Response<Map<String, Any>> {
-        try {
-            bkUserId?.let {
-                return ResponseBuilder.success(mapOf("userId" to bkUserId))
-            }
-            bkrepoToken ?: run {
-                throw IllegalArgumentException("ticket can not be null")
-            }
-            val userId = JwtUtils.validateToken(signingKey, bkrepoToken).body.subject
-            val result = mapOf("userId" to userId)
-            return ResponseBuilder.success(result)
-        } catch (ignored: Exception) {
-            logger.warn("validate user token false [$bkrepoToken]")
-            throw ErrorCodeException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
-        }
+        val name = if (displayName == null) "" else String(Base64.getDecoder().decode(displayName))
+        val result = mapOf(
+            "userId" to bkUserId.orEmpty(),
+            "displayName" to name,
+            "tenantId" to tenantId.orEmpty()
+        )
+        return ResponseBuilder.success(result)
     }
 
     @ApiOperation("校验用户ticket")
@@ -303,13 +304,15 @@ class UserController @Autowired constructor(
         @RequestParam admin: Boolean?,
         @RequestParam locked: Boolean?
     ): Response<Page<UserInfo>> {
+        preCheckUserAdmin()
         val result = userService.userPage(pageNumber, pageSize, user, admin, locked)
         return ResponseBuilder.success(result)
     }
 
-    @ApiOperation("用户info ")
+    @ApiOperation("用户info")
     @GetMapping("/userinfo/{uid}")
     fun userInfoById(@PathVariable uid: String): Response<UserInfo?> {
+        preCheckContextUser(uid)
         return ResponseBuilder.success(userService.getUserInfoById(uid))
     }
 
@@ -320,25 +323,48 @@ class UserController @Autowired constructor(
         @RequestParam oldPwd: String,
         @RequestParam newPwd: String
     ): Response<Boolean> {
-        return ResponseBuilder.success(userService.updatePassword(uid, oldPwd, newPwd))
+        preCheckContextUser(uid)
+        val decryptOldPwd = RsaUtils.decrypt(oldPwd)
+        val decryptNewPwd = RsaUtils.decrypt(newPwd)
+        return ResponseBuilder.success(userService.updatePassword(uid, decryptOldPwd, decryptNewPwd))
     }
 
-    @ApiOperation("用户info ")
-    @GetMapping("/reset/{uid}")
+    @ApiOperation("reset用户info ")
+    @PostMapping("/reset/{uid}")
     fun resetPassword(@PathVariable uid: String): Response<Boolean> {
+        preCheckContextUser(uid)
         return ResponseBuilder.success(userService.resetPassword(uid))
     }
 
     @ApiOperation("检验系统中是否存在同名userId ")
     @GetMapping("/repeat/{uid}")
     fun repeatUid(@PathVariable uid: String): Response<Boolean> {
+        preCheckContextUser(uid)
         return ResponseBuilder.success(userService.repeatUid(uid))
     }
 
     @ApiOperation("判断用户是否为项目管理员")
     @GetMapping("/admin/{projectId}")
     fun isProjectAdmin(@PathVariable projectId: String): Response<Boolean> {
-        return ResponseBuilder.success(checkProjectAdmin(projectId))
+        return ResponseBuilder.success(isContextUserProjectAdmin(projectId))
+    }
+
+    @ApiOperation("检验实体用户是否存在此userid")
+    @GetMapping("/validateEntityUser/{uid}")
+    fun validateEntityUser(@PathVariable uid: String): Response<Boolean> {
+        preCheckContextUser(uid)
+        return ResponseBuilder.success(userService.validateEntityUser(uid))
+    }
+
+    @ApiOperation("相关虚拟列表")
+    @GetMapping("/group")
+    fun userGroup(
+        @RequestParam userName: String? = null,
+        @RequestParam asstUser: String,
+    ): Response<List<UserInfo>> {
+        preCheckContextUser(asstUser)
+        val result = userService.getRelatedUserById(asstUser)
+        return ResponseBuilder.success(result)
     }
 
     companion object {

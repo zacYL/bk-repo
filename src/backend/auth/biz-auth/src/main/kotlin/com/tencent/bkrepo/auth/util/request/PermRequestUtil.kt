@@ -55,7 +55,7 @@ object PermRequestUtil {
 
     fun convToTPermission(request: CreatePermissionRequest): TPermission {
         return TPermission(
-            resourceType = request.resourceType.toString(),
+            resourceType = request.resourceType,
             projectId = request.projectId,
             permName = request.permName,
             repos = request.repos,
@@ -63,7 +63,7 @@ object PermRequestUtil {
             excludePattern = request.excludePattern,
             users = request.users,
             roles = request.roles,
-            actions = request.actions.map { it.toString() },
+            actions = request.actions,
             createBy = request.createBy,
             createAt = LocalDateTime.now(),
             updatedBy = request.updatedBy,

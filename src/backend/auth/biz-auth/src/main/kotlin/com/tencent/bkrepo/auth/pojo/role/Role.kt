@@ -41,7 +41,7 @@ data class Role(
     @ApiModelProperty("角色名")
     val name: String,
     @ApiModelProperty("项目ID")
-    val projectId: String,
+    val projectId: String?,
     @ApiModelProperty("仓库名称")
     val repoName: String? = null,
     @ApiModelProperty("管理员")

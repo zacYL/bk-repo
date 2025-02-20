@@ -70,7 +70,7 @@ class DevopsPipelineService(
             user = uid,
             projectCode = projectId,
             resourceType = BkAuthResourceType.PIPELINE_DEFAULT,
-            action = permissionAction
+            action = permissionAction!!.name
         ) || ciAuthService.validateUserResourcePermission(
             user = uid,
             projectCode = projectId,

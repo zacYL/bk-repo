@@ -33,6 +33,7 @@ package com.tencent.bkrepo.auth.controller.service
 
 import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.auth.controller.OpenResource
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.ListPathResult
 import com.tencent.bkrepo.auth.service.PermissionService
@@ -77,12 +78,31 @@ class ServicePermissionController @Autowired constructor(
         return ResponseBuilder.success(permissionService.checkPermission(request))
     }
 
-    override fun listPermissionRepo(projectId: String, userId: String, appId: String?): Response<List<String>> {
+    override fun listPermissionRepo(
+        projectId: String,
+        userId: String,
+        appId: String?,
+        actions: List<PermissionAction>?,
+        includePathAuthRepo: Boolean
+    ): Response<List<String>> {
         return ResponseBuilder.success(permissionService.listPermissionRepo(projectId, userId, appId))
     }
 
     override fun listPermissionProject(userId: String): Response<List<String>> {
         return ResponseBuilder.success(permissionService.listPermissionProject(userId))
+    }
+
+    override fun deletePermissionData(projectId: String, repoName: String): Response<Boolean> {
+        return ResponseBuilder.success(permissionService.deletePermissionData(projectId, repoName))
+    }
+
+    override fun getAuthRepoPaths(
+        userId: String,
+        projectId: String,
+        repoNames: List<String>,
+        action: PermissionAction
+    ): Response<Map<String, List<String>>> {
+        return ResponseBuilder.success(permissionService.getUserAuthPaths(userId, projectId, repoNames, action))
     }
 
 }

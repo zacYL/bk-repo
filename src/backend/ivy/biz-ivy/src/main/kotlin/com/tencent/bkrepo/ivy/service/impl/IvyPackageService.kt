@@ -30,7 +30,7 @@ package com.tencent.bkrepo.ivy.service.impl
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.ivy.artifact.IvyArtifactInfo
-import com.tencent.bkrepo.ivy.constants.METADATA_KEY_All_ARTIFACT_FULL_PATH
+import com.tencent.bkrepo.ivy.constants.METADATA_KEY_ALL_ARTIFACT_FULL_PATH
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_IVY_FULL_PATH
 import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -82,7 +82,7 @@ class IvyPackageService(
     private fun getVersionArtifactFullPath(artifactInfo: IvyArtifactInfo, version: PackageVersion): List<String> {
         val allArtifactFullPath =
             (version.packageMetadata.firstOrNull {
-                it.key == METADATA_KEY_All_ARTIFACT_FULL_PATH
+                it.key == METADATA_KEY_ALL_ARTIFACT_FULL_PATH
             }?.value) as MutableList<String>?
         val ivyFullPath =
             (version.packageMetadata.firstOrNull { it.key == METADATA_KEY_IVY_FULL_PATH }?.value) as String

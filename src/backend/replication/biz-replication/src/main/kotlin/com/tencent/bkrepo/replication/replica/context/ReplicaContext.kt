@@ -149,6 +149,9 @@ class ReplicaContext(
                 )
         }
     }
+    
+    fun eventExists() = this::event.isInitialized
+
 
     private fun buildReplicator(): Replicator {
         val clusterProperties = SpringContextUtils.getBean<ClusterProperties>()

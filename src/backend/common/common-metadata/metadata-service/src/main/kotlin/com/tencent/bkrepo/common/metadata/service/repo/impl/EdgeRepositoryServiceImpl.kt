@@ -68,7 +68,6 @@ class EdgeRepositoryServiceImpl(
 ) : RepositoryServiceImpl(
     repositoryDao,
     projectService,
-    nodeSearchService,
     recycleBinService,
     storageCredentialService,
     proxyChannelService,

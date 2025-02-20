@@ -29,6 +29,7 @@ package com.tencent.bkrepo.replication.service.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.TimeUtils
 import com.tencent.bkrepo.common.mongo.constant.ID
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.service.cluster.properties.ClusterProperties
@@ -41,6 +42,8 @@ import com.tencent.bkrepo.replication.model.TReplicaRecord
 import com.tencent.bkrepo.replication.model.TReplicaRecordDetail
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
+import com.tencent.bkrepo.replication.pojo.record.RecordCountResult
+import com.tencent.bkrepo.replication.pojo.record.RecordOverview
 import com.tencent.bkrepo.replication.pojo.record.ReplicaOverview
 import com.tencent.bkrepo.replication.pojo.record.ReplicaProgress
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
@@ -64,6 +67,7 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
+import org.springframework.data.mongodb.core.aggregation.Aggregation
 
 @Service
 @Conditional(DefaultCondition::class)
@@ -304,9 +308,9 @@ class ReplicaRecordServiceImpl(
         val result = replicaRecordDetailDao.aggregate(aggregation, RecordCountResult::class.java).mappedResults
         result.forEach {
             when (it.id) {
-                SUCCESS -> success = it.count
-                FAILED -> fail = it.count
-                RUNNING -> running = it.count
+                ExecutionStatus.SUCCESS -> success = it.count
+                ExecutionStatus.FAILED -> fail = it.count
+                ExecutionStatus.RUNNING -> running = it.count
             }
         }
         val conflict = replicaRecordDetailDao.find(

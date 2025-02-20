@@ -46,7 +46,6 @@ import com.tencent.bkrepo.common.metadata.dao.node.RNodeDao
 import com.tencent.bkrepo.common.metadata.model.TMetadata
 import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.common.metadata.service.metadata.RMetadataService
-import com.tencent.bkrepo.common.metadata.service.node.impl.NodeBaseService
 import com.tencent.bkrepo.common.metadata.util.ClusterUtils
 import com.tencent.bkrepo.common.metadata.util.MetadataUtils
 import com.tencent.bkrepo.common.metadata.util.NodeEventFactory.buildMetadataDeletedEvent
@@ -76,7 +75,6 @@ import java.time.LocalDateTime
 @Conditional(ReactiveCondition::class)
 class RMetadataServiceImpl(
     private val nodeDao: RNodeDao,
-    private val nodeBaseService: NodeBaseService,
     private val repositoryProperties: RepositoryProperties,
 ) : RMetadataService {
 
@@ -122,7 +120,7 @@ class RMetadataServiceImpl(
                 nodeDao.save(node)
                 // 更新父目录的修改时间
                 val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
-                nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
+                updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
             }
             publishEvent(buildMetadataSavedEvent(request))
             logger.info("Save metadata[$newMetadata] on node[/$projectId/$repoName$fullPath] success.")
@@ -174,7 +172,7 @@ class RMetadataServiceImpl(
             nodeDao.updateMulti(query, update)
             // 更新父目录的修改时间
             val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
-            nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
+            updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
             publishEvent(buildMetadataDeletedEvent(this))
             logger.info("Delete metadata[$keyList] on node[/$projectId/$repoName$fullPath] success.")
         }
@@ -202,6 +200,19 @@ class RMetadataServiceImpl(
                 updateSystemMetadata.joinToString(StringPool.COMMA)
             )
         }
+    }
+
+    private suspend fun updateModifiedInfo(
+        projectId: String,
+        repoName: String,
+        fullPath: String,
+        lastModifiedBy: String,
+        lastModifiedDate: LocalDateTime
+    ) {
+        val query = NodeQueryHelper.nodeQuery(projectId, repoName, fullPath)
+        query.addCriteria(where(TNode::createdDate).lt(lastModifiedDate))
+        val update = NodeQueryHelper.update(lastModifiedBy, lastModifiedDate)
+        nodeDao.updateFirst(query, update)
     }
 
     private fun List<String>.intersectIgnoreCase(list: List<String>): List<String> {

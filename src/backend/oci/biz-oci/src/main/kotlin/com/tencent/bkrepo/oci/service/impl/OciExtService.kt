@@ -80,11 +80,11 @@ class OciExtService(
     }
 
     private fun resolveDigestList(projectId: String, repoName: String, manifestPath: String): List<String>? {
-        val node = nodeClient.getNodeDetail(projectId, repoName, manifestPath).data
+        val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, manifestPath))
             ?: throw NodeNotFoundException("$projectId/$repoName/$manifestPath")
-        val srcRepo = repositoryClient.getRepoDetail(projectId, repoName).data
+        val srcRepo = repositoryService.getRepoDetail(projectId, repoName)
             ?: throw RepoNotFoundException("$projectId/$repoName")
-        return operationService.loadManifestList(node.sha256!!, node.size, srcRepo.storageCredentials)
+        return operationService.loadManifestList(node, srcRepo.storageCredentials)
                 ?.manifests?.map { it.digest }
     }
 

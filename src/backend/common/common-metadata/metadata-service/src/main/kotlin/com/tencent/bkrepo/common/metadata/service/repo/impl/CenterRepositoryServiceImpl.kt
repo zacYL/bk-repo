@@ -84,7 +84,6 @@ class CenterRepositoryServiceImpl(
 ) : RepositoryServiceImpl(
     repositoryDao,
     projectService,
-    nodeSearchService,
     recycleBinService,
     storageCredentialService,
     proxyChannelService,

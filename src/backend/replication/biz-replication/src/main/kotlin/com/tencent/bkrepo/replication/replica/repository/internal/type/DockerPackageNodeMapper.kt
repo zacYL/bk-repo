@@ -38,6 +38,7 @@ import com.tencent.bkrepo.replication.constant.DOCKER_LAYER_FULL_PATH
 import com.tencent.bkrepo.replication.constant.DOCKER_MANIFEST_JSON_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_LAYER_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_LAYER_FULL_PATH_V1
+import com.tencent.bkrepo.replication.constant.OCI_LIST_MANIFEST_JSON_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_MANIFEST_JSON_FULL_PATH
 import com.tencent.bkrepo.replication.util.ManifestParser
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -96,6 +97,14 @@ class DockerPackageNodeMapper(
                 ))
             }
             result.add(manifestFullPath)
+
+            //  list.manifest.json 只需要分发本身
+            val formattedVersion = if (version.startsWith("sha256:"))
+                version.replace(":", "__") else version
+            val listManifestFullPath = OCI_LIST_MANIFEST_JSON_FULL_PATH.format(name, formattedVersion)
+            nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, listManifestFullPath))?.let {
+                result.add(it.fullPath)
+            }
             return result
         }
     }

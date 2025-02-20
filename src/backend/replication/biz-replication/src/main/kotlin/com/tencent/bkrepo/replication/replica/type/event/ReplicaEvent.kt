@@ -25,12 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.replication.replica.event
+package com.tencent.bkrepo.replication.replica.type.event
 
-import com.tencent.bkrepo.common.artifact.cluster.ClusterInfo
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.service.cluster.ClusterInfo
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 
 /**
@@ -57,7 +57,7 @@ data class ReplicaEvent(
         "fullPath" to fullPath,
         "domain" to cluster.url.substring(0, cluster.url.indexOf("/replication")),
         "repoType" to repoType,
-        "username" to (cluster.username?:""),
-        "password" to (cluster.password?:"")
+        "username" to (cluster.username ?: ""),
+        "password" to (cluster.password ?: "")
     )
 )

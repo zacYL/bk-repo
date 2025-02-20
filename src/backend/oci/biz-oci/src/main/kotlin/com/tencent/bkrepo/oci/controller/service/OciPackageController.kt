@@ -31,6 +31,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.oci.api.OciClient
@@ -51,8 +52,9 @@ import org.springframework.web.bind.annotation.RestController
 class OciPackageController(
     private val operationService: OciOperationService,
     private val ociReplicationRecordDao: OciReplicationRecordDao,
-    private val eventExecutor: EventExecutor
-) : OciClient {
+    private val eventExecutor: EventExecutor,
+    private val repositoryService: RepositoryService,
+    ) : OciClient {
     private val logger = LoggerFactory.getLogger(OciPackageController::class.java)
     override fun packageCreate(record: OciReplicationRecordInfo): Response<Void> {
         logger.info("Start create package for third party image by ociReplicationRecordInfo:[${record.toJsonString()}]")
@@ -79,9 +81,12 @@ class OciPackageController(
     }
 
     override fun getPackagesFromThirdPartyRepo(projectId: String, repoName: String): Response<Void> {
+        val repoDetail = repositoryService.getRepoDetail(projectId, repoName)
         eventExecutor.submit(RepoCreatedEvent(
             projectId = projectId,
             repoName = repoName,
+            userId = SecurityUtils.getUserId(),
+            repoType = repoDetail?.type ?: RepositoryType.OCI
         ))
         return ResponseBuilder.success()
     }

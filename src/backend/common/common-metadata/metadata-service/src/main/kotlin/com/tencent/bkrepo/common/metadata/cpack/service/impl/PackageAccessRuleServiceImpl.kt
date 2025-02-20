@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.cpack.dao.PackageAccessRuleDao
 import com.tencent.bkrepo.common.metadata.cpack.service.PackageAccessRuleService
 import com.tencent.bkrepo.common.metadata.model.TPackageAccessRule
@@ -18,6 +19,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageAccessRuleRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Conditional
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
 @Service
+@Conditional(SyncCondition::class)
 class PackageAccessRuleServiceImpl(
     private val packageAccessRuleDao: PackageAccessRuleDao
 ) : PackageAccessRuleService {

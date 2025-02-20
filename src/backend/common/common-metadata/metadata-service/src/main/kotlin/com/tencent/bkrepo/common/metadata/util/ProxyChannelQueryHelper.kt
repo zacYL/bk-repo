@@ -93,7 +93,10 @@ object ProxyChannelQueryHelper {
             createdBy = userId,
             createdDate = LocalDateTime.now(),
             lastModifiedBy = userId,
-            lastModifiedDate = LocalDateTime.now()
+            lastModifiedDate = LocalDateTime.now(),
+            networkProxy = networkProxy,
+            connectTimeout = connectTimeout,
+            readTimeout = readTimeout,
         )
         return tProxyChannel
     }
@@ -119,7 +122,10 @@ object ProxyChannelQueryHelper {
                 username = it.username,
                 password = pw,
                 projectId = it.projectId,
-                repoName = it.repoName
+                repoName = it.repoName,
+                networkProxy = it.networkProxy,
+                connectTimeout = it.connectTimeout,
+                readTimeout = it.readTimeout
             )
         }
     }

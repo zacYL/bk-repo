@@ -84,6 +84,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import okhttp3.Request
 import okhttp3.Response
@@ -231,7 +232,7 @@ class MavenRemoteRepository(
         logger.info(
             "Resolving response for downloading file [$fullPath] to repo ${context.artifactInfo.getRepoIdentify()}"
         )
-        val artifactFile = createTempFile(response.body()!!)
+        val artifactFile = createTempFile(response.body!!)
         if (matcher.matches()) {
             var packaging = matcher.group(2)
             val fileSuffix = packaging
@@ -376,13 +377,13 @@ class MavenRemoteRepository(
         with(context.artifactInfo as MavenDeleteArtifactInfo) {
             logger.info("Will prepare to delete package [$packageName|$version] in repo ${getRepoIdentify()}")
             if (version.isBlank()) {
-                packageClient.listAllVersion(projectId, repoName, packageName).data.orEmpty().forEach {
+                packageService.listAllVersion(projectId, repoName, packageName, VersionListOption()).orEmpty().forEach {
                     removeVersion(context, it)
                 }
                 // 删除package下得metadata.xml文件
                 deleteNode(context, true)
             } else {
-                packageClient.findVersionByName(projectId, repoName, packageName, version).data?.let {
+                packageService.findVersionByName(projectId, repoName, packageName, version)?.let {
                     removeVersion(context, it)
                 } ?: throw VersionNotFoundException(version)
             }
@@ -397,7 +398,7 @@ class MavenRemoteRepository(
             logger.info(
                 "Will delete package $packageName version ${version.name} in repo ${getRepoIdentify()}"
             )
-            packageClient.deleteVersion(projectId, repoName, packageName, version.name)
+            packageService.deleteVersion(projectId, repoName, packageName, version.name)
             // 删除版本对应的依赖关系记录
             versionDependentsClient.delete(
                 VersionDependentsRequest(
@@ -414,7 +415,7 @@ class MavenRemoteRepository(
                 fullPath = artifactPath,
                 operator = context.userId
             )
-            nodeClient.deleteNode(request)
+            nodeService.deleteNode(request)
         }
     }
 
@@ -431,7 +432,7 @@ class MavenRemoteRepository(
                     MavenMessageCode.MAVEN_REQUEST_FORBIDDEN, "$MAVEN_METADATA_FILE_NAME can not be deleted."
                 )
             }
-            val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
+            val node = nodeService.getNodeDetail(MavenArtifactInfo(projectId, repoName, fullPath))
             if (node != null) {
                 if (node.fullPath.checksumType() == null) {
                     deleteArtifactCheckSums(context, node)
@@ -442,7 +443,7 @@ class MavenRemoteRepository(
                     fullPath = fullPath,
                     operator = userId
                 )
-                nodeClient.deleteNode(request)
+                nodeService.deleteNode(request)
             } else {
                 // 抛异常改为error日志
                 logger.error("Can not find node $fullPath in repo $artifactInfo")
@@ -461,14 +462,14 @@ class MavenRemoteRepository(
         with(node) {
             for (hashType in typeArray) {
                 val fullPath = "${node.fullPath}.${hashType.ext}"
-                nodeClient.getNodeDetail(projectId, repoName, fullPath).data?.let {
+                nodeService.getNodeDetail(MavenArtifactInfo(projectId, repoName, fullPath))?.let {
                     val request = NodeDeleteRequest(
                         projectId = projectId,
                         repoName = repoName,
                         fullPath = fullPath,
                         operator = context.userId
                     )
-                    nodeClient.deleteNode(request)
+                    nodeService.deleteNode(request)
                 }
             }
         }

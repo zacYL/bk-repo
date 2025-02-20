@@ -36,8 +36,6 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContex
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
-import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
-import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.constant.CONAN_URL_V2
 import com.tencent.bkrepo.conan.constant.ConanMessageCode
 import com.tencent.bkrepo.conan.constant.IGNORECASE
@@ -45,7 +43,6 @@ import com.tencent.bkrepo.conan.constant.PATTERN
 import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
 import com.tencent.bkrepo.conan.exception.ConanException
 import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
-import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
@@ -98,7 +95,7 @@ class ConanRemoteRepository : RemoteRepository() {
             .execute()
         return if (response.isSuccessful) {
             JsonUtils.objectMapper.readValue(
-                response.body()?.byteStream(), clazz
+                response.body?.byteStream(), clazz
             )
         } else {
             logger.error("Conan remote repository query failed, $path")
@@ -108,13 +105,15 @@ class ConanRemoteRepository : RemoteRepository() {
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context.artifactInfo as ConanArtifactInfo) {
-            packageClient.findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version).data
+            packageService.findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version)
                 ?.apply { packageDownloadIntercept(context, this) }
             context.getFullPathInterceptors().forEach { it.intercept(projectId, getArtifactFullPath()) }
-            val exist = nodeClient.checkExist(projectId, repoName, getArtifactFullPath()).data
+            val exist = nodeService.checkExist(context.artifactInfo)
             val artifactResource = super.onDownload(context)
             if (true != exist && artifactResource != null) {
-                SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, this))
+                conanLocalRepository.handleConanArtifactUpload(
+                    context.artifactInfo as ConanArtifactInfo, context.userId, artifactResource.getTotalSize()
+                )
             }
             return artifactResource
         }

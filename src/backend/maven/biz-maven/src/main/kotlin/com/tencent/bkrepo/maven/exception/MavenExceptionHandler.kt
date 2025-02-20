@@ -95,12 +95,6 @@ class MavenExceptionHandler {
         mavenResponse(errorResponse, exception)
     }
 
-    private fun mavenResponse(exception: ErrorCodeException) {
-        val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
-        val errorResponse = MavenExceptionResponse(exception.status.toString(), errorMessage)
-        mavenResponse(errorResponse, exception)
-    }
-
     private fun mavenResponse(responseObject: MavenExceptionResponse, exception: Exception) {
         logMavenException(exception, responseObject)
         val responseString = JsonUtils.objectMapper.writeValueAsString(responseObject)

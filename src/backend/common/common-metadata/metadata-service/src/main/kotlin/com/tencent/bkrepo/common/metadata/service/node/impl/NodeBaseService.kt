@@ -32,6 +32,7 @@ import com.google.common.cache.RemovalCause
 import com.google.common.cache.RemovalListeners
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.tencent.bkrepo.auth.api.ServicePermissionClient
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.PROXY_HEADER_NAME
 import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -55,6 +56,7 @@ import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.common.metadata.model.TRepository
 import com.tencent.bkrepo.common.metadata.service.blocknode.BlockNodeService
 import com.tencent.bkrepo.common.metadata.service.file.FileReferenceService
+import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.project.ProjectService
 import com.tencent.bkrepo.common.metadata.service.repo.QuotaService
@@ -81,6 +83,7 @@ import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
+import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeLinkRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateAccessDateRequest
@@ -116,6 +119,7 @@ abstract class NodeBaseService(
     open val routerControllerProperties: RouterControllerProperties,
     open val blockNodeService: BlockNodeService,
     open val projectService: ProjectService,
+    open val nodePermissionService: NodePermissionService,
 ) : NodeService {
 
     init {
@@ -557,6 +561,14 @@ abstract class NodeBaseService(
 
     open fun additionalCheck(existNode: TNode) {
         // 默认不做任何操作
+    }
+
+    fun getUserAuthPath(projectId: String, repoName: String, userId: String, action: PermissionAction): List<String> {
+        return nodePermissionService.getUserAuthPathCache(
+            UserAuthPathOption(
+                userId, projectId, listOf(repoName), action
+            )
+        )[repoName] ?: emptyList()
     }
 
     private fun incrementFileReference(node: TNode, repository: TRepository?): Boolean {

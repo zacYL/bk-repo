@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.common.metadata.service.node.impl
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.HumanReadable
@@ -39,6 +40,7 @@ import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.common.metadata.service.node.NodeDeleteOperation
 import com.tencent.bkrepo.common.metadata.service.repo.QuotaService
 import com.tencent.bkrepo.common.metadata.util.MetadataUtils
+import com.tencent.bkrepo.common.metadata.util.NodeDeleteHelper
 import com.tencent.bkrepo.common.metadata.util.NodeDeleteHelper.buildCriteria
 import com.tencent.bkrepo.common.metadata.util.NodeEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.common.metadata.util.NodeEventFactory.buildNodeCleanEvent
@@ -103,20 +105,7 @@ open class NodeDeleteSupport(
             if (fullPaths.isEmpty()) {
                 return 0L
             }
-            val orOperation = mutableListOf<Criteria>()
-            val normalizedFullPaths = fullPaths.map { PathUtils.normalizeFullPath(it) }
-            orOperation.add(where(TNode::fullPath).inValues(normalizedFullPaths))
-            normalizedFullPaths.forEach {
-                val normalizedPath = PathUtils.toPath(it)
-                val escapedPath = PathUtils.escapeRegex(normalizedPath)
-                orOperation.add(where(TNode::fullPath).regex("^$escapedPath"))
-            }
-            val criteria = where(TNode::projectId).isEqualTo(projectId)
-                .and(TNode::repoName).isEqualTo(repoName)
-                .and(TNode::deleted).isEqualTo(null)
-                .and(TNode::folder).isEqualTo(isFolder)
-                .orOperator(*orOperation.toTypedArray())
-            return nodeDao.count(Query(criteria))
+            return buildDeleteCriteria(projectId, repoName, fullPaths, operator)?.let { nodeDao.count(Query(it)) } ?: 0L
         }
     }
 
@@ -137,14 +126,7 @@ open class NodeDeleteSupport(
         fullPath: String,
         operator: String
     ): NodeDeleteResult {
-        val criteria = buildCriteria(projectId, repoName, fullPath)
-        val query = Query(criteria)
-        val node = nodeDao.find(query)
-        if (node.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
-            val errorCode = if (node.size == 1) ArtifactMessageCode.NODE_LOCK else ArtifactMessageCode.NODE_CHILD_LOCK
-            throw ErrorCodeException(errorCode, fullPath)
-        }
-        return delete(query, operator, criteria, projectId, repoName, listOf(fullPath))
+        return deleteByPaths(projectId, repoName, listOf(fullPath), operator)
     }
 
     override fun deleteByPaths(
@@ -153,21 +135,9 @@ open class NodeDeleteSupport(
         fullPaths: List<String>,
         operator: String
     ): NodeDeleteResult {
-        val normalizedFullPaths = fullPaths.map { PathUtils.normalizeFullPath(it) }
-        val orOperation = mutableListOf(
-            where(TNode::fullPath).inValues(normalizedFullPaths)
-        )
-        normalizedFullPaths.forEach {
-            val normalizedPath = PathUtils.toPath(it)
-            val escapedPath = PathUtils.escapeRegex(normalizedPath)
-            orOperation.add(where(TNode::fullPath).regex("^$escapedPath"))
-        }
-        val criteria = where(TNode::projectId).isEqualTo(projectId)
-            .and(TNode::repoName).isEqualTo(repoName)
-            .and(TNode::deleted).isEqualTo(null)
-            .orOperator(*orOperation.toTypedArray())
-        val query = Query(criteria)
-        return delete(query, operator, criteria, projectId, repoName, fullPaths)
+        val criteria = buildDeleteCriteria(projectId, repoName, fullPaths, operator)
+            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_EMPTY, "fullPaths is empty.")
+        return delete(Query(criteria), operator, criteria, projectId, repoName, fullPaths)
     }
 
     override fun deleteBeforeDate(
@@ -250,13 +220,12 @@ open class NodeDeleteSupport(
                 return NodeDeleteResult(deletedNum, deletedSize, deleteTime)
             }
             // show in recycle bin
-            nodeDao.updateFirst(
-                Query(
-                    where(TNode::projectId).isEqualTo(projectId).and(TNode::repoName).isEqualTo(repoName)
-                        .and(TNode::fullPath).inValues(fullPaths).and(TNode::deleted).isEqualTo(deleteTime)
-                ),
-                Update().push(TNode::metadata.name, MetadataUtils.buildRecycleBinMetadata())
-            )
+            if (!fullPaths.isNullOrEmpty()) {
+                nodeDao.updateMulti(
+                    NodeQueryHelper.nodeQuery(projectId, repoName, fullPaths, deleteTime),
+                    Update().push(TNode::metadata.name, MetadataUtils.buildRecycleBinMetadata())
+                )
+            }
             if (decreaseVolume) {
                 var deletedCriteria = criteria.and(TNode::deleted).isEqualTo(deleteTime)
                 fullPaths?.let {
@@ -282,11 +251,60 @@ open class NodeDeleteSupport(
         }
         logger.info(
             "Delete node[$resourceKey] by [$operator] success." +
-                "$deletedNum nodes have been deleted. The size is ${HumanReadable.size(deletedSize)}"
+                    "$deletedNum nodes have been deleted. The size is ${HumanReadable.size(deletedSize)}"
         )
         return NodeDeleteResult(deletedNum, deletedSize, deleteTime)
     }
 
+
+    /**
+     * 获取用于删除[fullPaths]中用户有权限的路径的Criteria，无可删除路径时返回null
+     */
+    private fun buildDeleteCriteria(
+        projectId: String,
+        repoName: String,
+        fullPaths: List<String>,
+        userId: String,
+    ): Criteria? {
+        val userAuthPaths = nodeBaseService.getUserAuthPath(projectId, repoName, userId, PermissionAction.DELETE)
+        val existPaths = filterExistsFullPathAndCheckLock(projectId, repoName, fullPaths)
+        return NodeDeleteHelper.buildDeleteCriteria(projectId, repoName, existPaths, userAuthPaths)
+    }
+
+    /**
+     * 筛选出存在的路径并检查是否被锁定，被锁定时无法删除并抛出[ErrorCodeException]异常
+     */
+    private fun filterExistsFullPathAndCheckLock(
+        projectId: String,
+        repoName: String,
+        fullPaths: List<String>
+    ): List<String> {
+        fullPaths.forEach {
+            // 不允许直接删除根目录
+            if (PathUtils.isRoot(it)) {
+                throw ErrorCodeException(CommonMessageCode.METHOD_NOT_ALLOWED, "Can't delete root node.")
+            }
+        }
+        val query = Query(
+            where(TNode::projectId).isEqualTo(projectId)
+                .and(TNode::repoName).isEqualTo(repoName)
+                .and(TNode::deleted).isEqualTo(null)
+                .and(TNode::fullPath).inValues(fullPaths)
+        )
+        val nodes = nodeDao.find(query)
+        val containLockedNode = nodes.any { node ->
+            node.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true
+        }
+        if (containLockedNode) {
+            val errorCode = if (nodes.size == 1) {
+                ArtifactMessageCode.NODE_LOCK
+            } else {
+                ArtifactMessageCode.NODE_CHILD_LOCK
+            }
+            throw ErrorCodeException(errorCode, fullPaths)
+        }
+        return nodes.map { it.fullPath }
+    }
 
     companion object {
         private val logger = LoggerFactory.getLogger(NodeDeleteSupport::class.java)

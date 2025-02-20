@@ -3,6 +3,7 @@ package com.tencent.bkrepo.common.metadata.search.packages
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
 import com.tencent.bkrepo.common.metadata.dao.packages.PackageVersionDao
 import com.tencent.bkrepo.common.metadata.model.TNode
@@ -12,6 +13,7 @@ import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
+import org.springframework.context.annotation.Conditional
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.inValues
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Component
  * 版本Checksum规则拦截器, 查询包版本Checksum需要在嵌套查询规则列表中指定projectId和repoType条件，且均为EQ操作
  */
 @Component
+@Conditional(SyncCondition::class)
 class VersionChecksumRuleInterceptor(
     override val packageVersionDao: PackageVersionDao,
     private val nodeDao: NodeDao,

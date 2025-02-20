@@ -8,7 +8,7 @@ import com.tencent.bkrepo.common.metadata.model.TOperateLog
 import com.tencent.bkrepo.common.metadata.service.repo.impl.RepositoryServiceImpl
 import com.tencent.bkrepo.common.metadata.util.PackageQueryHelper
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
-import com.tencent.bkrepo.repository.dao.PackageUploadsDao
+import com.tencent.bkrepo.common.metadata.dao.packages.PackageUploadsDao
 import com.tencent.bkrepo.repository.pojo.metric.DayDetail
 import com.tencent.bkrepo.repository.pojo.metric.NodeDownloadCount
 import com.tencent.bkrepo.repository.pojo.metric.PackageDownloadCount

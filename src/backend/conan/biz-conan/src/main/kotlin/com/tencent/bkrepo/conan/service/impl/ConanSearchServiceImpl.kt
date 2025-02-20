@@ -29,6 +29,8 @@ package com.tencent.bkrepo.conan.service.impl
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.metadata.service.packages.PackageService
+import com.tencent.bkrepo.conan.constant.ConanMessageCode
+import com.tencent.bkrepo.conan.exception.ConanSearchNotFoundException
 import com.tencent.bkrepo.conan.pojo.ConanInfo
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
@@ -36,6 +38,7 @@ import com.tencent.bkrepo.conan.service.ConanMetadataService
 import com.tencent.bkrepo.conan.service.ConanSearchService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.buildPackagePath
+import com.tencent.bkrepo.conan.utils.PathUtils.buildReference
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -51,15 +54,23 @@ class ConanSearchServiceImpl : ConanSearchService {
     @Autowired
     lateinit var conanMetadataService: ConanMetadataService
 
-    override fun search(
-        projectId: String,
-        repoName: String,
-        pattern: String?,
-        ignoreCase: Boolean
-    ): ConanSearchResult {
+    override fun search(artifactInfo: ArtifactInfo, pattern: String?, ignoreCase: Boolean): ConanSearchResult {
         val realPattern = pattern?.replace("*", ".*")
-        val recipes = searchRecipes(projectId, repoName, realPattern, ignoreCase)
+        val recipes = searchRecipes(artifactInfo.projectId, artifactInfo.repoName, realPattern, ignoreCase)
         return ConanSearchResult(recipes)
+    }
+
+    override fun searchRevision(conanArtifactInfo: ConanArtifactInfo): Map<String, ConanInfo> {
+        with(conanArtifactInfo) {
+            val conanFileReference = convertToConanFileReference(conanArtifactInfo)
+            val result = commonService.getPackageConanInfo(projectId, repoName, conanFileReference)
+            if (result.isEmpty()) {
+                throw ConanSearchNotFoundException(
+                    ConanMessageCode.CONAN_SEARCH_NOT_FOUND, buildReference(conanFileReference), getRepoIdentify()
+                )
+            }
+            return result
+        }
     }
 
     override fun searchPackages(pattern: String?, conanArtifactInfo: ConanArtifactInfo): Map<String, ConanInfo> {

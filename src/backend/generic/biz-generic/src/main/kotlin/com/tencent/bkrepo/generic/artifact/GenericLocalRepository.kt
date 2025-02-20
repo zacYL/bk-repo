@@ -69,8 +69,8 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.chunked.ChunkedUploadUtils
 import com.tencent.bkrepo.common.artifact.util.http.HttpRangeUtils
 import com.tencent.bkrepo.common.metadata.model.TBlockNode
-import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.service.blocknode.BlockNodeService
+import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.common.metadata.service.node.PipelineNodeService
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.manager.ci.CIPermissionManager
@@ -148,7 +148,7 @@ class GenericLocalRepository(
     private val clusterNodeClient: ClusterNodeClient,
     private val pipelineNodeService: PipelineNodeService,
     private val ciPermissionManager: CIPermissionManager,
-    private val permissionManager: PermissionManager,
+    private val nodePermissionService: NodePermissionService,
     private val blockNodeService: BlockNodeService,
     private val storageProperties: StorageProperties,
 ) : LocalRepository() {
@@ -563,7 +563,7 @@ class GenericLocalRepository(
         val nodes = this
         with(context){
             return if (filterAuth) {
-                val userAuthPathCache = permissionManager.getUserAuthPathCache(
+                val userAuthPathCache = nodePermissionService.getUserAuthPathCache(
                     UserAuthPathOption(
                         userId,
                         projectId,
@@ -652,7 +652,7 @@ class GenericLocalRepository(
         // 构造name-node map
         val prefix = "${node.fullPath}/"
 
-        val userAuthPathCache = permissionManager.getUserAuthPathCache(
+        val userAuthPathCache = nodePermissionService.getUserAuthPathCache(
             UserAuthPathOption(
                 context.userId,
                 context.projectId,

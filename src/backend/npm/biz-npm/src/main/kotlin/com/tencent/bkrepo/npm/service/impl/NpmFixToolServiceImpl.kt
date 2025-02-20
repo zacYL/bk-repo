@@ -105,7 +105,8 @@ class NpmFixToolServiceImpl(
         val durationSeconds = Duration.between(startTime, LocalDateTime.now()).seconds
         logger.info(
             "Repair npm package metadata file in repo [$projectId/$repoName], " +
-                    "total: $totalCount, success: $successCount, failed: $failedCount, duration $durationSeconds s totally."
+                    "total: $totalCount, success: $successCount, " +
+                    "failed: $failedCount, duration $durationSeconds s totally."
         )
         return PackageMetadataFixResponse(projectId, repoName, successCount, failedCount)
     }

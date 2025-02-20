@@ -129,7 +129,8 @@ object MailTemplateEN {
                             )
                             +buildString {
                                 append(cnName)
-                                append(" shares the following files with you, please download them in time within the validity period (")
+                                append(" shares the following files with you, ")
+                                append("please download them in time within the validity period (")
                                 append(expireDays)
                                 append("): ")
                             }

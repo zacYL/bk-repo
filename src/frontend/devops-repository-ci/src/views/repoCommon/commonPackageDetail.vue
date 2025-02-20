@@ -223,7 +223,7 @@
             },
             // 是否可以移动/复制
             canMoveOrCopy () {
-                return ['maven', 'docker', 'npm', 'go'].includes(this.repoType)
+                return ['maven', 'docker', 'npm', 'go', 'ohpm'].includes(this.repoType)
             }
         },
         created () {

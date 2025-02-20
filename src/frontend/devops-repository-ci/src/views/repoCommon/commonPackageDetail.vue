@@ -509,7 +509,7 @@
                             type: 'warning',
                             confirmFn: () => {
                                 this.$refs.repoListDialog.loading()
-                                apiMehods({ repoType: this.repoType, body }).then(res => {
+                                apiMehods({ repoType: this.repoType === 'ohpm' ? 'npm' : this.repoType, body }).then(res => {
                                     this.$refs.repoListDialog.close()
                                     this.$bkMessage({
                                         theme: 'success',
@@ -538,7 +538,7 @@
                         return
                     }
                     this.$refs.repoListDialog.loading()
-                    apiMehods({ repoType: this.repoType, body }).then(res => {
+                    apiMehods({ repoType: this.repoType === 'ohpm' ? 'npm' : this.repoType, body }).then(res => {
                         this.$refs.repoListDialog.close()
                         this.$bkMessage({
                             theme: 'success',

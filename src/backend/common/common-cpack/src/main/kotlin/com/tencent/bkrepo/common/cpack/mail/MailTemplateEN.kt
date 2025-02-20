@@ -56,14 +56,17 @@ object MailTemplateEN {
                 div {
                     "style"("line-height: 40px")
                     +buildString {
-        append("Your Artifact Library account: ")
-        append(userId)
-        append(" has been created, please contact the administrator to obtain the initial password.")
-    }
+                        append("Your Artifact Library account: ")
+                        append(userId)
+                        append(" has been created, please contact the administrator to obtain the initial password.")
+                    }
                 }
                 div {
                     "style"("line-height: 40px")
-                    +"Please click the button below to log in to the Product library and manage your account information and password in the Personal Center"
+                    +buildString {
+                        append("Please click the button below to log in to the Product library ")
+                        append("and manage your account information and password in the Personal Center")
+                    }
                 }
                 button {
                     "style"(
@@ -125,11 +128,11 @@ object MailTemplateEN {
                                         "color: #707070;"
                             )
                             +buildString {
-        append(cnName)
-        append(" shares the following files with you, please download them in time within the validity period (")
-        append(expireDays)
-        append("): ")
-    }
+                                append(cnName)
+                                append(" shares the following files with you, please download them in time within the validity period (")
+                                append(expireDays)
+                                append("): ")
+                            }
                         }
                     }
                     tr {

@@ -31,12 +31,9 @@
 
 package com.tencent.bkrepo.auth.service
 
-import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.Permission
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDeployInRepoRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.auth.pojo.permission.*
 import com.tencent.bkrepo.auth.pojo.role.ExternalRoleResult
 import com.tencent.bkrepo.auth.pojo.role.RoleSource
 
@@ -85,9 +82,13 @@ interface PermissionService {
 
     fun listPermission(projectId: String, repoName: String?, resourceType: String): List<Permission>
 
+    fun listPermission(projectId: String, repoName: String?): List<Permission>
+
     fun listBuiltinPermission(projectId: String, repoName: String): List<Permission>
 
     fun deletePermission(id: String): Boolean
+
+    fun deletePermissionData(projectId: String, repoName: String): Boolean
 
     fun updateRepoPermission(request: UpdatePermissionRepoRequest): Boolean
 
@@ -102,4 +103,54 @@ interface PermissionService {
     fun getOrCreatePersonalPath(projectId: String, repoName: String, userId: String): String
 
     fun listExternalRoleByProject(projectId: String, source: RoleSource): List<ExternalRoleResult>
+
+    fun listBuiltinPermissionNoBack(projectId: String, repoName: String)
+
+    fun getUserAuthPaths(
+        userId: String,
+        projectId: String,
+        repoNames: List<String>,
+        action: PermissionAction
+    ): Map<String, List<String>>
+
+    fun isProjectManager(userId: String): Boolean
+
+    /**
+     * 查询用户是否为管理员
+     * @param projectId 项目ID
+     * @param tenantId 租户ID
+     */
+    fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean
+
+    fun listNodePermission(projectId: String, repoName: String?): List<Permission>
+
+    fun updateIncludePath(request: UpdatePermissionPathRequest): Boolean
+
+    fun updateExcludePath(request: UpdatePermissionPathRequest): Boolean
+
+    fun updatePermissionRole(request: UpdatePermissionRoleRequest): Boolean
+
+    fun updatePermissionDepartment(request: UpdatePermissionDepartmentRequest): Boolean
+
+    fun updatePermissionAction(request: UpdatePermissionActionRequest): Boolean
+
+    fun updatePermissionById(id: String, key: String, value: Any): Boolean
+
+    fun updatePermissionById(id: String, request: UpdatePermissionRequest): Boolean
+
+    fun findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
+        permName: String,
+        projectId: String?,
+        resourceType: ResourceType,
+        repo: String
+    ): Permission?
+
+    fun listPermissionRepo(
+        projectId: String,
+        userId: String,
+        appId: String?,
+        actions: List<PermissionAction>?,
+        includePathAuthRepo: Boolean
+    ): List<String>
+
 }

@@ -29,13 +29,19 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.auth.pojo
+package com.tencent.bkrepo.auth.pojo.permission
 
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-open class ResourceBaseRequest(
-    open var resourceType: ResourceType,
-    open var projectId: String? = null,
-    open var repoName: String? = null,
-    open var path: String? = null
+@ApiModel("创建仓库路径资源")
+data class CreateRepoPathResourceTypeRequest(
+    @ApiModelProperty("项目ID")
+    val projectId: String,
+    @ApiModelProperty("路径集合名")
+    val permName: String,
+    @ApiModelProperty("关联仓库名")
+    val repos: List<String> = emptyList(),
+    @ApiModelProperty("匹配路径")
+    val includePattern: List<String> = emptyList(),
 )

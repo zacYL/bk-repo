@@ -66,7 +66,7 @@ class UserHelper constructor(
     }
 
     // check user is existed
-    private fun checkUserExistBatch(idList: List<String>) {
+    fun checkUserExistBatch(idList: List<String>) {
         idList.forEach {
             userDao.findFirstByUserId(it) ?: run {
                 logger.warn("user not  exist.")
@@ -132,6 +132,11 @@ class UserHelper constructor(
                     )
                 }
             }
+            RoleType.SYSTEM -> {
+                require(request.roleId != null)
+                roleRepository.findFirstByTypeAndRoleId(RoleType.SYSTEM, request.roleId)
+            }
+
         }
 
         role?.let {
@@ -140,7 +145,7 @@ class UserHelper constructor(
         }
 
         val roleId = when (request.type) {
-            RoleType.REPO -> request.roleId!!
+            RoleType.REPO, RoleType.SYSTEM -> request.roleId!!
             RoleType.PROJECT -> findUsableProjectTypeRoleId(request.roleId, request.projectId)
         }
 

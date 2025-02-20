@@ -60,6 +60,5 @@ interface RoleService {
     fun systemRoles(): List<Role>
 
     // cpack ext
-
     fun systemRolesByProjectId(projectId: String): List<Role>
 }

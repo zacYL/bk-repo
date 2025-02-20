@@ -3,10 +3,11 @@ package com.tencent.bkrepo.auth.service.impl
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
 import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
+import com.tencent.bkrepo.auth.dao.*
+import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.general.DevOpsAuthGeneral
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
-import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.Permission
@@ -14,38 +15,37 @@ import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
-import com.tencent.bkrepo.auth.repository.PermissionRepository
-import com.tencent.bkrepo.auth.repository.RoleRepository
-import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.devops.REPLICA_RESOURCECODE
 import com.tencent.bkrepo.common.devops.RESOURCECODE
-import com.tencent.bkrepo.repository.api.ProjectClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
+import com.tencent.bkrepo.auth.util.request.PermRequestUtil
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.metadata.service.project.ProjectService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.query.Update
 import java.time.LocalDateTime
+import java.util.*
 import java.util.stream.Collectors
-import kotlin.streams.toList
 
 class CanwayPermissionServiceImpl(
-    private val userRepository: UserRepository,
+    accountDao: AccountDao,
+    private val userDao: UserDao,
     private val roleRepository: RoleRepository,
-    private val permissionRepository: PermissionRepository,
+    private val permissionDao: PermissionDao,
+    personalPathDao: PersonalPathDao,
+    repoAuthConfigDao: RepoAuthConfigDao,
     private val devOpsAuthGeneral: DevOpsAuthGeneral,
-    mongoTemplate: MongoTemplate,
-    repositoryClient: RepositoryClient,
-    projectClient: ProjectClient
+    repositoryClient: RepositoryService,
+    projectClient: ProjectService
 ) : CpackPermissionServiceImpl(
-    userRepository,
+    accountDao,
+    userDao,
     roleRepository,
-    permissionRepository,
-    mongoTemplate,
+    permissionDao,
+    personalPathDao,
+    repoAuthConfigDao,
     repositoryClient,
     projectClient
 ) {
@@ -56,11 +56,11 @@ class CanwayPermissionServiceImpl(
     override fun listPermission(projectId: String, repoName: String?): List<Permission> {
         logger.debug("list  permission  projectId: [$projectId], repoName: [$repoName]")
         repoName?.let {
-            return permissionRepository.findByResourceTypeAndProjectIdAndRepos(ResourceType.REPO, projectId, repoName)
-                .map { transferPermission(it) }
+            return permissionDao.listByResourceAndRepo(ResourceType.REPO, projectId, repoName)
+                .map { PermRequestUtil.convToPermission(it) }
         }
-        return permissionRepository.findByResourceTypeAndProjectId(ResourceType.PROJECT, projectId)
-            .map { transferPermission(it) }
+        return permissionDao.listByResourceAndProject(ResourceType.PROJECT, projectId)
+            .map { PermRequestUtil.convToPermission(it) }
     }
 
     /**
@@ -99,7 +99,7 @@ class CanwayPermissionServiceImpl(
                                         userId = uid,
                                         instanceId = ANY_RESOURCE_CODE,
                                         resourceCode = RESOURCECODE,
-                                        actionCodes = listOf(action.toString().toLowerCase())
+                                        actionCodes = listOf(action.id())
                                     )
                                 )
                             }
@@ -122,7 +122,7 @@ class CanwayPermissionServiceImpl(
                                 } else {
                                     RESOURCECODE
                                 },
-                                actionCodes = listOf(action.toString().toLowerCase())
+                                actionCodes = listOf(action.id())
                             )
                         )
                         if (!validateUserPermission && action == PermissionAction.READ) {
@@ -134,7 +134,9 @@ class CanwayPermissionServiceImpl(
                                 emptyList()
                             )
                             val pathReadPermission =
-                                repoPathCollectPermission.filter { it.actionCode == PermissionAction.READ.name.toLowerCase() }
+                                repoPathCollectPermission.filter {
+                                    it.actionCode == PermissionAction.READ.name.lowercase(Locale.getDefault())
+                                }
                             return pathReadPermission.isNotEmpty()
                         } else {
                             validateUserPermission
@@ -152,7 +154,7 @@ class CanwayPermissionServiceImpl(
                                 } else {
                                     RESOURCECODE
                                 },
-                                actionCodes = listOf(action.toString().toLowerCase())
+                                actionCodes = listOf(action.id())
                             )
                         )
                     }
@@ -177,7 +179,7 @@ class CanwayPermissionServiceImpl(
                     userId = uid,
                     instanceId = repoName!!,
                     resourceCode = RESOURCECODE,
-                    actionCodes = listOf(action.toString().toLowerCase())
+                    actionCodes = listOf(action.id())
                 )
             )
             if (hasRepositoryPermission) {
@@ -187,14 +189,11 @@ class CanwayPermissionServiceImpl(
             if (path.isNullOrEmpty()) return true
 
             // 查询出当前路径所配置路径集合
-            val pathCollections = permissionRepository.findByResourceTypeAndProjectIdAndRepos(
-                ResourceType.NODE,
-                projectId!!, repoName!!
-            )
-
-            val pathToPathCollections = path!!.map { requestPath ->
+            val pathCollections = permissionDao.listByResourceAndRepo(ResourceType.NODE, projectId!!, repoName!!)
+            val pathSet = setOf(path)
+            val pathToPathCollections = pathSet.map { requestPath ->
                 val collections = pathCollections.parallelStream().filter { pathCollection ->
-                    pathCollection.includePattern.any { PathUtils.toPath(requestPath).startsWith(it) }
+                    pathCollection.includePattern.any { PathUtils.toPath(requestPath!!).startsWith(it) }
                 }.collect(Collectors.toList())
                 // 只要有个路径没有配置权限则返回没权限
                 if (collections.isEmpty()) return false
@@ -211,7 +210,7 @@ class CanwayPermissionServiceImpl(
                 pathCollectionIds.plus("*")
             )
             val authCollectionIds =
-                repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }
+                repoPathCollectPermission.filter { it.actionCode == action.id() }
                     .map { it.instanceId }
 
             val filter = pathToPathCollections.filter { (requestPath, pathMatchCollections) ->
@@ -229,17 +228,17 @@ class CanwayPermissionServiceImpl(
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
-        val permission = permissionRepository.findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
-            request.permName,
-            request.projectId,
-            request.resourceType,
-            request.repos.first()
+        val permission = permissionDao.findOneByPermName(
+            permName = request.permName,
+            projectId = request.projectId!!,
+            resourceType = request.resourceType,
+            repoName = request.repos.first()
         )
         permission?.let {
             logger.warn("create permission  [$request] is exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_DUP_PERMNAME)
         }
-        val result = permissionRepository.insert(
+        val result = permissionDao.insert(
             TPermission(
                 resourceType = request.resourceType,
                 projectId = request.projectId,
@@ -275,13 +274,6 @@ class CanwayPermissionServiceImpl(
         TODO("Not yet implemented")
     }
 
-    /**
-     * 无需注册资源
-     */
-    override fun registerResource(request: RegisterResourceRequest) {
-        TODO("Not yet implemented")
-    }
-
     override fun getUserAuthPaths(
         userId: String,
         projectId: String,
@@ -302,7 +294,7 @@ class CanwayPermissionServiceImpl(
                         userId = userId,
                         instanceId = repoName,
                         resourceCode = RESOURCECODE,
-                        actionCodes = listOf(action.toString().toLowerCase())
+                        actionCodes = listOf(action.toString().lowercase(Locale.getDefault()))
                     )
                 )
             ) {
@@ -320,9 +312,9 @@ class CanwayPermissionServiceImpl(
         )
 
         val repoPathCollectionsIds =
-            repoPathPermissions.filter { it.actionCode == action.name.toLowerCase() }
+            repoPathPermissions.filter { it.actionCode == action.name.lowercase(Locale.getDefault()) }
                 .map { it.instanceId }
-        val authPathCollections = permissionRepository.findByIdIn(repoPathCollectionsIds)
+        val authPathCollections = permissionDao.findByIdIn(repoPathCollectionsIds)
         authPathCollections.groupBy { it.repos.first() }.map { repoGroup ->
             repoAuthPathMap[repoGroup.key]?.addAll(repoGroup.value.flatMap { it.includePattern }.distinct())
         }
@@ -340,7 +332,7 @@ class CanwayPermissionServiceImpl(
             AUTH_BUILTIN_USER,
             listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE)
         )
-        return listOf(repoAdmin, repoUser).map { transferPermission(it) }
+        return listOf(repoAdmin, repoUser).map { PermRequestUtil.convToPermission(it) }
     }
 
     /**
@@ -363,13 +355,13 @@ class CanwayPermissionServiceImpl(
     override fun listPermissionProject(userId: String): List<String> {
         logger.debug("list permission project request : $userId ")
         if (userId.isEmpty()) return emptyList()
-        val user = userRepository.findFirstByUserId(userId) ?: run {
+        val user = userDao.findFirstByUserId(userId) ?: run {
             return listOf()
         }
 
         // 用户为CI 管理员
         if (isCIAdmin(userId)) {
-            return projectClient.listProject().data?.map { it.name } ?: emptyList()
+            return projectClient.listProject().map { it.name }
         }
 
         val projectList = mutableListOf<String>()

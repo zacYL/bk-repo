@@ -37,16 +37,13 @@ import com.tencent.bkrepo.auth.dao.UserDao
 import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.helper.UserHelper
 import com.tencent.bkrepo.auth.message.AuthMessageCode
+import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
-import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.User
-import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.*
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.util.DataDigestUtils
+import com.tencent.bkrepo.auth.util.query.UserQueryHelper
 import com.tencent.bkrepo.auth.util.request.UserRequestUtil
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -375,9 +372,27 @@ class UserServiceImpl constructor(
         return userDao.updatePasswordByUserId(userId, newHashPwd)
     }
 
+    override fun userAll(userName: String?, admin: Boolean?, locked: Boolean?): List<TUser> {
+        val query = UserQueryHelper.getUserByName(userName, admin, locked)
+        val records = userDao.find(query)
+        return records
+    }
+
+    override fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult> {
+        TODO("Not yet implemented")
+    }
+
+    override fun resetPassword(userId: String, newPwd: String?): Boolean {
+        TODO("Not yet implemented")
+    }
+
     override fun repeatUid(userId: String): Boolean {
         val user = userDao.findFirstByUserId(userId)
         return user != null
+    }
+
+    override fun listUserResult(rids: List<String>): List<UserResult> {
+        return emptyList()
     }
 
     override fun addUserAccount(userId: String, accountId: String): Boolean {

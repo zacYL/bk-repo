@@ -38,6 +38,7 @@ import com.tencent.bkrepo.auth.dao.RepoAuthConfigDao
 import com.tencent.bkrepo.auth.dao.UserDao
 import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.pojo.enums.ActionTypeMapping
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.service.local.PermissionServiceImpl
@@ -46,7 +47,6 @@ import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.metadata.service.project.ProjectService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import org.slf4j.LoggerFactory
-import java.util.Locale
 
 /**
  * 对接蓝鲸权限中心V3 RBAC
@@ -106,17 +106,17 @@ open class BkIamV3PermissionServiceImpl(
         with(request) {
             if (projectId == null) return false
             val resourceId = bkiamV3Service.getResourceId(
-                resourceType, projectId, repoName, path
+                resourceType.name, projectId, repoName, path
             ) ?: StringPool.EMPTY
-            return if (checkDefaultRepository(resourceType, resourceId, repoName)) {
-                checkBkIamV3ProjectPermission(projectId!!, uid, action)
+            return if (checkDefaultRepository(resourceType.name, resourceId, repoName)) {
+                checkBkIamV3ProjectPermission(projectId!!, uid, PermissionAction.lookup(action.name))
             } else {
                 bkiamV3Service.validateResourcePermission(
                     userId = uid,
                     projectId = projectId!!,
                     repoName = repoName,
-                    resourceType = resourceType.lowercase(Locale.getDefault()),
-                    action = convertActionType(resourceType, action),
+                    resourceType = resourceType.name.lowercase(),
+                    action = convertActionType(resourceType.name, action.name),
                     resourceId = resourceId,
                     appId = appId
                 )
@@ -141,7 +141,7 @@ open class BkIamV3PermissionServiceImpl(
         }
     }
 
-    fun checkBkIamV3ProjectPermission(projectId: String, userId: String, action: String): Boolean {
+    fun checkBkIamV3ProjectPermission(projectId: String, userId: String, action: PermissionAction): Boolean {
         logger.info("v3 checkBkIamV3ProjectPermission userId: $userId, projectId: $projectId, action: $action")
         return bkiamV3Service.validateResourcePermission(
             userId = userId,
@@ -149,7 +149,7 @@ open class BkIamV3PermissionServiceImpl(
             repoName = null,
             resourceType = ResourceType.PROJECT.id(),
             action = try {
-                convertActionType(ResourceType.PROJECT.name, action)
+                convertActionType(ResourceType.PROJECT.name, action.name)
             } catch (e: IllegalArgumentException) {
                 ActionTypeMapping.PROJECT_MANAGE.id()
             },

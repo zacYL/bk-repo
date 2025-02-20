@@ -6,6 +6,9 @@ import com.tencent.bkrepo.auth.ciApi
 import com.tencent.bkrepo.auth.ciUserManager
 import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
+import com.tencent.bkrepo.auth.dao.UserDao
+import com.tencent.bkrepo.auth.dao.repository.RoleRepository
+import com.tencent.bkrepo.auth.helper.UserHelper
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.DevopsUser
@@ -13,21 +16,20 @@ import com.tencent.bkrepo.auth.pojo.UserLoginVo
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
 import com.tencent.bkrepo.auth.pojo.user.*
-import com.tencent.bkrepo.auth.repository.RoleRepository
-import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
+import com.tencent.bkrepo.auth.util.request.UserRequestUtil
 import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.devops.client.DevopsClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
+import com.tencent.bkrepo.common.metadata.util.DesensitizedUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -41,12 +43,12 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 class CanwayUserServiceImpl(
-    private val userRepository: UserRepository,
+    private val userDao: UserDao,
     roleRepository: RoleRepository,
     private val mongoTemplate: MongoTemplate,
     permissionService: PermissionService,
     private val canwayUsermangerClient: CanwayUsermangerClient
-) : CpackUserServiceImpl(userRepository, roleRepository, mongoTemplate, permissionService) {
+) : CpackUserServiceImpl(userDao, roleRepository, mongoTemplate, permissionService) {
 
     @Autowired
     lateinit var devopsConf: DevopsConf
@@ -54,10 +56,12 @@ class CanwayUserServiceImpl(
     @Autowired
     lateinit var devopsClient: DevopsClient
 
+    private val userHelper by lazy { UserHelper(userDao, roleRepository) }
+
     override fun createUser(request: CreateUserRequest): Boolean {
         // todo 校验
         logger.info("create user request : [${DesensitizedUtils.toString(request)}]")
-        val user = userRepository.findFirstByUserId(request.userId)
+        val user = userDao.findFirstByUserId(request.userId)
         user?.let {
             logger.warn("create user [${request.userId}]  is exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_DUP_UID)
@@ -69,7 +73,7 @@ class CanwayUserServiceImpl(
         request.pwd?.let {
             pwd = DataDigestUtils.md5FromStr(request.pwd!!)
         }
-        userRepository.insert(
+        userDao.insert(
             TUser(
                 userId = request.userId,
                 name = request.name,
@@ -87,13 +91,13 @@ class CanwayUserServiceImpl(
 
     override fun createUserToRepo(request: CreateUserToRepoRequest): Boolean {
         logger.info("create user to repo request : [${DesensitizedUtils.toString(request)}]")
-        repositoryClient.getRepoInfo(request.projectId, request.repoName).data ?: run {
+        repositoryClient.getRepoInfo(request.projectId, request.repoName) ?: run {
             logger.warn("repo [${request.projectId}/${request.repoName}]  not exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_REPO_NOT_EXIST)
         }
         // user not exist, create user
         try {
-            val userResult = createUser(transferCreateRepoUserRequest(request))
+            val userResult = createUser(UserRequestUtil.convToCreateRepoUserRequest(request))
             if (!userResult) {
                 logger.warn("create user fail [$userResult]")
                 return false
@@ -109,7 +113,7 @@ class CanwayUserServiceImpl(
 
     override fun createUserToProject(request: CreateUserToProjectRequest): Boolean {
         logger.info("create user to project request : [${DesensitizedUtils.toString(request)}]")
-        projectClient.getProjectInfo(request.projectId).data ?: run {
+        projectClient.getProjectInfo(request.projectId) ?: run {
             logger.warn("project [${request.projectId}]  not exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_PROJECT_NOT_EXIST)
         }
@@ -132,29 +136,29 @@ class CanwayUserServiceImpl(
     override fun listUser(rids: List<String>): List<User> {
         logger.debug("list user rids : [{}]", rids)
         return if (rids.isEmpty()) {
-            userRepository.findAll().map { transferUser(it) }
+            userDao.findAll().map { UserRequestUtil.convToUser(it) }
         } else {
-            userRepository.findAllByRolesIn(rids).map { transferUser(it) }
+            userDao.findAllByRolesIn(rids).map { UserRequestUtil.convToUser(it) }
         }
     }
 
     override fun deleteById(userId: String): Boolean {
         logger.info("delete user userId : [$userId]")
-        checkUserExist(userId)
-        userRepository.deleteByUserId(userId)
+        userHelper.checkUserExist(userId)
+        userDao.removeByUserId(userId)
         return true
     }
 
     override fun addUserToRole(userId: String, roleId: String): User? {
         logger.info("add user to role userId : [$userId], roleId : [$roleId]")
         // check user
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
         // check role
-        checkRoleExist(roleId)
+        userHelper.checkRoleExist(roleId)
         // check is role bind to role
         val query = Query()
         val update = Update()
-        if (!checkUserRoleBind(userId, roleId)) {
+        if (!userHelper.checkUserRoleBind(userId, roleId)) {
             query.addCriteria(Criteria.where(TUser::userId.name).`is`(userId))
             update.addToSet(TUser::roles.name, roleId)
             mongoTemplate.upsert(query, update, TUser::class.java)
@@ -164,8 +168,8 @@ class CanwayUserServiceImpl(
 
     override fun addUserToRoleBatch(idList: List<String>, roleId: String): Boolean {
         logger.info("add user to role batch userId : [$idList], roleId : [$roleId]")
-        checkUserExistBatch(idList)
-        checkRoleExist(roleId)
+        userHelper.checkUserExistBatch(idList)
+        userHelper.checkRoleExist(roleId)
         val query = Query()
         val update = Update()
         query.addCriteria(Criteria.where(TUser::userId.name).`in`(idList))
@@ -177,9 +181,9 @@ class CanwayUserServiceImpl(
     override fun removeUserFromRole(userId: String, roleId: String): User? {
         logger.info("remove user from role userId : [$userId], roleId : [$roleId]")
         // check user
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
         // check role
-        checkRoleExist(roleId)
+        userHelper.checkRoleExist(roleId)
         val query = Query()
         val update = Update()
         query.addCriteria(Criteria.where(TUser::userId.name).`is`(userId).and(TUser::roles.name).`is`(roleId))
@@ -190,8 +194,8 @@ class CanwayUserServiceImpl(
 
     override fun removeUserFromRoleBatch(idList: List<String>, roleId: String): Boolean {
         logger.info("remove user from role  batch userId : [$idList], roleId : [$roleId]")
-        checkUserExistBatch(idList)
-        checkRoleExist(roleId)
+        userHelper.checkUserExistBatch(idList)
+        userHelper.checkRoleExist(roleId)
         val query = Query()
         val update = Update()
         query.addCriteria(Criteria.where(TUser::userId.name).`in`(idList).and(TUser::roles.name).`is`(roleId))
@@ -203,7 +207,7 @@ class CanwayUserServiceImpl(
 
     override fun updateUserById(userId: String, request: UpdateUserRequest): Boolean {
         logger.info("update user userId : [$userId], request : [$request]")
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
 
         val query = Query()
         query.addCriteria(Criteria.where(TUser::userId.name).`is`(userId))
@@ -232,7 +236,7 @@ class CanwayUserServiceImpl(
     override fun addUserToken(userId: String, name: String, expiredAt: String?): Token? {
         try {
             logger.info("add user token userId : [$userId] ,token : [$name]")
-            checkUserExist(userId)
+            userHelper.checkUserExist(userId)
 
             val existUserInfo = getUserById(userId)
             val existTokens = existUserInfo!!.tokens
@@ -276,7 +280,7 @@ class CanwayUserServiceImpl(
     }
 
     override fun listUserToken(userId: String): List<TokenResult> {
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
         val userInfo = getUserById(userId)
         val tokens = userInfo!!.tokens
         val result = mutableListOf<TokenResult>()
@@ -294,7 +298,7 @@ class CanwayUserServiceImpl(
 
     override fun removeToken(userId: String, name: String): Boolean {
         logger.info("remove token userId : [$userId] ,name : [$name]")
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
         val query = Query.query(Criteria.where(TUser::userId.name).`is`(userId))
         val s = BasicDBObject()
         s["name"] = name
@@ -306,15 +310,15 @@ class CanwayUserServiceImpl(
 
     override fun getUserById(userId: String): User? {
         logger.debug("get user userId : [$userId]")
-        val user = userRepository.findFirstByUserId(userId) ?: return null
-        return transferUser(user)
+        val user = userDao.findFirstByUserId(userId) ?: return null
+        return UserRequestUtil.convToUser(user)
     }
 
     override fun findUserByUserToken(userId: String, pwd: String): User? {
         logger.debug("find user userId : [$userId]")
         val isLogin = canwayUsermangerClient.login(UserLoginVo(userId, pwd)).data
         return if (isLogin == true) {
-            transferUser(
+            UserRequestUtil.convToUser(
                 TUser(
                     userId = AUTH_ADMIN,
                     name = EMPTY,
@@ -353,7 +357,8 @@ class CanwayUserServiceImpl(
         val query = Query.query(criteria)
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
         val totalRecords = mongoTemplate.count(query, TUser::class.java)
-        val records = mongoTemplate.find(query.with(pageRequest), TUser::class.java).map { transferUserInfo(it) }
+        val records =
+            mongoTemplate.find(query.with(pageRequest), TUser::class.java).map { UserRequestUtil.convToUserInfo(it) }
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 

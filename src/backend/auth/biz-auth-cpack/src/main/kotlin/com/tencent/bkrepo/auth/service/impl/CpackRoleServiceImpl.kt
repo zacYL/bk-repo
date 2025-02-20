@@ -32,16 +32,17 @@
 package com.tencent.bkrepo.auth.service.impl
 
 import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
+import com.tencent.bkrepo.auth.dao.UserDao
+import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.exception.RoleUpdateException
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TRole
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.CreateRoleRequest
 import com.tencent.bkrepo.auth.pojo.role.Role
+import com.tencent.bkrepo.auth.pojo.role.RoleSource
 import com.tencent.bkrepo.auth.pojo.role.UpdateRoleRequest
 import com.tencent.bkrepo.auth.pojo.user.UserResult
-import com.tencent.bkrepo.auth.repository.RoleRepository
-import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
@@ -56,7 +57,7 @@ import org.springframework.data.mongodb.core.query.Update
 open class CpackRoleServiceImpl constructor(
     private val roleRepository: RoleRepository,
     private val userService: UserService,
-    private val userRepository: UserRepository,
+    private val userRepository: UserDao,
     private val mongoTemplate: MongoTemplate,
     private val permissionService: PermissionService
 ) : RoleService {
@@ -65,10 +66,10 @@ open class CpackRoleServiceImpl constructor(
 
         val role: TRole? = when (request.type) {
             RoleType.SYSTEM -> roleRepository.findFirstByTypeAndName(RoleType.SYSTEM, request.name)
-            RoleType.PROJECT -> roleRepository.findFirstByTypeAndNameAndProjectId(
+            RoleType.PROJECT -> roleRepository.findFirstByTypeAndProjectIdAndName(
                 RoleType.SYSTEM,
+                request.projectId!!,
                 request.name,
-                request.projectId!!
             )
             RoleType.REPO -> roleRepository.findFirstByTypeAndNameAndProjectIdAndRepoName(
                 RoleType.SYSTEM,
@@ -128,7 +129,7 @@ open class CpackRoleServiceImpl constructor(
     private fun findUsableSystemTypeRoleId(roleId: String?): String {
         var tempRoleId = roleId ?: "system_role_${IDUtil.shortUUID()}"
         while (true) {
-            val role = roleRepository.findTRoleById(tempRoleId)
+            val role = roleRepository.findFirstById(tempRoleId)
             if (role == null) return tempRoleId else tempRoleId = "system_role_${IDUtil.shortUUID()}"
         }
     }
@@ -209,9 +210,9 @@ open class CpackRoleServiceImpl constructor(
         return roleRepository.findByTypeAndProjectId(RoleType.PROJECT, projectId).map { transfer(it) }
     }
 
-    override fun deleteRoleByid(id: String): Boolean {
+    override fun deleteRoleById(id: String): Boolean {
         logger.info("delete  role  id : [$id]")
-        val role = roleRepository.findTRoleById(id)
+        val role = roleRepository.findFirstById(id)
         if (role == null) {
             logger.warn("delete role [$id ] not exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_ROLE_NOT_EXIST)
@@ -222,6 +223,11 @@ open class CpackRoleServiceImpl constructor(
             roleRepository.deleteTRolesById(role.id!!)
         }
         return true
+    }
+
+    override fun listRoleBySource(source: RoleSource): List<Role> {
+        logger.debug("list role by role ,[$source]")
+        return roleRepository.findBySource(source).map { transfer(it) }
     }
 
     private fun transfer(tRole: TRole): Role {

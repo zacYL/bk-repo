@@ -1,16 +1,15 @@
 package com.tencent.bkrepo.auth.config
 
-import com.tencent.bkrepo.auth.repository.PermissionRepository
-import com.tencent.bkrepo.auth.repository.RoleRepository
-import com.tencent.bkrepo.auth.repository.UserRepository
+import com.tencent.bkrepo.auth.dao.*
+import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.impl.CpackPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CpackRoleServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CpackUserServiceImpl
-import com.tencent.bkrepo.repository.api.ProjectClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.common.metadata.service.project.ProjectService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
@@ -27,19 +26,23 @@ class CpackAuthServiceConfig {
     @Bean
     @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "cpack")
     fun cpackPermissionService(
-        @Autowired userRepository: UserRepository,
+        @Autowired accountDao: AccountDao,
+        @Autowired userDao: UserDao,
         @Autowired roleRepository: RoleRepository,
-        @Autowired permissionRepository: PermissionRepository,
-        @Autowired mongoTemplate: MongoTemplate,
-        @Autowired repositoryClient: RepositoryClient,
-        @Autowired projectClient: ProjectClient
+        @Autowired permissionDao: PermissionDao,
+        @Autowired personalPathDao: PersonalPathDao,
+        @Autowired repoAuthConfigDao: RepoAuthConfigDao,
+        @Autowired repositoryClient: RepositoryService,
+        @Autowired projectClient: ProjectService
     ): PermissionService {
         logger.debug("init cpackPermissionServiceImpl")
         return CpackPermissionServiceImpl(
-            userRepository,
+            accountDao,
+            userDao,
             roleRepository,
-            permissionRepository,
-            mongoTemplate,
+            permissionDao,
+            personalPathDao,
+            repoAuthConfigDao,
             repositoryClient,
             projectClient
         )
@@ -49,7 +52,7 @@ class CpackAuthServiceConfig {
     @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "cpack")
     fun cpackRoleService(
         @Autowired roleRepository: RoleRepository,
-        @Autowired userRepository: UserRepository,
+        @Autowired userRepository: UserDao,
         @Autowired userService: UserService,
         @Autowired mongoTemplate: MongoTemplate,
         @Autowired permissionService: PermissionService
@@ -67,7 +70,7 @@ class CpackAuthServiceConfig {
     @Bean
     @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "cpack")
     fun cpackUserService(
-        @Autowired userRepository: UserRepository,
+        @Autowired userRepository: UserDao,
         @Autowired roleRepository: RoleRepository,
         @Autowired mongoTemplate: MongoTemplate,
         @Autowired permissionService: PermissionService

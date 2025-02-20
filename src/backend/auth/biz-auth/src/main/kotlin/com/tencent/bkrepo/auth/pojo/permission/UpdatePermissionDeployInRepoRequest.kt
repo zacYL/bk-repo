@@ -29,13 +29,13 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.rds.pojo
+package com.tencent.bkrepo.auth.pojo.permission
 
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiModelProperty
-
-@Api("rds error 包装返回模型")
-data class RdsErrorResponse(
-    @ApiModelProperty("错误信息")
-    val error: String
+data class UpdatePermissionDeployInRepoRequest(
+    val permissionId: String,
+    val path: List<String>,
+    val users: List<String>,
+    val roles: List<String>,
+    val name: String,
+    val projectId: String
 )

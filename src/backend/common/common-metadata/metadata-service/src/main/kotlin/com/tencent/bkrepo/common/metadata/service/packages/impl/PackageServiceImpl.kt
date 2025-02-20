@@ -393,7 +393,7 @@ class PackageServiceImpl(
         val packageKey = request.packageKey
         val versionName = request.versionName
         val newMetadata = if (request.packageMetadata != null || request.packageMetadata != null) {
-            MetadataUtils.compatibleConvertAndCheck(request.packageMetadata, request.packageMetadata)
+            MetadataUtils.compatibleConvertAndCheck(request.metadata, request.packageMetadata)
         } else {
             null
         }
@@ -521,10 +521,10 @@ class PackageServiceImpl(
      */
     private fun updateExistVersion(
         oldVersion: TPackageVersion,
-        request: PackageVersionCreateRequest,
-        realIpAddress: String?,
-        packageQuery: Query,
-        packageUpdate: Update
+    request: PackageVersionCreateRequest,
+    realIpAddress: String?,
+    packageQuery: Query,
+    packageUpdate: Update
     ) {
         with(request) {
             checkPackageVersionOverwrite(overwrite, packageName, oldVersion)
@@ -537,7 +537,7 @@ class PackageServiceImpl(
                 artifactPath = request.artifactPath
                 artifactPaths = buildArtifactPaths(request)
                 stageTag = request.stageTag.orEmpty()
-                metadata = MetadataUtils.compatibleConvertAndCheck(request.packageMetadata, packageMetadata)
+                metadata = MetadataUtils.compatibleConvertAndCheck(request.metadata, packageMetadata)
                 tags = request.tags?.filter { it.isNotBlank() }.orEmpty()
                 extension = request.extension.orEmpty()
             }

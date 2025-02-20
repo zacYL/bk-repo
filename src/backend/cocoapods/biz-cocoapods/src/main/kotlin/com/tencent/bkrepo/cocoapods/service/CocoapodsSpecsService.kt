@@ -43,30 +43,31 @@ import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil.toCocoapodsRemoteConfi
 import com.tencent.bkrepo.cocoapods.utils.PathUtil
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexTarPath
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.remote.buildOkHttpClient
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.lock.service.LockOperation
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.security.util.SecurityUtils
-import com.tencent.bkrepo.repository.api.NodeService
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
 import okhttp3.Request
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
 
 @Service
 class CocoapodsSpecsService(
-    private val nodeClient: NodeService,
-    private val repositoryClient: RepositoryClient,
+    private val nodeService: NodeService,
+    private val repositoryService: RepositoryService,
     private val storageManager: StorageManager,
     private val cocoapodsProperties: CocoapodsProperties,
     private val lockOperation: LockOperation,
@@ -77,12 +78,14 @@ class CocoapodsSpecsService(
 
     fun initSpecs(projectId: String, repoName: String) {
         logger.info("project [$projectId], repo [$repoName],init specs...")
-        nodeClient.createNode(NodeCreateRequest(
-            projectId = projectId,
-            repoName = repoName,
-            fullPath = DOT_SPECS,
-            folder = true
-        ))
+        nodeService.createNode(
+            NodeCreateRequest(
+                projectId = projectId,
+                repoName = repoName,
+                fullPath = DOT_SPECS,
+                folder = true
+            )
+        )
     }
 
     fun initRemoteSpecs(projectId: String, repoInfo: RepositoryInfo) {
@@ -91,7 +94,12 @@ class CocoapodsSpecsService(
         val cocoapodsConf = conf.toCocoapodsRemoteConfiguration()
         val outputStream = ByteArrayOutputStream()
         val tempPath = FileUtil.buildTempDir("cocoapods/$projectId/${repoInfo.name}")
-        cocoapodsRepoService.updateStringSetting(projectId, repoInfo.name, INDEX_GENERATING, INDEX_GENERATING_VALUE_DOING)
+        cocoapodsRepoService.updateStringSetting(
+            projectId,
+            repoInfo.name,
+            INDEX_GENERATING,
+            INDEX_GENERATING_VALUE_DOING
+        )
         val url = PathUtil.buildRemoteSpecsUrl(cocoapodsConf, conf)
             ?: kotlin.run {
                 logger.error("downloadUrl is null")
@@ -111,7 +119,7 @@ class CocoapodsSpecsService(
                 logger.warn("project [$projectId], repo [${repoInfo.name}], no podspec found")
                 return
             }
-            val repoDetail = repositoryClient.getRepoDetail(projectId, repoInfo.name).data
+            val repoDetail = repositoryService.getRepoDetail(projectId, repoInfo.name)
                 ?: throw RepoNotFoundException(repoInfo.name)
 
             val specArtifact =
@@ -138,12 +146,24 @@ class CocoapodsSpecsService(
                 )
             })
         } finally {
-            cocoapodsRepoService.updateStringSetting(projectId, repoInfo.name, INDEX_GENERATING, INDEX_GENERATING_VALUE_DONE)
+            cocoapodsRepoService.updateStringSetting(
+                projectId,
+                repoInfo.name,
+                INDEX_GENERATING,
+                INDEX_GENERATING_VALUE_DONE
+            )
         }
         logger.info("project [$projectId], repo [${repoInfo.name},url:$url],init remote specs success")
     }
 
-    private fun cloneAndGetPodSpecs(conf: RemoteConfiguration,remoteUrl: String, projectId: String, repoInfo: RepositoryInfo, tempPath: File, outputStream: ByteArrayOutputStream): MutableList<ArchiveModifier.Podspec> {
+    private fun cloneAndGetPodSpecs(
+        conf: RemoteConfiguration,
+        remoteUrl: String,
+        projectId: String,
+        repoInfo: RepositoryInfo,
+        tempPath: File,
+        outputStream: ByteArrayOutputStream
+    ): MutableList<ArchiveModifier.Podspec> {
         var credentialsProvider: CredentialsProvider? = null
         if (conf.credentials.username != null &&
             conf.credentials.password != null
@@ -160,7 +180,13 @@ class CocoapodsSpecsService(
         var latestRef = ""
         lockOperation.doWithLock(lockKey) {
             latestRef = GitUtil.cloneOrPullRepo(remoteUrl, specsGitPath, credentialsProvider)
-            cocoapodsGitInstanceDao.saveIfNotExist(TCocoapodsGitInstance(url = remoteUrl, path = specsGitPath, ref = latestRef))
+            cocoapodsGitInstanceDao.saveIfNotExist(
+                TCocoapodsGitInstance(
+                    url = remoteUrl,
+                    path = specsGitPath,
+                    ref = latestRef
+                )
+            )
         }
         logger.info("repo [${repoInfo.name}] latestRef: $latestRef , oldLatestRef: $oldLatestRef")
         //如果当前已是最新的引用，则不需要再更新
@@ -170,10 +196,23 @@ class CocoapodsSpecsService(
         }
         FileUtil.copyDirectory(specsGitPath, tempPath)
         cocoapodsRepoService.updateStringSetting(projectId, repoInfo.name, LATEST_REF, latestRef)
-        return ArchiveModifier.modifyAndZip(tempPath, projectId, repoInfo.name, cocoapodsProperties.domain, outputStream)
+        return ArchiveModifier.modifyAndZip(
+            tempPath,
+            projectId,
+            repoInfo.name,
+            cocoapodsProperties.domain,
+            outputStream
+        )
     }
 
-    private fun downloadAndGetPodSpecs(conf: RemoteConfiguration, remoteUrl: String, repoInfo: RepositoryInfo, projectId: String, outputStream: ByteArrayOutputStream, tempPath: File): MutableList<ArchiveModifier.Podspec> {
+    private fun downloadAndGetPodSpecs(
+        conf: RemoteConfiguration,
+        remoteUrl: String,
+        repoInfo: RepositoryInfo,
+        projectId: String,
+        outputStream: ByteArrayOutputStream,
+        tempPath: File
+    ): MutableList<ArchiveModifier.Podspec> {
         val httpClient = buildOkHttpClient(conf).build()
 
         val request = Request.Builder().url(remoteUrl).build()
@@ -193,7 +232,15 @@ class CocoapodsSpecsService(
             val wrap = ByteArrayInputStream(ips.readBytes())
             val fileType = FileUtil.detectFileType(wrap)
             wrap.reset()
-            return ArchiveModifier.modifyArchive(projectId, repoInfo.name, cocoapodsProperties.domain, wrap, outputStream, fileType, tempPath)
+            return ArchiveModifier.modifyArchive(
+                projectId,
+                repoInfo.name,
+                cocoapodsProperties.domain,
+                wrap,
+                outputStream,
+                fileType,
+                tempPath
+            )
         } ?: run {
             logger.error("Failed to read the response body")
             throw ErrorCodeException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
@@ -201,7 +248,7 @@ class CocoapodsSpecsService(
     }
 
     fun indexExist(projectId: String, repoName: String): Boolean {
-        return nodeClient.checkExist(projectId, repoName, generateIndexTarPath()).data ?: false
+        return nodeService.checkExist(ArtifactInfo(projectId, repoName, generateIndexTarPath()))
     }
 
     companion object {

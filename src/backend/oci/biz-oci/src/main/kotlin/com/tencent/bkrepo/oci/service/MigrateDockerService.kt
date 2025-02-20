@@ -1,10 +1,16 @@
 package com.tencent.bkrepo.oci.service
 
 import com.tencent.bkrepo.common.api.util.StreamUtils.readText
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.packages.PackageService
+import com.tencent.bkrepo.common.metadata.service.project.ProjectService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
+import com.tencent.bkrepo.common.metadata.service.repo.StorageCredentialService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
@@ -15,11 +21,6 @@ import com.tencent.bkrepo.oci.model.ManifestSchema2
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
 import com.tencent.bkrepo.oci.util.OciLocationUtils
 import com.tencent.bkrepo.oci.util.OciUtils
-import com.tencent.bkrepo.repository.api.NodeService
-import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.api.ProjectClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
-import com.tencent.bkrepo.repository.api.StorageCredentialsClient
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -27,6 +28,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import org.slf4j.LoggerFactory
@@ -34,12 +36,12 @@ import org.springframework.stereotype.Service
 
 @Service
 class MigrateDockerService(
-    private val projectClient: ProjectClient,
-    private val packageClient: PackageClient,
-    private val repositoryClient: RepositoryClient,
-    private val nodeClient: NodeService,
+    private val projectService: ProjectService,
+    private val packageService: PackageService,
+    private val repositoryService: RepositoryService,
+    private val nodeService: NodeService,
     private val storageManager: StorageManager,
-    private val storageCredentialsClient: StorageCredentialsClient
+    private val storageCredentialsClient: StorageCredentialService
 ) {
     private val logger = LoggerFactory.getLogger(MigrateDockerService::class.java)
 
@@ -55,10 +57,10 @@ class MigrateDockerService(
      */
     fun migrate(overwrite: Boolean) {
         logger.info("migrate Docker pkg start")
-        val projects = projectClient.listProject().data
-        projects?.forEach { projectInfo ->
-            val repos = repositoryClient.listRepo(projectInfo.name, type = RepositoryType.DOCKER.name).data
-            repos?.forEach { repo ->
+        val projects = projectService.listProject()
+        projects.forEach { projectInfo ->
+            val repos = repositoryService.listRepo(projectInfo.name, type = RepositoryType.DOCKER.name)
+            repos.forEach { repo ->
                 migrateRepo(repo, overwrite)
             }
         }
@@ -66,21 +68,22 @@ class MigrateDockerService(
 
     private fun migrateRepo(repo: RepositoryInfo, overwrite: Boolean) {
         logger.info("migrate ${repo.projectId}/${repo.name} Docker pkg start")
-        val storageCredentials = storageCredentialsClient.findByKey(repo.storageCredentialsKey).data
+        val storageCredentials = storageCredentialsClient.findByKey(repo.storageCredentialsKey)
         var pageNumber = 1
-        var packages = packageClient.listPackagePage(
+        var packages = packageService.listPackagePage(
             projectId = repo.projectId,
             repoName = repo.name,
             option = PackageListOption(pageNumber = pageNumber, pageSize = PAGE_SIZE)
-        ).data?.records
+        ).records
         while (!packages.isNullOrEmpty()) {
             packages.forEach { pkg ->
-                val versionList = packageClient.listAllVersion(
+                val versionList = packageService.listAllVersion(
                     projectId = pkg.projectId,
                     repoName = pkg.repoName,
-                    packageKey = pkg.key
-                ).data
-                versionList?.forEach { version ->
+                    packageKey = pkg.key,
+                    option = VersionListOption()
+                )
+                versionList.forEach { version ->
                     migrateVersion(
                         pkg.projectId,
                         pkg.repoName,
@@ -92,11 +95,11 @@ class MigrateDockerService(
                 }
             }
             pageNumber++
-            packages = packageClient.listPackagePage(
+            packages = packageService.listPackagePage(
                 projectId = repo.projectId,
                 repoName = repo.name,
                 option = PackageListOption(pageNumber = pageNumber, pageSize = PAGE_SIZE)
-            ).data?.records
+            ).records
         }
     }
 
@@ -120,8 +123,8 @@ class MigrateDockerService(
         val path = "/$pkgName"
         val manifestPath = "$path/${packageVersion.name}/manifest.json"
         val manifestListPath = "$path/${packageVersion.name}/list.manifest.json"
-        val manifestNode = nodeClient.getNodeDetail(projectId, repoName, manifestPath).data ?: run {
-            nodeClient.getNodeDetail(projectId, repoName, manifestListPath).data
+        val manifestNode = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, manifestPath)) ?: run {
+            nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, manifestListPath))
         }
 
         if (manifestNode != null) {
@@ -176,15 +179,17 @@ class MigrateDockerService(
             }
             val newManifestFullPath = "$path/manifest/${packageVersion.name}/${manifestNode.name}"
             // 更新包版本信息 metadat, artifactPath, manifestPath
-            packageClient.updateVersion(PackageVersionUpdateRequest(
-                projectId = projectId,
-                repoName = repoName,
-                packageKey = packageKey,
-                versionName = packageVersion.name,
-                manifestPath = newManifestFullPath,
-                artifactPath = newManifestFullPath,
-                packageMetadata = metadata,
-            ))
+            packageService.updateVersion(
+                PackageVersionUpdateRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = packageKey,
+                    versionName = packageVersion.name,
+                    manifestPath = newManifestFullPath,
+                    artifactPath = newManifestFullPath,
+                    packageMetadata = metadata,
+                )
+            )
         } else {
             logger.info("$path manifestPath,manifestListPath node not find")
         }
@@ -198,7 +203,7 @@ class MigrateDockerService(
     ) {
         val oldDockerPath = "/$pkgName/$version"
         logger.info("delete old docker artifact start, path:[$oldDockerPath]")
-        nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, oldDockerPath, SYSTEM_USER))
+        nodeService.deleteNode(NodeDeleteRequest(projectId, repoName, oldDockerPath, SYSTEM_USER))
         logger.info("delete old docker artifact path:[$oldDockerPath] success...")
     }
 
@@ -211,7 +216,7 @@ class MigrateDockerService(
     ): Boolean {
         logger.info("check oci artifact start")
         // 检查版本是否存在
-        packageClient.findVersionByName(projectId, repoName, pkgKey, version).data ?: run {
+        packageService.findVersionByName(projectId, repoName, pkgKey, version) ?: run {
             logger.error("$projectId/$repoName/$pkgKey/$version not find")
             return false
         }
@@ -219,7 +224,7 @@ class MigrateDockerService(
         val pkgName = PackageKeys.resolveDocker(pkgKey)
         val manifestFullPath = OciLocationUtils.buildManifestPath(pkgName, version)
         // check manifest.json node
-        val manifestNode = nodeClient.getNodeDetail(projectId, repoName, manifestFullPath).data ?: run {
+        val manifestNode = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, manifestFullPath)) ?: run {
             logger.error("$projectId/$repoName/$pkgKey/$version manifest not find")
             return false
         }
@@ -231,7 +236,7 @@ class MigrateDockerService(
         var checkStatus = true
         OciUtils.manifestIterator(manifest).forEach {
             val blobFullPath = OciLocationUtils.blobVersionPathLocation(version, pkgName, it.filename)
-            nodeClient.checkExist(projectId, repoName, blobFullPath).data?.let { exist ->
+            nodeService.checkExist(ArtifactInfo(projectId, repoName, blobFullPath)).let { exist ->
                 if (!exist) {
                     logger.error("blob[$projectId/$repoName/$blobFullPath] not find")
                 }
@@ -252,7 +257,7 @@ class MigrateDockerService(
             "migrating manifest[${manifestNode.fullPath}] in repo ${manifestNode.projectId}/${manifestNode.repoName}"
         )
         val newManifestFullPath = "$path/manifest/$version/${manifestNode.name}"
-        nodeClient.copyNode(
+        nodeService.copyNode(
             NodeMoveCopyRequest(
                 srcProjectId = manifestNode.projectId,
                 srcRepoName = manifestNode.repoName,
@@ -283,7 +288,7 @@ class MigrateDockerService(
         }
         val oldBlobFullPath = "$path/$version/${descriptor.filename}"
         val newBlobFullPath = "$path/blobs/$version/${descriptor.filename}"
-        nodeClient.copyNode(
+        nodeService.copyNode(
             NodeMoveCopyRequest(
                 srcProjectId = manifestNode.projectId,
                 srcRepoName = manifestNode.repoName,
@@ -312,7 +317,7 @@ class MigrateDockerService(
     }
 
     fun migrateRepository(projectId: String, repoName: String, overwrite: Boolean) {
-        val repoInfo = repositoryClient.getRepoInfo(projectId, repoName).data ?: run {
+        val repoInfo = repositoryService.getRepoInfo(projectId, repoName) ?: run {
             logger.error("repo[$projectId/$repoName] find fail")
             return
         }
@@ -327,15 +332,15 @@ class MigrateDockerService(
         version: String,
         overwrite: Boolean
     ) {
-        val repoDetail = repositoryClient.getRepoDetail(
+        val repoDetail = repositoryService.getRepoDetail(
             projectId,
             repoName,
             type = RepositoryType.DOCKER.name
-        ).data ?: run {
+        ) ?: run {
             logger.error("repo[$projectId/$repoName] find fail")
             return
         }
-        val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data ?: run {
+        val packageVersion = packageService.findVersionByName(projectId, repoName, packageKey, version) ?: run {
             logger.error("repo[$projectId/$repoName/$packageKey/$version] find fail")
             return
         }

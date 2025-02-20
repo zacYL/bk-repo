@@ -34,6 +34,9 @@ package com.tencent.bkrepo.auth.service.impl
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
 import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
 import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
+import com.tencent.bkrepo.auth.dao.UserDao
+import com.tencent.bkrepo.auth.dao.repository.RoleRepository
+import com.tencent.bkrepo.auth.helper.UserHelper
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.token.Token
@@ -45,24 +48,22 @@ import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
-import com.tencent.bkrepo.auth.repository.RoleRepository
-import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.UserService
-import com.tencent.bkrepo.auth.service.local.AbstractServiceImpl
 import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
 import com.tencent.bkrepo.auth.util.query.UserQueryHelper
 import com.tencent.bkrepo.auth.util.query.UserUpdateHelper
+import com.tencent.bkrepo.auth.util.request.UserRequestUtil
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
 import com.tencent.bkrepo.common.cpack.service.NotifyService
+import com.tencent.bkrepo.common.metadata.service.project.ProjectService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
+import com.tencent.bkrepo.common.metadata.util.DesensitizedUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
-import com.tencent.bkrepo.repository.api.ProjectClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -72,20 +73,22 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 open class CpackUserServiceImpl constructor(
-    private val userRepository: UserRepository,
+    private val userDao: UserDao,
     roleRepository: RoleRepository,
     private val mongoTemplate: MongoTemplate,
     private val permissionService: PermissionService
-) : UserService, AbstractServiceImpl(mongoTemplate, userRepository, roleRepository) {
+) : UserService {
 
     @Autowired
-    lateinit var repositoryClient: RepositoryClient
+    lateinit var repositoryClient: RepositoryService
 
     @Autowired
-    lateinit var projectClient: ProjectClient
+    lateinit var projectClient: ProjectService
 
     @Autowired
     lateinit var notifyService: NotifyService
+
+    private val userHelper by lazy { UserHelper(userDao, roleRepository) }
 
     @Suppress("TooGenericExceptionCaught")
     override fun createUser(request: CreateUserRequest): Boolean {
@@ -96,7 +99,7 @@ open class CpackUserServiceImpl constructor(
             logger.warn("create user [${request.userId}]  is exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_DUP_UID)
         }
-        val user = userRepository.findFirstByUserId(request.userId)
+        val user = userDao.findFirstByUserId(request.userId)
         user?.let {
             logger.warn("create user [${request.userId}]  is exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_DUP_UID)
@@ -108,7 +111,7 @@ open class CpackUserServiceImpl constructor(
         request.pwd?.let {
             hashPwd = DataDigestUtils.md5FromStr(request.pwd!!)
         }
-        userRepository.insert(
+        userDao.insert(
             TUser(
                 userId = request.userId,
                 name = request.name,
@@ -137,7 +140,7 @@ open class CpackUserServiceImpl constructor(
 
     override fun createUserToRepo(request: CreateUserToRepoRequest): Boolean {
         logger.info("create user to repo request : [${DesensitizedUtils.toString(request)}]")
-        repositoryClient.getRepoInfo(request.projectId, request.repoName).data ?: run {
+        repositoryClient.getRepoInfo(request.projectId, request.repoName) ?: run {
             logger.warn("repo [${request.projectId}/${request.repoName}]  not exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_REPO_NOT_EXIST)
         }
@@ -159,7 +162,7 @@ open class CpackUserServiceImpl constructor(
 
     override fun createUserToProject(request: CreateUserToProjectRequest): Boolean {
         logger.info("create user to project request : [${DesensitizedUtils.toString(request)}]")
-        projectClient.getProjectInfo(request.projectId).data ?: run {
+        projectClient.getProjectInfo(request.projectId) ?: run {
             logger.warn("project [${request.projectId}]  not exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_PROJECT_NOT_EXIST)
         }
@@ -182,38 +185,27 @@ open class CpackUserServiceImpl constructor(
     override fun listUser(rids: List<String>): List<User> {
         logger.debug("list user rids : [$rids]")
         return if (rids.isEmpty()) {
-            userRepository.findAll().map { transferUser(it) }
+            userDao.findAll().map { transferUser(it) }
         } else {
-            userRepository.findAllByRolesIn(rids).map { transferUser(it) }
-        }
-    }
-
-    override fun listUserResult(rids: List<String>): List<UserResult> {
-        logger.debug("list user rids : [$rids]")
-        return if (rids.isEmpty()) {
-            // 排除被锁定的用户
-            val filter = UserQueryHelper.filterNotLockedUser()
-            mongoTemplate.find(filter, TUser::class.java).map { transferUserResult(it) }
-        } else {
-            userRepository.findAllByRolesIn(rids).map { transferUserResult(it) }
+            userDao.findAllByRolesIn(rids).map { transferUser(it) }
         }
     }
 
     override fun deleteById(userId: String): Boolean {
         logger.info("delete user userId : [$userId]")
-        checkUserExist(userId)
-        userRepository.deleteByUserId(userId)
+        userHelper.checkUserExist(userId)
+        userDao.removeByUserId(userId)
         return true
     }
 
     override fun addUserToRole(userId: String, roleId: String): User? {
         logger.info("add user to role userId : [$userId], roleId : [$roleId]")
         // check user
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
         // check role
-        checkRoleExist(roleId)
+        userHelper.checkRoleExist(roleId)
         // check is role bind to role
-        if (!checkUserRoleBind(userId, roleId)) {
+        if (!userHelper.checkUserRoleBind(userId, roleId)) {
             val query = UserQueryHelper.getUserById(userId)
             val update = Update()
             update.addToSet(TUser::roles.name, roleId)
@@ -224,8 +216,8 @@ open class CpackUserServiceImpl constructor(
 
     override fun addUserToRoleBatch(idList: List<String>, roleId: String): Boolean {
         logger.info("add user to role batch userId : [$idList], roleId : [$roleId]")
-        checkUserExistBatch(idList)
-        checkRoleExist(roleId)
+        userHelper.checkUserExistBatch(idList)
+        userHelper.checkRoleExist(roleId)
         val query = UserQueryHelper.getUserByIdList(idList)
         val update = UserUpdateHelper.buildAddRole(roleId)
         mongoTemplate.updateMulti(query, update, TUser::class.java)
@@ -235,9 +227,9 @@ open class CpackUserServiceImpl constructor(
     override fun removeUserFromRole(userId: String, roleId: String): User? {
         logger.info("remove user from role userId : [$userId], roleId : [$roleId]")
         // check user
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
         // check role
-        checkRoleExist(roleId)
+        userHelper.checkRoleExist(roleId)
         val query = UserQueryHelper.getUserByIdAndRoleId(userId, roleId)
         val update = UserUpdateHelper.buildUnsetRoles()
         mongoTemplate.upsert(query, update, TUser::class.java)
@@ -246,8 +238,8 @@ open class CpackUserServiceImpl constructor(
 
     override fun removeUserFromRoleBatch(idList: List<String>, roleId: String): Boolean {
         logger.info("remove user from role  batch userId : [$idList], roleId : [$roleId]")
-        checkUserExistBatch(idList)
-        checkRoleExist(roleId)
+        userHelper.checkUserExistBatch(idList)
+        userHelper.checkRoleExist(roleId)
         val query = UserQueryHelper.getUserByIdListAndRoleId(idList, roleId)
         val update = UserUpdateHelper.buildUnsetRoles()
         val result = mongoTemplate.updateMulti(query, update, TUser::class.java)
@@ -257,7 +249,7 @@ open class CpackUserServiceImpl constructor(
 
     override fun updateUserById(userId: String, request: UpdateUserRequest): Boolean {
         logger.info("update user userId : [$userId], request : [$request]")
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
         val query = UserQueryHelper.getUserById(userId)
         val update = UserUpdateHelper.buildUpdateUser(request)
         val result = mongoTemplate.updateFirst(query, update, TUser::class.java)
@@ -271,10 +263,28 @@ open class CpackUserServiceImpl constructor(
         return addUserToken(userId, token, null)
     }
 
+    override fun getUserPwdById(userId: String): String? {
+        val tUser = userDao.findFirstByUserId(userId) ?: return null
+        return tUser.pwd
+    }
+
+    override fun listValidToken(userId: String): List<Token> {
+        logger.debug("list valid token : [$userId]")
+        userHelper.checkUserExist(userId)
+        return userDao.findFirstByUserId(userId)!!.tokens.filter {
+            it.expiredAt == null || it.expiredAt!!.isAfter(LocalDateTime.now())
+        }
+    }
+
+    override fun validateEntityUser(userId: String): Boolean {
+        val user = userDao.findFirstByUserId(userId)
+        return user != null && !user.group
+    }
+
     override fun addUserToken(userId: String, name: String, expiredAt: String?): Token? {
         try {
             logger.info("add user token userId : [$userId] ,token : [$name]")
-            checkUserExist(userId)
+            userHelper.checkUserExist(userId)
 
             val existUserInfo = getUserById(userId)
             val existTokens = existUserInfo!!.tokens
@@ -318,7 +328,7 @@ open class CpackUserServiceImpl constructor(
     }
 
     override fun listUserToken(userId: String): List<TokenResult> {
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
         val userInfo = getUserById(userId)
         val tokens = userInfo!!.tokens
         val result = mutableListOf<TokenResult>()
@@ -328,9 +338,13 @@ open class CpackUserServiceImpl constructor(
         return result
     }
 
+    override fun listUserResult(rids: List<String>): List<UserResult> {
+        return emptyList()
+    }
+
     override fun removeToken(userId: String, name: String): Boolean {
         logger.info("remove token userId : [$userId] ,name : [$name]")
-        checkUserExist(userId)
+        userHelper.checkUserExist(userId)
         val query = UserQueryHelper.getUserById(userId)
         val update = UserUpdateHelper.buildUnsetTokenName(name)
         mongoTemplate.updateFirst(query, update, TUser::class.java)
@@ -339,7 +353,7 @@ open class CpackUserServiceImpl constructor(
 
     override fun getUserById(userId: String): User? {
         logger.debug("get user userId : [$userId]")
-        val user = userRepository.findFirstByUserId(userId) ?: return null
+        val user = userDao.findFirstByUserId(userId) ?: return null
         return transferUser(user)
     }
 
@@ -383,6 +397,10 @@ open class CpackUserServiceImpl constructor(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
+    override fun getRelatedUserById(userId: String): List<UserInfo> {
+        return userDao.getUserByAsstUser(userId).map { UserRequestUtil.convToUserInfo(it) }
+    }
+
     override fun userAll(
         userName: String?,
         admin: Boolean?,
@@ -394,7 +412,7 @@ open class CpackUserServiceImpl constructor(
     }
 
     override fun getUserInfoById(userId: String): UserInfo? {
-        val tUser = userRepository.findFirstByUserId(userId) ?: return null
+        val tUser = userDao.findFirstByUserId(userId) ?: return null
         return transferUserInfo(tUser)
     }
 
@@ -425,8 +443,8 @@ open class CpackUserServiceImpl constructor(
         return record.isNotEmpty()
     }
 
-    override fun listAdminUser(): List<User> {
-        return userRepository.findAllByAdmin(true).map { transferUser(it) }
+    override fun listAdminUsers(): List<String> {
+        return userDao.findAllAdminUsers().map { it.userId }
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -438,7 +456,7 @@ open class CpackUserServiceImpl constructor(
         }
         val query = UserQueryHelper.getUserById(userId)
         val update = Update().set(TUser::pwd.name, targetPwd)
-        val record = mongoTemplate.updateFirst(query, update, TUser::class.java)
+        mongoTemplate.updateFirst(query, update, TUser::class.java)
         getUserInfoById(userId)?.let { user ->
             try {
                 if (user.email != null && user.email!!.isNotBlank()) {
@@ -463,14 +481,14 @@ open class CpackUserServiceImpl constructor(
         for (role in roles) {
             users.addAll(listUserByRoleId(role).map { it.userId })
         }
-        if (includeAdmin) users.addAll(listAdminUser().map { it.userId })
+        if (includeAdmin) users.addAll(listAdminUsers())
         val userList = listUser(listOf()).filter { users.contains(it.userId) }
         return userList.map { UserResult(userId = it.userId, name = it.name) }
     }
 
     private fun listUserByRoleId(id: String): Set<UserResult> {
         val result = mutableSetOf<UserResult>()
-        userRepository.findAllByRolesIn(listOf(id)).let { users ->
+        userDao.findAllByRolesIn(listOf(id)).let { users ->
             for (user in users) {
                 result.add(UserResult(user.userId, user.name))
             }
@@ -484,6 +502,53 @@ open class CpackUserServiceImpl constructor(
 
     override fun removeUserAccount(userId: String, accountId: String): Boolean {
         TODO("Not yet implemented")
+    }
+
+    private fun transferCreateRepoUserRequest(request: CreateUserToRepoRequest): CreateUserRequest {
+        return CreateUserRequest(
+            request.userId,
+            request.name,
+            request.pwd,
+            request.admin,
+            request.asstUsers,
+            request.group
+        )
+    }
+
+    private fun transferUserInfo(user: TUser): UserInfo {
+        return UserInfo(
+            userId = user.userId,
+            name = user.name,
+            locked = user.locked,
+            email = user.email,
+            phone = user.phone,
+            createdDate = user.createdDate,
+            admin = user.admin,
+            group = user.group
+        )
+    }
+
+    fun transferCreateProjectUserRequest(request: CreateUserToProjectRequest): CreateUserRequest {
+        return CreateUserRequest(
+            request.userId,
+            request.name,
+            request.pwd,
+            request.admin,
+            request.asstUsers,
+            request.group
+        )
+    }
+
+    private fun transferUser(user: TUser): User {
+        return User(
+            userId = user.userId,
+            name = user.name,
+            pwd = user.pwd,
+            admin = user.admin,
+            locked = user.locked,
+            tokens = user.tokens,
+            roles = user.roles
+        )
     }
 
     companion object {

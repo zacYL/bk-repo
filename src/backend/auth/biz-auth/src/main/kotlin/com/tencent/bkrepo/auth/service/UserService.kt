@@ -55,8 +55,6 @@ interface UserService {
 
     fun listUser(rids: List<String>): List<User>
 
-    fun listUserResult(rids: List<String>): List<UserResult>
-
     fun deleteById(userId: String): Boolean
 
     fun updateUserById(userId: String, request: UpdateUserRequest): Boolean
@@ -93,13 +91,9 @@ interface UserService {
 
     fun resetPassword(userId: String): Boolean
 
-    fun repeatUid(userId: String): Boolean
-
-    fun listAdminUser(): List<User>
-
-    // cpack ext
-
     fun resetPassword(userId: String, newPwd: String?): Boolean
+
+    fun repeatUid(userId: String): Boolean
 
     fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult>
 
@@ -112,4 +106,6 @@ interface UserService {
     fun getRelatedUserById(userId: String): List<UserInfo>
 
     fun listAdminUsers(): List<String>
+
+    fun listUserResult(rids: List<String>): List<UserResult>
 }

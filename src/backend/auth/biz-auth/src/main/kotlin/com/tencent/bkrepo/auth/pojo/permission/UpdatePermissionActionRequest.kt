@@ -29,13 +29,11 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.auth.pojo
+package com.tencent.bkrepo.auth.pojo.permission
 
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 
-open class ResourceBaseRequest(
-    open var resourceType: ResourceType,
-    open var projectId: String? = null,
-    open var repoName: String? = null,
-    open var path: String? = null
+data class UpdatePermissionActionRequest(
+    val permissionId: String,
+    val actions: List<PermissionAction>
 )

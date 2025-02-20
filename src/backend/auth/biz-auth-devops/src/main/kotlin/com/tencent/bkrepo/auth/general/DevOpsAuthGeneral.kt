@@ -7,6 +7,7 @@ import com.tencent.bkrepo.auth.api.CanwayTenantClient
 import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
 import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
 import com.tencent.bkrepo.auth.constant.AuthConstant.SCOPECODE
+import com.tencent.bkrepo.auth.dao.PermissionDao
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.convertEnumListToStringList
 import com.tencent.bkrepo.auth.pojo.general.ScopeDTO
@@ -16,7 +17,6 @@ import com.tencent.bkrepo.auth.pojo.permission.RemoveInstancePermissionsRequest
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
 import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
-import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.common.devops.REPO_PATH_RESOURCECODE
 import com.tencent.bkrepo.common.devops.REPO_PATH_SCOPE_CODE
@@ -24,6 +24,7 @@ import com.tencent.bkrepo.common.devops.RESOURCECODE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.util.*
 
 @Component
 class DevOpsAuthGeneral(
@@ -31,7 +32,7 @@ class DevOpsAuthGeneral(
     private val canwaySystemClient: CanwaySystemClient,
     private val canwayTenantClient: CanwayTenantClient,
     private val canwayCustomPermissionClient: CanwayCustomPermissionClient,
-    private val permissionRepository: PermissionRepository,
+    private val permissionRepository: PermissionDao,
 ) {
     /**
      * 判断用户是否为系统管理员
@@ -79,7 +80,7 @@ class DevOpsAuthGeneral(
             option = UserPermissionQueryDTO(
                 userId = userId,
                 resourceCode = RESOURCECODE,
-                actionCodes = listOf(PermissionAction.READ.name.toLowerCase()),
+                actionCodes = listOf(PermissionAction.READ.name.lowercase(Locale.getDefault())),
                 paddingInstancePermission = true
             )
         ).data?.let { repoList.addAll(it.permissions.map { it.instanceId }) }

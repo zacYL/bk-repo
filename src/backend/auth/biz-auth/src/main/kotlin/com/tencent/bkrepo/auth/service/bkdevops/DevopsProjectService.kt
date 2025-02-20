@@ -33,6 +33,7 @@ package com.tencent.bkrepo.auth.service.bkdevops
 
 import com.tencent.bkrepo.auth.condition.DevopsAuthCondition
 import com.tencent.bkrepo.auth.pojo.enums.BkAuthResourceType
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.role.ExternalRoleResult
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Conditional
@@ -41,12 +42,12 @@ import org.springframework.stereotype.Service
 @Service
 @Conditional(DevopsAuthCondition::class)
 class DevopsProjectService @Autowired constructor(private val ciAuthService: CIAuthService) {
-    fun isProjectMember(user: String, projectCode: String, permissionAction: String): Boolean {
+    fun isProjectMember(user: String, projectCode: String, permissionAction: PermissionAction): Boolean {
         return ciAuthService.isProjectSuperAdmin(
             user = user,
             projectCode = projectCode,
             resourceType = BkAuthResourceType.PIPELINE_DEFAULT,
-            action = permissionAction
+            action = permissionAction.name
         ) || ciAuthService.isProjectMember(user, projectCode)
     }
 

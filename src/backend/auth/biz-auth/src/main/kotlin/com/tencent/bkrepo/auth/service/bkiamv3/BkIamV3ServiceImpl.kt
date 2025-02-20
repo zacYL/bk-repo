@@ -178,10 +178,10 @@ class BkIamV3ServiceImpl(
     private fun generatePermissionUrl(request: CheckPermissionRequest): String? {
         with(request) {
             val resourceId = getResourceId(
-                resourceType, projectId, repoName, path
+                resourceType.name, projectId, repoName, path
             )
-            val action = BkIamV3Utils.convertActionType(request.resourceType, request.action)
-            val resourceType = request.resourceType.lowercase(Locale.getDefault())
+            val action = BkIamV3Utils.convertActionType(request.resourceType.name, request.action.name)
+            val resourceType = request.resourceType
             if (repoName != null && !checkBkiamv3Config(projectId, repoName)) return null
             authManagerRepository.findByTypeAndResourceIdAndParentResId(
                 ResourceType.PROJECT, projectId!!, null
@@ -203,10 +203,10 @@ class BkIamV3ServiceImpl(
                     null
                 )
                 instanceList.add(repoInstance)
-                if (resourceType == ResourceType.NODE.id()) {
+                if (resourceType == ResourceType.NODE) {
                     val nodeInstance = RelationResourceInstance(
                         iamConfiguration.systemId,
-                        ResourceType.NODE.id(),
+                        ResourceType.NODE.name,
                         resourceId,
                         null
                     )
@@ -216,7 +216,7 @@ class BkIamV3ServiceImpl(
             val instances: List<List<RelationResourceInstance>> = listOf(instanceList)
             val relatedResourceTypes = RelatedResourceTypes(
                 iamConfiguration.systemId,
-                resourceType,
+                resourceType.name,
                 instances,
                 emptyList()
             )

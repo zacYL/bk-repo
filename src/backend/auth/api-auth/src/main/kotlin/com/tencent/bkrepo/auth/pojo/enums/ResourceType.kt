@@ -31,10 +31,13 @@
 
 package com.tencent.bkrepo.auth.pojo.enums
 
+import java.util.Locale
+
 enum class ResourceType(val nick: String) {
     SYSTEM("系统"),
     PROJECT("项目"),
     REPO("仓库"),
+    ENDPOINT("端点"),
     NODE("节点"),
     METADATA("元数据"),
     PACKAGE("包"),
@@ -43,13 +46,13 @@ enum class ResourceType(val nick: String) {
     REPLICATION("分发计划");
 
 
-    fun id() = this.name.toLowerCase()
+    fun id() = this.name.lowercase(Locale.getDefault())
 
     companion object {
         private val DEFAULT = NODE
 
         fun lookup(value: String): ResourceType {
-            val upperCase = value.toUpperCase()
+            val upperCase = value.uppercase(Locale.getDefault())
             return values().find { it.name == upperCase } ?: DEFAULT
         }
     }

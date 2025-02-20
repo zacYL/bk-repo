@@ -146,6 +146,15 @@ class RoleServiceImpl constructor(
         return true
     }
 
+    override fun systemRoles(): List<Role> {
+        val roles = roleRepository.findByType(RoleType.SYSTEM)
+        return roles.map { transfer(it) }
+    }
+
+    override fun systemRolesByProjectId(projectId: String): List<Role> {
+        TODO("Not yet implemented")
+    }
+
     private fun transfer(tRole: TRole): Role {
         val userList = userDao.findAllByRolesIn(listOf(tRole.id!!))
         val users = userList.map { it.userId }

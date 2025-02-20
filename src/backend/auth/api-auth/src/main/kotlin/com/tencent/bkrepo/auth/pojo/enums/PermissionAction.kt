@@ -31,6 +31,8 @@
 
 package com.tencent.bkrepo.auth.pojo.enums
 
+import java.util.Locale
+
 enum class PermissionAction {
     MANAGE,
     WRITE,
@@ -39,10 +41,12 @@ enum class PermissionAction {
     VIEW,
     UPDATE,
     DELETE,
+
     /**
      * 新增平台制品库菜单权限动作
      */
     ACCESS,
+
     /**
      * 新增分发计划额外权限动作
      */
@@ -50,10 +54,12 @@ enum class PermissionAction {
     ENABLE,
     EXECUTE,
     COPY,
+
     /**
      * 新增仓库控制权限
      */
     REPO_DELETE,
+
     /**
      * 新增动作权限
      */
@@ -76,9 +82,18 @@ enum class PermissionAction {
     ARTIFACT_DELETE,
     ARTIFACT_UPDATE;
 
-    fun id() = this.name.toLowerCase()
+    fun id() = this.name.lowercase(Locale.getDefault())
+
+    companion object {
+        private val DEFAULT = READ
+
+        fun lookup(value: String): PermissionAction {
+            val upperCase = value.uppercase(Locale.getDefault())
+            return PermissionAction.values().find { it.name == upperCase } ?: DEFAULT
+        }
+    }
 }
 
 fun convertEnumListToStringList(enumList: List<PermissionAction>): List<String> {
-    return enumList.map { it.name.toLowerCase() }
+    return enumList.map { it.name.lowercase(Locale.getDefault()) }
 }

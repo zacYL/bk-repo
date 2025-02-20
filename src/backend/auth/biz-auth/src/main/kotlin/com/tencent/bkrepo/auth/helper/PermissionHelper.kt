@@ -51,6 +51,7 @@ import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.READ
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.DOWNLOAD
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.MANAGE
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.oauth.AuthorizationGrantType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionContext
 import com.tencent.bkrepo.auth.util.scope.RuleUtil
@@ -171,7 +172,7 @@ class PermissionHelper constructor(
     ): Permission {
         return Permission(
             id = permissionId,
-            resourceType = PROJECT.name,
+            resourceType = PROJECT,
             projectId = projectId,
             permName = permissionName,
             users = userList,
@@ -182,13 +183,13 @@ class PermissionHelper constructor(
         )
     }
 
-    fun isRepoOrNodePermission(resourceType: String): Boolean {
-        return resourceType == NODE.name || resourceType == REPO.name
+    fun isRepoOrNodePermission(resourceType: ResourceType): Boolean {
+        return resourceType == NODE || resourceType == REPO
     }
 
     fun checkProjectReadAction(request: CheckPermissionContext, isProjectUser: Boolean): Boolean {
-        val readeOrdownload = request.action == READ.name || request.action == DOWNLOAD.name
-        return  readeOrdownload && isProjectUser
+        val readeOrdownload = request.action == READ || request.action == DOWNLOAD
+        return readeOrdownload && isProjectUser
     }
 
     fun getPermissionPathFromConfig(
@@ -236,7 +237,7 @@ class PermissionHelper constructor(
 
     fun checkRepoReadAction(context: CheckPermissionContext): Boolean {
         with(context) {
-            return resourceType == REPO.name && action == READ.name &&
+            return resourceType == REPO && action == READ &&
                     permissionDao.listPermissionInRepo(projectId, repoName!!, userId, roles).isNotEmpty()
         }
     }
@@ -247,13 +248,13 @@ class PermissionHelper constructor(
         permName: String,
         actions: Set<PermissionAction>
     ): TPermission {
-        permissionDao.findOneByPermName(projectId, repoName, permName, REPO.name) ?: run {
+        permissionDao.findOneByPermName(projectId, repoName, permName, REPO) ?: run {
             val request = TPermission(
                 projectId = projectId,
                 repos = listOf(repoName),
                 permName = permName,
-                actions = actions.map { it.name },
-                resourceType = REPO.name,
+                actions = actions.map { it },
+                resourceType = REPO,
                 createAt = LocalDateTime.now(),
                 updateAt = LocalDateTime.now(),
                 createBy = AUTH_ADMIN,
@@ -262,7 +263,7 @@ class PermissionHelper constructor(
             logger.info("permission not exist, create [$request]")
             permissionDao.insert(request)
         }
-        return permissionDao.findOneByPermName(projectId, repoName, permName, REPO.name)!!
+        return permissionDao.findOneByPermName(projectId, repoName, permName, REPO)!!
     }
 
     fun getNoAdminUserProject(userId: String): List<String> {
@@ -298,7 +299,7 @@ class PermissionHelper constructor(
     fun getUserCommonRoleProject(roles: List<String>): List<String> {
         val projectList = mutableListOf<String>()
         roleRepository.findByIdIn(roles).forEach {
-            if (it.projectId.isNotEmpty() && it.roleId == PROJECT_VIEWER_ID) {
+            if (it.projectId!!.isNotEmpty() && it.roleId == PROJECT_VIEWER_ID) {
                 projectList.add(it.projectId)
             }
         }
@@ -328,11 +329,11 @@ class PermissionHelper constructor(
     private fun checkIncludePatternAction(
         patternList: List<String>,
         path: String,
-        actions: List<String>,
-        checkAction: String
+        actions: List<PermissionAction>,
+        checkAction: PermissionAction
     ): Boolean {
         patternList.forEach {
-            if (path.startsWith(it) && (actions.contains(MANAGE.name) || actions.contains(checkAction))) return true
+            if (path.startsWith(it) && (actions.contains(MANAGE) || actions.contains(checkAction))) return true
         }
         return false
     }
@@ -340,8 +341,8 @@ class PermissionHelper constructor(
     private fun checkExcludePatternAction(
         patternList: List<String>,
         path: String,
-        actions: List<String>,
-        checkAction: String
+        actions: List<PermissionAction>,
+        checkAction: PermissionAction
     ): Boolean {
         patternList.forEach {
             if (path.startsWith(it) && actions.contains(checkAction)) return true
@@ -355,7 +356,7 @@ class PermissionHelper constructor(
 
     fun checkNodeActionWithOutCtrl(context: CheckPermissionContext, isProjectUser: Boolean): Boolean {
         with(context) {
-            if (resourceType != NODE.name || path == null) return false
+            if (resourceType != NODE || path == null) return false
             val result = permissionDao.listInPermission(projectId, repoName!!, userId, resourceType, roles)
             result.forEach {
                 if (checkIncludePatternAction(it.includePattern, path!!, it.actions, action)) return true
@@ -376,7 +377,7 @@ class PermissionHelper constructor(
 
     fun checkNodeActionWithCtrl(context: CheckPermissionContext): Boolean {
         with(context) {
-            if (resourceType != NODE.name || path == null) return false
+            if (resourceType != NODE || path == null) return false
             val result = permissionDao.listInPermission(projectId, repoName!!, userId, resourceType, roles)
             result.forEach {
                 if (checkIncludePatternAction(it.includePattern, path!!, it.actions, action)) return true

@@ -163,7 +163,8 @@ open class PermissionManager(
         val repoInfo = queryRepositoryInfo(projectId, repoName)
         if (isReadPublicOrSystemRepoCheck(
                 action, repoInfo, public, userId
-            )) {
+            )
+        ) {
             return
         }
         checkPermission(
@@ -227,7 +228,8 @@ open class PermissionManager(
         val repoInfo = queryRepositoryInfo(projectId, repoName)
         if (isReadPublicOrSystemRepoCheck(
                 action, repoInfo, public, userId
-            )) {
+            )
+        ) {
             return
         }
         // 禁止批量下载流水线节点
@@ -405,8 +407,8 @@ open class PermissionManager(
         val checkRequest = CheckPermissionRequest(
             uid = userId,
             appId = platformId,
-            resourceType = type.toString(),
-            action = action.toString(),
+            resourceType = type,
+            action = action,
             projectId = projectId,
             repoName = repoName,
             path = paths?.first(),

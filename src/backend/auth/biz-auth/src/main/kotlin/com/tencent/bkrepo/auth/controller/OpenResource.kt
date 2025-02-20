@@ -111,8 +111,8 @@ open class OpenResource(private val permissionService: PermissionService) {
         val request = CheckPermissionRequest(
             uid = SecurityUtils.getUserId(),
             appId = appId,
-            resourceType = ResourceType.SYSTEM.name,
-            action = PermissionAction.MANAGE.name
+            resourceType = ResourceType.SYSTEM,
+            action = PermissionAction.MANAGE
         )
 
         if (!permissionService.checkPlatformPermission(request)) {
@@ -127,14 +127,14 @@ open class OpenResource(private val permissionService: PermissionService) {
     fun preCheckUserInProject(type: AuthPermissionType, projectId: String, repoName: String?) {
         val checkRequest = CheckPermissionRequest(
             uid = SecurityUtils.getUserId(),
-            resourceType = ResourceType.PROJECT.name,
-            action = PermissionAction.WRITE.name,
+            resourceType = ResourceType.PROJECT,
+            action = PermissionAction.WRITE,
             projectId = projectId,
             appId = SecurityUtils.getPlatformId()
         )
         if (type == AuthPermissionType.REPO) {
             checkRequest.repoName = repoName
-            checkRequest.resourceType = ResourceType.REPO.name
+            checkRequest.resourceType = ResourceType.REPO
         }
         if (!permissionService.checkPermission(checkRequest)) {
             logger.warn("check user permission error [$checkRequest]")
@@ -149,9 +149,9 @@ open class OpenResource(private val permissionService: PermissionService) {
         val userId = SecurityUtils.getUserId()
         val checkRequest = CheckPermissionRequest(
             uid = userId,
-            resourceType = ResourceType.PROJECT.name,
+            resourceType = ResourceType.PROJECT,
             projectId = projectId,
-            action = PermissionAction.MANAGE.name
+            action = PermissionAction.MANAGE
         )
         if (!permissionService.checkPermission(checkRequest)) {
             logger.warn("user is not project admin [$checkRequest]")
@@ -164,9 +164,9 @@ open class OpenResource(private val permissionService: PermissionService) {
         val userId = SecurityUtils.getUserId()
         val checkRequest = CheckPermissionRequest(
             uid = userId,
-            resourceType = ResourceType.PROJECT.toString(),
+            resourceType = ResourceType.PROJECT,
             projectId = projectId,
-            action = PermissionAction.MANAGE.toString()
+            action = PermissionAction.MANAGE
         )
         return permissionService.checkPermission(checkRequest)
     }
@@ -174,12 +174,12 @@ open class OpenResource(private val permissionService: PermissionService) {
     fun checkRequest(request: CheckPermissionRequest) {
         with(request) {
             when (resourceType) {
-                ResourceType.PROJECT.toString() -> {
+                ResourceType.PROJECT -> {
                     if (projectId.isNullOrBlank()) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
                     }
                 }
-                ResourceType.REPO.toString() -> {
+                ResourceType.REPO -> {
                     if (projectId.isNullOrBlank()) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
                     }
@@ -187,7 +187,7 @@ open class OpenResource(private val permissionService: PermissionService) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "repoName")
                     }
                 }
-                ResourceType.NODE.toString() -> {
+                ResourceType.NODE -> {
                     if (projectId.isNullOrBlank()) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
                     }
@@ -197,6 +197,9 @@ open class OpenResource(private val permissionService: PermissionService) {
                     if (path.isNullOrBlank()) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "path")
                     }
+                }
+                else -> {
+
                 }
             }
         }

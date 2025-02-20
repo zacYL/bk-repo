@@ -1,11 +1,11 @@
 package com.tencent.bkrepo.cocoapods.service
 
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsPackageService(
-    private val packageClient: PackageClient,
-    private val nodeClient: NodeClient,
+    private val packageService: PackageService,
+    private val nodeService: NodeService,
 ) {
     fun createVersion(
         artifactInfo: CocoapodsArtifactInfo,
@@ -37,7 +37,7 @@ class CocoapodsPackageService(
                 overwrite = true,
                 createdBy = SecurityUtils.getUserId(),
             )
-            packageClient.createVersion(request, HttpContextHolder.getClientAddress())
+            packageService.createPackageVersion(request, HttpContextHolder.getClientAddress())
             logger.info("created version for cocoapods,repo [$repoName], package[$name $version]")
         }
     }
@@ -47,10 +47,10 @@ class CocoapodsPackageService(
             val filePath = packageVersion.contentPath?.substringBeforeLast("/")
             val specsPath = ".specs/${name}/${packageVersion.name}"
             var request = NodeDeleteRequest(projectId, repoName, filePath ?: "", SecurityUtils.getUserId())
-            nodeClient.deleteNode(request)
+            nodeService.deleteNode(request)
             logger.info("delete filePath:[$filePath]")
             request = NodeDeleteRequest(projectId, repoName, specsPath, SecurityUtils.getUserId())
-            nodeClient.deleteNode(request)
+            nodeService.deleteNode(request)
             logger.info("delete specsPath:[$specsPath]")
         }
     }
@@ -61,10 +61,10 @@ class CocoapodsPackageService(
             val packageFilePath = "/$orgName"
             val packageSpecsPath = ".specs/$name"
             var request = NodeDeleteRequest(projectId, repoName, packageFilePath, SecurityUtils.getUserId())
-            nodeClient.deleteNode(request)
+            nodeService.deleteNode(request)
             logger.info("delete packageFilePath:[$packageFilePath]")
             request = NodeDeleteRequest(projectId, repoName, packageSpecsPath, SecurityUtils.getUserId())
-            nodeClient.deleteNode(request)
+            nodeService.deleteNode(request)
             logger.info("delete packageSpecsPath:[$packageSpecsPath]")
         }
     }

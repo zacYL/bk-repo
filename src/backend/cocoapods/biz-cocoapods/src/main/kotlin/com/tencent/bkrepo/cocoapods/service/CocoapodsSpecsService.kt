@@ -50,7 +50,7 @@ import com.tencent.bkrepo.common.artifact.repository.remote.buildOkHttpClient
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.lock.service.LockOperation
 import com.tencent.bkrepo.common.security.util.SecurityUtils
-import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.NodeService
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
@@ -65,7 +65,7 @@ import java.io.File
 
 @Service
 class CocoapodsSpecsService(
-    private val nodeClient: NodeClient,
+    private val nodeClient: NodeService,
     private val repositoryClient: RepositoryClient,
     private val storageManager: StorageManager,
     private val cocoapodsProperties: CocoapodsProperties,

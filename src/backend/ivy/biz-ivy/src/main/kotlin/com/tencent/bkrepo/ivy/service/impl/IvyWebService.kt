@@ -33,7 +33,7 @@ import com.tencent.bkrepo.ivy.enum.IvyMessageCode.IVY_ARTIFACT_NOT_FOUND
 import com.tencent.bkrepo.ivy.exception.IvyArtifactNotFoundException
 import com.tencent.bkrepo.ivy.pojo.BasicInfo
 import com.tencent.bkrepo.ivy.pojo.PackageVersionInfo
-import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.NodeService
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -46,7 +46,7 @@ import java.time.format.DateTimeFormatter
 class IvyWebService(
     private val ivyPackageService: IvyPackageService,
     private val packageClient: PackageClient,
-    private val nodeClient: NodeClient
+    private val nodeClient: NodeService
 ) {
 
     fun deletePackage(artifactInfo: IvyArtifactInfo, packageKey: String) {

@@ -19,7 +19,7 @@ import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
-import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.NodeService
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.job.clean.CleanRepoTaskScheduler
 import com.tencent.bkrepo.repository.pojo.node.NodeDelete
@@ -47,7 +47,7 @@ class RepositoryCleanServiceImpl(
     private val packageService: PackageService,
     private val nodeDeleteOperation: NodeDeleteOperation,
     private val nodeStatsOperation: NodeStatsOperation,
-    private val nodeClient: NodeClient,
+    private val nodeClient: NodeService,
     private val publisher: ApplicationEventPublisher
 ) : RepositoryCleanService {
 

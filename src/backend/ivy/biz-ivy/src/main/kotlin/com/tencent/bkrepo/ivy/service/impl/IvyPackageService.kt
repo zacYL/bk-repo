@@ -31,7 +31,7 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.ivy.artifact.IvyArtifactInfo
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_All_ARTIFACT_FULL_PATH
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_IVY_FULL_PATH
-import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.NodeService
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -42,7 +42,7 @@ import org.springframework.stereotype.Service
 @Service
 class IvyPackageService(
     private val packageClient: PackageClient,
-    private val nodeClient: NodeClient
+    private val nodeClient: NodeService
 ) {
     fun deleteVersionFile(artifactInfo: IvyArtifactInfo, packageVersion: PackageVersion) {
         with(artifactInfo) {

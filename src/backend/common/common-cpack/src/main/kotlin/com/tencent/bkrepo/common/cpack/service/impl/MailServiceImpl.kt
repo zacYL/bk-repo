@@ -20,7 +20,7 @@ import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.DevopsMailMessage
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.NodeService
 import com.tencent.bkrepo.repository.api.ProjectClient
 import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Service
 @Service
 class MailServiceImpl(
     private val mailSender: JavaMailSender,
-    private val nodeClient: NodeClient,
+    private val nodeClient: NodeService,
     private val temporaryTokenClient: ServiceTemporaryTokenClient,
     private val userService: ServiceUserClient,
     private val mailConf: CpackMailConf,

@@ -1,9 +1,13 @@
 package com.tencent.bkrepo.maven.service.impl
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.packages.PackageService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
 import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.pojo.MavenGAVC
@@ -11,28 +15,25 @@ import com.tencent.bkrepo.maven.service.MavenDeleteService
 import com.tencent.bkrepo.maven.service.MavenMetadataService
 import com.tencent.bkrepo.maven.util.MavenMetadataUtils.reRender
 import com.tencent.bkrepo.maven.util.MavenUtil
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 
 @Service
 class MavenDeleteServiceImpl(
-    private val packageClient: PackageClient,
+    private val packageService: PackageService,
     private val mavenMetadataService: MavenMetadataService,
-    private val nodeClient: NodeClient,
+    private val nodeService: NodeService,
     private val storageManager: StorageManager,
-    private val repositoryClient: RepositoryClient
+    private val repositoryService: RepositoryService
 ) : MavenDeleteService {
     override fun deleteVersion(
         projectId: String,
@@ -41,7 +42,7 @@ class MavenDeleteServiceImpl(
         version: String,
         operator: String
     ): Boolean {
-        packageClient.deleteVersion(projectId, repoName, packageKey, version)
+        packageService.deleteVersion(projectId, repoName, packageKey, version)
         val artifactPath = MavenUtil.extractPath(packageKey) + "/$version"
         // 需要删除对应的metadata表记录
         val (artifactId, groupId) = MavenUtil.extractGroupIdAndArtifactId(packageKey)
@@ -53,7 +54,7 @@ class MavenDeleteServiceImpl(
             fullPath = artifactPath,
             operator = operator
         )
-        nodeClient.deleteNode(request)
+        nodeService.deleteNode(request)
         // 更新包索引
         updatePackageMetadata(
             projectId,
@@ -70,10 +71,10 @@ class MavenDeleteServiceImpl(
         artifactPath: String,
         mavenGavc: MavenGAVC
     ) {
-        val repositoryDetail = repositoryClient.getRepoDetail(projectId, repoName).data
+        val repositoryDetail = repositoryService.getRepoDetail(projectId, repoName)
             ?: throw RepoNotFoundException("repo not found: { projectId=$projectId, repoName=$repoName }")
 
-        val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data ?: return
+        val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, artifactPath)) ?: return
         val operator = node.lastModifiedBy
         storageManager.loadArtifactInputStream(
             node,
@@ -83,7 +84,7 @@ class MavenDeleteServiceImpl(
             val mavenMetadata = MetadataXpp3Reader().read(artifactInputStream)
             mavenMetadata.versioning.versions.remove(mavenGavc.version)
             if (mavenMetadata.versioning.versions.size == 0) {
-                nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, node.fullPath, operator))
+                nodeService.deleteNode(NodeDeleteRequest(projectId, repoName, node.fullPath, operator))
                 return
             }
             mavenMetadata.reRender()

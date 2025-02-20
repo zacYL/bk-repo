@@ -36,7 +36,6 @@ import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexTarPath
 import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_GZIP
-import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_ZIP
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
@@ -50,7 +49,7 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWrite
 import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.encodeDisposition
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder.getResponse
-import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.NodeService
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
@@ -61,7 +60,7 @@ import javax.servlet.http.HttpServletResponse
 
 @Service
 class CocoapodsIndexService(
-    private val nodeClient: NodeClient,
+    private val nodeClient: NodeService,
     private val repositoryClient: RepositoryClient,
     private val storageManager: StorageManager,
     private val cocoapodsRepoService: CocoapodsRepoService,

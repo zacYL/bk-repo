@@ -15,7 +15,7 @@ import com.tencent.bkrepo.oci.model.ManifestSchema2
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
 import com.tencent.bkrepo.oci.util.OciLocationUtils
 import com.tencent.bkrepo.oci.util.OciUtils
-import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.NodeService
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -37,7 +37,7 @@ class MigrateDockerService(
     private val projectClient: ProjectClient,
     private val packageClient: PackageClient,
     private val repositoryClient: RepositoryClient,
-    private val nodeClient: NodeClient,
+    private val nodeClient: NodeService,
     private val storageManager: StorageManager,
     private val storageCredentialsClient: StorageCredentialsClient
 ) {

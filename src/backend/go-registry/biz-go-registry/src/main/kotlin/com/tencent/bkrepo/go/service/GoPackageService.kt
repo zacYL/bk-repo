@@ -27,12 +27,15 @@
 
 package com.tencent.bkrepo.go.service
 
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.MD5
 import com.tencent.bkrepo.common.artifact.constant.SHA256
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -44,8 +47,6 @@ import com.tencent.bkrepo.go.pojo.artifact.GoArtifactInfo
 import com.tencent.bkrepo.go.pojo.artifact.GoModuleInfo
 import com.tencent.bkrepo.go.pojo.enum.GoFileType
 import com.tencent.bkrepo.go.util.DecompressUtil.readModAndReadmeContent
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -53,15 +54,15 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
+import java.io.InputStream
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.io.InputStream
 
 @Service
 class GoPackageService(
     private val storageManager: StorageManager,
-    private val packageClient: PackageClient,
-    private val nodeClient: NodeClient
+    private val packageService: PackageService,
+    private val nodeService: NodeService
 ) {
 
     fun createVersion(
@@ -89,7 +90,7 @@ class GoPackageService(
                 createdBy = SecurityUtils.getUserId(),
                 extension = versionExtension
             )
-            packageClient.createVersion(request, HttpContextHolder.getClientAddress())
+            packageService.createPackageVersion(request, HttpContextHolder.getClientAddress())
             logger.info("created version for go module [${artifactInfo.getModuleId()}]")
         }
     }
@@ -111,9 +112,9 @@ class GoPackageService(
         with(artifactInfo) {
             val version = getArtifactVersion()
             if (version == null) {
-                packageClient.deletePackage(projectId, repoName, getPackageKey(), HttpContextHolder.getClientAddress())
+                packageService.deletePackage(projectId, repoName, getPackageKey(), HttpContextHolder.getClientAddress())
             } else {
-                packageClient.deleteVersion(
+                packageService.deleteVersion(
                     projectId,
                     repoName,
                     getPackageKey(),
@@ -122,7 +123,7 @@ class GoPackageService(
                 )
             }
             val request = NodeDeleteRequest(projectId, repoName, getArtifactRootPath(), userId)
-            nodeClient.deleteNode(request)
+            nodeService.deleteNode(request)
         }
     }
 
@@ -166,7 +167,9 @@ class GoPackageService(
         return try {
             val userId = SecurityUtils.getUserId()
             val modFullPath = artifactInfo.getArtifactFullPathByType(GoFileType.MOD)
-            val modExist = nodeClient.checkExist(artifactInfo.projectId, artifactInfo.repoName, modFullPath).data
+            val modExist = nodeService.checkExist(
+                ArtifactInfo(artifactInfo.projectId, artifactInfo.repoName, modFullPath)
+            )
             val (mod, readme) = inputStream.readModAndReadmeContent(extractMod, extractReadme)
             val modBytes = mod?.toByteArray()
             val readmeBytes = readme?.toByteArray()

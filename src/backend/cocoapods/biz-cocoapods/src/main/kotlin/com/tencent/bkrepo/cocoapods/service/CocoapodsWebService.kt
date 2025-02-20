@@ -35,14 +35,14 @@ import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil.buildBasicInfo
 import com.tencent.bkrepo.cocoapods.utils.PathUtil
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
-import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.NodeService
 import com.tencent.bkrepo.repository.api.PackageClient
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsWebService(
-    private val nodeClient: NodeClient,
+    private val nodeClient: NodeService,
     private val packageClient: PackageClient,
     private val cocoapodsPackageService: CocoapodsPackageService,
 ) {

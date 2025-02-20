@@ -128,8 +128,7 @@ class CocoapodsIndexService(
                     inputStream = inputStream,
                     artifactName = generateIndexTarPath(),
                     srcRepo = RepositoryIdentify(projectId, repoName),
-                    contentType = APPLICATION_ZIP
-                )
+                ).apply { contentType = APPLICATION_GZIP }
             }
 
             else -> throw RepoNotFoundException(repoName)

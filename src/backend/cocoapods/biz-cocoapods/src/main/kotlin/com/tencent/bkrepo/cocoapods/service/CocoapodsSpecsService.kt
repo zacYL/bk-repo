@@ -186,10 +186,10 @@ class CocoapodsSpecsService(
         }
 
         if (!response.isSuccessful) {
-            logger.error("Request failed with status code, url: $remoteUrl, message: ${response.message()}")
+            logger.error("Request failed with status code, url: $remoteUrl, message: ${response.message}")
             throw ErrorCodeException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
         }
-        response.body()?.byteStream()?.use { ips ->
+        response.body?.byteStream()?.use { ips ->
             val wrap = ByteArrayInputStream(ips.readBytes())
             val fileType = FileUtil.detectFileType(wrap)
             wrap.reset()

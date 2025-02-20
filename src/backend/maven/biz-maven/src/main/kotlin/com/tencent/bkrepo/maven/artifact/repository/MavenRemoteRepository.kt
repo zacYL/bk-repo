@@ -60,8 +60,8 @@ import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
-import com.tencent.bkrepo.maven.pojo.MavenBasicInfo
 import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
+import com.tencent.bkrepo.maven.pojo.MavenBasicInfo
 import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.service.MavenExtService
 import com.tencent.bkrepo.maven.service.MavenOperationService
@@ -86,6 +86,8 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
+import java.time.format.DateTimeFormatter
+import java.util.regex.Pattern
 import okhttp3.Request
 import okhttp3.Response
 import org.apache.commons.lang3.StringUtils
@@ -96,8 +98,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Component
-import java.time.format.DateTimeFormatter
-import java.util.regex.Pattern
 
 @Component
 class MavenRemoteRepository(
@@ -219,6 +219,7 @@ class MavenRemoteRepository(
             is MavenDeleteArtifactInfo -> {
                 deletePackage(context)
             }
+
             else -> {
                 deleteNode(context)
             }
@@ -353,7 +354,11 @@ class MavenRemoteRepository(
                     context.repoName,
                     packageName = mavenGAVC.artifactId,
                     packageKey = PackageKeys.ofGav(mavenGAVC.groupId, mavenGAVC.artifactId),
-                    packageType = if (context.repositoryDetail.type == RepositoryType.GRADLE) PackageType.GRADLE else PackageType.MAVEN,
+                    packageType = if (context.repositoryDetail.type == RepositoryType.GRADLE) {
+                        PackageType.GRADLE
+                    } else {
+                        PackageType.MAVEN
+                    },
                     versionName = mavenGAVC.version,
                     size = size,
                     artifactPath = fullPath,

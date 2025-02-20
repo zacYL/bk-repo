@@ -39,11 +39,10 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHold
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
-import io.undertow.servlet.spec.HttpServletRequestImpl
 import com.tencent.bkrepo.oci.util.OciUtils
+import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
-import javax.servlet.http.HttpServletRequest
 
 @Component
 @Resolver(OciBlobArtifactInfo::class)

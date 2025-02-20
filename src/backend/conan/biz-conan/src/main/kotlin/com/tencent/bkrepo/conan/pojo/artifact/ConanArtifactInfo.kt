@@ -71,7 +71,8 @@ class ConanArtifactInfo(
         // search
         const val SEARCH_V1 = "$CONAN_V1_PREFIX/search"
         // revision search
-        const val REVISION_SEARCH_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/revisions/{revision}/search"
+        const val REVISION_SEARCH_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}" +
+                "/revisions/{revision}/search"
         // package search
         const val PACKAGE_SEARCH_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/search"
 
@@ -80,18 +81,23 @@ class ConanArtifactInfo(
         // get recipe snapshot
         const val GET_RECIPE_SNAPSHOT_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}"
         // get package manifest
-        const val GET_PACKAGE_MANIFEST_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/packages/{packageId}/digest"
+        const val GET_PACKAGE_MANIFEST_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}" +
+                "/packages/{packageId}/digest"
         // get package snapshot
-        const val GET_PACKAGE_SNAPSHOT_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/packages/{packageId}"
+        const val GET_PACKAGE_SNAPSHOT_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}" +
+                "/packages/{packageId}"
         // get recipe upload urls
         const val GET_RECIPE_UPLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/upload_urls"
         // get package download urls
-        const val GET_PACKAGE_UPLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/packages/{packageId}/upload_urls"
+        const val GET_PACKAGE_UPLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}" +
+                "/packages/{packageId}/upload_urls"
 
         // get conan file download urls
-        const val GET_CONANFILE_DOWNLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/download_urls"
+        const val GET_CONANFILE_DOWNLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}" +
+                "/download_urls"
         // get package download urls
-        const val GET_PACKAGE_DOWNLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}/packages/{packageId}/download_urls"
+        const val GET_PACKAGE_DOWNLOAD_URLS_V1 = "$CONAN_V1_PREFIX/{name}/{version}/{username}/{channel}" +
+                "/packages/{packageId}/download_urls"
 
         // upload file
         const val UPLOAD_FILE_V1 = "/{projectId}/{repoName}/v1/files/" +
@@ -148,7 +154,8 @@ class ConanArtifactInfo(
         // search
         const val SEARCH_V2 = "$CONAN_V2_PREFIX/search"
         // revision search
-        const val REVISION_SEARCH_V2 = "$CONAN_V2_PREFIX/{name}/{version}/{username}/{channel}/revisions/{revision}/search"
+        const val REVISION_SEARCH_V2 = "$CONAN_V2_PREFIX/{name}/{version}/{username}/{channel}" +
+                "/revisions/{revision}/search"
         // package search
         const val PACKAGE_SEARCH_V2 = "$CONAN_V2_PREFIX/{name}/{version}/{username}/{channel}/search"
         // check_credentials

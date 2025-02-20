@@ -34,10 +34,10 @@ import com.tencent.bk.audit.annotations.AuditInstanceRecord
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
+import com.tencent.bkrepo.common.artifact.audit.NODE_CREATE_ACTION
 import com.tencent.bkrepo.common.artifact.audit.NODE_DELETE_ACTION
 import com.tencent.bkrepo.common.artifact.audit.NODE_DOWNLOAD_ACTION
 import com.tencent.bkrepo.common.artifact.audit.NODE_RESOURCE
-import com.tencent.bkrepo.common.artifact.audit.NODE_CREATE_ACTION
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
@@ -137,8 +137,12 @@ class MavenResourceController(
     }
 
     @PostMapping("/pom_gav", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun extractGavFromPom(@RequestPart(value = "file") file: MultipartFile) = ResponseBuilder.success(mavenService.extractGavFromPom(file))
+    fun extractGavFromPom(@RequestPart(value = "file") file: MultipartFile) {
+        ResponseBuilder.success(mavenService.extractGavFromPom(file))
+    }
 
     @PostMapping("/jar_gav", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun extractGavFromJar(@RequestPart(value = "file") file: MultipartFile) = ResponseBuilder.success(mavenService.extractGavFromJar(file))
+    fun extractGavFromJar(@RequestPart(value = "file") file: MultipartFile) {
+        ResponseBuilder.success(mavenService.extractGavFromJar(file))
+    }
 }

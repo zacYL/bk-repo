@@ -77,8 +77,8 @@ class CocoapodsLocalRepository(
             putAttribute(SPECS_FILE_CONTENT, podSpec.content)
         }
         with(context.artifactInfo as CocoapodsArtifactInfo) {
-            packageClient
-                .findVersionByName(projectId, repoName, PackageKeys.ofCocoapods(name), version).data
+            packageService
+                .findVersionByName(projectId, repoName, PackageKeys.ofCocoapods(name), version)
                 ?.apply { uploadIntercept(context, this) }
         }
 

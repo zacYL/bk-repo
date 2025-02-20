@@ -30,4 +30,5 @@ package com.tencent.bkrepo.conan.exception
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 
-class ConanParameterInvalidException(parameter: String): ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, parameter)
+class ConanParameterInvalidException(parameter: String) :
+    ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, parameter)

@@ -27,7 +27,7 @@
 
 package com.tencent.bkrepo.replication.replica.type.manual
 
-import com.tencent.bkrepo.common.metadata.permission.PermissionManager
+import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.common.service.otel.util.AsyncUtils.trace
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.manager.LocalDataManager
@@ -38,10 +38,10 @@ import com.tencent.bkrepo.replication.replica.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.executor.ManualThreadPoolExecutor
 import com.tencent.bkrepo.replication.replica.type.AbstractReplicaService
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
-import org.springframework.stereotype.Component
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
+import org.springframework.stereotype.Component
 
 /**
  * 基于手动执行的一次性任务同步器
@@ -50,9 +50,9 @@ import java.util.concurrent.Semaphore
 class ManualBasedReplicaService(
     replicaRecordService: ReplicaRecordService,
     localDataManager: LocalDataManager,
-    permissionManager: PermissionManager,
+    permissionManager: NodePermissionService,
     private val replicationProperties: ReplicationProperties
-) : AbstractReplicaService(replicaRecordService, localDataManager,permissionManager) {
+) : AbstractReplicaService(replicaRecordService, localDataManager, permissionManager) {
     private val executor = ManualThreadPoolExecutor.instance
     override fun replica(context: ReplicaContext) {
         replicaTaskObjects(context)
@@ -63,8 +63,8 @@ class ManualBasedReplicaService(
      */
     override fun includeAllData(context: ReplicaContext): Boolean {
         return context.taskObject.packageConstraints.isNullOrEmpty() &&
-            context.taskObject.pathConstraints.isNullOrEmpty() &&
-            context.task.replicaObjectType == ReplicaObjectType.REPOSITORY
+                context.taskObject.pathConstraints.isNullOrEmpty() &&
+                context.task.replicaObjectType == ReplicaObjectType.REPOSITORY
     }
 
     /**
@@ -97,7 +97,7 @@ class ManualBasedReplicaService(
             semaphore.acquire()
             futureList.add(
                 executor.submit(
-                    Callable{
+                    Callable {
                         try {
                             replicaTaskObject(context, taskObject)
                         } finally {

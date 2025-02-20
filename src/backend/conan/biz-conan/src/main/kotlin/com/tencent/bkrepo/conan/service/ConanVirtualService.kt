@@ -34,7 +34,11 @@ import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
  * conan 虚拟仓库接口
  */
 interface ConanVirtualService {
-    fun getOrSetCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String, artifactInfo: ConanArtifactInfo): String
+    fun getOrSetCacheRepo(
+        repositoryDetail: RepositoryDetail,
+        requestURI: String,
+        artifactInfo: ConanArtifactInfo
+    ): String
 
     fun getCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String): String?
 }

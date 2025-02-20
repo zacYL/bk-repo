@@ -50,10 +50,18 @@ object HelmMetadataUtils {
     fun convertToMetadata(chartInfo: HelmChartMetadata, sourceType: ArtifactChannel? = null): List<MetadataModel> {
         val mutableMap: MutableList<MetadataModel> = convertToMap(chartInfo).mapNotNull {
             when (it.value) {
-                is Array<*> -> if ((it.value as Array<*>).isEmpty()) null else MetadataModel(key = it.key, value = it.value, system = true, display = true)
-                is Set<*> -> if ((it.value as Set<*>).isEmpty()) null else MetadataModel(key = it.key, value = it.value, system = true, display = true)
-                is List<*> -> if ((it.value as List<*>).isEmpty()) null else MetadataModel(key = it.key, value = it.value, system = true, display = true)
-                is String -> if ((it.value as String).isEmpty()) null else MetadataModel(key = it.key, value = it.value, system = true, display = true)
+                is Array<*> -> if ((it.value as Array<*>).isEmpty()) null
+                else MetadataModel(key = it.key, value = it.value, system = true, display = true)
+
+                is Set<*> -> if ((it.value as Set<*>).isEmpty()) null
+                else MetadataModel(key = it.key, value = it.value, system = true, display = true)
+
+                is List<*> -> if ((it.value as List<*>).isEmpty()) null
+                else MetadataModel(key = it.key, value = it.value, system = true, display = true)
+
+                is String -> if ((it.value as String).isEmpty()) null
+                else MetadataModel(key = it.key, value = it.value, system = true, display = true)
+
                 else -> MetadataModel(key = it.key, value = it.value, system = true, display = true)
             }
         } as MutableList<MetadataModel>

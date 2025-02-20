@@ -14,6 +14,7 @@ import com.tencent.bkrepo.common.metadata.pojo.log.OpLogListOption
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLog
 import com.tencent.bkrepo.common.metadata.pojo.log.OperateLogResponse
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
+import java.time.LocalDateTime
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -21,7 +22,6 @@ import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.util.AntPathMatcher
-import java.time.LocalDateTime
 
 object OperateLogServiceHelper {
 
@@ -210,7 +210,8 @@ object OperateLogServiceHelper {
             clientAddress = tOperateLog.clientAddress,
             result = tOperateLog.result,
             content = content,
-            failReason = if (tOperateLog.result) null else tOperateLog.description[DESCRIPTION_KEY_FAIL_REASON] as? String
+            failReason = if (tOperateLog.result) null
+            else tOperateLog.description[DESCRIPTION_KEY_FAIL_REASON] as? String
         )
     }
 

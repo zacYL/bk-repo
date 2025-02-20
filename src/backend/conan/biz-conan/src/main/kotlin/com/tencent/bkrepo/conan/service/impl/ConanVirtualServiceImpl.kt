@@ -47,10 +47,16 @@ class ConanVirtualServiceImpl : ConanVirtualService {
     @Autowired
     lateinit var redisOperation: RedisOperation
 
-    override fun getOrSetCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String, artifactInfo: ConanArtifactInfo): String {
+    override fun getOrSetCacheRepo(
+        repositoryDetail: RepositoryDetail,
+        requestURI: String,
+        artifactInfo: ConanArtifactInfo
+    ): String {
         with(repositoryDetail) {
             val conanFileReference = requestURI.extractConanFileReference()
-            val cacheKey = ConanVirtualRepository.getRecipeCacheKey(projectId, name, getConanRecipePattern(conanFileReference))
+            val cacheKey = ConanVirtualRepository.getRecipeCacheKey(
+                projectId, name, getConanRecipePattern(conanFileReference)
+            )
 
             var cacheRepo: String? = null
             var retryCount = 0
@@ -73,7 +79,8 @@ class ConanVirtualServiceImpl : ConanVirtualService {
     override fun getCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String): String? {
         with(repositoryDetail) {
             val conanFileReference = requestURI.extractConanFileReference()
-            val cacheKey = ConanVirtualRepository.getRecipeCacheKey(projectId, name, getConanRecipePattern(conanFileReference))
+            val cacheKey =
+                ConanVirtualRepository.getRecipeCacheKey(projectId, name, getConanRecipePattern(conanFileReference))
             return redisOperation.scanForFirstKey(cacheKey)?.let {
                 redisOperation.get(it)
             }
@@ -81,7 +88,8 @@ class ConanVirtualServiceImpl : ConanVirtualService {
     }
 
     private fun selectRepo(conanFileReference: ConanFileReference, artifactInfo: ConanArtifactInfo): String {
-        return SpringContextUtils.getBean(ConanSearchService::class.java).search(artifactInfo, conanFileReference.name, true).results.firstOrNull()
+        return SpringContextUtils.getBean(ConanSearchService::class.java)
+            .search(artifactInfo, conanFileReference.name, true).results.firstOrNull()
             ?: throw ConanException("can not find cache repo")
     }
 

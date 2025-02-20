@@ -31,14 +31,14 @@ import com.tencent.bkrepo.common.api.constant.retry
 import com.tencent.bkrepo.common.api.pojo.ClusterNodeType
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.path.PathUtils
-import com.tencent.bkrepo.common.metadata.permission.PermissionManager
+import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
 import com.tencent.bkrepo.replication.constant.RETRY_COUNT
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
 import com.tencent.bkrepo.replication.pojo.task.objects.PathConstraint
-import com.tencent.bkrepo.replication.replica.type.AbstractReplicaService
 import com.tencent.bkrepo.replication.replica.context.ReplicaContext
+import com.tencent.bkrepo.replication.replica.type.AbstractReplicaService
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
 import org.springframework.stereotype.Component
 
@@ -49,7 +49,7 @@ import org.springframework.stereotype.Component
 class EventBasedReplicaService(
     replicaRecordService: ReplicaRecordService,
     localDataManager: LocalDataManager,
-    permissionManager: PermissionManager,
+    permissionManager: NodePermissionService,
 ) : AbstractReplicaService(replicaRecordService, localDataManager, permissionManager) {
 
     override fun replica(context: ReplicaContext) {
@@ -76,16 +76,19 @@ class EventBasedReplicaService(
                     val pathConstraint = PathConstraint(event.resourceKey)
                     replicaByPathConstraint(this, pathConstraint)
                 }
+
                 EventType.NODE_DELETED -> {
                     val pathConstraint = PathConstraint(event.resourceKey)
                     deleteByPathConstraint(this, pathConstraint)
                 }
+
                 EventType.VERSION_CREATED, EventType.VERSION_UPDATED -> {
                     val packageKey = event.data["packageKey"].toString()
                     val packageVersion = event.data["packageVersion"].toString()
                     val packageConstraint = PackageConstraint(packageKey, listOf(packageVersion))
                     replicaByPackageConstraint(this, packageConstraint)
                 }
+
                 else -> throw UnsupportedOperationException()
             }
         }

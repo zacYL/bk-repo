@@ -27,7 +27,7 @@
 
 package com.tencent.bkrepo.replication.replica.type.schedule
 
-import com.tencent.bkrepo.common.metadata.permission.PermissionManager
+import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.replica.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.type.AbstractReplicaService
@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component
 class ScheduledReplicaService(
     replicaRecordService: ReplicaRecordService,
     localDataManager: LocalDataManager,
-    permissionManager: PermissionManager,
+    permissionManager: NodePermissionService,
 ) : AbstractReplicaService(replicaRecordService, localDataManager, permissionManager) {
 
     override fun replica(context: ReplicaContext) {

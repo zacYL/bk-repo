@@ -32,7 +32,6 @@ import com.tencent.bkrepo.cocoapods.artifact.CocoapodsProperties
 import com.tencent.bkrepo.cocoapods.constant.COCOAPODS_REPLICA_RESOLVE
 import com.tencent.bkrepo.cocoapods.constant.LOCK_PREFIX
 import com.tencent.bkrepo.cocoapods.pool.EventHandlerThreadPoolExecutor
-import com.tencent.bkrepo.cocoapods.service.CocoapodsReplicaService
 import com.tencent.bkrepo.cocoapods.service.CocoapodsSpecsService
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
@@ -40,22 +39,21 @@ import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.artifact.util.okhttp.BasicAuthInterceptor
-import com.tencent.bkrepo.common.artifact.util.okhttp.HttpClientBuilderFactory
 import com.tencent.bkrepo.common.lock.service.LockOperation
+import com.tencent.bkrepo.common.service.util.okhttp.BasicAuthInterceptor
+import com.tencent.bkrepo.common.service.util.okhttp.HttpClientBuilderFactory
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.repository.api.RepositoryClient
-import okhttp3.MediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Component
 import java.io.IOException
 import java.util.concurrent.Future
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
 
 @Component
 class RemoteEventJobExecutor(
@@ -145,8 +143,8 @@ class RemoteEventJobExecutor(
             // 将 ArtifactEvent 对象转换为 JSON 字符串
             val eventJson = gson.toJson(event)
 
-            val mediaType = MediaType.parse("application/json")
-            val requestBody = RequestBody.create(mediaType, eventJson)
+            val mediaType = "application/json".toMediaTypeOrNull()
+            val requestBody = eventJson.toRequestBody(mediaType)
             val path = COCOAPODS_REPLICA_RESOLVE.replace("{projectId}", projectId).replace("{repoName}", repoName)
             val request = Request.Builder()
                 .url(domain + "/cocoapods" + path)
@@ -155,7 +153,7 @@ class RemoteEventJobExecutor(
             try {
                 httpClient.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
-                        logger.info("response:${response.body()!!.string()}")
+                        logger.info("response:${response.body!!.string()}")
                     }
                 }
             } catch (e: IOException) {
@@ -189,10 +187,12 @@ class RemoteEventJobExecutor(
 
     companion object {
         private val logger = LoggerFactory.getLogger(RemoteEventJobExecutor::class.java)
+
         /**
          * 远程请求连接超时时间，单位ms
          */
         const val CONNECT_TIMEOUT: Long = 10 * 1000L
+
         /**
          * 远程请求读超时时间，单位ms
          */

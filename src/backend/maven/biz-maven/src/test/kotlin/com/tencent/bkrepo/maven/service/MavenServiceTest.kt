@@ -13,13 +13,14 @@ import org.springframework.test.context.TestPropertySource
 @DataMongoTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ComponentScans(
-        ComponentScan("com.tencent.bkrepo.maven.service"), ComponentScan("com.tencent.bkrepo.maven.dao")
+    ComponentScan("com.tencent.bkrepo.maven.service"), ComponentScan("com.tencent.bkrepo.maven.dao")
 )
 @TestPropertySource(locations = ["classpath:bootstrap-ut.properties"])
 class MavenServiceTest(
-        private val mavenService: MavenServiceImpl
+    private val mavenService: MavenServiceImpl
 ) {
     @Test
     @DisplayName("test maven web file upload")
-    fun `test maven web file upload`() {}
+    fun `test maven web file upload`() {
+    }
 }

@@ -27,14 +27,13 @@
 
 package com.tencent.bkrepo.cocoapods.utils
 
+import ArchiveModifier
 import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.model.TCocoapodsRemotePackage
 import com.tencent.bkrepo.cocoapods.pojo.CocoapodsRemoteConfiguration
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecSourceType
 import com.tencent.bkrepo.cocoapods.pojo.enums.RemoteRepoType
-import com.tencent.bkrepo.common.api.constant.StringPool
-import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -55,7 +54,7 @@ object PathUtil {
     fun getOrgNameByVersion(packageVersion: PackageVersion): String {
         with(packageVersion) {
             val parts = contentPath?.split("/")?.filter { it.isNotEmpty() }
-            return parts?.getOrNull(0)?:""
+            return parts?.getOrNull(0) ?: ""
         }
     }
 
@@ -77,7 +76,7 @@ object PathUtil {
     fun buildRemoteSpecsUrl(cocoapodsConf: CocoapodsRemoteConfiguration, conf: RemoteConfiguration) =
         when (cocoapodsConf.type) {
             RemoteRepoType.GIT_HUB -> {
-                cocoapodsConf.downloadUrl?:"https://github.com/CocoaPods/Specs.git"
+                cocoapodsConf.downloadUrl ?: "https://github.com/CocoaPods/Specs.git"
             }
 
             RemoteRepoType.CPACK -> {
@@ -91,7 +90,7 @@ object PathUtil {
             }
         }
 
-    fun TCocoapodsRemotePackage.Source.toDownloadUrl(): String?{
+    fun TCocoapodsRemotePackage.Source.toDownloadUrl(): String? {
         return when (type) {
             PodSpecSourceType.HTTP.name -> {
                 url

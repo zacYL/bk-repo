@@ -36,9 +36,9 @@ import com.tencent.bkrepo.conan.service.ConanVirtualService
 import com.tencent.bkrepo.conan.utils.PathUtils.isFirstQueryPath
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import org.springframework.web.servlet.HandlerInterceptor
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import org.springframework.web.servlet.HandlerInterceptor
 
 /**
  * 本地仓库：无拦截
@@ -66,7 +66,8 @@ class ProxyInterceptor(
                     true
                 } else {
                     val actualRepoName = conanVirtualService.getCacheRepo(this, request.requestURI) ?: return true
-                    val actualRepoDetail = SpringContextUtils.getBean(RepositoryClient::class.java).getRepoDetail(projectId, actualRepoName).data!!
+                    val actualRepoDetail = SpringContextUtils.getBean(RepositoryClient::class.java)
+                        .getRepoDetail(projectId, actualRepoName).data!!
                     if (actualRepoDetail.category == RepositoryCategory.REMOTE) {
                         handleRemoteRepo(actualRepoDetail, request, response)
                     } else true
@@ -76,7 +77,11 @@ class ProxyInterceptor(
         return true
     }
 
-    private fun handleRemoteRepo(repositoryDetail: RepositoryDetail, request: HttpServletRequest, response: HttpServletResponse) =
+    private fun handleRemoteRepo(
+        repositoryDetail: RepositoryDetail,
+        request: HttpServletRequest,
+        response: HttpServletResponse
+    ) =
         if (isDownFilePath(request)) {
             //下载请求不拦截
             true

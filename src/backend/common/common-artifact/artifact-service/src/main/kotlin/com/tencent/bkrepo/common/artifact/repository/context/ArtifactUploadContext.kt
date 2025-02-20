@@ -223,9 +223,15 @@ open class ArtifactUploadContext : ArtifactContext {
         val interceptorList = mutableListOf<DownloadInterceptor<*, NodeDetail>>()
         try {
             listOf(DownloadInterceptorFactory.buildNodeInterceptor(DownloadInterceptorType.NODE_LOCK)!!)
-            logger.debug("get repo[${repositoryDetail.projectId}/${repositoryDetail.name}] upload interceptor: $interceptorList")
+            logger.debug(
+                "get repo[${repositoryDetail.projectId}/${repositoryDetail.name}] " +
+                        "upload interceptor: $interceptorList"
+            )
         } catch (e: Exception) {
-            logger.warn("fail to get repo[${repositoryDetail.projectId}/${repositoryDetail.name}] upload interceptor: $e")
+            logger.warn(
+                "fail to get repo[${repositoryDetail.projectId}/${repositoryDetail.name}]" +
+                        " upload interceptor: $e"
+            )
         }
         return interceptorList
     }

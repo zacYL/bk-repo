@@ -50,6 +50,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 object ObjectBuildUtils {
 
@@ -117,7 +118,7 @@ object ObjectBuildUtils {
         fullPath: String,
         userId: String,
         metadata: Map<String, Any>? = null
-        ): MetadataSaveRequest {
+    ): MetadataSaveRequest {
         val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = true) }
         return MetadataSaveRequest(
             projectId = projectId,
@@ -136,7 +137,9 @@ object ObjectBuildUtils {
         userId: String,
         metadata: Map<String, Any>? = null
     ): PackageMetadataSaveRequest {
-        val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = it.key != SOURCE_TYPE) }
+        val metadataModels = metadata?.map {
+            MetadataModel(key = it.key, value = it.value, system = it.key != SOURCE_TYPE)
+        }
         return PackageMetadataSaveRequest(
             projectId = projectId,
             repoName = repoName,
@@ -159,7 +162,7 @@ object ObjectBuildUtils {
         with(ociArtifactInfo) {
             // 兼容多仓库类型支持
             val packageType = PackageType.valueOf(repoType)
-            val packageKey = PackageKeys.ofName(repoType.toLowerCase(), packageName)
+            val packageKey = PackageKeys.ofName(repoType.lowercase(Locale.getDefault()), packageName)
             return PackageVersionCreateRequest(
                 projectId = projectId,
                 repoName = repoName,

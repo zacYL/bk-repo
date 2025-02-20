@@ -39,16 +39,16 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.DecompressUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
+import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
-import com.tencent.bkrepo.common.metadata.permission.PermissionManager
-import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.oci.constant.BLOB_PATH_VERSION_KEY
@@ -70,13 +70,13 @@ import com.tencent.bkrepo.oci.util.ObjectBuildUtils
 import com.tencent.bkrepo.oci.util.OciLocationUtils
 import com.tencent.bkrepo.oci.util.OciResponseUtils
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import java.io.IOException
+import java.io.InputStream
+import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.StreamUtils
 import org.springframework.web.multipart.MultipartFile
-import java.io.IOException
-import java.io.InputStream
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
 class OciBlobServiceImpl(
@@ -91,7 +91,7 @@ class OciBlobServiceImpl(
         with(artifactInfo) {
             logger.info(
                 "Handling bolb upload request ${artifactInfo.digest}|${artifactInfo.uuid}|" +
-                    "${artifactInfo.mount}|${artifactInfo.from} in ${getRepoIdentify()}."
+                        "${artifactInfo.mount}|${artifactInfo.from} in ${getRepoIdentify()}."
             )
             if (digest.isNullOrBlank()) {
                 logger.info("Will use post then put to upload blob...")
@@ -256,7 +256,7 @@ class OciBlobServiceImpl(
     override fun deleteBlob(artifactInfo: OciBlobArtifactInfo) {
         logger.info(
             "Handling delete blob request for package [${artifactInfo.packageName}] " +
-                "with digest [${artifactInfo.digest}] in repo [${artifactInfo.getRepoIdentify()}]"
+                    "with digest [${artifactInfo.digest}] in repo [${artifactInfo.getRepoIdentify()}]"
         )
         if (artifactInfo.digest.isNullOrBlank())
             throw OciBadRequestException(OciMessageCode.OCI_DELETE_RULES, artifactInfo.getArtifactFullPath())
@@ -352,7 +352,9 @@ class OciBlobServiceImpl(
             // 创建一个唯一的UUID用于标识这次上传
             val uuid = storage.createAppendId(null)
             // 设置当前处理的blob的artifact信息到HTTP请求中
-            HttpContextHolder.getRequest().setAttribute(ARTIFACT_INFO_KEY, artifactInfo.toOciBlobArtifactInfo(e.digest, uuid))
+            HttpContextHolder.getRequest().setAttribute(
+                ARTIFACT_INFO_KEY, artifactInfo.toOciBlobArtifactInfo(e.digest, uuid)
+            )
             // 获取当前层的文件流并构建ArtifactFile对象
             val file = ArtifactFileFactory.build(getLayer(e.digest, blobs).inputStream())
             // 上传当前层的文件

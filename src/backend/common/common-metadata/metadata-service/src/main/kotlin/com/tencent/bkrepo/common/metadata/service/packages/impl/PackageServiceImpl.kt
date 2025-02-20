@@ -68,6 +68,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
+import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Conditional
 import org.springframework.dao.DuplicateKeyException
@@ -79,7 +80,6 @@ import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 
 @Service
 @Conditional(SyncCondition::class)
@@ -263,7 +263,10 @@ class PackageServiceImpl(
                     logger.info("Create package version[$projectId/$repoName/$packageKey-${newVersion.name}] success")
                     publishEvent(buildCreatedEvent(request, realIpAddress ?: HttpContextHolder.getClientAddress()))
                 } catch (exception: DuplicateKeyException) {
-                    logger.warn("Create version[$projectId/$repoName/$packageKey-${newVersion.name}] error: [${exception.message}]")
+                    logger.warn(
+                        "Create version[$projectId/$repoName/$packageKey-${newVersion.name}]" +
+                                " error: [${exception.message}]"
+                    )
                     oldVersion = packageVersionDao.findByName(tPackage.id!!, versionName)
                     updateExistVersion(
                         oldVersion = oldVersion!!,
@@ -389,8 +392,8 @@ class PackageServiceImpl(
         val repoName = request.repoName
         val packageKey = request.packageKey
         val versionName = request.versionName
-        val newMetadata = if (request.metadata != null || request.packageMetadata != null) {
-            MetadataUtils.compatibleConvertAndCheck(request.metadata, request.packageMetadata)
+        val newMetadata = if (request.packageMetadata != null || request.packageMetadata != null) {
+            MetadataUtils.compatibleConvertAndCheck(request.packageMetadata, request.packageMetadata)
         } else {
             null
         }
@@ -534,7 +537,7 @@ class PackageServiceImpl(
                 artifactPath = request.artifactPath
                 artifactPaths = buildArtifactPaths(request)
                 stageTag = request.stageTag.orEmpty()
-                metadata = MetadataUtils.compatibleConvertAndCheck(request.metadata, packageMetadata)
+                metadata = MetadataUtils.compatibleConvertAndCheck(request.packageMetadata, packageMetadata)
                 tags = request.tags?.filter { it.isNotBlank() }.orEmpty()
                 extension = request.extension.orEmpty()
             }
@@ -547,7 +550,7 @@ class PackageServiceImpl(
 
     private fun TPackageVersion.buildArtifactPaths(request: PackageVersionCreateRequest): MutableSet<String>? {
         request.artifactPath?.let {
-             return if (!request.multiArtifact) {
+            return if (!request.multiArtifact) {
                 mutableSetOf(it)
             } else {
                 artifactPaths?.add(it)

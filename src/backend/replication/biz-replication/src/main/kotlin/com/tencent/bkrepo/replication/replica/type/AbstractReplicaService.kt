@@ -35,7 +35,7 @@ import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.metadata.constant.FAKE_SHA256
-import com.tencent.bkrepo.common.metadata.permission.PermissionManager
+import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.stream.event.supplier.MessageSupplier
 import com.tencent.bkrepo.replication.manager.LocalDataManager
@@ -64,8 +64,8 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
-import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 
 /**
@@ -76,11 +76,12 @@ import org.springframework.beans.factory.annotation.Autowired
 abstract class AbstractReplicaService(
     private val replicaRecordService: ReplicaRecordService,
     private val localDataManager: LocalDataManager,
-    private val permissionManager: PermissionManager,
+    private val permissionManager: NodePermissionService,
 ) : ReplicaService {
 
     @Autowired
     private lateinit var eventSupplier: MessageSupplier
+
     /**
      * 同步 task Object
      */
@@ -142,7 +143,7 @@ abstract class AbstractReplicaService(
             replicaByPath(replicaContext, root)
             logger.info(
                 "replicaByRepo for generic finished" +
-                    " ${replicaContext.localProjectId}|${replicaContext.localRepoName}"
+                        " ${replicaContext.localProjectId}|${replicaContext.localRepoName}"
             )
             return
         }
@@ -246,7 +247,9 @@ abstract class AbstractReplicaService(
 
             check(!userAuthPath.isNullOrEmpty()) { "node fullPath[${node.fullPath}] no read permission" }
 
-            check(userAuthPath.any() { node.fullPath.startsWith(PathUtils.toFullPath(it)) }) { "node fullPath[${node.fullPath}] no read permission" }
+            check(userAuthPath.any { node.fullPath.startsWith(PathUtils.toFullPath(it)) }) {
+                "node fullPath[${node.fullPath}] no read permission"
+            }
 
 
             if (!node.folder) {
@@ -445,7 +448,7 @@ abstract class AbstractReplicaService(
                 errorReason = throwable.message.orEmpty()
                 logger.error(
                     "replica file failed, " +
-                        "error is ${Throwables.getStackTraceAsString(throwable)}"
+                            "error is ${Throwables.getStackTraceAsString(throwable)}"
                 )
                 replicaContext.replicaProgress.failed++
                 setErrorStatus(this, throwable)
@@ -454,7 +457,9 @@ abstract class AbstractReplicaService(
                 }
             } finally {
                 updateTaskProgressCache(context.taskKey)
-                if (context.replicaContext.task.record == false && replicaContext.task.replicaObjectType == ReplicaObjectType.REPOSITORY) {
+                if (context.replicaContext.task.record == false
+                    && replicaContext.task.replicaObjectType == ReplicaObjectType.REPOSITORY
+                ) {
                     replicaRecordService.deleteRecordDetailById(detail.id)
                 } else {
                     completeRecordDetail(context)

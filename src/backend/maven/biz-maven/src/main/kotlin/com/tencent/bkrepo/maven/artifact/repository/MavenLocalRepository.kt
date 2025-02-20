@@ -1058,7 +1058,11 @@ class MavenLocalRepository(
                     context.repoName,
                     packageName = mavenGAVC.artifactId,
                     packageKey = PackageKeys.ofGav(mavenGAVC.groupId, mavenGAVC.artifactId),
-                    packageType = if (context.repositoryDetail.type == RepositoryType.GRADLE) PackageType.GRADLE else PackageType.MAVEN,
+                    packageType = if (context.repositoryDetail.type == RepositoryType.GRADLE) {
+                        PackageType.GRADLE
+                    } else {
+                        PackageType.MAVEN
+                    },
                     versionName = mavenGAVC.version,
                     size = context.getArtifactFile().getSize(),
                     artifactPath = fullPath,

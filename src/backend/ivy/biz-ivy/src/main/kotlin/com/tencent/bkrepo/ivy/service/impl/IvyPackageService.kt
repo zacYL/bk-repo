@@ -83,9 +83,11 @@ class IvyPackageService(
 
     private fun getVersionArtifactFullPath(artifactInfo: IvyArtifactInfo, version: PackageVersion): List<String> {
         val allArtifactFullPath =
-            (version.packageMetadata.firstOrNull() { it.key == METADATA_KEY_All_ARTIFACT_FULL_PATH }?.value) as MutableList<String>?
+            (version.packageMetadata.firstOrNull {
+                it.key == METADATA_KEY_All_ARTIFACT_FULL_PATH
+            }?.value) as MutableList<String>?
         val ivyFullPath =
-            (version.packageMetadata.firstOrNull() { it.key == METADATA_KEY_IVY_FULL_PATH }?.value) as String
+            (version.packageMetadata.firstOrNull { it.key == METADATA_KEY_IVY_FULL_PATH }?.value) as String
         allArtifactFullPath?.add(ivyFullPath)
         allArtifactFullPath?.addAll(artifactInfo.artifactsToSummaryPath(allArtifactFullPath))
 

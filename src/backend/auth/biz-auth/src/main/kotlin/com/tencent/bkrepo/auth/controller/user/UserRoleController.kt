@@ -32,21 +32,14 @@
 package com.tencent.bkrepo.auth.controller.user
 
 import com.tencent.bkrepo.auth.constant.AUTH_API_ROLE_PREFIX
-import com.tencent.bkrepo.auth.pojo.role.CreateRoleRequest
-import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.pojo.role.UpdateRoleRequest
-import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
@@ -58,37 +51,6 @@ import org.springframework.web.bind.annotation.RestController
 class UserRoleController(
     private val roleService: RoleService
 ) {
-
-    @ApiOperation("删除角色")
-    @Principal(PrincipalType.ADMIN)
-    @DeleteMapping("/delete/{id}")
-    fun deleteRole(
-        @RequestAttribute userId: String,
-        @ApiParam(value = "角色主键id")
-        @PathVariable id: String
-    ): Response<Boolean> {
-        return ResponseBuilder.success(roleService.deleteRoleById(id))
-    }
-
-    @ApiOperation("根据主键id查询角色详情")
-    @GetMapping("/detail/{id}")
-    fun detail(
-        @RequestAttribute userId: String,
-        @ApiParam(value = "角色主键id")
-        @PathVariable id: String
-    ): Response<Role?> {
-        return ResponseBuilder.success(roleService.detail(id))
-    }
-
-    @ApiOperation("查询用户组下用户列表")
-    @GetMapping("/users/{id}")
-    fun listUserByRoleId(
-        @RequestAttribute userId: String,
-        @PathVariable id: String
-    ): Response<Set<UserResult>> {
-        return ResponseBuilder.success(roleService.listUserByRoleId(id))
-    }
-
     @ApiOperation("编辑用户组信息")
     @Principal(PrincipalType.ADMIN)
     @PutMapping("/{id}")
@@ -100,14 +62,4 @@ class UserRoleController(
         return ResponseBuilder.success(roleService.updateRoleInfo(id, updateRoleRequest))
     }
 
-    @ApiOperation("创建角色")
-    @PostMapping("/create")
-    @Principal(PrincipalType.ADMIN)
-    fun createRole(
-        @RequestAttribute userId: String,
-        @RequestBody request: CreateRoleRequest
-    ): Response<String?> {
-        val id = roleService.createRole(request)
-        return ResponseBuilder.success(id)
-    }
 }

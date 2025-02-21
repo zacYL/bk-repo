@@ -81,6 +81,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.stream.Collectors
 
 @Service
 class OciBlobServiceImpl(
@@ -344,15 +345,13 @@ class OciBlobServiceImpl(
     private val hexNum = 0xFF
     private fun toHex(byteArray: ByteArray): String {
         // 转成16进制后是32字节
-        return with(StringBuilder()) {
+        return with(StringBuilder(byteArray.size * 2)) {
             byteArray.forEach {
                 val hex = it.toInt() and (hexNum)
-                val hexStr = Integer.toHexString(hex)
-                if (hexStr.length == 1) {
-                    append("0").append(hexStr)
-                } else {
-                    append(hexStr)
+                if (hex < 0x10) {
+                    append("0")
                 }
+                append(Integer.toHexString(hex))
             }
             toString()
         }
@@ -370,6 +369,7 @@ class OciBlobServiceImpl(
      * @throws OciImageUploadException 如果索引为空或数据块为空，则抛出异常，表示镜像无效
      */
     private fun decompressImage(inputStream: InputStream): Triple<Index, ByteArray, MutableMap<String, ByteArray>> {
+        logger.info("start decompress docker image")
         // 初始化索引变量为null，后续将存储index.json的内容
         var index: ByteArray? = null
         // 适配旧版docker因此把manifest引出
@@ -430,8 +430,19 @@ class OciBlobServiceImpl(
         logger.info("will start transfer the manifest to manifest Schema2")
         val manifestsV2: MutableList<ManifestSchema2> = mutableListOf()
         var newBlobs: MutableMap<String, ByteArray> = mutableMapOf()
-        // 计算文件的digest
-        val blobDigests = blobs.mapValues { entry -> sha256FromByteArray(entry.value) }
+        // 构建layers
+        var layers = mutableListOf<LayerDescriptor>()
+        // 计算文件的digest(过滤其他无关文件)
+        val blobDigests = blobs.entries.parallelStream()
+            .filter { entry ->
+                entry.key.endsWith("layer.tar") || entry.key.endsWith(".json")
+            }
+            .collect(
+                Collectors.toMap(
+                    { it.key },
+                    { sha256FromByteArray(it.value) }
+                )
+            )
         // 获取旧版的manigest.json实例
         manifests.inputStream().readJsonString<List<OldManifest>>().forEach {
             var configDigest: String? = null
@@ -442,6 +453,14 @@ class OciBlobServiceImpl(
                 it.layers.forEach { layer ->
                     if (entry.key.equals(layer)) {
                         newBlobs.put("sha256:${blobDigests[entry.key]}", entry.value)
+                        val size = entry.value.size.toLong()
+                        layers.add(
+                            LayerDescriptor(
+                                mediaType = "application/vnd.oci.image.layer.v1.tar",
+                                size = size,
+                                digest = "sha256:${blobDigests[entry.key]}",
+                            )
+                        )
                     }
                 }
                 // 处理config
@@ -457,18 +476,6 @@ class OciBlobServiceImpl(
                 size = configSize,
                 digest = configDigest!!
             )
-            // 构建layers
-            var layers = mutableListOf<LayerDescriptor>()
-            newBlobs.entries.forEach { entry ->
-                val size = entry.value.size.toLong()
-                layers.add(
-                    LayerDescriptor(
-                        mediaType = "application/vnd.oci.image.layer.v1.tar",
-                        size = size,
-                        digest = entry.key,
-                    )
-                )
-            }
             // 把config和manifest的相关东西提交上去
             newBlobs.put(configDigest!!, configByteArray!!)
             // 构建manifest.json

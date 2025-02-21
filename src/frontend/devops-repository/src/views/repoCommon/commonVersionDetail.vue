@@ -359,6 +359,11 @@
                     }
                     // 此时不能在HTML中直接使用repoType，如果直接使用会导致该tab页提前被渲染，出现在其他tab页之前，不符合产品要求
                     this.detailType = this.repoType
+                }).catch((err) => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: err?.message || this.$t('unknownError')
+                    })
                 }).finally(() => {
                     this.isLoading = false
                 })

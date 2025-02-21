@@ -459,6 +459,11 @@
                             }
                         })
                     }
+                }).catch((err) => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: err?.message || this.$t('unknownError')
+                    })
                 }).finally(() => {
                     this.initReadmeAClick()
                     this.isLoading = false

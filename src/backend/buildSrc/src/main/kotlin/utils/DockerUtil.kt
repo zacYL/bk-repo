@@ -189,23 +189,27 @@ object DockerUtil {
         val objectMapper = ObjectMapper()
         try {
             TarArchiveInputStream(tarFile.inputStream()).use { tarInput ->
-                var entry = tarInput.nextEntry
-                while (entry != null) {
-                    if (entry.name == "manifest.json") {
-                        val manifestJson = tarInput.readBytes().toString(Charsets.UTF_8)
-                        val jsonNode = objectMapper.readValue(manifestJson, JsonNode::class.java)
-
-                        if (jsonNode.isArray and !jsonNode.isEmpty) {
-                            val configFileName = jsonNode[0]["Config"].asText()
-                            return configFileName.substringAfterLast("/").substringAfterLast(":")
-                        }
-                    }
-                    entry = tarInput.nextTarEntry
-                }
+                return readFile(tarInput, objectMapper)
             }
         } catch (e: Exception) {
             println("解析镜像ID失败: ${e.message}")
-            e.printStackTrace()
+        }
+        return null
+    }
+
+    private fun readFile(tarInput: TarArchiveInputStream, objectMapper: ObjectMapper): String? {
+        var entry = tarInput.nextEntry
+        while (entry != null) {
+            if (entry.name == "manifest.json") {
+                val manifestJson = tarInput.readBytes().toString(Charsets.UTF_8)
+                val jsonNode = objectMapper.readValue(manifestJson, JsonNode::class.java)
+
+                if (jsonNode.isArray and !jsonNode.isEmpty) {
+                    val configFileName = jsonNode[0]["Config"].asText()
+                    return configFileName.substringAfterLast("/").substringAfterLast(":")
+                }
+            }
+            entry = tarInput.nextTarEntry
         }
         return null
     }

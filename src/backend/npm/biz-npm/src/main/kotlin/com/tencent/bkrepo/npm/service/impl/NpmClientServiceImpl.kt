@@ -52,6 +52,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveConte
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.version.SemVersionParser.parse
 import com.tencent.bkrepo.common.lock.service.LockOperation
 import com.tencent.bkrepo.common.security.permission.Permission
@@ -477,6 +478,10 @@ class NpmClientServiceImpl(
             val packageKey = NpmUtils.packageKeyByRepoType(npmPackageMetaData.name.orEmpty())
             val gmtTime = TimeUtil.getGMTTime()
             val npmMetadata = npmPackageMetaData.versions.map.values.iterator().next()
+            // 处理没有latest标签的问题
+            if (!npmPackageMetaData.distTags.getMap().containsKey(LATEST)) {
+                npmPackageMetaData.distTags.getMap().set(LATEST, npmMetadata.version!!)
+            }
             if (!npmMetadata.dist!!.any().containsKey(SIZE)) {
                 npmMetadata.dist!!.set(SIZE, size)
             }

@@ -101,6 +101,8 @@ import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.util.RepoCleanRuleUtils
 import com.tencent.bkrepo.repository.util.RuleUtils
+import java.time.LocalDateTime
+import java.util.Locale
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Conditional
@@ -115,7 +117,6 @@ import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 
 /**
  * 仓库服务实现类
@@ -233,7 +234,7 @@ class RepositoryServiceImpl(
 
     override fun listRepoByTypes(projectId: String, types: List<String>): List<RepositoryInfo> {
         val query = buildListQuery(projectId)
-            .addCriteria(TRepository::type.inValues(types.map { it.toUpperCase() }))
+            .addCriteria(TRepository::type.inValues(types.map { it.uppercase(Locale.getDefault()) }))
         return repositoryDao.find(query).map { convertToInfo(it)!! }
     }
 
@@ -268,7 +269,7 @@ class RepositoryServiceImpl(
             }
             //若同时是匿名公开与系统内公开仓库，则调整为系统内公开仓库
             val settingSystem = (configuration?.settings?.get(SYSTEM_REPO) ?: false) as Boolean
-            if (public && settingSystem){
+            if (public && settingSystem) {
                 this.public = false
             }
             // 解析存储凭证
@@ -379,7 +380,7 @@ class RepositoryServiceImpl(
             //删除仓库权限中心数据
             try {
                 servicePermissionClient.deletePermissionData(repoDeleteRequest.projectId, repoDeleteRequest.name)
-            }catch (exception: Exception){
+            } catch (exception: Exception) {
                 logger.error("Permission data cleaning failed: ${exception}")
             }
             publishEvent(buildDeletedEvent(repoDeleteRequest, repository.type))
@@ -400,22 +401,24 @@ class RepositoryServiceImpl(
     override fun migrateCleanStrategy(): List<String> {
         // 1. 查询所有仓库
         val allRepos = repositoryDao.find(
-            Query(where(TRepository::category).`in`(listOf(RepositoryCategory.COMPOSITE, RepositoryCategory.LOCAL))
-                .and(TRepository::type).isEqualTo(RepositoryType.GENERIC))
+            Query(
+                where(TRepository::category).`in`(listOf(RepositoryCategory.COMPOSITE, RepositoryCategory.LOCAL))
+                    .and(TRepository::type).isEqualTo(RepositoryType.GENERIC)
+            )
         ).mapNotNull { convertToInfo(it) }
         val migratedRepos = mutableListOf<String>()
         // 遍历仓库
-        repoLoop@ for (repoInfo in allRepos) {
+        for (repoInfo in allRepos) {
             logger.info("MigrateCleanStrategy: [${repoInfo.projectId}:${repoInfo.name}]")
             val configuration = when (repoInfo.category) {
                 RepositoryCategory.LOCAL -> repoInfo.configuration as LocalConfiguration
                 RepositoryCategory.COMPOSITE -> repoInfo.configuration as CompositeConfiguration
                 else -> {
                     logger.warn("Unknown repo category: $repoInfo")
-                    continue@repoLoop
+                    continue
                 }
             }
-            val cleanStrategy = configuration.cleanStrategy ?: continue@repoLoop
+            val cleanStrategy = configuration.cleanStrategy ?: continue
             val reserveDays = cleanStrategy.reserveDays
             // 提取规则
             var rule = RepoCleanRuleUtils.extractRule(cleanStrategy)
@@ -431,111 +434,151 @@ class RepositoryServiceImpl(
                 migratedRepos.add("${repoInfo.projectId}/${repoInfo.name}:${repoInfo.type}")
             } else {
                 // 先合并path 的条件规则
-                val targetPathNestedRules = mutableListOf<Rule.NestedRule>()
-                pathNestedLoop@for (pathNestedRule in rule.rules) {
-                    if (pathNestedRule is Rule.NestedRule) {
-                        val queryRules = pathNestedRule.rules
-                        val pathQueryRule = queryRules.filterIsInstance<Rule.QueryRule>().find { it.field == "path" }
-                            ?: continue@pathNestedLoop
-                        // 在合并后后规则集中寻找是否存在重复路径
-                        val existPathNestedRule = targetPathNestedRules.find {
-                            it.rules.filterIsInstance<Rule.QueryRule>()
-                                .find { path -> path.value == pathQueryRule.value } != null
-                        }
-                        // 过滤掉 path及reverseDays 条件
-                        val filterRules = queryRules.filterIsInstance<Rule.QueryRule>()
-                            .filter { it.field != "path" && !it.field.startsWith("reverseDays") }
-
-                        if (existPathNestedRule == null) {
-                            if (filterRules.isNullOrEmpty()) {
-                                pathNestedRule.rules.add(
-                                    Rule.QueryRule("id", "null", OperationType.NE)
-                                )
-                            }
-                            targetPathNestedRules.add(pathNestedRule)
-                        } else {
-                            // 这里意味着 path 对应的规则为全部
-                            if (filterRules.isNullOrEmpty() &&
-                                existPathNestedRule.rules
-                                    .filterIsInstance<Rule.QueryRule>().find { it.field == "id" } == null
-                            ) {
-                                existPathNestedRule.rules.add(Rule.QueryRule("id", "null", OperationType.NE))
-                            } else {
-                                existPathNestedRule.rules.addAll(filterRules)
-                            }
-                        }
-                    }
-                }
-                rule = Rule.NestedRule(targetPathNestedRules as MutableList<Rule>, Rule.NestedRule.RelationType.OR)
-
-                var rootPathExist = false
-                // 遍历条件规则
-                pathNestedLoop@for (pathNestedRule in rule.rules) {
-                    if (pathNestedRule is Rule.NestedRule) {
-                        val rules = pathNestedRule.rules
-                        val matchRules = mutableListOf<Rule.QueryRule>()
-                        val oldMatchRules = rules.filterIsInstance<Rule.QueryRule>()
-                        if (oldMatchRules.isNullOrEmpty()) {
-                            // 无效规则
-                            rule.rules.remove(pathNestedRule)
-                        } else {
-                            oldMatchRules.forEach { eachRule ->
-                                if (eachRule.field == "path" && eachRule.value == "/") {
-                                    rootPathExist = true
-                                }
-                                if (eachRule.field == "name" ||
-                                    eachRule.field.startsWith("metadata.") ||
-                                    eachRule.field == "id") {
-                                    matchRules.add(eachRule)
-                                }
-                            }
-                            // 空的匹配规则，在旧版中空表示全部数据
-                            if (matchRules.isEmpty() && rules.filterIsInstance<Rule.NestedRule>().isEmpty()) {
-                                matchRules.add(Rule.QueryRule("id", "null", OperationType.NE))
-                            }
-                        }
-                        rules.removeIf { it is Rule.QueryRule &&
-                                (it.field == "name" || it.field.startsWith("metadata.") || it.field == "id") }
-                        rules.add(Rule.NestedRule(matchRules as MutableList<Rule>, Rule.NestedRule.RelationType.OR))
-                        val queryFields = rules.filterIsInstance<Rule.QueryRule>().map { it.field }
-                        if (!queryFields.contains("reserveDays")) {
-                            rules.add(Rule.QueryRule("reserveDays", reserveDays))
-                        }
-                    }
-                }
+                rule = Rule.NestedRule(findRules(rule.rules) as MutableList<Rule>, Rule.NestedRule.RelationType.OR)
+                val rootPathExist = mergeRules(rule, reserveDays)
                 if (!rootPathExist) {
-                    rule.rules.add(0, Rule.NestedRule(
-                        mutableListOf(
-                            Rule.QueryRule("path", "/", OperationType.REGEX),
-                            Rule.QueryRule("reserveDays", reserveDays, OperationType.LTE),
-                            Rule.NestedRule(mutableListOf(), Rule.NestedRule.RelationType.OR)
-                        ),
-                        Rule.NestedRule.RelationType.AND))
+                    rule.rules.add(
+                        0, Rule.NestedRule(
+                            mutableListOf(
+                                Rule.QueryRule("path", "/", OperationType.REGEX),
+                                Rule.QueryRule("reserveDays", reserveDays, OperationType.LTE),
+                                Rule.NestedRule(mutableListOf(), Rule.NestedRule.RelationType.OR)
+                            ),
+                            Rule.NestedRule.RelationType.AND
+                        )
+                    )
                 }
                 val tRepo = repositoryDao.findByNameAndType(repoInfo.projectId, repoInfo.name)
                 configuration.cleanStrategy = RepoCleanRuleUtils.replaceRule(cleanStrategy, rule)
-                if (tRepo != null) {
-                    try {
-                        updateRepo(
-                            RepoUpdateRequest(
-                                projectId = repoInfo.projectId,
-                                name = repoInfo.name,
-                                configuration = configuration,
-                                coverStrategy = repoInfo.coverStrategy,
-                                operator = "system"
-                            )
-                        )
-                        migratedRepos.add("${repoInfo.projectId}/${repoInfo.name}:${repoInfo.type}")
-                    } catch(e: Exception) {
-                        logger.warn("Migrate clean strategy failed: $repoInfo", e)
-                    }
-                } else {
-                    logger.warn("Failed to find repo[$repoInfo], maybe it has been deleted.")
-                }
+                updateRepositoryConfiguration(
+                    repoInfo = repoInfo,
+                    tRepo = tRepo,
+                    configuration = configuration,
+                    migratedRepos = migratedRepos
+                )
             }
         }
         return migratedRepos
     }
+
+
+    private fun findRules(rule: MutableList<Rule>): MutableList<Rule.NestedRule> {
+        val targetPathNestedRules = mutableListOf<Rule.NestedRule>()
+        for (pathNestedRule in rule) {
+            if (pathNestedRule !is Rule.NestedRule) continue
+            val queryRules = pathNestedRule.rules
+            val pathQueryRule = queryRules.filterIsInstance<Rule.QueryRule>().find { it.field == "path" }
+                ?: continue
+            // 在合并后后规则集中寻找是否存在重复路径
+            val existPathNestedRule = targetPathNestedRules.find {
+                it.rules.filterIsInstance<Rule.QueryRule>()
+                    .find { path -> path.value == pathQueryRule.value } != null
+            }
+            // 过滤掉 path及reverseDays 条件
+            val filterRules = queryRules.filterIsInstance<Rule.QueryRule>()
+                .filter { it.field != "path" && !it.field.startsWith("reverseDays") }
+
+            if (existPathNestedRule == null) {
+                if (filterRules.isNullOrEmpty()) {
+                    pathNestedRule.rules.add(
+                        Rule.QueryRule("id", "null", OperationType.NE)
+                    )
+                }
+                targetPathNestedRules.add(pathNestedRule)
+            } else {
+                // 这里意味着 path 对应的规则为全部
+                if (filterRules.isNullOrEmpty() &&
+                    existPathNestedRule.rules
+                        .filterIsInstance<Rule.QueryRule>().find { it.field == "id" } == null
+                ) {
+                    existPathNestedRule.rules.add(Rule.QueryRule("id", "null", OperationType.NE))
+                } else {
+                    existPathNestedRule.rules.addAll(filterRules)
+                }
+            }
+        }
+        return targetPathNestedRules
+    }
+
+    private fun mergeRules(rule: Rule.NestedRule, reserveDays: Long): Boolean {
+        var rootPathExist = false
+        // 遍历条件规则
+        for (pathNestedRule in rule.rules) {
+            if (pathNestedRule !is Rule.NestedRule) continue
+            val rules = pathNestedRule.rules
+            val matchRules = mutableListOf<Rule.QueryRule>()
+            val oldMatchRules = rules.filterIsInstance<Rule.QueryRule>()
+            if (oldMatchRules.isNullOrEmpty()) {
+                // 无效规则
+                rule.rules.remove(pathNestedRule)
+            } else {
+                val (exist, tempRules) = findMatchRules(oldMatchRules, rules)
+                rootPathExist = exist
+                matchRules.addAll(tempRules)
+            }
+            rules.removeIf {
+                it is Rule.QueryRule &&
+                        (it.field == "name" || it.field.startsWith("metadata.") || it.field == "id")
+            }
+            rules.add(Rule.NestedRule(matchRules as MutableList<Rule>, Rule.NestedRule.RelationType.OR))
+            val queryFields = rules.filterIsInstance<Rule.QueryRule>().map { it.field }
+            if (!queryFields.contains("reserveDays")) {
+                rules.add(Rule.QueryRule("reserveDays", reserveDays))
+            }
+        }
+        return rootPathExist
+    }
+
+    private fun findMatchRules(
+        oldMatchRules: List<Rule.QueryRule>,
+        rules: MutableList<Rule>
+    ): Pair<Boolean, MutableList<Rule.QueryRule>> {
+        val matchRules = mutableListOf<Rule.QueryRule>()
+        var rootPathExist = false
+        oldMatchRules.forEach { eachRule ->
+            if (eachRule.field == "path" && eachRule.value == "/") {
+                rootPathExist = true
+            }
+            if (eachRule.field == "name" ||
+                eachRule.field.startsWith("metadata.") ||
+                eachRule.field == "id"
+            ) {
+                matchRules.add(eachRule)
+            }
+        }
+        // 空的匹配规则，在旧版中空表示全部数据
+        if (matchRules.isEmpty() && rules.filterIsInstance<Rule.NestedRule>().isEmpty()) {
+            matchRules.add(Rule.QueryRule("id", "null", OperationType.NE))
+        }
+        return Pair(rootPathExist, matchRules)
+    }
+
+    private fun updateRepositoryConfiguration(
+        repoInfo: RepositoryInfo,
+        tRepo: TRepository?,
+        configuration: RepositoryConfiguration,
+        migratedRepos: MutableList<String>
+    ) {
+        if (tRepo != null) {
+            try {
+                updateRepo(
+                    RepoUpdateRequest(
+                        projectId = repoInfo.projectId,
+                        name = repoInfo.name,
+                        configuration = configuration,
+                        coverStrategy = repoInfo.coverStrategy,
+                        operator = "system"
+                    )
+                )
+                migratedRepos.add("${repoInfo.projectId}/${repoInfo.name}:${repoInfo.type}")
+            } catch (e: Exception) {
+                logger.warn("Migrate clean strategy failed: $repoInfo", e)
+            }
+        } else {
+            logger.warn("Failed to find repo[$repoInfo], maybe it has been deleted.")
+        }
+    }
+
 
     override fun statRepo(projectId: String, repoName: String): NodeSizeInfo {
         val projectMetrics = projectService.getProjectMetricsInfo(projectId)
@@ -585,7 +628,7 @@ class RepositoryServiceImpl(
                     operator = "system"
                 )
             )
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             logger.warn("Migrate clean strategy failed: $repo", e)
         }
     }
@@ -742,6 +785,7 @@ class RepositoryServiceImpl(
                     checkReserveDays(it)
                     RuleUtils.checkRuleRegex(it)
                 }
+
                 is Rule.FixedRule -> {
 //                        checkPath(it.wrapperRule, projectId, repoName)
                     checkReserveDays(it.wrapperRule)
@@ -836,7 +880,7 @@ class RepositoryServiceImpl(
         proxyChannelService.deleteProxy(proxyRepository)
         logger.info(
             "Success to delete private proxy channel [${proxy.name}]" +
-                " in repo[${repository.projectId}|${repository.name}]",
+                    " in repo[${repository.projectId}|${repository.name}]",
         )
     }
 

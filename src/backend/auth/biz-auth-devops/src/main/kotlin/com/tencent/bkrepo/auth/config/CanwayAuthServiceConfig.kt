@@ -1,7 +1,11 @@
 package com.tencent.bkrepo.auth.config
 
 import com.tencent.bkrepo.auth.api.CanwayUsermangerClient
-import com.tencent.bkrepo.auth.dao.*
+import com.tencent.bkrepo.auth.dao.AccountDao
+import com.tencent.bkrepo.auth.dao.PermissionDao
+import com.tencent.bkrepo.auth.dao.PersonalPathDao
+import com.tencent.bkrepo.auth.dao.RepoAuthConfigDao
+import com.tencent.bkrepo.auth.dao.UserDao
 import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.general.DevOpsAuthGeneral
 import com.tencent.bkrepo.auth.service.PermissionService

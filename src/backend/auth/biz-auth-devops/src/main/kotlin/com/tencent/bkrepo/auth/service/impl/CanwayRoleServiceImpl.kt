@@ -1,6 +1,9 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.*
+import com.tencent.bkrepo.auth.CI_TENANT
+import com.tencent.bkrepo.auth.ciApi
+import com.tencent.bkrepo.auth.ciAuth
+import com.tencent.bkrepo.auth.TENANT_SCOPECODE
 import com.tencent.bkrepo.auth.dao.UserDao
 import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.model.TRole

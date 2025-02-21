@@ -70,12 +70,11 @@ object DecompressUtils {
         var zipEntry: E
         archiveInputStream.use { archiveEntry ->
             while (archiveInputStream.nextEntry.also { zipEntry = it } != null) {
-                if (!zipEntry.isDirectory) {
-                    val fileName = zipEntry.name.split("/").last()
-                    val fileExtension = fileName.substringAfterLast('.', "")
-                    if (fileExtension in extensions) {
-                        return fileName to streamToString(archiveEntry)
-                    }
+                if (zipEntry.isDirectory) continue
+                val fileName = zipEntry.name.split("/").last()
+                val fileExtension = fileName.substringAfterLast('.', "")
+                if (fileExtension in extensions) {
+                    return fileName to streamToString(archiveEntry)
                 }
             }
         }

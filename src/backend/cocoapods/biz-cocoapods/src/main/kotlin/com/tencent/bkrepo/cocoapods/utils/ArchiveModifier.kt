@@ -147,29 +147,32 @@ object ArchiveModifier {
             if (file.isDirectory) {
                 traverseDirectory(file, podspecList)
             } else {
-                // 如果是 .podspec 或 podspec.json 文件，添加到列表
-                if (file.extension == PodSpecType.POD_SPEC.extendedName
-                    || file.name.contains(PodSpecType.JSON.extendedName)
-                ) {
-                    // 获取上一级文件名 VERSION 和 NAME
-                    val parentDir = file.parentFile
+                readFile(file, podspecList)
+            }
+        }
+    }
+
+    private fun readFile(file: File, podspecList: MutableList<Podspec>) {
+        if (file.extension != PodSpecType.POD_SPEC.extendedName
+            && !file.name.contains(PodSpecType.JSON.extendedName)
+        ) return
+        // 如果是 .podspec 或 podspec.json 文件，添加到列表
+
+        // 获取上一级文件名 VERSION 和 NAME
+        val parentDir = file.parentFile
 //                    val version = parentDir.name // 父目录名称就是 VERSION
 //                    val name = parentDir.parentFile.name // 父目录的父目录名称就是 NAME
-                    val podSpecType = (PodSpecType.matchPath(file.path) ?: PodSpecType.POD_SPEC)
-                    val text = file.readText()
-                    try {
-                        CocoapodsUtil.parseSourceFromContent(text, podSpecType)?.let {
-                            it.apply {
-                                this.file = file
-                                this.fileType = podSpecType
-                            }
-                            podspecList.add(it)
-                        }
-                    } catch (e: Exception) {
-                        logger.error("parse specs content error: ${e.message}...content:$text")
-                    }
-                }
+        val podSpecType = (PodSpecType.matchPath(file.path) ?: PodSpecType.POD_SPEC)
+        val text = file.readText()
+        try {
+            val podspec = CocoapodsUtil.parseSourceFromContent(text, podSpecType) ?: return
+            podspec.apply {
+                this.file = file
+                this.fileType = podSpecType
             }
+            podspecList.add(podspec)
+        } catch (e: Exception) {
+            logger.error("parse specs content error: ${e.message}...content:$text")
         }
     }
 
@@ -294,23 +297,27 @@ object ArchiveModifier {
                 addFileToTar(subFile, tarOut, "$parentDir${file.name}/")
             }
         } else {
-            // 添加文件
-            try {
-                val entry = TarArchiveEntry(file, "$parentDir${file.name}")
-                entry.size = file.length() // 设置文件大小
-                tarOut.putArchiveEntry(entry)
+            addFile(file, tarOut, parentDir)
+        }
+    }
 
-                FileInputStream(file).use { fis ->
-                    val buffer = ByteArray(8192) // 使用 8KB 缓冲区
-                    var len: Int
-                    while (fis.read(buffer).also { len = it } > 0) {
-                        tarOut.write(buffer, 0, len)
-                    }
+    private fun addFile(file: File, tarOut: TarArchiveOutputStream, parentDir: String) {
+        // 添加文件
+        try {
+            val entry = TarArchiveEntry(file, "$parentDir${file.name}")
+            entry.size = file.length() // 设置文件大小
+            tarOut.putArchiveEntry(entry)
+
+            FileInputStream(file).use { fis ->
+                val buffer = ByteArray(8192) // 使用 8KB 缓冲区
+                var len: Int
+                while (fis.read(buffer).also { len = it } > 0) {
+                    tarOut.write(buffer, 0, len)
                 }
-                tarOut.closeArchiveEntry()
-            } catch (e: Exception) {
-                println("Failed to add file to tar: ${e.message}")
             }
+            tarOut.closeArchiveEntry()
+        } catch (e: Exception) {
+            println("Failed to add file to tar: ${e.message}")
         }
     }
 

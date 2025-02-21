@@ -34,7 +34,7 @@ import org.springframework.boot.runApplication
  * cocoapods registry
  */
 @MicroService
-class ConanRegistryApplication
+class CocoapodsRegistryApplication
 fun main(args: Array<String>) {
-    runApplication<ConanRegistryApplication>(*args)
+    runApplication<CocoapodsRegistryApplication>(*args)
 }

@@ -11,6 +11,7 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermission
 import java.security.MessageDigest
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
 object FileUtil {
@@ -41,19 +42,23 @@ object FileUtil {
 
     fun unzip(source: File, target: File) {
         ZipInputStream(FileInputStream(source)).use { zipIn ->
-            var zipEntry = zipIn.nextEntry
-            while (zipEntry != null) {
-                if (zipEntry.isDirectory) {
-                    File(target, zipEntry.name).mkdirs()
-                } else {
-                    val file = File(target, zipEntry.name)
-                    file.outputStream().use { outputStream ->
-                        zipIn.copyTo(outputStream)
-                    }
-                }
-                zipEntry = zipIn.nextEntry
-            }
+            unzipChild(zipIn, target)
             zipIn.closeEntry()
+        }
+    }
+
+    private fun unzipChild(zipIn: ZipInputStream, target: File) {
+        var zipEntry = zipIn.nextEntry
+        while (zipEntry != null) {
+            if (zipEntry.isDirectory) {
+                File(target, zipEntry.name).mkdirs()
+            } else {
+                val file = File(target, zipEntry.name)
+                file.outputStream().use { outputStream ->
+                    zipIn.copyTo(outputStream)
+                }
+            }
+            zipEntry = zipIn.nextEntry
         }
     }
 

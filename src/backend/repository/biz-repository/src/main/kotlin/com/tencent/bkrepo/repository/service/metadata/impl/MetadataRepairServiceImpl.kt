@@ -23,34 +23,34 @@ class MetadataRepairServiceImpl(
         // 进行二进制文件元数据调整
         logger.info("Start adjusting node metadata")
         val projectList = projectDao.findAll()
-        projectList.forEach { project ->
+        for (project in projectList) {
             val nodeList = nodeDao.findFileNode(project.name)
-            if (nodeList.isNotEmpty()) {
-                nodeList.forEach { node ->
-                    if (nodeMetedateUpdate(node)) {
-                        nodeMetadataCount += 1
-                    }
-                }
-            } else {
+            if (nodeList.isEmpty()) {
                 logger.info("[${project.name}] project no node found")
+                continue
+            }
+            nodeList.forEach { node ->
+                if (nodeMetadateUpdate(node)) {
+                    nodeMetadataCount += 1
+                }
             }
         }
         // 进行包元数据调整
         logger.info("Start adjusting packageVersion metadata")
         val packageVersionList = packageVersionDao.findAll()
-        if (packageVersionList.isNotEmpty()) {
-            packageVersionList.forEach { packVersion ->
-                if (nodeMetedateUpdate(packVersion)) {
-                    packageMetadataCount += 1
-                }
-            }
-        } else {
+        if (packageVersionList.isEmpty()) {
             logger.info("no package found")
+            return
+        }
+        packageVersionList.forEach { packVersion ->
+            if (nodeMetadateUpdate(packVersion)) {
+                packageMetadataCount += 1
+            }
         }
         logger.info("Completed [$nodeMetadataCount]nodes and [$packageMetadataCount]packages metadata adjustment")
     }
 
-    fun nodeMetedateUpdate(node: TNode): Boolean {
+    fun nodeMetadateUpdate(node: TNode): Boolean {
         with(node) {
             var isUpdate = false
             this.metadata?.forEach {
@@ -67,11 +67,11 @@ class MetadataRepairServiceImpl(
         }
     }
 
-    fun nodeMetedateUpdate(packVersion: TPackageVersion): Boolean {
+    fun nodeMetadateUpdate(packVersion: TPackageVersion): Boolean {
         with(packVersion) {
             this.metadata.forEach {
                 it.system = true
-                it.display = if (it.key in RESERVED_KEY) false else true
+                it.display = it.key !in RESERVED_KEY
             }
             packageVersionDao.save(this)
             return true

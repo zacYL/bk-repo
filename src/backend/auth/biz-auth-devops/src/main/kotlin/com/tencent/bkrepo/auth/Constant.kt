@@ -1,8 +1,8 @@
 package com.tencent.bkrepo.auth
 
-const val ciAuth = "/ms/auth"
-const val ciUserManager = "/ms/usermanager"
-const val ciApi = "/api"
+const val CI_AUTH = "/ms/auth"
+const val CI_USER_MANAGER = "/ms/usermanager"
+const val CI_API = "/api"
 
 // ci 相关cookie
 const val CI_TENANT = "X-DEVOPS-TENANT-ID"

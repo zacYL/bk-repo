@@ -24,47 +24,45 @@ class ExtUserServiceImpl(
         // 查询集成环境所有用户信息
         val canwayUserList = canwayUsermangerClient.getAllUser(false, null).data
         val canwayUserIdList = canwayUserList?.map { it.id }
+        if (canwayUserIdList.isNullOrEmpty()) return
         // 创建手机号码（防止手机为空情况）
         var telephone = generateRandomPhoneNumber()
         // 创建邮箱（防止邮箱为空情况）
         var emailNumber = 0
         userList.forEach { user ->
-            with(user) {
-                if (canwayUserIdList != null) {
-                    if (userId !in canwayUserIdList) {
-                        val cwTelephone: String = phone.takeIf { !it.isNullOrBlank() } ?: run {
-                            telephone = (telephone.toLong() + 1).toString()
-                            telephone
-                        }
-                        // 创建用户
-                        canwayUsermangerClient.addUsers(
-                            loginUserId = AUTH_ADMIN,
-                            UserRequest(
-                                userInsertVO = UserInsertVO(
-                                    userId = userId,
-                                    displayName = name,
-                                    headPortrait = "",
-                                    email = if (email.isNullOrBlank())generateRandomEmail(emailNumber++) else email!!,
-                                    telephone = cwTelephone
-                                ),
-                                orgIds = listOf("1")
-                            )
-                        )
-                        if (phone.isNullOrBlank()) {
-                            telephone = (telephone.toLong() + 1).toString()
-                        }
-                        // 修改密码
-                        canwayUsermangerClient.passwordUpdate(
-                            loginUserId = AUTH_ADMIN,
-                            userPasswordUpdateVO = UserPasswordUpdateVO(
-                                username = userId,
-                                password = pwd,
-                                isCpackUser = true
-                            )
-                        )
-                        logger.info("[$userId] user completed migration")
-                    }
+            if (user.userId !in canwayUserIdList) {
+                val cwTelephone: String = user.phone.takeIf { !it.isNullOrBlank() } ?: run {
+                    telephone = (telephone.toLong() + 1).toString()
+                    telephone
                 }
+                // 创建用户
+                canwayUsermangerClient.addUsers(
+                    loginUserId = AUTH_ADMIN,
+                    UserRequest(
+                        userInsertVO = UserInsertVO(
+                            userId = user.userId,
+                            displayName = user.name,
+                            headPortrait = "",
+                            email = if (user.email.isNullOrBlank()) generateRandomEmail(emailNumber++)
+                            else user.email!!,
+                            telephone = cwTelephone
+                        ),
+                        orgIds = listOf("1")
+                    )
+                )
+                if (user.phone.isNullOrBlank()) {
+                    telephone = (telephone.toLong() + 1).toString()
+                }
+                // 修改密码
+                canwayUsermangerClient.passwordUpdate(
+                    loginUserId = AUTH_ADMIN,
+                    userPasswordUpdateVO = UserPasswordUpdateVO(
+                        username = user.userId,
+                        password = user.pwd,
+                        isCpackUser = true
+                    )
+                )
+                logger.info("[${user.userId}] user completed migration")
             }
         }
     }

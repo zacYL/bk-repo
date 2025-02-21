@@ -1,8 +1,8 @@
 package com.tencent.bkrepo.auth.service.impl
 
 import com.tencent.bkrepo.auth.CI_TENANT
-import com.tencent.bkrepo.auth.ciApi
-import com.tencent.bkrepo.auth.ciAuth
+import com.tencent.bkrepo.auth.CI_API
+import com.tencent.bkrepo.auth.CI_AUTH
 import com.tencent.bkrepo.auth.TENANT_SCOPECODE
 import com.tencent.bkrepo.auth.dao.UserDao
 import com.tencent.bkrepo.auth.dao.repository.RoleRepository
@@ -125,7 +125,7 @@ class CanwayRoleServiceImpl(
 
     private fun getRequestUrl(uri: String): String {
         val devopsHost = devopsConf.devopsHost
-        return "${devopsHost.removeSuffix("/")}$ciAuth$ciApi$uri"
+        return "${devopsHost.removeSuffix("/")}$CI_AUTH$CI_API$uri"
     }
 
     override fun systemRolesByProjectId(projectId: String): List<Role> {

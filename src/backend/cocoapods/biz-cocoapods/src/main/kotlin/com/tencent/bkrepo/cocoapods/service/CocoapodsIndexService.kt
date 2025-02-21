@@ -36,9 +36,9 @@ import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexTarPath
 import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_GZIP
-import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_ZIP
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
@@ -48,24 +48,24 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriterContext
 import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.encodeDisposition
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder.getResponse
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
-import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
 import java.io.IOException
 import javax.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsIndexService(
-    private val nodeClient: NodeClient,
-    private val repositoryClient: RepositoryClient,
+    private val nodeService: NodeService,
+    private val repositoryService: RepositoryService,
     private val storageManager: StorageManager,
     private val cocoapodsRepoService: CocoapodsRepoService,
-    private val cocoapodsSpecsService:CocoapodsSpecsService,
+    private val cocoapodsSpecsService: CocoapodsSpecsService,
     private val remoteEventJobExecutor: RemoteEventJobExecutor,
     private val artifactResourceWriterContext: ArtifactResourceWriterContext,
 ) {
@@ -74,15 +74,22 @@ class CocoapodsIndexService(
      * 更新远程仓库的podspec 索引
      */
     fun updateRemoteSpecs(projectId: String, repoName: String) {
-        val indexGenerating = cocoapodsRepoService.getStringSetting(projectId, repoName, com.tencent.bkrepo.cocoapods.service.CocoapodsSpecsService.INDEX_GENERATING)
+        val indexGenerating =
+            cocoapodsRepoService.getStringSetting(projectId, repoName, CocoapodsSpecsService.INDEX_GENERATING)
         if (CocoapodsSpecsService.INDEX_GENERATING_VALUE_DOING == indexGenerating) {
             throw ErrorCodeException(CocoapodsMessageCode.COCOAPODS_INDEX_UPDATING_ERROR)
         }
-        remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, SecurityUtils.getUserId()))
+        remoteEventJobExecutor.execute(
+            ObjectBuildUtil.buildCreatedEvent(
+                projectId,
+                repoName,
+                SecurityUtils.getUserId()
+            )
+        )
     }
 
     fun downloadSpecs(projectId: String, repoName: String) {
-        val repoDetail = repositoryClient.getRepoDetail(projectId, repoName).data
+        val repoDetail = repositoryService.getRepoDetail(projectId, repoName)
             ?: throw RepoNotFoundException(repoName)
         val resource = when (repoDetail.category) {
             RepositoryCategory.LOCAL -> {
@@ -94,9 +101,10 @@ class CocoapodsIndexService(
                     prefix = prefix
                 )
                 val nodeMap = nodes.filterNot { it.folder }.associate {
-                    val name = it.fullPath.removePrefix(prefix).ensurePrefix(com.tencent.bkrepo.cocoapods.constant.SPECS)
+                    val name =
+                        it.fullPath.removePrefix(prefix).ensurePrefix(com.tencent.bkrepo.cocoapods.constant.SPECS)
                     name to run {
-                        nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath)
+                        nodeService.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath)
                         storageManager.loadArtifactInputStream(it, repoDetail.storageCredentials)
                             ?: throw ArtifactNotFoundException(it.fullPath)
                     }
@@ -116,11 +124,17 @@ class CocoapodsIndexService(
                 //下载index文件
                 if (cocoapodsSpecsService.indexExist(projectId, repoName).not()) {
                     logger.warn("repo $repoName index file not exist")
-                    remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, SecurityUtils.getUserId()))
+                    remoteEventJobExecutor.execute(
+                        ObjectBuildUtil.buildCreatedEvent(
+                            projectId,
+                            repoName,
+                            SecurityUtils.getUserId()
+                        )
+                    )
                     returnEmptySpec()
                     return
                 }
-                val node = nodeClient.getNodeDetail(projectId, repoName, generateIndexTarPath()).data
+                val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, generateIndexTarPath()))
                     ?: throw NodeNotFoundException(generateIndexTarPath())
                 val inputStream = storageManager.loadArtifactInputStream(node, repoDetail.storageCredentials)
                     ?: throw ArtifactNotFoundException(generateIndexTarPath())
@@ -149,6 +163,7 @@ class CocoapodsIndexService(
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create archive.")
         }
     }
+
     private fun queryNodeDetailList(
         projectId: String,
         repoName: String,
@@ -156,7 +171,7 @@ class CocoapodsIndexService(
     ): List<NodeDetail> {
         var pageNumber = 1
         val nodeDetailList = mutableListOf<NodeDetail>()
-        val count = nodeClient.countFileNode(projectId, repoName, prefix).data ?: 0
+        val count = nodeService.countFileNode(ArtifactInfo(projectId, repoName, prefix))
         do {
             val option = NodeListOption(
                 pageNumber = pageNumber,
@@ -165,8 +180,8 @@ class CocoapodsIndexService(
                 includeMetadata = true,
                 deep = true
             )
-            val records = nodeClient.listNodePage(projectId, repoName, prefix, option).data?.records
-            if (records.isNullOrEmpty()) {
+            val records = nodeService.listNodePage(ArtifactInfo(projectId, repoName, prefix), option).records
+            if (records.isEmpty()) {
                 break
             }
             nodeDetailList.addAll(

@@ -27,7 +27,6 @@
 
 package com.tencent.bkrepo.conan.utils
 
-import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.CharPool.AT
 import com.tencent.bkrepo.common.api.constant.CharPool.COLON
 import com.tencent.bkrepo.common.api.constant.CharPool.HASH_TAG
@@ -44,7 +43,6 @@ import com.tencent.bkrepo.conan.constant.PACKAGES_FOLDER
 import com.tencent.bkrepo.conan.pojo.ConanFileReference
 import com.tencent.bkrepo.conan.pojo.PackageReference
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
-import javax.servlet.http.HttpServletRequest
 
 object PathUtils {
 
@@ -124,6 +122,7 @@ object PathUtils {
                 .toString()
         }
     }
+
     fun extractNameFromReference(input: String): String {
         return input.substringAfter(AT).substringBefore(SLASH)
     }

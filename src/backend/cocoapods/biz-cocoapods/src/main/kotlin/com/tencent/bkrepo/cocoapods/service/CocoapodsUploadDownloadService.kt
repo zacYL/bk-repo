@@ -34,12 +34,12 @@ import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
-import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsUploadDownloadService(
-    private val repositoryClient: RepositoryClient
+    private val repositoryService: RepositoryService
 ) {
     fun upload(cocoapodsArtifactInfo: CocoapodsArtifactInfo, artifactFile: ArtifactFile) {
         val context = ArtifactUploadContext(artifactFile)
@@ -48,7 +48,7 @@ class CocoapodsUploadDownloadService(
 
     fun downloadPackage(cocoapodsArtifactInfo: CocoapodsArtifactInfo) {
         with(cocoapodsArtifactInfo) {
-            val repo = repositoryClient.getRepoDetail(projectId, repoName).data
+            val repo = repositoryService.getRepoDetail(projectId, repoName)
                 ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
             val context = ArtifactDownloadContext(repo = repo)
             ArtifactContextHolder.getRepository().download(context)

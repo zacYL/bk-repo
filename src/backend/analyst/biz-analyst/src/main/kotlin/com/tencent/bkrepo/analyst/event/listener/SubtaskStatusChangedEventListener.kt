@@ -27,10 +27,10 @@
 
 package com.tencent.bkrepo.analyst.event.listener
 
+import com.tencent.bkrepo.analyst.event.DelScanPlanEvent
 import com.tencent.bkrepo.analyst.event.SubtaskStatusChangedEvent
 import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
 import com.tencent.bkrepo.analyst.model.TPlanArtifactLatestSubScanTask
-import com.tencent.bkrepo.analyst.event.DelScanPlanEvent
 import com.tencent.bkrepo.analyst.pojo.request.ArtifactPlanRelationRequest
 import com.tencent.bkrepo.analyst.service.ScanPlanService
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus
@@ -75,7 +75,14 @@ class SubtaskStatusChangedEventListener(
                 if (!qualityRedLine) {
                     addForbidMetadata(this, metadata)
                 }
-                metadata.add(MetadataModel(key = SubScanTaskDefinition::qualityRedLine.name, value = it, system = true, display = false))
+                metadata.add(
+                    MetadataModel(
+                        key = SubScanTaskDefinition::qualityRedLine.name,
+                        value = it,
+                        system = true,
+                        display = false
+                    )
+                )
             }
             saveMetadata(this, metadata)
             logger.info("update project[$projectId] repo[$repoName] fullPath[$fullPath] metadata[$metadata] success")

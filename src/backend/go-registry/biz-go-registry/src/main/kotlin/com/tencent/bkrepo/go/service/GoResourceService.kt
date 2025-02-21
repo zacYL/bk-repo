@@ -36,6 +36,8 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
+import com.tencent.bkrepo.common.metadata.service.packages.PackageService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.info.InfoService
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -50,15 +52,13 @@ import com.tencent.bkrepo.go.pojo.artifact.GoVersionMetadataInfo
 import com.tencent.bkrepo.go.pojo.response.GoRegistrySummary
 import com.tencent.bkrepo.go.pojo.response.GoVersionMetadata
 import com.tencent.bkrepo.go.util.GoUtils
-import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class GoResourceService(
-    private val packageClient: PackageClient,
-    private val repositoryClient: RepositoryClient,
+    private val packageService: PackageService,
+    private val repositoryService: RepositoryService,
     private val infoService: InfoService
 ) : ArtifactService() {
 
@@ -69,8 +69,8 @@ class GoResourceService(
             GoUtils.getNewerClientVersion(HttpContextHolder.getRequest().getHeader(USER_AGENT))?.let {
                 response.setHeader(HEADER_CLI_LATEST, it)
             }
-            val count = packageClient.getPackageCount(projectId, repoName).data ?: 0
-            val repoInfo = repositoryClient.getRepoDetail(projectId, repoName).data
+            val count = packageService.getPackageCount(projectId, repoName)
+            val repoInfo = repositoryService.getRepoDetail(projectId, repoName)
                 ?: throw RepoNotFoundException(artifactInfo.getRepoIdentify())
             return GoRegistrySummary(projectId, repoName, RepositoryType.GO, repoInfo.category, repoInfo.public, count)
         }

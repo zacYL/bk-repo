@@ -12,6 +12,8 @@ import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.common.metadata.model.TPackageVersion
 import com.tencent.bkrepo.common.metadata.model.TRepository
 import com.tencent.bkrepo.common.metadata.service.node.NodeDeleteOperation
+import com.tencent.bkrepo.common.metadata.service.node.NodeSearchService
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.node.NodeStatsOperation
 import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
@@ -19,7 +21,6 @@ import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
-import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.job.clean.CleanRepoTaskScheduler
 import com.tencent.bkrepo.repository.pojo.node.NodeDelete
@@ -32,12 +33,12 @@ import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.service.repo.RepositoryCleanService
 import com.tencent.bkrepo.repository.util.RepoCleanRuleUtils
 import com.tencent.bkrepo.repository.util.RuleUtils
-import org.slf4j.LoggerFactory
-import org.springframework.context.ApplicationEventPublisher
-import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.stream.Collectors
+import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.stereotype.Service
 
 @Service
 class RepositoryCleanServiceImpl(
@@ -47,7 +48,8 @@ class RepositoryCleanServiceImpl(
     private val packageService: PackageService,
     private val nodeDeleteOperation: NodeDeleteOperation,
     private val nodeStatsOperation: NodeStatsOperation,
-    private val nodeClient: NodeClient,
+    private val nodeService: NodeService,
+    private val nodeSearchService: NodeSearchService,
     private val publisher: ApplicationEventPublisher
 ) : RepositoryCleanService {
 
@@ -58,7 +60,7 @@ class RepositoryCleanServiceImpl(
             cleanStrategy?.let {
                 logger.info(
                     "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
-                        "clean strategy autoClean:[${it.autoClean}] status:[${it.status}]"
+                            "clean strategy autoClean:[${it.autoClean}] status:[${it.status}]"
                 )
                 // 自动清理关闭，状态为 WAITING，删除job
                 if (!it.autoClean && it.status == CleanStatus.WAITING) {
@@ -77,7 +79,7 @@ class RepositoryCleanServiceImpl(
             cleanStrategy?.let {
                 logger.info(
                     "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
-                        "clean strategy autoClean:[${it.autoClean}] status:[${it.status}]"
+                            "clean strategy autoClean:[${it.autoClean}] status:[${it.status}]"
                 )
                 execute(repo, it)
             } ?: logger.warn("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy is null")
@@ -152,7 +154,7 @@ class RepositoryCleanServiceImpl(
             if (logger.isDebugEnabled) {
                 logger.debug(
                     "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
-                        "packageName:[${it.name}] rule query result:[$ruleQueryList]"
+                            "packageName:[${it.name}] rule query result:[$ruleQueryList]"
                 )
             }
             listVersion.removeAll(ruleQueryList)
@@ -166,7 +168,7 @@ class RepositoryCleanServiceImpl(
             if (logger.isDebugEnabled) {
                 logger.debug(
                     "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
-                        "delete version collection: $deleteVersions"
+                            "delete version collection: $deleteVersions"
                 )
             }
             deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
@@ -250,10 +252,8 @@ class RepositoryCleanServiceImpl(
         flatten: Map<String, Rule.NestedRule>,
         pageNumber: Int = 1
     ) {
-        val nodelist = nodeClient.listNodePage(
-            projectId = projectId,
-            repoName = repoName,
-            path = path,
+        val nodelist = nodeService.listNodePage(
+            artifact = ArtifactInfo(projectId, repoName, path),
             option = NodeListOption(
                 pageNumber = pageNumber,
                 pageSize = cleanPageSize,
@@ -262,29 +262,27 @@ class RepositoryCleanServiceImpl(
                 sortProperty = listOf(TNode::id.name),
                 direction = listOf(Sort.Direction.ASC.name)
             )
-        ).data?.records
-        if (nodelist != null) {
-            logger.info("executeNodeCleanV2: [$projectId/$repoName$path], node size: ${nodelist.size}")
-            nodelist.forEach {
-                if (it.folder) {
-                    executeNodeCleanV2(it.projectId, it.repoName, it.fullPath, flatten)
-                } else {
-                    if (!RepoCleanRuleUtils.needReserveWrapper(it, flatten)) {
-                        try {
-                            logger.info("executeNodeCleanV2: will delete node: " +
-                                    "[${it.projectId}/${it.repoName}/${it.fullPath}]")
-                            nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
-                        } catch (e: Exception) {
-                            logger.error("executeNodeCleanV2: delete node failed, node: $it", e)
-                        }
+        ).records
+        logger.info("executeNodeCleanV2: [$projectId/$repoName$path], node size: ${nodelist.size}")
+        nodelist.forEach {
+            if (it.folder) {
+                executeNodeCleanV2(it.projectId, it.repoName, it.fullPath, flatten)
+            } else {
+                if (!RepoCleanRuleUtils.needReserveWrapper(it, flatten)) {
+                    try {
+                        logger.info(
+                            "executeNodeCleanV2: will delete node: " +
+                                    "[${it.projectId}/${it.repoName}/${it.fullPath}]"
+                        )
+                        nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
+                    } catch (e: Exception) {
+                        logger.error("executeNodeCleanV2: delete node failed, node: $it", e)
                     }
                 }
             }
-            if (nodelist.size >= cleanPageSize) {
-                executeNodeCleanV2(projectId, repoName, path, flatten, pageNumber + 1)
-            }
-        } else {
-            logger.warn("list node page is null")
+        }
+        if (nodelist.size >= cleanPageSize) {
+            executeNodeCleanV2(projectId, repoName, path, flatten, pageNumber + 1)
         }
     }
 
@@ -303,10 +301,10 @@ class RepositoryCleanServiceImpl(
             select = null,
             rule = newRule
         )
-        var nodePage = nodeClient.search(queryModel).data
-        nodePage?.let {
-            while (nodePage!!.records.isNotEmpty()) {
-                nodePage!!.records.map {
+        var nodePage = nodeSearchService.searchWithoutCount(queryModel)
+        nodePage.let {
+            while (nodePage.records.isNotEmpty()) {
+                nodePage.records.map {
                     val projectId = it[TNode::projectId.name] as String
                     val repoName = it[TNode::repoName.name] as String
                     val fullPath = it[TNode::fullPath.name] as String
@@ -329,7 +327,7 @@ class RepositoryCleanServiceImpl(
                 }
                 pageNumber += 1
                 queryModel.page = PageLimit(pageNumber, DEFAULT_PAGE_SIZE)
-                nodePage = nodeClient.search(queryModel).data
+                nodePage = nodeSearchService.searchWithoutCount(queryModel)
             }
         }
         return result

@@ -31,11 +31,12 @@
 
 package com.tencent.bkrepo.cocoapods.utils
 
+import ArchiveModifier
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
 import com.tencent.bkrepo.cocoapods.model.TCocoapodsRemotePackage.Source
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecSourceType
+import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
 import org.apache.commons.lang3.StringUtils
 
 object CocoapodsUtil {
@@ -61,7 +62,8 @@ object CocoapodsUtil {
                 // 检查是否到达定义结束，以 `}` 结束
                 if (trimmedLine.endsWith("}")) {
                     // 替换 `s.source` 的内容,获取起始行的缩进
-                    val indent = lines[startIndex!!].substring(0, lines[startIndex].indexOf(lines[startIndex].trimStart()))
+                    val indent =
+                        lines[startIndex!!].substring(0, lines[startIndex].indexOf(lines[startIndex].trimStart()))
                     lines[startIndex] = newSource(indent) // 使用新的 source 内容替换起始行
                     for (j in startIndex + 1..i) {
                         lines[j] = "" // 清空多行定义的剩余部分
@@ -107,10 +109,10 @@ object CocoapodsUtil {
         for (line in lines) {
             val sourceLine = line.trim()
             val key = line.substringBefore("=")
-            if (key.contains(".name")){
+            if (key.contains(".name")) {
                 name = getValueFromPodspecLine(line) ?: break
             }
-            if (key.contains(".version")){
+            if (key.contains(".version")) {
                 version = getValueFromPodspecLine(line) ?: break
             }
 
@@ -118,7 +120,7 @@ object CocoapodsUtil {
             if (sourceLine.contains(":http")) {
                 type = PodSpecSourceType.HTTP.name
                 url = getByRegex("http", sourceLine)
-            }else {
+            } else {
                 // 如果是 Git 源
                 if (sourceLine.contains(":git")) {
                     type = PodSpecSourceType.GIT.name
@@ -157,9 +159,9 @@ object CocoapodsUtil {
             url = sourceJson.get("http")?.asString
             Source(PodSpecSourceType.HTTP.name, url.toString(), null)
         }
-        return if (name != null && version != null && url != null){
-             ArchiveModifier.Podspec(name, version, source, null)
-        }else {
+        return if (name != null && version != null && url != null) {
+            ArchiveModifier.Podspec(name, version, source, null)
+        } else {
             null
         }
     }
@@ -178,7 +180,8 @@ object CocoapodsUtil {
     private fun getValueFromPodspecLine(line: String?): String? {
         return line?.split("=")?.last()?.trim()?.removeSurrounding("\"")?.removeSurrounding("'")
     }
-    private fun getByRegex(key:String,line:String): String? {
+
+    private fun getByRegex(key: String, line: String): String? {
         val urlMatch = Regex(":$key\\s*=>\\s*['\"]([^'\"]+)['\"]").find(line)
         return urlMatch?.groupValues?.get(1)
     }
@@ -186,6 +189,6 @@ object CocoapodsUtil {
     private fun resolveTag(template: String, version: String): String {
         // 使用正则表达式来替换 `#{}` 中的内容
         val regex = Regex("""#\{([^}]+)}""")
-        return regex.replace(template,version)
+        return regex.replace(template, version)
     }
 }

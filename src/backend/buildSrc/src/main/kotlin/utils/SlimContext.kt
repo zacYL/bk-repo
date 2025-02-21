@@ -1,6 +1,5 @@
 package utils
 
-import org.gradle.api.Project
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
@@ -9,7 +8,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.time.LocalDateTime
-import java.util.Base64
+import java.util.*
+import org.gradle.api.Project
 
 class SlimContext(
     val project: Project,
@@ -120,11 +120,15 @@ class SlimContext(
             val md5JarName = "${libJar.nameWithoutExtension}--$md5.jar"
             if (leafModules.any { module -> libJar.name.contains(module, ignoreCase = true) }) {
                 jarsPrivateDependencies.append(md5JarName).append("\n")
-                Files.move(libJar.toPath(), jarPrivateDir.resolve(md5JarName).toPath(), StandardCopyOption.REPLACE_EXISTING)
+                Files.move(
+                    libJar.toPath(), jarPrivateDir.resolve(md5JarName).toPath(), StandardCopyOption.REPLACE_EXISTING
+                )
                 Files.createSymbolicLink(libJar.toPath(), Paths.get("../../jars-private/$md5JarName"))
             } else {
                 jarsPublicDependencies.append(md5JarName).append("\n")
-                Files.move(libJar.toPath(), jarPublicDir.resolve(md5JarName).toPath(), StandardCopyOption.REPLACE_EXISTING)
+                Files.move(
+                    libJar.toPath(), jarPublicDir.resolve(md5JarName).toPath(), StandardCopyOption.REPLACE_EXISTING
+                )
                 Files.createSymbolicLink(libJar.toPath(), Paths.get("../../../jars-public/$md5JarName"))
             }
         }
@@ -159,7 +163,8 @@ class SlimContext(
     private fun copyHelmCharts(targetPath: String) {
         Paths.get(targetPath, "helm-charts", "templates", serviceName).toFile().mkdirs()
         packageFiles.helmChartsFilesDir.listFiles { _, name -> name.endsWith(".yaml") }?.forEach {
-            val newFile = Paths.get(targetPath, "helm-charts", "templates", serviceName, "$serviceName-${it.name}").toFile()
+            val newFile =
+                Paths.get(targetPath, "helm-charts", "templates", serviceName, "$serviceName-${it.name}").toFile()
             renderHelmChart(it, newFile)
         }
     }
@@ -206,7 +211,8 @@ class SlimContext(
         // helm-chart
         val serviceYml = Paths.get(packageFiles.templatesFilesDir.absolutePath, "helm-charts#build#cpack.yaml").toFile()
         val serviceNewName = "helm-charts#build#$serviceName.yaml"
-        val newServiceYml = Paths.get(tarFiles.k8sDir.absolutePath, "support-files", "templates", serviceNewName).toFile()
+        val newServiceYml =
+            Paths.get(tarFiles.k8sDir.absolutePath, "support-files", "templates", serviceNewName).toFile()
         newServiceYml.writeText(
             serviceYml.readText()
                 .replace("cpack", serviceName)
@@ -253,7 +259,11 @@ class SlimContext(
 
         val responseCode = connection.responseCode
         if (responseCode != HttpURLConnection.HTTP_OK) {
-            throw RuntimeException("下载制品[$path]失败: ${connection.errorStream.bufferedReader().use { it.readText() }}")
+            throw RuntimeException(
+                "下载制品[$path]失败: ${
+                    connection.errorStream.bufferedReader().use { it.readText() }
+                }"
+            )
         }
         connection.responseMessage
         // 将输入流写入文件

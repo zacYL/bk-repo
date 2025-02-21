@@ -19,9 +19,9 @@ import com.tencent.bkrepo.common.cpack.service.NotifyService
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.DevopsMailMessage
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.project.ProjectService
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.ProjectClient
 import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mail.javamail.JavaMailSender
@@ -31,11 +31,11 @@ import org.springframework.stereotype.Service
 @Service
 class MailServiceImpl(
     private val mailSender: JavaMailSender,
-    private val nodeClient: NodeClient,
+    private val nodeService: NodeService,
     private val temporaryTokenClient: ServiceTemporaryTokenClient,
     private val userService: ServiceUserClient,
     private val mailConf: CpackMailConf,
-    private val projectClient: ProjectClient,
+    private val projectService: ProjectService,
     private val cpackConf: CpackConf
 ) : NotifyService {
 
@@ -45,12 +45,9 @@ class MailServiceImpl(
     override fun fileShare(userId: String, content: String) {
         val artifactInfo = resolveArtifactInfo(content)
         val nodeDetail =
-            nodeClient.getNodeDetail(
-                artifactInfo.projectId,
-                artifactInfo.repoName,
-                artifactInfo.getArtifactFullPath()
-            ).data ?: throw ArtifactNotFoundException(artifactInfo.getArtifactFullPath())
-        val projectDisplayName = projectClient.getProjectInfo(artifactInfo.projectId).data!!.displayName
+            nodeService.getNodeDetail(artifactInfo)
+                ?: throw ArtifactNotFoundException(artifactInfo.getArtifactFullPath())
+        val projectDisplayName = projectService.getProjectInfo(artifactInfo.projectId)!!.displayName
         val fileShareInfo = FileShareInfo(
             fileName = nodeDetail.name,
             md5 = nodeDetail.md5 ?: "Can not found md5 value",
@@ -87,12 +84,9 @@ class MailServiceImpl(
     override fun fileShare(userId: String, content: String, users: List<String>) {
         val artifactInfo = resolveArtifactInfo(content)
         val nodeDetail =
-            nodeClient.getNodeDetail(
-                artifactInfo.projectId,
-                artifactInfo.repoName,
-                artifactInfo.getArtifactFullPath()
-            ).data ?: throw throw ArtifactNotFoundException(artifactInfo.getArtifactFullPath())
-        val projectDisplayName = projectClient.getProjectInfo(artifactInfo.projectId).data!!.displayName
+            nodeService.getNodeDetail(artifactInfo)
+                ?: throw throw ArtifactNotFoundException(artifactInfo.getArtifactFullPath())
+        val projectDisplayName = projectService.getProjectInfo(artifactInfo.projectId)!!.displayName
         val fileShareInfo = FileShareInfo(
             fileName = nodeDetail.name,
             md5 = nodeDetail.md5 ?: "Can not found md5 value",

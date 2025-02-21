@@ -12,8 +12,8 @@ const val REPO_PATH_SCOPE_CODE = "bkrepo"
 const val BKUSERNAME = "bk_username"
 const val CANWAY_PERMISSION = "请在ci权限中心授权"
 
-const val repository = "/repository"
-const val web = "/web"
+const val REPOSITORY = "/repository"
+const val WEB = "/web"
 
 const val DEPLOY_CANWAY = "canway"
 const val DEPLOY_CPACK = "cpack"

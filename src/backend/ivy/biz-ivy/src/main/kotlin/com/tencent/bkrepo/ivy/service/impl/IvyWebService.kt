@@ -27,36 +27,41 @@
 
 package com.tencent.bkrepo.ivy.service.impl
 
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.ivy.artifact.IvyArtifactInfo
 import com.tencent.bkrepo.ivy.enum.IvyMessageCode.IVY_ARTIFACT_NOT_FOUND
 import com.tencent.bkrepo.ivy.exception.IvyArtifactNotFoundException
 import com.tencent.bkrepo.ivy.pojo.BasicInfo
 import com.tencent.bkrepo.ivy.pojo.PackageVersionInfo
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
+import java.time.format.DateTimeFormatter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.format.DateTimeFormatter
 
 @Service
 class IvyWebService(
     private val ivyPackageService: IvyPackageService,
-    private val packageClient: PackageClient,
-    private val nodeClient: NodeClient
+    private val packageService: PackageService,
+    private val nodeService: NodeService
 ) {
 
     fun deletePackage(artifactInfo: IvyArtifactInfo, packageKey: String) {
         logger.info("ivy delete package...")
         with(artifactInfo) {
-            val versions = packageClient.listAllVersion(projectId, repoName, packageKey).data
-            versions?.forEach {
-                packageClient.deleteVersion(projectId, repoName, packageKey, it.name)
-            } ?: logger.warn("[$projectId/$repoName/$packageKey] version not found")
-            packageClient.deletePackage(projectId, repoName, packageKey)
+            val versions = packageService.listAllVersion(projectId, repoName, packageKey, VersionListOption())
+            if (versions.isEmpty()) {
+                logger.warn("[$projectId/$repoName/$packageKey] version not found")
+            }
+            versions.forEach {
+                packageService.deleteVersion(projectId, repoName, packageKey, it.name)
+            }
+            packageService.deletePackage(projectId, repoName, packageKey)
             ivyPackageService.deletePackageFile(artifactInfo, versions)
         }
     }
@@ -64,11 +69,11 @@ class IvyWebService(
     fun deleteVersion(artifactInfo: IvyArtifactInfo, packageKey: String, version: String) {
         logger.info("ivy delete version...")
         with(artifactInfo) {
-            val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data ?: run {
+            val packageVersion = packageService.findVersionByName(projectId, repoName, packageKey, version) ?: run {
                 logger.warn("packageKey [$packageKey] don't found.")
                 throw PackageNotFoundException(packageKey)
             }
-            packageClient.deleteVersion(projectId, repoName, packageKey, version)
+            packageService.deleteVersion(projectId, repoName, packageKey, version)
             ivyPackageService.deleteVersionFile(artifactInfo, packageVersion)
             logger.info("delete artifactInfo:[$artifactInfo],packageVersion:[$packageVersion]")
         }
@@ -80,14 +85,15 @@ class IvyWebService(
         version: String,
     ): PackageVersionInfo {
         with(ivyArtifactInfo) {
-            val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data ?: run {
+            val packageVersion = packageService.findVersionByName(projectId, repoName, packageKey, version) ?: run {
                 logger.warn("packageKey [$packageKey] don't found.")
                 throw PackageNotFoundException(packageKey)
             }
-            val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, packageVersion.contentPath!!).data ?: run {
-                logger.warn("node [${packageVersion.contentPath}] don't found.")
-                throw IvyArtifactNotFoundException(IVY_ARTIFACT_NOT_FOUND)
-            }
+            val nodeDetail =
+                nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, packageVersion.contentPath!!)) ?: run {
+                    logger.warn("node [${packageVersion.contentPath}] don't found.")
+                    throw IvyArtifactNotFoundException(IVY_ARTIFACT_NOT_FOUND)
+                }
             return PackageVersionInfo(buildBasicInfo(nodeDetail, packageVersion), packageVersion.packageMetadata)
         }
     }

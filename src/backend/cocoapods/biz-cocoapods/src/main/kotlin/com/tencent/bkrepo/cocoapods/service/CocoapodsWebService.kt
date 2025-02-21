@@ -27,34 +27,36 @@
 
 package com.tencent.bkrepo.cocoapods.service
 
-import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsCommonException
+import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.pojo.user.PackageVersionInfo
 import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil.buildBasicInfo
 import com.tencent.bkrepo.cocoapods.utils.PathUtil
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsWebService(
-    private val nodeClient: NodeClient,
-    private val packageClient: PackageClient,
+    private val nodeService: NodeService,
+    private val packageService: PackageService,
     private val cocoapodsPackageService: CocoapodsPackageService,
 ) {
     //TODO 逻辑待优化。当前为遍历版本，取其中一个的contentPath解析出orgName然后删除整个路径
     fun deletePackage(artifactInfo: CocoapodsArtifactInfo, packageKey: String) {
         logger.info("cocoapods delete package...")
         with(artifactInfo) {
-            packageClient.listAllVersion(projectId, repoName, packageKey).data?.forEach {
-                packageClient.deleteVersion(projectId, repoName, packageKey, it.name)
-                artifactInfo.orgName = PathUtil.getOrgNameByVersion(it);
-            } ?: logger.warn("[$projectId/$repoName/$packageKey] version not found")
-            packageClient.deletePackage(projectId, repoName, packageKey)
+            packageService.listAllVersion(projectId, repoName, packageKey, VersionListOption()).forEach {
+                packageService.deleteVersion(projectId, repoName, packageKey, it.name)
+                artifactInfo.orgName = PathUtil.getOrgNameByVersion(it)
+            }
+            packageService.deletePackage(projectId, repoName, packageKey)
             name = PackageKeys.resolveCocoapods(packageKey)
             cocoapodsPackageService.deletePackageFile(artifactInfo)
         }
@@ -65,11 +67,12 @@ class CocoapodsWebService(
         with(artifactInfo) {
             //直接从packageKey解析制品包名称
             name = PackageKeys.resolveCocoapods(packageKey)
-            val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data ?: run {
-                logger.warn("packageKey [$packageKey] don't found.")
-                throw PackageNotFoundException(packageKey)
-            }
-            packageClient.deleteVersion(projectId, repoName, packageKey, version)
+            val packageVersion =
+                packageService.findVersionByName(projectId, repoName, packageKey, version) ?: run {
+                    logger.warn("packageKey [$packageKey] don't found.")
+                    throw PackageNotFoundException(packageKey)
+                }
+            packageService.deleteVersion(projectId, repoName, packageKey, version)
             cocoapodsPackageService.deleteVersionFile(artifactInfo, packageVersion)
             logger.info("delete artifactInfo:[$artifactInfo],packageVersion:[$packageVersion]")
         }
@@ -81,14 +84,16 @@ class CocoapodsWebService(
         version: String,
     ): PackageVersionInfo {
         with(cocoapodsArtifactInfo) {
-            val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data ?: run {
-                logger.warn("packageKey [$packageKey] don't found.")
-                throw PackageNotFoundException(packageKey)
-            }
-            val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, packageVersion.contentPath!!).data ?: run {
-                logger.warn("node [${packageVersion.contentPath}] don't found.")
-                throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
-            }
+            val packageVersion =
+                packageService.findVersionByName(projectId, repoName, packageKey, version) ?: run {
+                    logger.warn("packageKey [$packageKey] don't found.")
+                    throw PackageNotFoundException(packageKey)
+                }
+            val nodeDetail =
+                nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, packageVersion.contentPath!!)) ?: run {
+                    logger.warn("node [${packageVersion.contentPath}] don't found.")
+                    throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
+                }
             return PackageVersionInfo(buildBasicInfo(nodeDetail, packageVersion), packageVersion.packageMetadata)
         }
     }

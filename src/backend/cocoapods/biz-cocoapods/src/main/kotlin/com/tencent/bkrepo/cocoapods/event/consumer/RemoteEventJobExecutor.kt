@@ -40,11 +40,11 @@ import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.lock.service.LockOperation
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.service.util.okhttp.BasicAuthInterceptor
 import com.tencent.bkrepo.common.service.util.okhttp.HttpClientBuilderFactory
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import java.io.IOException
 import java.util.concurrent.Future
 import java.util.concurrent.ThreadPoolExecutor
@@ -59,7 +59,7 @@ import org.springframework.stereotype.Component
 class RemoteEventJobExecutor(
     private val lockOperation: LockOperation,
     private val cocoapodsSpecsService: CocoapodsSpecsService,
-    private val repositoryClient: RepositoryClient,
+    private val repositoryService: RepositoryService,
     private val cocoapodsProperties: CocoapodsProperties
 ) {
     private val threadPoolExecutor: ThreadPoolExecutor = EventHandlerThreadPoolExecutor.instance
@@ -168,7 +168,7 @@ class RemoteEventJobExecutor(
             logger.info("repo create event: $event")
             val lockKey = "$LOCK_PREFIX:init_specs:$projectId:$repoName"
             lockAction(lockKey) {
-                repositoryClient.getRepoInfo(projectId, repoName).data?.let { repoInfo ->
+                repositoryService.getRepoInfo(projectId, repoName)?.let { repoInfo ->
                     when (repoInfo.category) {
                         RepositoryCategory.LOCAL -> {
                             cocoapodsSpecsService.initSpecs(projectId, repoName)

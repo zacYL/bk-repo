@@ -36,7 +36,6 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDeleteResult
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -71,7 +70,7 @@ import org.springframework.web.bind.annotation.RestController
 class NodeController(
     private val nodeService: NodeService,
     private val nodeSearchService: NodeSearchService,
-) : NodeClient {
+) : com.tencent.bkrepo.repository.api.NodeService {
 
     override fun getNodeDetail(projectId: String, repoName: String, fullPath: String): Response<NodeDetail?> {
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, fullPath)

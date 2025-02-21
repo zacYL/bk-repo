@@ -1,6 +1,10 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.api.*
+import com.tencent.bkrepo.auth.api.CanwayCustomMigrationClient
+import com.tencent.bkrepo.auth.api.CanwayCustomPermissionClient
+import com.tencent.bkrepo.auth.api.CanwayCustomRoleClient
+import com.tencent.bkrepo.auth.api.CanwayProjectClient
+import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
@@ -68,7 +72,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.util.*
 
 @Service
 class ExtPermissionServiceImpl(
@@ -333,7 +336,7 @@ class ExtPermissionServiceImpl(
         return permission.groupBy { it.repos.first() }.map { group ->
             RepoPathResourceTypeInstance(
                 group.key,
-                repoMap[group.key]?.type?.name?.lowercase(Locale.getDefault()) ?: "",
+                repoMap[group.key]?.type?.name?.lowercase() ?: "",
                 group.value.map { RepoPathItem(it.id!!, it.permName) }
             )
         }.filter {

@@ -3,7 +3,11 @@ package com.tencent.bkrepo.auth.service.impl
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
 import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
-import com.tencent.bkrepo.auth.dao.*
+import com.tencent.bkrepo.auth.dao.AccountDao
+import com.tencent.bkrepo.auth.dao.PermissionDao
+import com.tencent.bkrepo.auth.dao.PersonalPathDao
+import com.tencent.bkrepo.auth.dao.RepoAuthConfigDao
+import com.tencent.bkrepo.auth.dao.UserDao
 import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.general.DevOpsAuthGeneral
 import com.tencent.bkrepo.auth.message.AuthMessageCode
@@ -26,7 +30,6 @@ import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
-import java.util.*
 import java.util.stream.Collectors
 
 class CanwayPermissionServiceImpl(
@@ -135,7 +138,7 @@ class CanwayPermissionServiceImpl(
                             )
                             val pathReadPermission =
                                 repoPathCollectPermission.filter {
-                                    it.actionCode == PermissionAction.READ.name.lowercase(Locale.getDefault())
+                                    it.actionCode == PermissionAction.READ.id()
                                 }
                             return pathReadPermission.isNotEmpty()
                         } else {
@@ -294,7 +297,7 @@ class CanwayPermissionServiceImpl(
                         userId = userId,
                         instanceId = repoName,
                         resourceCode = RESOURCECODE,
-                        actionCodes = listOf(action.toString().lowercase(Locale.getDefault()))
+                        actionCodes = listOf(action.id())
                     )
                 )
             ) {
@@ -312,7 +315,7 @@ class CanwayPermissionServiceImpl(
         )
 
         val repoPathCollectionsIds =
-            repoPathPermissions.filter { it.actionCode == action.name.lowercase(Locale.getDefault()) }
+            repoPathPermissions.filter { it.actionCode == action.id() }
                 .map { it.instanceId }
         val authPathCollections = permissionDao.findByIdIn(repoPathCollectionsIds)
         authPathCollections.groupBy { it.repos.first() }.map { repoGroup ->

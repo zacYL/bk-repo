@@ -21,9 +21,9 @@ import org.springframework.stereotype.Service
 @Service
 @Primary
 class MavenCompositeRepository(
-        private val mavenLocalRepository: MavenLocalRepository,
-        private val mavenRemoteRepository: MavenRemoteRepository,
-        proxyChannelService: ProxyChannelService
+    private val mavenLocalRepository: MavenLocalRepository,
+    private val mavenRemoteRepository: MavenRemoteRepository,
+    proxyChannelService: ProxyChannelService
 ) : CompositeRepository(mavenLocalRepository, mavenRemoteRepository, proxyChannelService) {
 
     @Suppress("TooGenericExceptionCaught")
@@ -69,11 +69,10 @@ class MavenCompositeRepository(
         val proxyChannelList = getProxyChannelList(context)
         for (setting in proxyChannelList) {
             try {
-                action(getContextFromProxyChannel(context, setting))?.let {
-                    // 无论请求是否成功, 都会返回kotlin.Unit
-                    if (it != Unit) {
-                        return it
-                    }
+                val result = action(getContextFromProxyChannel(context, setting))
+                // 无论请求是否成功, 都会返回kotlin.Unit
+                if (result != null && result != Unit) {
+                    return result
                 }
             } catch (downloadException: ArtifactNotInWhitelistException) {
                 throw ArtifactNotInWhitelistException()

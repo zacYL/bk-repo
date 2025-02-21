@@ -98,9 +98,7 @@ class RemoteEventJobExecutor(
      * 提交任务到线程池执行
      * @param action 执行函数
      */
-    protected fun submit(
-        action: () -> Unit,
-    ): Future<ExecutionResult> {
+    protected fun submit(action: () -> Unit): Future<ExecutionResult> {
         return threadPoolExecutor.submit<ExecutionResult> {
             try {
                 val status = ExecutionStatus.SUCCESS
@@ -128,37 +126,37 @@ class RemoteEventJobExecutor(
     }
 
     private fun replicaHandle(event: ArtifactEvent) {
-        with(event) {
-            val domain = event.data["domain"] as? String
-                ?: throw IllegalArgumentException("domain not found in event data")
-            logger.info("replica from ${cocoapodsProperties.domain} to $domain")
-            val httpClient = HttpClientBuilderFactory
-                .create()
-                .addInterceptor(BasicAuthInterceptor(data["username"] as String, data["password"] as String))
-                .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
-                .connectTimeout(CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
-                .build()
+        val domain = event.data["domain"] as? String
+            ?: throw IllegalArgumentException("domain not found in event data")
+        logger.info("replica from ${cocoapodsProperties.domain} to $domain")
+        val httpClient = HttpClientBuilderFactory
+            .create()
+            .addInterceptor(BasicAuthInterceptor(event.data["username"] as String, event.data["password"] as String))
+            .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
+            .connectTimeout(CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
+            .build()
 //        cocoapodsReplicaService.resolveIndexFile(event)
 
-            // 将 ArtifactEvent 对象转换为 JSON 字符串
-            val eventJson = gson.toJson(event)
+        // 将 ArtifactEvent 对象转换为 JSON 字符串
+        val eventJson = gson.toJson(event)
 
-            val mediaType = "application/json".toMediaTypeOrNull()
-            val requestBody = eventJson.toRequestBody(mediaType)
-            val path = COCOAPODS_REPLICA_RESOLVE.replace("{projectId}", projectId).replace("{repoName}", repoName)
-            val request = Request.Builder()
-                .url(domain + "/cocoapods" + path)
-                .post(requestBody)
-                .build()
-            try {
-                httpClient.newCall(request).execute().use { response ->
-                    if (response.isSuccessful) {
-                        logger.info("response:${response.body!!.string()}")
-                    }
+        val mediaType = "application/json".toMediaTypeOrNull()
+        val requestBody = eventJson.toRequestBody(mediaType)
+        val path = COCOAPODS_REPLICA_RESOLVE.replace(
+            "{projectId}", event.projectId
+        ).replace("{repoName}", event.repoName)
+        val request = Request.Builder()
+            .url(domain + "/cocoapods" + path)
+            .post(requestBody)
+            .build()
+        try {
+            httpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    logger.info("response:${response.body!!.string()}")
                 }
-            } catch (e: IOException) {
-                e.printStackTrace()
             }
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 

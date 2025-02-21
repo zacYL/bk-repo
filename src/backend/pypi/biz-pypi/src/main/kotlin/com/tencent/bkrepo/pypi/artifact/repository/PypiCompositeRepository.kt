@@ -71,11 +71,10 @@ class PypiCompositeRepository(
         val proxyChannelList = getProxyChannelList(context)
         for (setting in proxyChannelList) {
             try {
-                action(getContextFromProxyChannel(context, setting))?.let {
-                    // 无论请求是否成功, 都会返回kotlin.Unit
-                    if (it != Unit && it != "") {
-                        return it
-                    }
+                val result = action(getContextFromProxyChannel(context, setting))
+                // 无论请求是否成功, 都会返回kotlin.Unit
+                if (result != null && result != Unit) {
+                    return result
                 }
             } catch (ignored: Exception) {
                 logger.warn("Failed to execute map with channel ${setting.name}", ignored)

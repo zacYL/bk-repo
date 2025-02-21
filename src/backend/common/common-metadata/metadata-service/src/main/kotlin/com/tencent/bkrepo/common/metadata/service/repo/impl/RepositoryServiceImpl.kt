@@ -732,21 +732,20 @@ class RepositoryServiceImpl(
      * 2.检查规则中的目录是否存在
      */
     private fun checkMetadataRule(rule: Rule?, projectId: String, repoName: String, paths: MutableList<String>) {
-        if (rule is Rule.NestedRule && rule.rules.isNotEmpty()) {
-            rule.rules.forEach {
-                when (it) {
-                    is Rule.NestedRule -> checkMetadataRule(it, projectId, repoName, paths)
-                    is Rule.QueryRule -> {
+        if (rule !is Rule.NestedRule || rule.rules.isEmpty()) return
+        rule.rules.forEach {
+            when (it) {
+                is Rule.NestedRule -> checkMetadataRule(it, projectId, repoName, paths)
+                is Rule.QueryRule -> {
 //                        checkPath(it, projectId, repoName)
-                        if (it.field == "path") paths.add(it.value as String)
-                        checkReserveDays(it)
-                        RuleUtils.checkRuleRegex(it)
-                    }
-                    is Rule.FixedRule -> {
+                    if (it.field == "path") paths.add(it.value as String)
+                    checkReserveDays(it)
+                    RuleUtils.checkRuleRegex(it)
+                }
+                is Rule.FixedRule -> {
 //                        checkPath(it.wrapperRule, projectId, repoName)
-                        checkReserveDays(it.wrapperRule)
-                        RuleUtils.checkRuleRegex(it.wrapperRule)
-                    }
+                    checkReserveDays(it.wrapperRule)
+                    RuleUtils.checkRuleRegex(it.wrapperRule)
                 }
             }
         }

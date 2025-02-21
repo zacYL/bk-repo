@@ -142,6 +142,7 @@ import java.io.ByteArrayOutputStream
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 import org.apache.commons.lang3.StringUtils
 import org.apache.maven.artifact.repository.metadata.Metadata
@@ -399,62 +400,7 @@ class MavenLocalRepository(
                     "in repo ${context.artifactInfo.getRepoIdentify()}"
         )
         if (matcher.matches()) {
-            var packaging = matcher.group(2)
-            logger.info("File's package is $packaging")
-
-            val fileSuffix = packaging
-            val model: Model? = if (packaging == "pom") {
-                val mavenPomModel = context.getArtifactFile().getInputStream().use { MavenXpp3Reader().read(it) }
-                val version = if (mavenPomModel.version == null) {
-                    mavenPomModel.parent.version
-                } else {
-                    mavenPomModel.version
-                }
-                val verNotBlank = StringUtils.isNotBlank(version)
-                val isPom = mavenPomModel.packaging.equals("pom", ignoreCase = true)
-                if (!verNotBlank || !isPom) {
-                    packaging = mavenPomModel.packaging
-                }
-                mavenPomModel
-            } else {
-                context.getArtifactFile().apply {
-                    if (this.getFile() == null) this.flushToFile()
-                }
-                val file = context.getArtifactFile().getFile()!!
-                // todo pom.xml 可能为空
-                // reference: org.springframework:spring-webmvc:4.3.7.RELEASE
-                try {
-                    JarUtils.parseModelInJar(file)
-                } catch (e: JarFormatException) {
-                    null
-                }
-            }
-            val isArtifact = (packaging == fileSuffix)
-            logger.info("Current file is artifact: $isArtifact")
-            val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC(model)
-            val node = buildMavenArtifactNode(context, packaging, mavenGavc)
-            storageManager.storeArtifactFile(
-                request = node,
-                artifactFile = context.getArtifactFile(),
-                storageCredentials = context.storageCredentials
-            )
-            context.putAttribute(FULL_PATH, node.fullPath)
-            if (isArtifact) {
-                createMavenVersion(context, mavenGavc, node.fullPath)
-                // 记录依赖信息
-                model?.let { mavenExtService.addVersionDependents(mavenGavc, it, context.projectId, context.repoName) }
-            }
-            // 更新包各模块版本最新记录
-            logger.info("Prepare to create maven metadata....")
-            try {
-                mavenMetadataService.update(node)
-            } catch (e: DuplicateKeyException) {
-                logger.warn(
-                    "DuplicateKeyException occurred during updating metadata for " +
-                            "${context.artifactInfo.getArtifactFullPath()} " +
-                            "in repo ${context.artifactInfo.getRepoIdentify()}"
-                )
-            }
+            processMatchUpload(matcher, context)
         } else {
             val artifactFullPath = context.artifactInfo.getArtifactFullPath()
             val isSnapShotUri = artifactFullPath.isSnapshotUri()
@@ -476,6 +422,65 @@ class MavenLocalRepository(
             } else {
                 super.onUpload(context)
             }
+        }
+    }
+
+    private fun processMatchUpload(matcher: Matcher, context: ArtifactUploadContext) {
+        var packaging = matcher.group(2)
+        logger.info("File's package is $packaging")
+
+        val fileSuffix = packaging
+        val model: Model? = if (packaging == "pom") {
+            val mavenPomModel = context.getArtifactFile().getInputStream().use { MavenXpp3Reader().read(it) }
+            val version = if (mavenPomModel.version == null) {
+                mavenPomModel.parent.version
+            } else {
+                mavenPomModel.version
+            }
+            val verNotBlank = StringUtils.isNotBlank(version)
+            val isPom = mavenPomModel.packaging.equals("pom", ignoreCase = true)
+            if (!verNotBlank || !isPom) {
+                packaging = mavenPomModel.packaging
+            }
+            mavenPomModel
+        } else {
+            context.getArtifactFile().apply {
+                if (this.getFile() == null) this.flushToFile()
+            }
+            val file = context.getArtifactFile().getFile()!!
+            // todo pom.xml 可能为空
+            // reference: org.springframework:spring-webmvc:4.3.7.RELEASE
+            try {
+                JarUtils.parseModelInJar(file)
+            } catch (e: JarFormatException) {
+                null
+            }
+        }
+        val isArtifact = (packaging == fileSuffix)
+        logger.info("Current file is artifact: $isArtifact")
+        val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC(model)
+        val node = buildMavenArtifactNode(context, packaging, mavenGavc)
+        storageManager.storeArtifactFile(
+            request = node,
+            artifactFile = context.getArtifactFile(),
+            storageCredentials = context.storageCredentials
+        )
+        context.putAttribute(FULL_PATH, node.fullPath)
+        if (isArtifact) {
+            createMavenVersion(context, mavenGavc, node.fullPath)
+            // 记录依赖信息
+            model?.let { mavenExtService.addVersionDependents(mavenGavc, it, context.projectId, context.repoName) }
+        }
+        // 更新包各模块版本最新记录
+        logger.info("Prepare to create maven metadata....")
+        try {
+            mavenMetadataService.update(node)
+        } catch (e: DuplicateKeyException) {
+            logger.warn(
+                "DuplicateKeyException occurred during updating metadata for " +
+                        "${context.artifactInfo.getArtifactFullPath()} " +
+                        "in repo ${context.artifactInfo.getRepoIdentify()}"
+            )
         }
     }
 

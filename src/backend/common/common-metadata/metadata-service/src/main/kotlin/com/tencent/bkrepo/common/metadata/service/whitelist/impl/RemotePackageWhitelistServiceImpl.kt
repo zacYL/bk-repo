@@ -58,11 +58,10 @@ class RemotePackageWhitelistServiceImpl(
         var count = 0
         for (i in request.indices) {
             try {
-                request[i].let {
-                    if (WhitelistUtils.packageKeyValid(it.packageKey, it.type)) {
-                        createWhitelist(it)
-                        count++
-                    }
+                val whitelistRequest = request[i]
+                if (WhitelistUtils.packageKeyValid(whitelistRequest.packageKey, whitelistRequest.type)) {
+                    createWhitelist(whitelistRequest)
+                    count++
                 }
             } catch (e: Exception) {
                 logger.error("batch whitelist error, index: $i, data: ${request[i]}", e)

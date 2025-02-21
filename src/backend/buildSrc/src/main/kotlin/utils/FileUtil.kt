@@ -1,8 +1,5 @@
 package utils
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -12,6 +9,9 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermission
 import java.security.MessageDigest
 import java.util.zip.ZipInputStream
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 
 object FileUtil {
 
@@ -41,19 +41,23 @@ object FileUtil {
 
     fun unzip(source: File, target: File) {
         ZipInputStream(FileInputStream(source)).use { zipIn ->
-            var zipEntry = zipIn.nextEntry
-            while (zipEntry != null) {
-                if (zipEntry.isDirectory) {
-                    File(target, zipEntry.name).mkdirs()
-                } else {
-                    val file = File(target, zipEntry.name)
-                    file.outputStream().use { outputStream ->
-                        zipIn.copyTo(outputStream)
-                    }
-                }
-                zipEntry = zipIn.nextEntry
-            }
+            unzipChild(zipIn, target)
             zipIn.closeEntry()
+        }
+    }
+
+    private fun unzipChild(zipIn: ZipInputStream, target: File) {
+        var zipEntry = zipIn.nextEntry
+        while (zipEntry != null) {
+            if (zipEntry.isDirectory) {
+                File(target, zipEntry.name).mkdirs()
+            } else {
+                val file = File(target, zipEntry.name)
+                file.outputStream().use { outputStream ->
+                    zipIn.copyTo(outputStream)
+                }
+            }
+            zipEntry = zipIn.nextEntry
         }
     }
 

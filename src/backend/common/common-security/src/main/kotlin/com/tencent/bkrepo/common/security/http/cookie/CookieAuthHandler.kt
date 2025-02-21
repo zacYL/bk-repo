@@ -54,17 +54,16 @@ open class CookieAuthHandler(properties: JwtAuthProperties) : HttpAuthHandler {
     override fun extractAuthCredentials(request: HttpServletRequest): HttpAuthCredentials {
         val cookies = request.cookies ?: return AnonymousCredentials()
         for (cookie in cookies) {
-            if (cookie.name == BKREPO_TICKET) {
-                logger.debug("found cookie [${cookie.name} : ${cookie.value}]")
-                // 当以cookies 方式鉴权时，检查请求中是否有对应请求头，并对值做校验, 防CSRF攻击
-                // 考虑到 浏览器文件链接的存在，此处对GET请求不做跨站校验
-                // 安全性变低，但是可以保证CSRF攻击也无法篡改数据
-                if (!request.method.equals("GET", ignoreCase = true)) {
-                    val xCSRFToken = request.getHeader(X_CSRF_TOKEN) ?: throw AuthenticationException()
-                    if (xCSRFToken != cookie.value) { throw AuthenticationException() }
-                }
-                return CookieAuthCredentials(cookie.value)
+            if (cookie.name != BKREPO_TICKET) continue
+            logger.debug("found cookie [${cookie.name} : ${cookie.value}]")
+            // 当以cookies 方式鉴权时，检查请求中是否有对应请求头，并对值做校验, 防CSRF攻击
+            // 考虑到 浏览器文件链接的存在，此处对GET请求不做跨站校验
+            // 安全性变低，但是可以保证CSRF攻击也无法篡改数据
+            if (!request.method.equals("GET", ignoreCase = true)) {
+                val xCSRFToken = request.getHeader(X_CSRF_TOKEN) ?: throw AuthenticationException()
+                if (xCSRFToken != cookie.value) { throw AuthenticationException() }
             }
+            return CookieAuthCredentials(cookie.value)
         }
         logger.debug("not found cookie [$BKREPO_TICKET]")
         return AnonymousCredentials()

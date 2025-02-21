@@ -58,18 +58,17 @@ object CocoapodsUtil {
                 startIndex = i
                 insideSourceBlock = true
             }
-            if (insideSourceBlock) {
-                // 检查是否到达定义结束，以 `}` 结束
-                if (trimmedLine.endsWith("}")) {
-                    // 替换 `s.source` 的内容,获取起始行的缩进
-                    val indent =
-                        lines[startIndex!!].substring(0, lines[startIndex].indexOf(lines[startIndex].trimStart()))
-                    lines[startIndex] = newSource(indent) // 使用新的 source 内容替换起始行
-                    for (j in startIndex + 1..i) {
-                        lines[j] = "" // 清空多行定义的剩余部分
-                    }
-                    break
+            if (!insideSourceBlock) continue
+            // 检查是否到达定义结束，以 `}` 结束
+            if (trimmedLine.endsWith("}")) {
+                // 替换 `s.source` 的内容,获取起始行的缩进
+                val indent =
+                    lines[startIndex!!].substring(0, lines[startIndex].indexOf(lines[startIndex].trimStart()))
+                lines[startIndex] = newSource(indent) // 使用新的 source 内容替换起始行
+                for (j in startIndex + 1..i) {
+                    lines[j] = "" // 清空多行定义的剩余部分
                 }
+                break
             }
         }
 
@@ -138,9 +137,14 @@ object CocoapodsUtil {
         }
 
         // 如果没有找到有效的 source 信息，则返回 null
-        return if (name != null && version != null && type != null && url != null) {
-            ArchiveModifier.Podspec(name, version, Source(type, url, gitTag), null)
-        } else null
+        return when {
+            name != null && version != null && type != null && url != null -> {
+                ArchiveModifier.Podspec(name, version, Source(type, url, gitTag), null)
+            }
+            else -> {
+                null
+            }
+        }
 
     }
 

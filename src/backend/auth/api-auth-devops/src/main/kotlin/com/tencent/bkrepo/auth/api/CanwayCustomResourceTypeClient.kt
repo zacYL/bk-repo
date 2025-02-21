@@ -9,7 +9,6 @@ import io.swagger.annotations.ApiParam
 import net.canway.devops.auth.pojo.resource.action.ResourceActionVO
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader

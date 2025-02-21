@@ -1,10 +1,10 @@
 package com.tencent.bkrepo.cocoapods.utils
 
+import java.io.File
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.TagOpt
 import org.slf4j.LoggerFactory
-import java.io.File
 
 object GitUtil {
     /**
@@ -17,38 +17,14 @@ object GitUtil {
 
         try {
             if (repoDir.exists() && repoDir.isDirectory) {
-                logger.info("Local repository exists. pull from remote.")
-
-                // 检测并删除锁文件
-                val lockFile = File(repoDir, ".git/index.lock")
-                if (lockFile.exists()) {
-                    logger.warn("Lock file detected: ${lockFile.absolutePath}. Deleting it to prevent conflicts.")
-                    lockFile.delete()
-                }
-
-                Git.open(repoDir).use { git ->
-                    // 执行 pull，启用浅拉取和禁用标签
-                    val pullCommand = git.pull()
-                        .setTagOpt(TagOpt.NO_TAGS) // 禁用标签拉取
-                        .setRemoteBranchName("master")
-                    if (credentialsProvider != null) {
-                        pullCommand.setCredentialsProvider(credentialsProvider)
-                    }
-                    pullCommand.call()
-                }
+                removeDirectoryAndPull(repoDir, credentialsProvider)
             } else {
-                // 如果目录不存在，执行 `git clone`
-                logger.info("Cloning repository from $repoUrl to $localPath.")
-                val cloneCommand = Git.cloneRepository()
-                    .setURI(repoUrl)
-                    .setDirectory(repoDir)
-                    .setNoTags()
-                    .setBranchesToClone(listOf("refs/heads/master")) // 仅克隆指定分支
-                    .setBranch("refs/heads/master") // 设置克隆的起始分支
-                if (credentialsProvider != null) {
-                    cloneCommand.setCredentialsProvider(credentialsProvider)
-                }
-                cloneCommand.call()
+                cloneRepository(
+                    repoUrl = repoUrl,
+                    repoDir = repoDir,
+                    localPath = localPath,
+                    credentialsProvider = credentialsProvider
+                )
             }
             logger.info("Repository updated successfully.")
             val latestRefs = getLatestRefs(localPath)
@@ -58,6 +34,45 @@ object GitUtil {
             logger.error("Failed to update repository: ${e.message}", e)
             throw e
         }
+    }
+
+    private fun removeDirectoryAndPull(repoDir: File, credentialsProvider: CredentialsProvider?) {
+        logger.info("Local repository exists. pull from remote.")
+
+        // 检测并删除锁文件
+        val lockFile = File(repoDir, ".git/index.lock")
+        if (lockFile.exists()) {
+            logger.warn("Lock file detected: ${lockFile.absolutePath}. Deleting it to prevent conflicts.")
+            lockFile.delete()
+        }
+
+        Git.open(repoDir).use { git ->
+            // 执行 pull，启用浅拉取和禁用标签
+            val pullCommand = git.pull()
+                .setTagOpt(TagOpt.NO_TAGS) // 禁用标签拉取
+                .setRemoteBranchName("master")
+            if (credentialsProvider != null) {
+                pullCommand.setCredentialsProvider(credentialsProvider)
+            }
+            pullCommand.call()
+        }
+    }
+
+    private fun cloneRepository(
+        repoUrl: String, repoDir: File, localPath: String, credentialsProvider: CredentialsProvider?
+    ) {
+        // 如果目录不存在，执行 `git clone`
+        logger.info("Cloning repository from $repoUrl to $localPath.")
+        val cloneCommand = Git.cloneRepository()
+            .setURI(repoUrl)
+            .setDirectory(repoDir)
+            .setNoTags()
+            .setBranchesToClone(listOf("refs/heads/master")) // 仅克隆指定分支
+            .setBranch("refs/heads/master") // 设置克隆的起始分支
+        if (credentialsProvider != null) {
+            cloneCommand.setCredentialsProvider(credentialsProvider)
+        }
+        cloneCommand.call()
     }
 
     private fun getLatestRefs(repoPath: String): String {
@@ -76,5 +91,6 @@ object GitUtil {
             throw e
         }
     }
+
     private val logger = LoggerFactory.getLogger(this::class.java)
 }

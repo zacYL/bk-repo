@@ -21,9 +21,9 @@ import org.springframework.stereotype.Service
 @Service
 @Primary
 class MavenCompositeRepository(
-        private val mavenLocalRepository: MavenLocalRepository,
-        private val mavenRemoteRepository: MavenRemoteRepository,
-        proxyChannelService: ProxyChannelService
+    private val mavenLocalRepository: MavenLocalRepository,
+    private val mavenRemoteRepository: MavenRemoteRepository,
+    proxyChannelService: ProxyChannelService
 ) : CompositeRepository(mavenLocalRepository, mavenRemoteRepository, proxyChannelService) {
 
     @Suppress("TooGenericExceptionCaught")
@@ -48,20 +48,18 @@ class MavenCompositeRepository(
 
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
         (context.artifactInfo as MavenArtifactInfo).let {
-            if (it.isArtifact() && whitelistSwitchService.get(RepositoryType.MAVEN)) {
-                nodeService.getNodeDetail(
-                    ArtifactInfo(it.projectId, it.repoName, it.getArtifactFullPath())
-                )?.let { nodeDetail ->
-                    nodeDetail.nodeMetadata.forEach { metadataModel ->
-                        if (metadataModel.key == SOURCE_TYPE &&
-                            metadataModel.value == ArtifactChannel.PROXY.name &&
-                            !remotePackageWhitelistService.existWhitelist(
-                                RepositoryType.MAVEN, "${it.groupId}:${it.artifactId}", it.versionId,
-                            )
-                        ) {
-                            throw ArtifactNotInWhitelistException()
-                        }
-                    }
+            if (!it.isArtifact() || !whitelistSwitchService.get(RepositoryType.MAVEN)) return
+            val nodeDetail = nodeService.getNodeDetail(
+                ArtifactInfo(it.projectId, it.repoName, it.getArtifactFullPath())
+            ) ?: return
+            nodeDetail.nodeMetadata.forEach { metadataModel ->
+                if (metadataModel.key == SOURCE_TYPE &&
+                    metadataModel.value == ArtifactChannel.PROXY.name &&
+                    !remotePackageWhitelistService.existWhitelist(
+                        RepositoryType.MAVEN, "${it.groupId}:${it.artifactId}", it.versionId,
+                    )
+                ) {
+                    throw ArtifactNotInWhitelistException()
                 }
             }
         }
@@ -71,11 +69,10 @@ class MavenCompositeRepository(
         val proxyChannelList = getProxyChannelList(context)
         for (setting in proxyChannelList) {
             try {
-                action(getContextFromProxyChannel(context, setting))?.let {
-                    // 无论请求是否成功, 都会返回kotlin.Unit
-                    if (it != Unit) {
-                        return it
-                    }
+                val result = action(getContextFromProxyChannel(context, setting))
+                // 无论请求是否成功, 都会返回kotlin.Unit
+                if (result != null && result != Unit) {
+                    return result
                 }
             } catch (downloadException: ArtifactNotInWhitelistException) {
                 throw ArtifactNotInWhitelistException()

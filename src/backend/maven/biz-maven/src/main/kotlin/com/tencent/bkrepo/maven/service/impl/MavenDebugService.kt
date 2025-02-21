@@ -14,13 +14,16 @@ import com.tencent.bkrepo.maven.util.JarUtils
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.toMavenGAVC
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import java.io.File
 import java.io.FileOutputStream
+import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -39,18 +42,14 @@ class MavenDebugService(
     fun dependenciesForeach() {
         // 遍历所有项目
         val projects = projectService.listProject()
-        logger.info("find projects: ${projects?.size}")
+        logger.info("find projects: ${projects.size}")
         // 遍历项目下maven仓库
-        projects?.let { projectInfos ->
-            projectInfos.forEach { project ->
-                logger.info("find project: ${project.name}")
-                val repos = repositoryService.listRepo(project.name, type = RepositoryType.MAVEN.name)
-                // 遍历仓库下包
-                repos?.let { repositoryInfos ->
-                    repositoryInfos.forEach { repo ->
-                        forEachPackageInRepo(repo)
-                    }
-                }
+        projects.forEach { project ->
+            logger.info("find project: ${project.name}")
+            val repos = repositoryService.listRepo(project.name, type = RepositoryType.MAVEN.name)
+            // 遍历仓库下包
+            repos.forEach { repo ->
+                forEachPackageInRepo(repo)
             }
         }
     }
@@ -60,7 +59,7 @@ class MavenDebugService(
         var pageNumber = 1
         while (true) {
             val packages = findPackage(repo.projectId, repo.name, pageNumber)
-            if (packages.isNullOrEmpty()) break
+            if (packages.isEmpty()) break
             pageNumber++
             // 遍历包下面的版本
             packages.forEach { packageVersion ->
@@ -70,10 +69,8 @@ class MavenDebugService(
                     packageKey = packageVersion.key,
                     option = VersionListOption()
                 )
-                versions?.let { versionList ->
-                    versionList.forEach { version ->
-                        flushVersionDependent(repo, packageVersion.key, version)
-                    }
+                versions.forEach { version ->
+                    flushVersionDependent(repo, packageVersion.key, version)
                 }
             }
         }
@@ -84,72 +81,74 @@ class MavenDebugService(
         val repoDetail = repositoryService.getRepoDetail(repo.projectId, repo.name)!!
         // 找到版本关联的文件
         val jarPath = version.contentPath
-        if (jarPath != null) {
-            val mavenGAVC = jarPath.toMavenGAVC()
-            val jarNode = nodeService.getNodeDetail(ArtifactInfo(repo.projectId, repo.name, jarPath))
-            if (jarNode != null) {
-                val oldVersionMetadata = version.packageMetadata
-                // 更新包版本信息
-                val metadata: MutableMap<String, Any> = mutableMapOf(
-                    "groupId" to mavenGAVC.groupId,
-                    "artifactId" to mavenGAVC.artifactId,
-                    "version" to mavenGAVC.version,
-                    "packaging" to mavenGAVC.packaging
-                )
-                mavenGAVC.classifier?.let {
-                    metadata["classifier"] = it
-                }
-                oldVersionMetadata.forEach {
-                    if (!metadata.containsKey(it.key)) {
-                        metadata[it.key] = it.value
-                    }
-                }
-                logger.info("update package version metadata: $metadata")
-                packageMetadataService.saveMetadata(
-                    PackageMetadataSaveRequest(
-                        projectId = repo.projectId,
-                        repoName = repo.name,
-                        packageKey = packageKey,
-                        version = version.name,
-                        versionMetadata = metadata.map {
-                            MetadataModel(
-                                key = it.key,
-                                value = it.value,
-                                system = true,
-                                display = true
-                            )
-                        }
+        if (jarPath.isNullOrEmpty()) {
+            logger.error("package_version: [$packageKey/${version.name}] has no jar file")
+            return
+        }
+        val mavenGAVC = jarPath.toMavenGAVC()
+        val jarNode = nodeService.getNodeDetail(ArtifactInfo(repo.projectId, repo.name, jarPath))
+        if (jarNode == null) {
+            logger.info("jarNode is null: [${repo.projectId}/${repo.name}/$jarPath]")
+            return
+        }
+
+        val oldVersionMetadata = version.packageMetadata
+        // 更新包版本信息
+        val metadata: MutableMap<String, Any> = mutableMapOf(
+            "groupId" to mavenGAVC.groupId,
+            "artifactId" to mavenGAVC.artifactId,
+            "version" to mavenGAVC.version,
+            "packaging" to mavenGAVC.packaging
+        )
+        mavenGAVC.classifier?.let {
+            metadata["classifier"] = it
+        }
+        oldVersionMetadata.forEach {
+            if (!metadata.containsKey(it.key)) {
+                metadata[it.key] = it.value
+            }
+        }
+        logger.info("update package version metadata: $metadata")
+        packageMetadataService.saveMetadata(
+            PackageMetadataSaveRequest(
+                projectId = repo.projectId,
+                repoName = repo.name,
+                packageKey = packageKey,
+                version = version.name,
+                versionMetadata = metadata.map {
+                    MetadataModel(
+                        key = it.key,
+                        value = it.value,
+                        system = true,
+                        display = true
                     )
-                )
-                val model = if (mavenGAVC.packaging == "pom") {
-                    storageManager.loadArtifactInputStream(jarNode, repoDetail.storageCredentials)?.use {
-                        MavenXpp3Reader().read(it)
-                    }
-                } else {
-                    val jarFile = File.createTempFile("maven", jarNode.name)
-                    try {
-                        FileOutputStream(jarFile).use { outputStream ->
-                            storageManager.loadArtifactInputStream(jarNode, repoDetail.storageCredentials)?.use {
-                                it.copyTo(outputStream)
-                            }
-                        }
-                        JarUtils.parseModelInJar(jarFile)
-                    } catch (e: JarFormatException) {
-                        logger.error("parse jar error: ${jarNode.name}")
-                        null
-                    } finally {
-                        jarFile.delete()
-                    }
                 }
-                model?.let { mavenExtService.addVersionDependents(mavenGAVC, it, repo.projectId, repo.name) }
-            } else {
-                logger.info("jarNode is null: [${repo.projectId}/${repo.name}/$jarPath]")
+            )
+        )
+        val model = if (mavenGAVC.packaging == "pom") {
+            storageManager.loadArtifactInputStream(jarNode, repoDetail.storageCredentials)?.use {
+                MavenXpp3Reader().read(it)
             }
         } else {
-            logger.error(
-                "package_version: [$packageKey/${version.name}] " +
-                        "has no jar file"
-            )
+            readModelFromJar(jarNode, repoDetail)
+        }
+        model?.let { mavenExtService.addVersionDependents(mavenGAVC, it, repo.projectId, repo.name) }
+    }
+
+    private fun readModelFromJar(jarNode: NodeDetail, repoDetail: RepositoryDetail): Model? {
+        val jarFile = File.createTempFile("maven", jarNode.name)
+        return try {
+            FileOutputStream(jarFile).use { outputStream ->
+                storageManager.loadArtifactInputStream(jarNode, repoDetail.storageCredentials)?.use {
+                    it.copyTo(outputStream)
+                }
+            }
+            JarUtils.parseModelInJar(jarFile)
+        } catch (e: JarFormatException) {
+            logger.error("parse jar error: ${jarNode.name}")
+            null
+        } finally {
+            jarFile.delete()
         }
     }
 

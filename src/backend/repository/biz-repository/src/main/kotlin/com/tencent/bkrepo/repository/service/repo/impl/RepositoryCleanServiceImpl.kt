@@ -86,21 +86,16 @@ class RepositoryCleanServiceImpl(
         } ?: logger.error("argument exception tRepository is null, tRepository:[$tRepository]")
     }
 
-    private fun execute(
-        repo: TRepository,
-        cleanStrategy: RepositoryCleanStrategy
-    ) {
+    private fun execute(repo: TRepository, cleanStrategy: RepositoryCleanStrategy) {
         try {
             repositoryService.updateCleanStatusRunning(repo.projectId, repo.name)
             if (repo.type == RepositoryType.GENERIC) {
                 // 将rule 转为 Map<Regex, Rule>
-                val flattenRule = RepoCleanRuleUtils.flattenRule(cleanStrategy)
-                flattenRule?.let {
-                    if (logger.isDebugEnabled) {
-                        logger.debug("flattenRule:[${flattenRule.toJsonString()}]")
-                    }
-                    executeNodeCleanV2(repo.projectId, repo.name, "/", it)
+                val flattenRule = RepoCleanRuleUtils.flattenRule(cleanStrategy) ?: return
+                if (logger.isDebugEnabled) {
+                    logger.debug("flattenRule:[${flattenRule.toJsonString()}]")
                 }
+                executeNodeCleanV2(repo.projectId, repo.name, "/", flattenRule)
             } else {
                 executeClean(repo.projectId, repo.name, cleanStrategy)
             }
@@ -265,24 +260,28 @@ class RepositoryCleanServiceImpl(
         ).records
         logger.info("executeNodeCleanV2: [$projectId/$repoName$path], node size: ${nodelist.size}")
         nodelist.forEach {
-            if (it.folder) {
-                executeNodeCleanV2(it.projectId, it.repoName, it.fullPath, flatten)
-            } else {
-                if (!RepoCleanRuleUtils.needReserveWrapper(it, flatten)) {
-                    try {
-                        logger.info(
-                            "executeNodeCleanV2: will delete node: " +
-                                    "[${it.projectId}/${it.repoName}/${it.fullPath}]"
-                        )
-                        nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
-                    } catch (e: Exception) {
-                        logger.error("executeNodeCleanV2: delete node failed, node: $it", e)
-                    }
-                }
-            }
+            processNodeClean(it, flatten)
         }
         if (nodelist.size >= cleanPageSize) {
             executeNodeCleanV2(projectId, repoName, path, flatten, pageNumber + 1)
+        }
+    }
+
+    private fun processNodeClean(node: NodeInfo, flatten: Map<String, Rule.NestedRule>) {
+        if (node.folder) {
+            executeNodeCleanV2(node.projectId, node.repoName, node.fullPath, flatten)
+        } else {
+            if (!RepoCleanRuleUtils.needReserveWrapper(node, flatten)) {
+                try {
+                    logger.info(
+                        "executeNodeCleanV2: will delete node: " +
+                                "[${node.projectId}/${node.repoName}/${node.fullPath}]"
+                    )
+                    nodeDeleteOperation.deleteByPath(node.projectId, node.repoName, node.fullPath, SYSTEM_USER)
+                } catch (e: Exception) {
+                    logger.error("executeNodeCleanV2: delete node failed, node: $node", e)
+                }
+            }
         }
     }
 

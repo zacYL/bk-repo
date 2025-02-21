@@ -57,24 +57,31 @@ class ProxyInterceptor(
     private val conanVirtualService: ConanVirtualService
 ) : HandlerInterceptor {
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        with(ArtifactContextHolder.getRepoDetail()!!) {
-            if (category == RepositoryCategory.REMOTE && request.method == HttpMethod.GET.name) {
-                return handleRemoteRepo(this, request, response)
+        val repoDetail = ArtifactContextHolder.getRepoDetail()!!
+        return when (repoDetail.category) {
+            RepositoryCategory.REMOTE -> {
+                if (request.method == HttpMethod.GET.name) {
+                    handleRemoteRepo(repoDetail, request, response)
+                } else {
+                    true
+                }
             }
-            if (category == RepositoryCategory.VIRTUAL) {
-                return if (isFirstQueryPath(request.requestURI)) {
+
+            RepositoryCategory.VIRTUAL -> {
+                if (isFirstQueryPath(request.requestURI)) {
                     true
                 } else {
-                    val actualRepoName = conanVirtualService.getCacheRepo(this, request.requestURI) ?: return true
+                    val actualRepoName = conanVirtualService.getCacheRepo(repoDetail, request.requestURI) ?: return true
                     val actualRepoDetail = SpringContextUtils.getBean(RepositoryService::class.java)
-                        .getRepoDetail(projectId, actualRepoName)!!
+                        .getRepoDetail(repoDetail.projectId, actualRepoName)!!
                     if (actualRepoDetail.category == RepositoryCategory.REMOTE) {
                         handleRemoteRepo(actualRepoDetail, request, response)
                     } else true
                 }
             }
+
+            else -> true
         }
-        return true
     }
 
     private fun handleRemoteRepo(

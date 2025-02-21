@@ -34,56 +34,77 @@ object ArchiveModifier {
         // 解压文件
         when (archiveType) {
             APPLICATION_ZIP -> {
-                // 解压 ZIP 文件
-                ZipInputStream(archiveInputStream).use { zis ->
-                    var entry: ZipEntry?
-                    while (zis.nextEntry.also { entry = it } != null) {
-                        val entryFile = File(tempDir, entry!!.name)
-                        if (entry!!.isDirectory) {
-                            entryFile.mkdirs()
-                        } else {
-                            FileOutputStream(entryFile).use { fos ->
-                                val buffer = ByteArray(1024)
-                                var len: Int
-                                while (zis.read(buffer).also { len = it } > 0) {
-                                    fos.write(buffer, 0, len)
-                                }
-                            }
-                        }
-                        zis.closeEntry()
-                    }
-                }
+                zipDeCompressor(archiveInputStream, tempDir)
             }
 
             APPLICATION_GZIP -> {
-                // 解压 TAR.GZ 文件
-                GzipCompressorInputStream(archiveInputStream).use { gzipIn ->
-                    TarArchiveInputStream(gzipIn).use { tarIn ->
-                        var entry: TarArchiveEntry?
-                        while (tarIn.nextTarEntry.also { entry = it } != null) {
-                            val entryFile = File(tempDir, entry!!.name)
-                            // 检查并创建父目录
-                            entryFile.parentFile?.takeIf { !it.exists() }?.mkdirs()
-                            if (entry!!.isDirectory) {
-                                entryFile.mkdirs()
-                            } else {
-                                FileOutputStream(entryFile).use { fos ->
-                                    val buffer = ByteArray(1024)
-                                    var len: Int
-                                    while (tarIn.read(buffer).also { len = it } > 0) {
-                                        fos.write(buffer, 0, len)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                gzipPDeCompressor(archiveInputStream, tempDir)
             }
 
             else -> throw IllegalArgumentException("Unsupported archive type: $archiveType")
         }
 
         return modifyAndZip(tempDir, projectId, repoName, domain, archiveOutputStream)
+    }
+
+    private fun zipDeCompressor(archiveInputStream: InputStream, tempDir: File) {
+        // 解压 ZIP 文件
+        ZipInputStream(archiveInputStream).use { zis ->
+            var entry: ZipEntry?
+            while (zis.nextEntry.also { entry = it } != null) {
+                mkdirAndWriteFile(
+                    tempDir = tempDir,
+                    name = entry!!.name,
+                    isDirectory = entry!!.isDirectory,
+                    input = zis,
+                    gzip = false
+                )
+                zis.closeEntry()
+            }
+        }
+    }
+
+    private fun gzipPDeCompressor(archiveInputStream: InputStream, tempDir: File) {
+        // 解压 TAR.GZ 文件
+        GzipCompressorInputStream(archiveInputStream).use { gzipIn ->
+            TarArchiveInputStream(gzipIn).use { tarIn ->
+                var entry: TarArchiveEntry?
+                while (tarIn.nextTarEntry.also { entry = it } != null) {
+                    mkdirAndWriteFile(
+                        tempDir = tempDir,
+                        name = entry!!.name,
+                        isDirectory = entry!!.isDirectory,
+                        input = tarIn,
+                        gzip = true
+                    )
+                }
+            }
+        }
+    }
+
+    private fun mkdirAndWriteFile(
+        tempDir: File, name: String, isDirectory: Boolean, input: InputStream, gzip: Boolean
+    ) {
+        val entryFile = File(tempDir, name)
+        if (gzip) {
+            // 检查并创建父目录
+            entryFile.parentFile?.takeIf { !it.exists() }?.mkdirs()
+        }
+        if (isDirectory) {
+            entryFile.mkdirs()
+        } else {
+            writeFile(entryFile, input)
+        }
+    }
+
+    private fun writeFile(entryFile: File, input: InputStream) {
+        FileOutputStream(entryFile).use { fos ->
+            val buffer = ByteArray(1024)
+            var len: Int
+            while (input.read(buffer).also { len = it } > 0) {
+                fos.write(buffer, 0, len)
+            }
+        }
     }
 
     fun modifyAndZip(
@@ -126,29 +147,32 @@ object ArchiveModifier {
             if (file.isDirectory) {
                 traverseDirectory(file, podspecList)
             } else {
-                // 如果是 .podspec 或 podspec.json 文件，添加到列表
-                if (file.extension == PodSpecType.POD_SPEC.extendedName
-                    || file.name.contains(PodSpecType.JSON.extendedName)
-                ) {
-                    // 获取上一级文件名 VERSION 和 NAME
-                    val parentDir = file.parentFile
+                readFile(file, podspecList)
+            }
+        }
+    }
+
+    private fun readFile(file: File, podspecList: MutableList<Podspec>) {
+        if (file.extension != PodSpecType.POD_SPEC.extendedName
+            && !file.name.contains(PodSpecType.JSON.extendedName)
+        ) return
+        // 如果是 .podspec 或 podspec.json 文件，添加到列表
+
+        // 获取上一级文件名 VERSION 和 NAME
+        val parentDir = file.parentFile
 //                    val version = parentDir.name // 父目录名称就是 VERSION
 //                    val name = parentDir.parentFile.name // 父目录的父目录名称就是 NAME
-                    val podSpecType = (PodSpecType.matchPath(file.path) ?: PodSpecType.POD_SPEC)
-                    val text = file.readText()
-                    try {
-                        CocoapodsUtil.parseSourceFromContent(text, podSpecType)?.let {
-                            it.apply {
-                                this.file = file
-                                this.fileType = podSpecType
-                            }
-                            podspecList.add(it)
-                        }
-                    } catch (e: Exception) {
-                        logger.error("parse specs content error: ${e.message}...content:$text")
-                    }
-                }
+        val podSpecType = (PodSpecType.matchPath(file.path) ?: PodSpecType.POD_SPEC)
+        val text = file.readText()
+        try {
+            val podspec = CocoapodsUtil.parseSourceFromContent(text, podSpecType) ?: return
+            podspec.apply {
+                this.file = file
+                this.fileType = podSpecType
             }
+            podspecList.add(podspec)
+        } catch (e: Exception) {
+            logger.error("parse specs content error: ${e.message}...content:$text")
         }
     }
 
@@ -273,23 +297,27 @@ object ArchiveModifier {
                 addFileToTar(subFile, tarOut, "$parentDir${file.name}/")
             }
         } else {
-            // 添加文件
-            try {
-                val entry = TarArchiveEntry(file, "$parentDir${file.name}")
-                entry.size = file.length() // 设置文件大小
-                tarOut.putArchiveEntry(entry)
+            addFile(file, tarOut, parentDir)
+        }
+    }
 
-                FileInputStream(file).use { fis ->
-                    val buffer = ByteArray(8192) // 使用 8KB 缓冲区
-                    var len: Int
-                    while (fis.read(buffer).also { len = it } > 0) {
-                        tarOut.write(buffer, 0, len)
-                    }
+    private fun addFile(file: File, tarOut: TarArchiveOutputStream, parentDir: String) {
+        // 添加文件
+        try {
+            val entry = TarArchiveEntry(file, "$parentDir${file.name}")
+            entry.size = file.length() // 设置文件大小
+            tarOut.putArchiveEntry(entry)
+
+            FileInputStream(file).use { fis ->
+                val buffer = ByteArray(8192) // 使用 8KB 缓冲区
+                var len: Int
+                while (fis.read(buffer).also { len = it } > 0) {
+                    tarOut.write(buffer, 0, len)
                 }
-                tarOut.closeArchiveEntry()
-            } catch (e: Exception) {
-                println("Failed to add file to tar: ${e.message}")
             }
+            tarOut.closeArchiveEntry()
+        } catch (e: Exception) {
+            println("Failed to add file to tar: ${e.message}")
         }
     }
 

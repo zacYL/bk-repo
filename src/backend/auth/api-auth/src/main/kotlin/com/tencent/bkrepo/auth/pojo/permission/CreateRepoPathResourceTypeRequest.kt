@@ -29,23 +29,19 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.pypi.pojo
+package com.tencent.bkrepo.auth.pojo.permission
 
+import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
-data class PypiMigrateResponse<T>(
-    @ApiModelProperty("描述")
-    val description: String,
-    @ApiModelProperty("总的包数量")
-    val totalCount: Int = 0,
-    @ApiModelProperty("迁移成功数量")
-    val successCount: Int = 0,
-    @ApiModelProperty("迁移失败数量")
-    val failCount: Int = 0,
-    @ApiModelProperty("耗时 单位s")
-    val elapseTimeSeconds: Long = 0,
-    @ApiModelProperty("迁移失败数据")
-    val failSet: Set<T?> = emptySet(),
-    @ApiModelProperty("记录写入时间")
-    val taskFinishedTime: String = ""
+@ApiModel("创建仓库路径资源")
+data class CreateRepoPathResourceTypeRequest(
+    @ApiModelProperty("项目ID")
+    val projectId: String,
+    @ApiModelProperty("路径集合名")
+    val permName: String,
+    @ApiModelProperty("关联仓库名")
+    val repos: List<String> = emptyList(),
+    @ApiModelProperty("匹配路径")
+    val includePattern: List<String> = emptyList(),
 )

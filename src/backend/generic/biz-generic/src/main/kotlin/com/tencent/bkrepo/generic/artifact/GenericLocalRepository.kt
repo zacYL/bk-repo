@@ -322,13 +322,28 @@ class GenericLocalRepository(
         val uploadType = HeaderUtils.getHeader(HEADER_UPLOAD_TYPE)
         with(context.artifactInfo) {
             nodeService.getNodeDetail(this)?.let {
-                if (!overwrite && !isBlockUpload(uploadId, sequence)
-                    && !isChunkedUpload(uploadType) && !isSeparateUpload(uploadType)
-                ) {
-                    throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, getArtifactName())
-                }
+                conditionCheck(
+                    overwrite = overwrite,
+                    isBlockUpload = isBlockUpload(uploadId, sequence),
+                    isChunkedUpload = isChunkedUpload(uploadType),
+                    isSeparateUpload = isSeparateUpload(uploadType),
+                    name = getArtifactName()
+                )
                 uploadIntercept(context, it)
             }
+        }
+    }
+
+    private fun conditionCheck(
+        overwrite: Boolean,
+        isBlockUpload: Boolean,
+        isChunkedUpload: Boolean,
+        isSeparateUpload: Boolean,
+        name: String
+    ) {
+        val singleUpload = !isBlockUpload && !isChunkedUpload && !isSeparateUpload
+        if (!overwrite && singleUpload) {
+            throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, name)
         }
     }
 

@@ -86,27 +86,7 @@ class CanwayPermissionServiceImpl(
                     }
 
                     ResourceType.PROJECT -> {
-                        when (action) {
-                            PermissionAction.MANAGE -> {
-                                devOpsAuthGeneral.isProjectOrSuperiorAdmin(uid, projectId!!)
-                            }
-
-                            PermissionAction.READ -> {
-                                devOpsAuthGeneral.isProjectMemberOrAdmin(uid, projectId!!)
-                            }
-
-                            else -> {
-                                devOpsAuthGeneral.validateUserPermission(
-                                    projectId = projectId!!,
-                                    option = UserPermissionValidateDTO(
-                                        userId = uid,
-                                        instanceId = ANY_RESOURCE_CODE,
-                                        resourceCode = RESOURCECODE,
-                                        actionCodes = listOf(action.id())
-                                    )
-                                )
-                            }
-                        }
+                        checkProjectPermission(request)
                     }
 
                     ResourceType.NODE -> {
@@ -114,36 +94,7 @@ class CanwayPermissionServiceImpl(
                     }
 
                     ResourceType.REPO -> {
-
-                        val validateUserPermission = devOpsAuthGeneral.validateUserPermission(
-                            projectId = projectId!!,
-                            option = UserPermissionValidateDTO(
-                                userId = uid,
-                                instanceId = repoName ?: ANY_RESOURCE_CODE,
-                                resourceCode = if (request.resourceType == ResourceType.REPLICATION) {
-                                    REPLICA_RESOURCECODE
-                                } else {
-                                    RESOURCECODE
-                                },
-                                actionCodes = listOf(action.id())
-                            )
-                        )
-                        if (!validateUserPermission && action == PermissionAction.READ) {
-                            // 仓库权限校验失败且是校验read权限，则拥有路径read权限也有仓库的read权限
-                            val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
-                                uid,
-                                projectId!!,
-                                listOf(repoName!!),
-                                emptyList()
-                            )
-                            val pathReadPermission =
-                                repoPathCollectPermission.filter {
-                                    it.actionCode == PermissionAction.READ.id()
-                                }
-                            return pathReadPermission.isNotEmpty()
-                        } else {
-                            validateUserPermission
-                        }
+                        checkRepoPermission(request)
                     }
 
                     else -> {
@@ -166,6 +117,66 @@ class CanwayPermissionServiceImpl(
         } catch (exception: Exception) {
             logger.error("Devops permission request failed: ", exception)
             throw ErrorCodeException(AuthMessageCode.AUTH_PERMISSION_FAILED)
+        }
+    }
+
+    private fun checkProjectPermission(request: CheckPermissionRequest): Boolean {
+        with(request) {
+            return when (action) {
+                PermissionAction.MANAGE -> {
+                    devOpsAuthGeneral.isProjectOrSuperiorAdmin(uid, projectId!!)
+                }
+
+                PermissionAction.READ -> {
+                    devOpsAuthGeneral.isProjectMemberOrAdmin(uid, projectId!!)
+                }
+
+                else -> {
+                    devOpsAuthGeneral.validateUserPermission(
+                        projectId = projectId!!,
+                        option = UserPermissionValidateDTO(
+                            userId = uid,
+                            instanceId = ANY_RESOURCE_CODE,
+                            resourceCode = RESOURCECODE,
+                            actionCodes = listOf(action.id())
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun checkRepoPermission(request: CheckPermissionRequest): Boolean {
+        with(request) {
+            val validateUserPermission = devOpsAuthGeneral.validateUserPermission(
+                projectId = projectId!!,
+                option = UserPermissionValidateDTO(
+                    userId = uid,
+                    instanceId = repoName ?: ANY_RESOURCE_CODE,
+                    resourceCode = if (request.resourceType == ResourceType.REPLICATION) {
+                        REPLICA_RESOURCECODE
+                    } else {
+                        RESOURCECODE
+                    },
+                    actionCodes = listOf(action.id())
+                )
+            )
+            return if (!validateUserPermission && action == PermissionAction.READ) {
+                // 仓库权限校验失败且是校验read权限，则拥有路径read权限也有仓库的read权限
+                val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
+                    uid,
+                    projectId!!,
+                    listOf(repoName!!),
+                    emptyList()
+                )
+                val pathReadPermission =
+                    repoPathCollectPermission.filter {
+                        it.actionCode == PermissionAction.READ.id()
+                    }
+                pathReadPermission.isNotEmpty()
+            } else {
+                validateUserPermission
+            }
         }
     }
 

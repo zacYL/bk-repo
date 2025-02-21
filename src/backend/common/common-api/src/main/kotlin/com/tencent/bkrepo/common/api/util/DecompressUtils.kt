@@ -70,12 +70,11 @@ object DecompressUtils {
         var zipEntry: E
         archiveInputStream.use { archiveEntry ->
             while (archiveInputStream.nextEntry.also { zipEntry = it } != null) {
-                if (!zipEntry.isDirectory) {
-                    val fileName = zipEntry.name.split("/").last()
-                    val fileExtension = fileName.substringAfterLast('.', "")
-                    if (fileExtension in extensions) {
-                        return fileName to streamToString(archiveEntry)
-                    }
+                if (zipEntry.isDirectory) continue
+                val fileName = zipEntry.name.split("/").last()
+                val fileExtension = fileName.substringAfterLast('.', "")
+                if (fileExtension in extensions) {
+                    return fileName to streamToString(archiveEntry)
                 }
             }
         }
@@ -108,7 +107,7 @@ object DecompressUtils {
      * @return R? 返回处理结果，如果结果为null，则表示处理失败
      */
     fun <R, E> tryArchiverWithCompressor(
-        `is`: InputStream,
+        inputStream: InputStream,
         resultFactory: () -> R? = { null },
         callbackPre: (ArchiveEntry) -> Boolean = { !it.isDirectory },
         callback: (ArchiveInputStream<*>, ArchiveEntry) -> E?,
@@ -116,7 +115,7 @@ object DecompressUtils {
         callbackPost: (ArchiveEntry, E?) -> Boolean = { _, _ -> true }
     ): R? {
         // 根据输入流是否支持标记，决定是否将其包装在BufferedInputStream中
-        var wrap = if (`is`.markSupported()) `is` else BufferedInputStream(`is`)
+        var wrap = if (inputStream.markSupported()) inputStream else BufferedInputStream(inputStream)
         return try {
             // 尝试使用归档流处理输入流
             doWithArchiver(wrap, resultFactory, callbackPre, callback, handleResult, callbackPost)
@@ -143,7 +142,7 @@ object DecompressUtils {
      * @return R? 最终的处理结果，可能为null
      */
     fun <R, E> doWithArchiver(
-        `is`: InputStream,
+        inputStream: InputStream,
         resultFactory: () -> R? = { null },
         callbackPre: (ArchiveEntry) -> Boolean = { !it.isDirectory },
         callback: (ArchiveInputStream<*>, ArchiveEntry) -> E?,
@@ -153,7 +152,7 @@ object DecompressUtils {
         // 初始化结果对象
         var result = resultFactory()
         // 根据输入流是否支持标记来决定是否包装为BufferedInputStream
-        val wrap = if (`is`.markSupported()) `is` else BufferedInputStream(`is`)
+        val wrap = if (inputStream.markSupported()) inputStream else BufferedInputStream(inputStream)
         // 创建并使用ArchiveInputStream处理归档数据
         ArchiveStreamFactory().createArchiveInputStream<ArchiveInputStream<*>>(wrap).use {
             // 循环处理每个归档条目

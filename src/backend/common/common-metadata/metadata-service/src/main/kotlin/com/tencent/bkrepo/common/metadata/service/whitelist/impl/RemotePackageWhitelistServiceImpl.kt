@@ -58,11 +58,10 @@ class RemotePackageWhitelistServiceImpl(
         var count = 0
         for (i in request.indices) {
             try {
-                request[i].let {
-                    if (WhitelistUtils.packageKeyValid(it.packageKey, it.type)) {
-                        createWhitelist(it)
-                        count++
-                    }
+                val whitelistRequest = request[i]
+                if (WhitelistUtils.packageKeyValid(whitelistRequest.packageKey, whitelistRequest.type)) {
+                    createWhitelist(whitelistRequest)
+                    count++
                 }
             } catch (e: Exception) {
                 logger.error("batch whitelist error, index: $i, data: ${request[i]}", e)
@@ -81,37 +80,32 @@ class RemotePackageWhitelistServiceImpl(
         } else {
             requestPackageKey?.let { WhitelistUtils.packageKeyValidThrow(it, oldWhitelist.type) }
         }
-        with(oldWhitelist) {
-            Triple(
-                    request.type?.let { if (type != it) it else null },
-                    requestPackageKey?.let { if (packageKey != it) it else null },
-                    requestVersions?.let { if (versions?.sorted() != it) it else null }
-            ).apply {
-                if (first == null && second == null && third == null) return true
+        val (first, second, third) = Triple(
+            request.type?.let { if (oldWhitelist.type != it) it else null },
+            requestPackageKey?.let { if (oldWhitelist.packageKey != it) it else null },
+            requestVersions?.let { if (oldWhitelist.versions?.sorted() != it) it else null }
+        )
+        if (first == null && second == null && third == null) return true
+        // packageKey or type changed, check if exists
+        if (first != null || second != null) {
+            val newType = first ?: oldWhitelist.type
+            val newPackageKey = second ?: oldWhitelist.packageKey
+            val records = page(newType, newPackageKey, null, null, null, false).records
+            if (records.isNotEmpty()) {
+                throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED,
+                    "type=$newType; packageKey=$newPackageKey ")
             }
-        }.apply {
-            // packageKey or type changed, check if exists
-            if (first != null || second != null) {
-                val newType = first ?: oldWhitelist.type
-                val newPackageKey = second ?: oldWhitelist.packageKey
-                page(newType, newPackageKey, null, null, null, false).records.let {
-                    if (it.isNotEmpty()) {
-                        throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED,
-                                "type=$newType; packageKey=$newPackageKey ")
-                    }
-                }
-            }
-
-            val query = Query(Criteria.where(TRemotePackageWhitelist::id.name).`is`(id))
-            val update = Update().apply {
-                first?.let { set(TRemotePackageWhitelist::type.name, it) }
-                second?.let { set(TRemotePackageWhitelist::packageKey.name, it) }
-                third?.let { set(TRemotePackageWhitelist::versions.name, it) }
-                set(TRemotePackageWhitelist::lastModifiedBy.name, SecurityUtils.getUserId())
-                set(TRemotePackageWhitelist::lastModifiedDate.name, LocalDateTime.now())
-            }
-            mongoTemplate.updateFirst(query, update, TRemotePackageWhitelist::class.java)
         }
+
+        val query = Query(Criteria.where(TRemotePackageWhitelist::id.name).`is`(id))
+        val update = Update().apply {
+            first?.let { set(TRemotePackageWhitelist::type.name, it) }
+            second?.let { set(TRemotePackageWhitelist::packageKey.name, it) }
+            third?.let { set(TRemotePackageWhitelist::versions.name, it) }
+            set(TRemotePackageWhitelist::lastModifiedBy.name, SecurityUtils.getUserId())
+            set(TRemotePackageWhitelist::lastModifiedDate.name, LocalDateTime.now())
+        }
+        mongoTemplate.updateFirst(query, update, TRemotePackageWhitelist::class.java)
         return true
     }
 

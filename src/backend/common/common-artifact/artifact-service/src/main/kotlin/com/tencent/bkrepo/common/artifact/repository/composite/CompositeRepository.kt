@@ -52,9 +52,9 @@ import com.tencent.bkrepo.common.metadata.service.repo.ProxyChannelService
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import java.time.format.DateTimeFormatter
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.format.DateTimeFormatter
 
 /**
  * 组合仓库抽象逻辑
@@ -160,9 +160,10 @@ class CompositeRepository(
         val proxyChannelList = getProxyChannelList(context)
         for (setting in proxyChannelList) {
             try {
-                action(getContextFromProxyChannel(context, setting))?.let {
-                    // 无论请求是否成功, 都会返回kotlin.Unit
-                    if (it != Unit) { return it }
+                val result = action(getContextFromProxyChannel(context, setting))
+                // 无论请求是否成功, 都会返回kotlin.Unit
+                if (result != null && result != Unit) {
+                    return result
                 }
             } catch (downloadException: ArtifactNotInWhitelistException) {
                 throw ArtifactNotInWhitelistException()

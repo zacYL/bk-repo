@@ -2,8 +2,8 @@ package com.tencent.bkrepo.auth.service.impl
 
 import com.mongodb.BasicDBObject
 import com.tencent.bkrepo.auth.api.CanwayUsermangerClient
-import com.tencent.bkrepo.auth.ciApi
-import com.tencent.bkrepo.auth.ciUserManager
+import com.tencent.bkrepo.auth.CI_API
+import com.tencent.bkrepo.auth.CI_USER_MANAGER
 import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
 import com.tencent.bkrepo.auth.dao.UserDao
@@ -15,7 +15,13 @@ import com.tencent.bkrepo.auth.pojo.DevopsUser
 import com.tencent.bkrepo.auth.pojo.UserLoginVo
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.*
+import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
+import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
+import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.User
+import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
@@ -385,7 +391,7 @@ class CanwayUserServiceImpl(
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     override fun listUserResult(rids: List<String>): List<UserResult> {
         val devopsHost = devopsConf.devopsHost.removeSuffix("/")
-        val request = "$devopsHost$ciUserManager$ciApi$userListApi"
+        val request = "$devopsHost$CI_USER_MANAGER$CI_API$userListApi"
         return try {
             val response = SimpleHttpUtils.doGet(request).content
             val canwayUserList = response.readJsonString<CanwayResponse<List<DevopsUser>>>().data

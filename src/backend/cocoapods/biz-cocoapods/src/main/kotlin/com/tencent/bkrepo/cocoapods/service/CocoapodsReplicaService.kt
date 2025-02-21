@@ -1,35 +1,31 @@
 package com.tencent.bkrepo.cocoapods.service
 
 import com.google.gson.JsonParser
-import com.tencent.bkrepo.cocoapods.artifact.CocoapodsProperties
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
 import com.tencent.bkrepo.cocoapods.utils.CocoapodsUtil
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
-import com.tencent.bkrepo.common.security.util.SecurityUtils
-import com.tencent.bkrepo.common.storage.filesystem.FileSystemClient
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.InputStreamReader
-import kotlin.math.log
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsReplicaService(
-    private val nodeClient: NodeClient,
-    private val repoClient: RepositoryClient,
+    private val nodeService: NodeService,
+    private val repositoryService: RepositoryService,
     private val storageManager: StorageManager
 ) {
 
@@ -41,8 +37,8 @@ class CocoapodsReplicaService(
         logger.info("Cocoapods-Event: resolveIndexFile, event:[$event]")
         with(event) {
 
-            val packageFilePath = data["fullPath"] as? String?:
-            throw IllegalArgumentException("fullPath is missing or not a string")
+            val packageFilePath =
+                data["fullPath"] as? String ?: throw IllegalArgumentException("fullPath is missing or not a string")
 
             val indexFilePath = getIndexFilePath(projectId, repoName, packageFilePath)
 
@@ -51,20 +47,17 @@ class CocoapodsReplicaService(
 
             if (type == 0) return
 
-            val repoDetail = repoClient
-                .getRepoDetail(projectId, repoName)
-                .data as RepositoryDetail
-            val nodeDetail = nodeClient
-                .getNodeDetail(projectId, repoName, indexFilePath)
-                .data as NodeDetail
+            val repoDetail = repositoryService.getRepoDetail(projectId, repoName) as RepositoryDetail
+            val nodeDetail = nodeService
+                .getNodeDetail(ArtifactInfo(projectId, repoName, indexFilePath)) as NodeDetail
 
             //索引源文件InputStream
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
-            val domain = data["domain"] as? String?:
-            throw IllegalArgumentException("domain is missing or not a string")
+            val domain =
+                data["domain"] as? String ?: throw IllegalArgumentException("domain is missing or not a string")
 
-            //目标地址,ex:"http://bkrepo.indecpack7.com/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
+            //目标地址,ex:"http://xxx/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
             val sourcePath = "${domain}/${projectId}/${repoName}/${packageFilePath}"
 
             logger.info("replace with sourcePath: $sourcePath")
@@ -164,7 +157,7 @@ class CocoapodsReplicaService(
         val specsPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec"
         val jsonPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec.json"
         val pathList: List<String> =
-            nodeClient.listExistFullPath(projectId, repoName, listOf(specsPath, jsonPath)).data.orEmpty()
+            nodeService.listExistFullPath(projectId, repoName, listOf(specsPath, jsonPath))
         if (pathList.isEmpty()) return ""
         return pathList[0]
     }

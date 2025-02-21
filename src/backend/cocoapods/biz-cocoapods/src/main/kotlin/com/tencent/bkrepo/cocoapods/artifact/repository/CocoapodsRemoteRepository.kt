@@ -62,19 +62,26 @@ class CocoapodsRemoteRepository(
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         val artifactResource = super.onDownload(context)
-        artifactResource?.node?.let { nodeDownloadIntercept(context,it) }
+        artifactResource?.node?.let { nodeDownloadIntercept(context, it) }
         return artifactResource
     }
 
     override fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {
         val metadataList = (context.artifactInfo as CocoapodsArtifactInfo).generateMetadata() +
-            MetadataModel(key = SOURCE_TYPE, value = ArtifactChannel.PROXY, system = true)
+                MetadataModel(key = SOURCE_TYPE, value = ArtifactChannel.PROXY, system = true)
         return super.buildCacheNodeCreateRequest(context, artifactFile).copy(nodeMetadata = metadataList)
     }
 
-    override fun onDownloadSuccess(context: ArtifactDownloadContext, artifactResource: ArtifactResource, throughput: Throughput) {
+    override fun onDownloadSuccess(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource,
+        throughput: Throughput
+    ) {
         val cocoapodsArtifactInfo = context.artifactInfo as CocoapodsArtifactInfo
-        logger.info("Repo [${cocoapodsArtifactInfo.repoName}] Download artifact [${cocoapodsArtifactInfo.name}:${cocoapodsArtifactInfo.version}] successfully.")
+        logger.info(
+            "Repo [${cocoapodsArtifactInfo.repoName}] Download artifact " +
+                    "[${cocoapodsArtifactInfo.name}:${cocoapodsArtifactInfo.version}] successfully."
+        )
         cocoapodsPackageService.createVersion(cocoapodsArtifactInfo, artifactResource.getTotalSize())
         super.onDownloadSuccess(context, artifactResource, throughput)
     }

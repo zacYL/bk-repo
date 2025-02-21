@@ -26,10 +26,9 @@
  */
 
 package com.tencent.bkrepo.cocoapods.artifact.repository
+
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
 import org.springframework.stereotype.Component
 
 @Component
-class CocoapodsVirtualRepository : VirtualRepository() {
-
-}
+class CocoapodsVirtualRepository : VirtualRepository()

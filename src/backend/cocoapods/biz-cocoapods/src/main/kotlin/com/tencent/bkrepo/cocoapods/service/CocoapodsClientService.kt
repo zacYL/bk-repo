@@ -18,7 +18,10 @@ class CocoapodsClientService {
         val response = HttpContextHolder.getResponse()
 
         response.contentType = APPLICATION_OCTET_STREAM
-        response.setHeader(CONTENT_DISPOSITION, CONTENT_DISPOSITION_TEMPLATE.format(CLIENT_PLUGIN_NAME, CLIENT_PLUGIN_NAME))
+        response.setHeader(
+            CONTENT_DISPOSITION,
+            CONTENT_DISPOSITION_TEMPLATE.format(CLIENT_PLUGIN_NAME, CLIENT_PLUGIN_NAME)
+        )
         response.outputStream.use { outputStream ->
             ips.use { inputStream ->
                 inputStream.copyTo(outputStream)

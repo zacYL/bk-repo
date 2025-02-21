@@ -47,10 +47,10 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
-import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
 import java.io.OutputStreamWriter
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
 
 @Component
 class CocoapodsLocalRepository(
@@ -68,7 +68,10 @@ class CocoapodsLocalRepository(
                     val tarFilePath = generateCachePath(artifactInfo, cocoapodsProperties.domain)
                     it.getPodSpec(tarFilePath)
                 } catch (e: Exception) {
-                    logger.error("projectId [$projectId],repo [$repoName] upload package [${artifactInfo.name}] error, ${e.message}")
+                    logger.error(
+                        "projectId [$projectId],repo [$repoName] upload package [${artifactInfo.name}] " +
+                                "error, ${e.message}"
+                    )
                     throw CocoapodsFileParseException(CocoapodsMessageCode.COCOAPODS_FILE_PARSE_ERROR)
                 }
             }

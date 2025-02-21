@@ -1,13 +1,10 @@
 package com.tencent.bkrepo.cocoapods.utils
 
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
-import org.apache.tika.Tika
 import java.io.File
-import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import org.apache.tika.Tika
 
 object FileUtil {
     fun detectFileType(file: File): String {
@@ -24,7 +21,9 @@ object FileUtil {
         val sourceDir = File(sourcePath)
 
         if (!sourceDir.exists() || !sourceDir.isDirectory) {
-            throw IllegalArgumentException("Source path does not exist or is not a directory: $sourcePath")
+            throw IllegalArgumentException(
+                "Source path does not exist or is not a directory: $sourcePath"
+            )
         }
 
         if (!targetDir.exists()) {
@@ -44,7 +43,7 @@ object FileUtil {
         }
     }
 
-    fun buildTempDir(child:String): File {
+    fun buildTempDir(child: String): File {
         // 临时解压目录
         return File(System.getProperty("java.io.tmpdir"), child)
     }

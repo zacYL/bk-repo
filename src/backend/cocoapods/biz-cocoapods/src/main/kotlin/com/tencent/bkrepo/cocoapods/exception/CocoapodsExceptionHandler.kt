@@ -78,7 +78,8 @@ class CocoapodsExceptionHandler {
         val userId = HttpContextHolder.getRequest().getAttribute(USER_KEY) ?: ANONYMOUS_USER
         val uri = HttpContextHolder.getRequest().requestURI
         logger.warn(
-            "User[$userId] access cocoapods resource[$uri] failed[${exception.javaClass.simpleName}]: ${exception.message}"
+            "User[$userId] access cocoapods resource[$uri] " +
+                    "failed[${exception.javaClass.simpleName}]: ${exception.message}"
         )
     }
 

@@ -2,7 +2,7 @@ package com.tencent.bkrepo.cocoapods.service
 
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
-import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsRepoService(
-    private val repositoryClient: RepositoryClient,
+    private val repositoryService: RepositoryService,
 ) {
 
     fun getRepoInfo(projectId: String, repoName: String): RepositoryInfo {
-        return repositoryClient.getRepoInfo(projectId, repoName).data ?: throw RepoNotFoundException(repoName)
+        return repositoryService.getRepoInfo(projectId, repoName) ?: throw RepoNotFoundException(repoName)
     }
 
     fun getStringSetting(projectId: String, repoName: String, key: String): String? {
@@ -24,7 +24,7 @@ class CocoapodsRepoService(
     fun updateStringSetting(projectId: String, repoName: String, key: String, value: String) {
         val repoInfo = getRepoInfo(projectId, repoName)
         repoInfo.configuration.settings[key] = value
-        repositoryClient.updateRepo(createRepoUpdateRequest(projectId, repoName, repoInfo, repoInfo.configuration))
+        repositoryService.updateRepo(createRepoUpdateRequest(projectId, repoName, repoInfo, repoInfo.configuration))
     }
 
     private fun createRepoUpdateRequest(

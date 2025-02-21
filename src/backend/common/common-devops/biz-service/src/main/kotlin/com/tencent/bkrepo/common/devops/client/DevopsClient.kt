@@ -10,12 +10,12 @@ import com.tencent.bkrepo.common.devops.pojo.request.CanwayUserGroupRequest
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayGroupResponse
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayUser
 import com.tencent.bkrepo.common.devops.util.http.CertTrustManager
+import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
 
 @Service
 @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = DEPLOY_CANWAY, matchIfMissing = true)
@@ -44,10 +44,13 @@ class DevopsClient(
      * [projectId] 项目
      */
     fun groupsByProjectId(projectId: String): List<CanwayGroup>? {
-        val subjectCanwayGroupList = devopsApi.organizationByProjectId(projectId = projectId, subjectCode = subjectCode.GROUP.name).execute()
+        val subjectCanwayGroupList =
+            devopsApi.organizationByProjectId(projectId = projectId, subjectCode = subjectCode.GROUP.name).execute()
                 .body()?.data ?: return listOf()
         if (subjectCanwayGroupList.isEmpty()) return listOf()
-        val groupInformation = devopsApi.groupInformation(CanwayUserGroupRequest(groupIds=subjectCanwayGroupList.map { it.subjectId })).execute().body()?.data ?: listOf()
+        val groupInformation =
+            devopsApi.groupInformation(CanwayUserGroupRequest(groupIds = subjectCanwayGroupList.map { it.subjectId }))
+                .execute().body()?.data ?: listOf()
         val canwayGroupList = mutableListOf<CanwayGroup>()
         subjectCanwayGroupList.forEach { subjectCanwayGroup ->
             canwayGroupList.add(
@@ -97,7 +100,8 @@ class DevopsClient(
 
     fun departmentsByProjectId(projectId: String): List<DevopsDepartment>? {
         val subjectCanwayDepartment =
-            devopsApi.organizationByProjectId(projectId, subjectCode = subjectCode.DEPARTMENT.name).execute().body()?.data
+            devopsApi.organizationByProjectId(projectId, subjectCode = subjectCode.DEPARTMENT.name).execute()
+                .body()?.data
         return subjectCanwayDepartment?.map {
             DevopsDepartment(
                 id = it.subjectId,

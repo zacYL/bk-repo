@@ -45,7 +45,7 @@ import com.tencent.bkrepo.common.metadata.service.metadata.MetadataService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.ivy.artifact.IvyArtifactInfo
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_ATTRIBUTES
-import com.tencent.bkrepo.ivy.constants.METADATA_KEY_All_ARTIFACT_FULL_PATH
+import com.tencent.bkrepo.ivy.constants.METADATA_KEY_ALL_ARTIFACT_FULL_PATH
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_BRANCH
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_EXTRA_ATTRIBUTES
 import com.tencent.bkrepo.ivy.constants.METADATA_KEY_IVY_FULL_PATH
@@ -328,13 +328,13 @@ class IvyLocalRepository(
                     display = false
                 ),
                 MetadataModel(
-                    key = METADATA_KEY_All_ARTIFACT_FULL_PATH,
+                    key = METADATA_KEY_ALL_ARTIFACT_FULL_PATH,
                     value = artifactsFullPath,
                     system = true,
                     display = true
                 ),
                 MetadataModel(
-                    key = METADATA_KEY_All_ARTIFACT_FULL_PATH,
+                    key = METADATA_KEY_ALL_ARTIFACT_FULL_PATH,
                     value = artifactsFullPath,
                     system = true,
                     display = true

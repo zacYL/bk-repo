@@ -28,15 +28,15 @@
 package com.tencent.bkrepo.replication.replica.repository.internal.type
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
-import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.springframework.stereotype.Component
 
 @Component
 class GoPackageNodeMapper(
-    private val nodeClient: NodeClient
+    private val nodeService: NodeService
 ) : PackageNodeMapper {
 
     override fun type() = RepositoryType.GO
@@ -54,9 +54,9 @@ class GoPackageNodeMapper(
         val version = packageVersion.name
         val modFullPath = getGoModuleFullPath(modulePath, version, "mod")
         val readmeFullPath = GO_MODULE_ROOT_PATH.format(modulePath, version) + "/.readme"
-        return listOf(getGoModuleFullPath(modulePath, version, "zip")) + nodeClient.listExistFullPath(
+        return listOf(getGoModuleFullPath(modulePath, version, "zip")) + nodeService.listExistFullPath(
             packageSummary.projectId, packageSummary.repoName, listOf(modFullPath, readmeFullPath)
-        ).data.orEmpty()
+        )
     }
 
     private fun getGoModuleFullPath(modulePath: String, version: String, extension: String) =

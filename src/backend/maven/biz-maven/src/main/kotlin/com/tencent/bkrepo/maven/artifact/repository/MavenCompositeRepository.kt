@@ -48,20 +48,18 @@ class MavenCompositeRepository(
 
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
         (context.artifactInfo as MavenArtifactInfo).let {
-            if (it.isArtifact() && whitelistSwitchService.get(RepositoryType.MAVEN)) {
-                nodeService.getNodeDetail(
-                    ArtifactInfo(it.projectId, it.repoName, it.getArtifactFullPath())
-                )?.let { nodeDetail ->
-                    nodeDetail.nodeMetadata.forEach { metadataModel ->
-                        if (metadataModel.key == SOURCE_TYPE &&
-                            metadataModel.value == ArtifactChannel.PROXY.name &&
-                            !remotePackageWhitelistService.existWhitelist(
-                                RepositoryType.MAVEN, "${it.groupId}:${it.artifactId}", it.versionId,
-                            )
-                        ) {
-                            throw ArtifactNotInWhitelistException()
-                        }
-                    }
+            if (!it.isArtifact() || !whitelistSwitchService.get(RepositoryType.MAVEN)) return
+            val nodeDetail = nodeService.getNodeDetail(
+                ArtifactInfo(it.projectId, it.repoName, it.getArtifactFullPath())
+            ) ?: return
+            nodeDetail.nodeMetadata.forEach { metadataModel ->
+                if (metadataModel.key == SOURCE_TYPE &&
+                    metadataModel.value == ArtifactChannel.PROXY.name &&
+                    !remotePackageWhitelistService.existWhitelist(
+                        RepositoryType.MAVEN, "${it.groupId}:${it.artifactId}", it.versionId,
+                    )
+                ) {
+                    throw ArtifactNotInWhitelistException()
                 }
             }
         }

@@ -35,26 +35,26 @@ class NpmCompositeRepository(
 ) : CompositeRepository(localRepository, remoteRepository, proxyChannelService) {
 
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
-        if (whitelistSwitchService.get(RepositoryType.NPM)) {
-            val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)?: return
-            logger.info("npm local fullPath: $fullPath")
-            val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(context.artifactInfo.getArtifactFullPath())
-            logger.info("npm local packageInfo: [${packageInfo.first} : ${packageInfo.second}]")
-            nodeService.getNodeDetail(ArtifactInfo(context.projectId, context.repoName, fullPath))?.let { nodeDetail ->
-                // 如果节点在仓库中存在
-                logger.info("npm local nodeDetail: $nodeDetail")
-                nodeDetail.nodeMetadata.forEach { metadataModel ->
-                    // 判断是否来自代理源缓存
-                    if (metadataModel.key == SOURCE_TYPE &&
-                        metadataModel.value == ArtifactChannel.PROXY.name &&
-                        !remotePackageWhitelistService.existWhitelist(
-                            context.repo.type, packageInfo.first, packageInfo.second
-                        )
-                    ) {
-                        // 抛出异常 Http.status = 423
-                        throw ArtifactNotInWhitelistException()
-                    }
-                }
+        val flag = whitelistSwitchService.get(RepositoryType.NPM)
+        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)
+        if (!flag || fullPath.isNullOrEmpty()) return
+        logger.info("npm local fullPath: $fullPath")
+        val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(context.artifactInfo.getArtifactFullPath())
+        logger.info("npm local packageInfo: [${packageInfo.first} : ${packageInfo.second}]")
+        val nodeDetail =
+            nodeService.getNodeDetail(ArtifactInfo(context.projectId, context.repoName, fullPath)) ?: return
+        // 如果节点在仓库中存在
+        logger.info("npm local nodeDetail: $nodeDetail")
+        nodeDetail.nodeMetadata.forEach { metadataModel ->
+            // 判断是否来自代理源缓存
+            if (metadataModel.key == SOURCE_TYPE &&
+                metadataModel.value == ArtifactChannel.PROXY.name &&
+                !remotePackageWhitelistService.existWhitelist(
+                    context.repo.type, packageInfo.first, packageInfo.second
+                )
+            ) {
+                // 抛出异常 Http.status = 423
+                throw ArtifactNotInWhitelistException()
             }
         }
     }

@@ -410,7 +410,7 @@ class OciBlobServiceImpl(
         }
 
         // 如果索引为空或blobs为空，抛出异常，表示镜像无效
-        if (index?.isEmpty() == true || blobs.isNullOrEmpty()) {
+        if (index?.isEmpty() == true || blobs.isNullOrEmpty() || manifest == null) {
             throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
         }
         // 适配旧版的docker镜像（可能存在没有index.json的情况）

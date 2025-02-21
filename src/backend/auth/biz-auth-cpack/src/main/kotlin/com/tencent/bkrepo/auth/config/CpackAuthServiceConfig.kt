@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.data.mongodb.core.MongoTemplate
 
+
 @Configuration
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 class CpackAuthServiceConfig {

@@ -1,6 +1,10 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.api.*
+import com.tencent.bkrepo.auth.api.CanwayCustomMigrationClient
+import com.tencent.bkrepo.auth.api.CanwayCustomPermissionClient
+import com.tencent.bkrepo.auth.api.CanwayCustomRoleClient
+import com.tencent.bkrepo.auth.api.CanwayProjectClient
+import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER

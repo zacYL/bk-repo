@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.auth.pojo.permission
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import java.time.LocalDateTime
 
 data class UpdatePermissionRequest(

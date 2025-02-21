@@ -138,9 +138,14 @@ object CocoapodsUtil {
         }
 
         // 如果没有找到有效的 source 信息，则返回 null
-        return if (name != null && version != null && type != null && url != null) {
-            ArchiveModifier.Podspec(name, version, Source(type, url, gitTag), null)
-        } else null
+        return when {
+            name != null && version != null && type != null && url != null -> {
+                ArchiveModifier.Podspec(name, version, Source(type, url, gitTag), null)
+            }
+            else -> {
+                null
+            }
+        }
 
     }
 

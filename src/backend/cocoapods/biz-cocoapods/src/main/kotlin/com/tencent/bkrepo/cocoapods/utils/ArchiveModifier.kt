@@ -34,56 +34,77 @@ object ArchiveModifier {
         // 解压文件
         when (archiveType) {
             APPLICATION_ZIP -> {
-                // 解压 ZIP 文件
-                ZipInputStream(archiveInputStream).use { zis ->
-                    var entry: ZipEntry?
-                    while (zis.nextEntry.also { entry = it } != null) {
-                        val entryFile = File(tempDir, entry!!.name)
-                        if (entry!!.isDirectory) {
-                            entryFile.mkdirs()
-                        } else {
-                            FileOutputStream(entryFile).use { fos ->
-                                val buffer = ByteArray(1024)
-                                var len: Int
-                                while (zis.read(buffer).also { len = it } > 0) {
-                                    fos.write(buffer, 0, len)
-                                }
-                            }
-                        }
-                        zis.closeEntry()
-                    }
-                }
+                zipDeCompressor(archiveInputStream, tempDir)
             }
 
             APPLICATION_GZIP -> {
-                // 解压 TAR.GZ 文件
-                GzipCompressorInputStream(archiveInputStream).use { gzipIn ->
-                    TarArchiveInputStream(gzipIn).use { tarIn ->
-                        var entry: TarArchiveEntry?
-                        while (tarIn.nextTarEntry.also { entry = it } != null) {
-                            val entryFile = File(tempDir, entry!!.name)
-                            // 检查并创建父目录
-                            entryFile.parentFile?.takeIf { !it.exists() }?.mkdirs()
-                            if (entry!!.isDirectory) {
-                                entryFile.mkdirs()
-                            } else {
-                                FileOutputStream(entryFile).use { fos ->
-                                    val buffer = ByteArray(1024)
-                                    var len: Int
-                                    while (tarIn.read(buffer).also { len = it } > 0) {
-                                        fos.write(buffer, 0, len)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                gzipPDeCompressor(archiveInputStream, tempDir)
             }
 
             else -> throw IllegalArgumentException("Unsupported archive type: $archiveType")
         }
 
         return modifyAndZip(tempDir, projectId, repoName, domain, archiveOutputStream)
+    }
+
+    private fun zipDeCompressor(archiveInputStream: InputStream, tempDir: File) {
+        // 解压 ZIP 文件
+        ZipInputStream(archiveInputStream).use { zis ->
+            var entry: ZipEntry?
+            while (zis.nextEntry.also { entry = it } != null) {
+                mkdirAndWriteFile(
+                    tempDir = tempDir,
+                    name = entry!!.name,
+                    isDirectory = entry!!.isDirectory,
+                    input = zis,
+                    gzip = false
+                )
+                zis.closeEntry()
+            }
+        }
+    }
+
+    private fun gzipPDeCompressor(archiveInputStream: InputStream, tempDir: File) {
+        // 解压 TAR.GZ 文件
+        GzipCompressorInputStream(archiveInputStream).use { gzipIn ->
+            TarArchiveInputStream(gzipIn).use { tarIn ->
+                var entry: TarArchiveEntry?
+                while (tarIn.nextTarEntry.also { entry = it } != null) {
+                    mkdirAndWriteFile(
+                        tempDir = tempDir,
+                        name = entry!!.name,
+                        isDirectory = entry!!.isDirectory,
+                        input = tarIn,
+                        gzip = true
+                    )
+                }
+            }
+        }
+    }
+
+    private fun mkdirAndWriteFile(
+        tempDir: File, name: String, isDirectory: Boolean, input: InputStream, gzip: Boolean
+    ) {
+        val entryFile = File(tempDir, name)
+        if (gzip) {
+            // 检查并创建父目录
+            entryFile.parentFile?.takeIf { !it.exists() }?.mkdirs()
+        }
+        if (isDirectory) {
+            entryFile.mkdirs()
+        } else {
+            writeFile(entryFile, input)
+        }
+    }
+
+    private fun writeFile(entryFile: File, input: InputStream) {
+        FileOutputStream(entryFile).use { fos ->
+            val buffer = ByteArray(1024)
+            var len: Int
+            while (input.read(buffer).also { len = it } > 0) {
+                fos.write(buffer, 0, len)
+            }
+        }
     }
 
     fun modifyAndZip(

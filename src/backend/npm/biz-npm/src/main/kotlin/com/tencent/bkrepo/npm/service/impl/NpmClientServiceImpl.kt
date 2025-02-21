@@ -300,13 +300,12 @@ class NpmClientServiceImpl(
     override fun deleteVersion(artifactInfo: NpmArtifactInfo) {
         with(artifactInfo) {
             logger.info("npm delete package version request: [$this]")
-            val fullPathList = mutableListOf<String>()
             val ohpm = ArtifactContextHolder.getRepoDetail()?.type == RepositoryType.OHPM
             val packageKey = NpmUtils.packageKey(packageName, ohpm)
             val versionInfo = packageClient.findVersionByName(projectId, repoName, packageKey, version!!).data
                 ?: throw VersionNotFoundException("$packageKey/$version")
             val context = ArtifactRemoveContext()
-            //todo 此处ohpm路径是否要特殊处理？
+            // todo 此处ohpm路径是否要特殊处理？
             context.putAttribute(TARBALL_FULL_PATH, versionInfo.contentPath!!)
             // 删除包管理中对应的version
             npmPackageHandler.deleteVersion(context.userId, packageName, version!!, artifactInfo)
@@ -320,8 +319,6 @@ class NpmClientServiceImpl(
             logger.info("npm delete package request: [$this]")
             val context = ArtifactRemoveContext(artifact = artifactInfo)
             val pkgMetadata = npmOperationService.loadPackageMetadata(context)
-            npmPackageHandler.deletePackage(context.userId, packageName, this)
-            repository.remove(context)
             if (pkgMetadata != null) {
                 checkOhpmDependentsAndDeprecate(SecurityUtils.getUserId(), artifactInfo, pkgMetadata, null)
                 npmDependentHandler.updatePackageDependents(
@@ -330,6 +327,8 @@ class NpmClientServiceImpl(
             } else {
                 logger.warn("fail to load package metadata while delete package[$this]")
             }
+            npmPackageHandler.deletePackage(context.userId, packageName, this)
+            repository.remove(context)
             logger.info("userId [${context.userId}] delete package [$packageName] success.")
         }
     }

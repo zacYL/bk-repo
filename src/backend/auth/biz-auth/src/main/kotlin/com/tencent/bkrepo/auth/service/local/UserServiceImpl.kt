@@ -205,7 +205,7 @@ class UserServiceImpl constructor(
     }
 
     override fun addUserToRoleBatch(idList: List<String>, roleId: String): Boolean {
-        logger.info("delete user to role batch : [$idList, $roleId]")
+        logger.info("add user to role batch : [$idList, $roleId]")
         return userHelper.addUserToRoleBatchCommon(idList, roleId)
     }
 

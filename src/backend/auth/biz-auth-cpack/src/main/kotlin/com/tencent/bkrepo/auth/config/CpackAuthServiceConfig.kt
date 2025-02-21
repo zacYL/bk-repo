@@ -77,14 +77,12 @@ class CpackAuthServiceConfig {
     fun cpackUserService(
         @Autowired userRepository: UserDao,
         @Autowired roleRepository: RoleRepository,
-        @Autowired mongoTemplate: MongoTemplate,
         @Autowired permissionService: PermissionService
     ): UserService {
         logger.debug("init cpackUserServiceImpl")
         return CpackUserServiceImpl(
             userRepository,
             roleRepository,
-            mongoTemplate,
             permissionService
         )
     }

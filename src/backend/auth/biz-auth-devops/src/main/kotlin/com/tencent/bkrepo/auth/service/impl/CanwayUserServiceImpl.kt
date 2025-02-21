@@ -54,7 +54,7 @@ class CanwayUserServiceImpl(
     private val mongoTemplate: MongoTemplate,
     permissionService: PermissionService,
     private val canwayUsermangerClient: CanwayUsermangerClient
-) : CpackUserServiceImpl(userDao, roleRepository, mongoTemplate, permissionService) {
+) : CpackUserServiceImpl(userDao, roleRepository, permissionService) {
 
     @Autowired
     lateinit var devopsConf: DevopsConf

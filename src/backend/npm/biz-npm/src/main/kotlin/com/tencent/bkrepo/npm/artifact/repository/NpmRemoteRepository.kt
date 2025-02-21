@@ -117,19 +117,16 @@ class NpmRemoteRepository(
                 queryContext.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
                 queryContext.putAttribute(REQUEST_URI, "/${packageInfo.first}/${packageInfo.second}")
                 executor.execute {
-                    query(queryContext)?.use {
-                        it.readJsonString<NpmVersionMetadata>()
-                    } ?: run {
-                        // 如果package-version.json没有,则从package json中获取
-                        getVersionMetadataFromPackage(context, packageInfo).also {
-                            if (it != null) {
-                                // 保存package-version.json文件
-                                storageVersionMetadata(context, it, versionMetadataFullPath)
-                            }
-                        }
-                    }?.let {
+                    val versionMetadata = getVersionMetadata(
+                        queryContext, context, packageInfo, versionMetadataFullPath
+                    )
+                    versionMetadata?.let { metadata ->
                         val size = artifactResource.getTotalSize()
-                        npmPackageHandler.createVersion(userId, artifactInfo, it, size,
+                        npmPackageHandler.createVersion(
+                            userId,
+                            artifactInfo,
+                            metadata,
+                            size,
                             ohpm = repositoryDetail.type == RepositoryType.OHPM
                         )
                     }
@@ -139,6 +136,18 @@ class NpmRemoteRepository(
                 super.onDownloadSuccess(this, artifactResource, throughput)
             }
         }
+    }
+
+    private fun getVersionMetadata(
+        queryContext: ArtifactQueryContext,
+        context: ArtifactDownloadContext,
+        packageInfo: Pair<String, String>,
+        versionMetadataFullPath: String
+    ): NpmVersionMetadata? {
+        return query(queryContext)?.use { it.readJsonString<NpmVersionMetadata>() }
+            ?: getVersionMetadataFromPackage(context, packageInfo)?.also { metadata ->
+                storageVersionMetadata(context, metadata, versionMetadataFullPath)
+            }
     }
 
     private fun storageVersionMetadata(

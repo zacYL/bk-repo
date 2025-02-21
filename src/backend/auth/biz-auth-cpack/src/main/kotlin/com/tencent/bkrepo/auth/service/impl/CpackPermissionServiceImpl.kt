@@ -31,8 +31,17 @@
 
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.constant.*
-import com.tencent.bkrepo.auth.dao.*
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
+import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
+import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
+import com.tencent.bkrepo.auth.constant.PROJECT_VIEWER_ID
+import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
+import com.tencent.bkrepo.auth.dao.AccountDao
+import com.tencent.bkrepo.auth.dao.PermissionDao
+import com.tencent.bkrepo.auth.dao.PersonalPathDao
+import com.tencent.bkrepo.auth.dao.RepoAuthConfigDao
+import com.tencent.bkrepo.auth.dao.UserDao
 import com.tencent.bkrepo.auth.dao.repository.RoleRepository
 import com.tencent.bkrepo.auth.helper.PermissionHelper
 import com.tencent.bkrepo.auth.message.AuthMessageCode
@@ -42,7 +51,18 @@ import com.tencent.bkrepo.auth.pojo.enums.AccessControlMode
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
-import com.tencent.bkrepo.auth.pojo.permission.*
+import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
+import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionContext
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
+import com.tencent.bkrepo.auth.pojo.permission.Permission
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDeployInRepoRequest
 import com.tencent.bkrepo.auth.pojo.role.ExternalRoleResult
 import com.tencent.bkrepo.auth.pojo.role.RoleSource
 import com.tencent.bkrepo.auth.service.PermissionService
@@ -445,11 +465,11 @@ open class CpackPermissionServiceImpl constructor(
         return false
     }
 
-    fun isUserLocalProjectAdmin(userId: String, projectId: String): Boolean {
+    private fun isUserLocalProjectAdmin(userId: String, projectId: String): Boolean {
         return permHelper.isUserLocalProjectAdmin(userId, projectId)
     }
 
-    fun checkLocalRepoOrNodePermission(context: CheckPermissionContext): Boolean {
+    private fun checkLocalRepoOrNodePermission(context: CheckPermissionContext): Boolean {
         // check role repo admin
         if (permHelper.checkRepoAdmin(context)) return true
         // check repo read action
@@ -464,13 +484,13 @@ open class CpackPermissionServiceImpl constructor(
         return false
     }
 
-    fun needNodeCheck(projectId: String, repoName: String): Boolean {
+    private fun needNodeCheck(projectId: String, repoName: String): Boolean {
         val projectPermission = permissionDao.listByResourceAndRepo(ResourceType.NODE, projectId, repoName)
         val repoCheckConfig = repoAuthConfigDao.findOneByProjectRepo(projectId, repoName) ?: return false
         return projectPermission.isNotEmpty() && repoCheckConfig.accessControlMode != AccessControlMode.DEFAULT
     }
 
-    fun checkNodeAction(request: CheckPermissionContext, isProjectUser: Boolean): Boolean {
+    private fun checkNodeAction(request: CheckPermissionContext, isProjectUser: Boolean): Boolean {
         with(request) {
             if (checkRepoAccessControl(projectId, repoName!!)) {
                 return permHelper.checkNodeActionWithCtrl(request)
@@ -621,7 +641,7 @@ open class CpackPermissionServiceImpl constructor(
         return project
     }
 
-    fun getNoAdminUserRepo(projectId: String, userId: String): List<String> {
+    private fun getNoAdminUserRepo(projectId: String, userId: String): List<String> {
         val repoList = mutableListOf<String>()
         permissionDao.listByProjectIdAndUsers(projectId, userId).forEach {
             if (it.actions.isNotEmpty() && it.repos.isNotEmpty()) {
@@ -790,7 +810,7 @@ open class CpackPermissionServiceImpl constructor(
         )!!
     }
 
-    fun isUserLocalProjectUser(userId: String, projectId: String): Boolean {
+    private fun isUserLocalProjectUser(userId: String, projectId: String): Boolean {
         val user = userDao.findFirstByUserId(userId) ?: run {
             throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }

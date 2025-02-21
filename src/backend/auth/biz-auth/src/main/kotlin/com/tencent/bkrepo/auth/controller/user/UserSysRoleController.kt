@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.auth.controller.user
 
+import com.tencent.bkrepo.auth.controller.OpenResource
 import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
@@ -17,13 +18,14 @@ import org.springframework.web.bind.annotation.RestController
 class UserSysRoleController(
     private val permissionService: PermissionService,
     private val roleService: RoleService
-) {
+) : OpenResource(permissionService) {
 
     @GetMapping("/list/{projectId}")
     fun roleByProjectId(
         @RequestAttribute userId: String,
         @PathVariable projectId: String
     ): Response<List<Role>> {
+        preCheckProjectAdmin(projectId)
         return ResponseBuilder.success(roleService.systemRolesByProjectId(projectId))
     }
 

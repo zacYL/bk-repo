@@ -68,7 +68,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.util.*
 
 @Service
 class ExtPermissionServiceImpl(
@@ -333,7 +332,7 @@ class ExtPermissionServiceImpl(
         return permission.groupBy { it.repos.first() }.map { group ->
             RepoPathResourceTypeInstance(
                 group.key,
-                repoMap[group.key]?.type?.name?.lowercase(Locale.getDefault()) ?: "",
+                repoMap[group.key]?.type?.name?.lowercase() ?: "",
                 group.value.map { RepoPathItem(it.id!!, it.permName) }
             )
         }.filter {

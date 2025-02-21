@@ -5,11 +5,11 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCle
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  *
@@ -180,7 +180,7 @@ object RepoCleanRuleUtils {
             nodeInfo.recentlyUseDate?.let { this.add(LocalDateTime.parse(it, DateTimeFormatter.ISO_DATE_TIME)) }
         }.maxOf { it }
         val seconds = Duration.between(lastModifiedTimeDate, LocalDateTime.now()).seconds
-        logger.debug("lastModifiedTimeDate:[$lastModifiedTimeDate], seconds:[$seconds]")
+        logger.debug("lastModifiedTimeDate:[{}], seconds:[{}]", lastModifiedTimeDate, seconds)
         // todo matchRule 是否可能为空，考虑如果为空附默认值
         val rules = matchRule!!.rules
             .filterIsInstance<Rule.NestedRule>().first().rules
@@ -191,68 +191,57 @@ object RepoCleanRuleUtils {
             .firstOrNull { it.field == "reserveDays" }?.value as? Int ?: 30
         logger.debug("reverseDays:[$reverseDays]")
         // 有设置规则 尝试匹配规则
-        if (!rules.isNullOrEmpty()) {
-            rules.forEach { queryRule ->
-                if (queryRule.field == "id") {
-                    if (logger.isDebugEnabled) {
-                        logger.debug("match by id: [${queryRule.value}]")
-                    }
-                    return true
-                }
-                if (queryRule.field == "name") {
-                    val ruleValue = queryRule.value as String
-                    val type = queryRule.operation
-                    checkReverseRule(nodeInfo.name.trim(), ruleValue.trim(), type).apply {
-                        if (this) {
-                            if (logger.isDebugEnabled) {
-                                logger.debug("match by name: [${queryRule.value}]")
-                            }
-                            return true
-                        }
-                    }
-                }
-                if (queryRule.field.startsWith("metadata.")) {
-                    val key = queryRule.field.removePrefix("metadata.")
-                    val ruleValue = if (queryRule.value is String) {
-                        queryRule.value as String
-                    } else {
-                        logger.info("metadata value is not string, skip")
-                        return@forEach
-                    }
-                    val type = queryRule.operation
-                    nodeInfo.nodeMetadata?.firstOrNull { it.key == key }?.let { metadata ->
-                        logger.debug("metadata: [${metadata.toJsonString()}]")
-                        val metadataValue = if (metadata.value is String) {
-                            logger.debug("metadata value is string: [${metadata.value}]")
-                            metadata.value as String
-                        } else {
-                            logger.debug("metadataValue is not String: [${metadata.toJsonString()}]")
-                            null
-                        }
-                        logger.debug("metadataValue:[$metadataValue]")
-                        metadataValue?.let {
-                            checkReverseRule(it.trim(), ruleValue.trim(), type).apply {
-                                if (this) {
-                                    if (logger.isDebugEnabled) {
-                                        logger.debug(
-                                            "match by metadata: " +
-                                                "[query: ${queryRule.toJsonString()}, " +
-                                                "metadata: ${metadata.toJsonString()}]"
-                                        )
-                                    }
-                                    return true
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            logger.info("not match any rule")
+        if (ruleCheck(rules, nodeInfo)) {
+            return true
         }
         return reverseDays * daySeconds >= seconds
     }
 
-    fun checkReverseRule(nodeValue: String, ruleValue: String, type: OperationType): Boolean {
+    private fun ruleCheck(rules: List<Rule.QueryRule>?, nodeInfo: NodeInfo): Boolean {
+        if (rules.isNullOrEmpty()) return false
+        rules.forEach { queryRule ->
+            if (queryRule.field == "id") {
+                return true
+            }
+            if (queryRule.field == "name") {
+                val ruleValue = queryRule.value as String
+                val type = queryRule.operation
+                val result = checkReverseRule(nodeInfo.name.trim(), ruleValue.trim(), type)
+                if (result) {
+                    return true
+                }
+            }
+            if (!queryRule.field.startsWith("metadata.")) return@forEach
+            val key = queryRule.field.removePrefix("metadata.")
+            val ruleValue = if (queryRule.value is String) {
+                queryRule.value as String
+            } else {
+                logger.info("metadata value is not string, skip")
+                return@forEach
+            }
+            val type = queryRule.operation
+            val metadata = nodeInfo.nodeMetadata?.firstOrNull { it.key == key }
+            if (metadata == null) return@forEach
+            logger.debug("metadata: [${metadata.toJsonString()}]")
+            val metadataValue = if (metadata.value is String) {
+                logger.debug("metadata value is string: [{}]", metadata.value)
+                metadata.value as String
+            } else {
+                logger.debug("metadataValue is not String: [${metadata.toJsonString()}]")
+                null
+            }
+            logger.debug("metadataValue:[$metadataValue]")
+            if (metadataValue == null) return@forEach
+            val result = checkReverseRule(metadataValue.trim(), ruleValue.trim(), type)
+            if (result) {
+                return true
+            }
+        }
+        logger.info("not match any rule")
+        return false
+    }
+
+    private fun checkReverseRule(nodeValue: String, ruleValue: String, type: OperationType): Boolean {
         logger.info("nodeValue:[$nodeValue], ruleValue:[$ruleValue], type:[$type]")
         return try {
             when (type) {

@@ -338,7 +338,11 @@ object MailTemplateEN {
                                                                         "background: #fff; " +
                                                                         "color: #c7c7c7;"
                                                             )
-                                                            +"You receive this email because you followed the project of $projectId, or other people @ you"
+                                                            +buildString {
+                                                                append("You receive this email because")
+                                                                append(" you followed the project of $projectId, ")
+                                                                append("or other people @ you")
+                                                            }
                                                         }
                                                     }
                                                 }

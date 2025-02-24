@@ -8,6 +8,8 @@ import com.tencent.bkrepo.auth.pojo.software.SoftwareUseUnit
 import com.tencent.bkrepo.auth.pojo.software.UnitType
 import com.tencent.bkrepo.auth.pojo.software.request.UseUnitDeleteRequest
 import com.tencent.bkrepo.auth.pojo.software.response.SoftwareUseUnitResponse
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.software.SoftwareUserService
 import org.springframework.stereotype.Service
@@ -110,25 +112,25 @@ class SoftwareUserServiceImpl(
      * [set]        用户或部门 id 集合
      */
     private fun updatePermission(permission: Permission, unitType: UnitType, action: Boolean, set: Set<String>) {
-//        when (unitType) {
-//            UnitType.USER -> {
-//                permissionService.updatePermissionUser(
-//                    UpdatePermissionUserRequest(
-//                        permissionId = permission.id!!,
-//                        null,
-//                        userId = merge(permission.users, set, action)
-//                    )
-//                )
-//            }
-//            UnitType.DEPARTMENT -> {
-//                permissionService.updatePermissionDepartment(
-//                    UpdatePermissionDepartmentRequest(
-//                        permissionId = permission.id!!,
-//                        departmentId = merge(permission.departments, set, action)
-//                    )
-//                )
-//            }
-//        }
+        when (unitType) {
+            UnitType.USER -> {
+                permissionService.updatePermissionUser(
+                    UpdatePermissionUserRequest(
+                        permissionId = permission.id!!,
+                        null,
+                        userId = merge(permission.users, set, action)
+                    )
+                )
+            }
+            UnitType.DEPARTMENT -> {
+                permissionService.updatePermissionDepartment(
+                    UpdatePermissionDepartmentRequest(
+                        permissionId = permission.id!!,
+                        departmentId = merge(permission.departments, set, action)
+                    )
+                )
+            }
+        }
     }
 
     override fun deleteUnit(repoName: String, useUnitDeleteRequest: UseUnitDeleteRequest): Boolean {

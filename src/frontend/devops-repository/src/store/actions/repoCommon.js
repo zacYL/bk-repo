@@ -250,7 +250,7 @@ export default {
         const urlMap = {
             docker: 'docker/ext/addr',
             npm: 'npm/ext/address',
-            ohpm: 'npm/ext/address'
+            ohpm: 'ohpm/ext/address'
         }
         if (!urlMap[repoType] || state.domain[repoType]) return
         Vue.prototype.$ajax.get(
@@ -282,7 +282,7 @@ export default {
                 commit('SET_ARTIFACT_LIST', res)
             })
     },
-    
+
     /**
      * @description: 更新索引
      * @param {*} _

@@ -103,7 +103,7 @@ class DataRecordsBackupServiceImpl(
 
     private fun init(context: BackupContext) {
         val currentDateStr = context.startDate.format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"))
-        val path = Paths.get(context.task.storeLocation, context.task.name, currentDateStr)
+        val path = Paths.get(context.task.storeLocation, context.task.id, currentDateStr)
         if (!Files.exists(path)) {
             Files.createDirectories(path)
         }

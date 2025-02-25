@@ -322,8 +322,9 @@ class NpmClientServiceImpl(
             val pkgMetadata = npmOperationService.loadPackageMetadata(context)
             if (pkgMetadata != null) {
                 checkOhpmDependentsAndDeprecate(SecurityUtils.getUserId(), artifactInfo, pkgMetadata, null)
+                val ohpm = context.repositoryDetail.type == RepositoryType.OHPM
                 npmDependentHandler.updatePackageDependents(
-                    context.userId, this, pkgMetadata, NpmOperationAction.UNPUBLISH
+                    context.userId, this, pkgMetadata, NpmOperationAction.UNPUBLISH, ohpm
                 )
             } else {
                 logger.warn("fail to load package metadata while delete package[$this]")

@@ -34,6 +34,8 @@ package com.tencent.bkrepo.auth.controller.user
 import com.tencent.bkrepo.auth.constant.AUTH_API_PERMISSION_PREFIX
 import com.tencent.bkrepo.auth.controller.OpenResource
 import com.tencent.bkrepo.auth.pojo.enums.AuthPermissionType
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
@@ -53,6 +55,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -195,5 +198,21 @@ class PermissionController @Autowired constructor(
     ): Response<List<ExternalRoleResult>> {
         preCheckProjectAdmin(projectId)
         return ResponseBuilder.success(permissionService.listExternalRoleByProject(projectId, source))
+    }
+
+    @GetMapping("/admin")
+    fun isAdmin(
+        @RequestAttribute userId: String,
+        @RequestParam projectId: String
+    ): Response<Boolean> {
+        val result = permissionService.checkPermission(
+            CheckPermissionRequest(
+                uid = userId,
+                resourceType = ResourceType.PROJECT,
+                projectId = projectId,
+                action = PermissionAction.MANAGE
+            )
+        )
+        return ResponseBuilder.success(result)
     }
 }

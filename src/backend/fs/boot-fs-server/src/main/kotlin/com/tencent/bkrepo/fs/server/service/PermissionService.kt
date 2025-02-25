@@ -48,8 +48,8 @@ class PermissionService(
     suspend fun checkPermission(projectId: String, repoName: String, action: PermissionAction, uid: String): Boolean {
         val checkRequest = CheckPermissionRequest(
             uid = uid,
-            resourceType = ResourceType.REPO.toString(),
-            action = action.toString(),
+            resourceType = ResourceType.REPO,
+            action = action,
             projectId = projectId,
             repoName = repoName
         )

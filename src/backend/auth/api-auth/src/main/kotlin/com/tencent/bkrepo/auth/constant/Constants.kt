@@ -35,7 +35,7 @@ package com.tencent.bkrepo.auth.constant
  * 认证相关
  */
 
-const val PROJECT_MANAGE_ID = "project_manage_role"
+const val PROJECT_MANAGE_ID = "project_manage"
 
 const val PROJECT_MANAGE_NAME = "项目管理组"
 

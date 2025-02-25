@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.storage.innercos.request.CheckObjectExistReques
 import com.tencent.bkrepo.common.storage.innercos.request.CopyObjectRequest
 import com.tencent.bkrepo.common.storage.innercos.request.DeleteObjectRequest
 import com.tencent.bkrepo.common.storage.innercos.request.GetObjectRequest
+import com.tencent.bkrepo.common.storage.innercos.stream.LazyCosInputStream
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
@@ -63,7 +64,11 @@ open class InnerCosFileStorage : AbstractEncryptorFileStorage<InnerCosCredential
         } else {
             GetObjectRequest(name)
         }
-        return client.getObjectByChunked(request).inputStream
+        return if (storageProperties.innercos.lazyRequest) {
+            if (exist(path, name, client)) {
+                LazyCosInputStream(client, request)
+            } else null
+        } else client.getObjectByChunked(request).inputStream
     }
 
     override fun delete(path: String, name: String, client: CosClient) {

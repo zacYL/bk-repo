@@ -50,6 +50,7 @@ data class InnerCosCredentials(
     var slowLogSpeed: Int = MB,
     var slowLogTimeInMillis: Long = 30_000,
     var download: DownloadProperties = DownloadProperties(),
+    var lazyRequest: Boolean = false,
     override var key: String? = null,
     override var cache: CacheProperties = CacheProperties(),
     override var upload: UploadProperties = UploadProperties(),

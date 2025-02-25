@@ -172,6 +172,7 @@ storage:
     region: __BK_REPO_COS_REGION__
     bucket: __BK_REPO_COS_BUCKET__
     public: true
+    lazyRequest: true
     cache:
       enabled: __BK_REPO_CACHE_ENABLE__
       path: __BK_REPO_CACHE_MOUNT_PATH__

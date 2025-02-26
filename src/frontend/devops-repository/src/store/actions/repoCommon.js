@@ -253,12 +253,26 @@ export default {
             ohpm: 'ohpm/ext/address'
         }
         if (!urlMap[repoType] || state.domain[repoType]) return
+        const processDomain = (url) => {
+            try {
+                const urlObj = new URL(url)
+                // 仅修改pathname部分
+                urlObj.pathname = urlObj.pathname
+                    .replace(/\/npm(\/?)$/, '/ohpm$1') // 精确匹配结尾
+                    .replace(/^(\/npm)(?=\/|$)/, '/ohpm') // 根路径情况
+                return urlObj.toString()
+            } catch {
+                // 非标准URL时处理（如缺失协议）
+                return url.replace(/\/npm(\/?)$/, '/ohpm$1')
+            }
+        }
         Vue.prototype.$ajax.get(
             urlMap[repoType]
         ).then(res => {
+            const v = (res.domain || res || `${location.origin}/${repoType}`)
             commit('SET_DOMAIN', {
                 type: repoType,
-                domain: res.domain || res || `${location.origin}/${repoType}`
+                domain: repoType === 'ohpm' ? processDomain(v) : v
             })
         })
     },

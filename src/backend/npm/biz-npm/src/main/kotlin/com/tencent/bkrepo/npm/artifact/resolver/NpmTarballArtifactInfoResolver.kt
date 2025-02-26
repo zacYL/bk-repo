@@ -62,10 +62,11 @@ class NpmTarballArtifactInfoResolver : ArtifactInfoResolver {
             val name = attributes[NAME].toString().trim()
             val packageName = NpmUtils.formatPackageName(name, scope)
             val version = NpmUtils.analyseVersionFromPackageName(attributes[FILENAME].toString(), name)
+            val ext = NpmUtils.analyseExtFromPackageName(attributes[FILENAME].toString())
             val delimiter = attributes[DELIMITER].toString().trim()
             val repeatedScope = attributes[REPEATED_SCOPE] != null
             val ohpm = RepositoryType.OHPM == ArtifactContextHolder.getRepoDetail()?.type
-            return NpmTarballArtifactInfo(projectId, repoName, packageName, version, delimiter, repeatedScope, ohpm)
+            return NpmTarballArtifactInfo(projectId, repoName, packageName, version, delimiter, repeatedScope, ext)
         }
     }
 }

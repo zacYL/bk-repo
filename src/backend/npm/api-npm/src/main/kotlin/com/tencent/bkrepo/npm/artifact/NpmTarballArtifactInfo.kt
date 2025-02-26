@@ -43,22 +43,16 @@ class NpmTarballArtifactInfo(
     version: String? = null,
     private val delimiter: String = DELIMITER_HYPHEN,
     private val repeatedScope: Boolean = true,
-    private val ohpm: Boolean = false,
+    private val ext: String = FILE_SUFFIX,
 ) : NpmArtifactInfo(projectId, repoName, packageName, version) {
 
     override fun getArtifactFullPath(): String {
         require(version != null)
-        return getTarballFullPath(packageName, version, delimiter, repeatedScope,ohpm)
+        return getTarballFullPath(packageName, version, delimiter, repeatedScope, ext)
     }
 
-    private fun getTarballFullPath(name: String, version: String, delimiter: String, repeatedScope: Boolean, ohpm: Boolean) =
+    private fun getTarballFullPath(name: String, version: String, delimiter: String, repeatedScope: Boolean, ext: String) =
         TARBALL_FULL_PATH_FORMAT.format(
-            name, delimiter, if (repeatedScope) name else name.substringAfterLast("/"), version, getContentFileExt(ohpm)
+            name, delimiter, if (repeatedScope) name else name.substringAfterLast("/"), version, ".$ext"
         )
-
-    private fun getContentFileExt(ohpm: Boolean) = if (ohpm) {
-        HAR_FILE_EXT
-    } else {
-        FILE_SUFFIX
-    }
 }

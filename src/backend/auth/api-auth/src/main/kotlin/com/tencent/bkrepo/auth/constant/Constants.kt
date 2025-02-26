@@ -39,10 +39,6 @@ const val PROJECT_MANAGE_ID = "project_manage"
 
 const val PROJECT_MANAGE_NAME = "项目管理组"
 
-const val PROJECT_VIEW_ID = "project_view_role"
-
-const val PROJECT_VIEW_NAME = "项目访问组"
-
 const val PROJECT_VIEWER_ID = "project_view"
 
 const val PROJECT_VIEWER_NAME = "项目用户"

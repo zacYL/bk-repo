@@ -501,7 +501,7 @@
                                         .catch(error => {
                                             this.$bkMessage({
                                                 theme: 'error',
-                                                message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                                                message: `${error?.errors?.[0]?.message || error.message || this.$t('uploadMavenErrorMsgTip')}`
                                             })
                                             reject(error)
                                         })
@@ -524,7 +524,7 @@
                                             resolve()
                                         })
                                         .catch(error => {
-                                            this.errorMsg = error.message || error.error || error
+                                            this.errorMsg = error?.errors?.[0]?.message || error.message || error.error || error
                                             reject(this.errorMsg)
                                         })
                                     break
@@ -544,7 +544,7 @@
                                             resolve()
                                         })
                                         .catch(error => {
-                                            this.errorMsg = error.message || error.error || error
+                                            this.errorMsg = error?.errors?.[0]?.message || error.message || error.error || error
                                             reject(this.errorMsg)
                                         })
                                     break

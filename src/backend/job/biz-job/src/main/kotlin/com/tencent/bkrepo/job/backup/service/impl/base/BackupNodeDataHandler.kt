@@ -217,7 +217,12 @@ class BackupNodeDataHandler(
     fun uploadFile(record: BackupNodeInfo, context: BackupContext, repo: RepositoryDetail) {
         if (!sha256Check(record.folder, record.sha256)) return
         val filePath = generateRandomPath(context.targertPath, record.sha256!!)
-        val artifactFile = filePath.toFile().toArtifactFile()
+        val file = filePath.toFile()
+        if (!file.exists()){
+            logger.warn("file not exist [${filePath}]")
+            return
+        }
+        val artifactFile = file.toArtifactFile()
         // TODO 增加重试以及异常捕获
         storageService.store(record.sha256!!, artifactFile, repo.storageCredentials)
     }

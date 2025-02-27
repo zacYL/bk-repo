@@ -41,11 +41,11 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHold
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
+import com.tencent.bkrepo.npm.constants.DELIMITER_DOWNLOAD
+import com.tencent.bkrepo.npm.constants.DELIMITER_HYPHEN
 import com.tencent.bkrepo.npm.constants.FILE_SUFFIX
 import com.tencent.bkrepo.npm.constants.HAR_FILE_EXT
 import com.tencent.bkrepo.npm.constants.HSP_FILE_EXT
-import com.tencent.bkrepo.npm.constants.DELIMITER_DOWNLOAD
-import com.tencent.bkrepo.npm.constants.DELIMITER_HYPHEN
 import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.NPM_METADATA_ROOT
 import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
@@ -55,10 +55,10 @@ import com.tencent.bkrepo.npm.constants.NPM_PKG_VERSION_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
 import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH_FORMAT
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
+import java.io.InputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.slf4j.LoggerFactory
-import java.io.InputStream
 
 object NpmUtils {
 
@@ -104,6 +104,8 @@ object NpmUtils {
         val unscopedName = name.substringAfterLast("/")
         val ext = if (filename.endsWith(".har")) {
             ".har"
+        } else if (filename.endsWith(".hsp")) {
+            ".hsp"
         } else {
             ".tgz"
         }
@@ -166,7 +168,7 @@ object NpmUtils {
      * name with scope tarball like this: http://domain/@scope/demo/-/demo-1.0.0.tgz
      * name without scope tarball like this: http://domain/demo/-/demo-1.0.0.tgz
      */
-    private fun getTgzSuffix(oldTarball: String, name: String): String{
+    private fun getTgzSuffix(oldTarball: String, name: String): String {
         val firstNameIndex = oldTarball.indexOfAny(listOf("/$name/$DELIMITER_HYPHEN/", "/$name/$DELIMITER_DOWNLOAD/"))
         return oldTarball.substring(firstNameIndex + 1)
     }

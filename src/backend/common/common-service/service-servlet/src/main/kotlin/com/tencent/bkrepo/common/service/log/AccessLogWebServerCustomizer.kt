@@ -64,7 +64,6 @@ class AccessLogWebServerCustomizer : WebServerFactoryCustomizer<UndertowServletW
                 deploymentInfo.addInitialHandlerChainWrapper { handler ->
                     val accessLogReceiver = Slf4jAccessLogReceiver()
                     AccessLogHandler(handler, accessLogReceiver, pattern, Undertow::class.java.classLoader)
-                    DisallowedMethodsHandler(handler, HttpString("TRACE"))
                 }
             }
         )

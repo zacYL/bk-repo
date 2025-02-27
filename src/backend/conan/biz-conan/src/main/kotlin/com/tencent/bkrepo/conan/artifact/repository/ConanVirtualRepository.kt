@@ -41,8 +41,8 @@ import com.tencent.bkrepo.conan.constant.PATTERN
 import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
-import com.tencent.bkrepo.conan.utils.PathUtils.extractConanFileReference
-import com.tencent.bkrepo.conan.utils.PathUtils.getConanRecipePattern
+import com.tencent.bkrepo.conan.utils.ConanPathUtils.extractConanFileReference
+import com.tencent.bkrepo.conan.utils.ConanPathUtils.getConanRecipePattern
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired

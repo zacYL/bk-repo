@@ -38,13 +38,12 @@ import com.tencent.bkrepo.conan.constant.CHANNEL
 import com.tencent.bkrepo.conan.constant.NAME
 import com.tencent.bkrepo.conan.constant.PACKAGE_ID
 import com.tencent.bkrepo.conan.constant.PACKAGE_REVISION
-import com.tencent.bkrepo.conan.constant.PATH
 import com.tencent.bkrepo.conan.constant.REVISION
 import com.tencent.bkrepo.conan.constant.USERNAME
 import com.tencent.bkrepo.conan.constant.VERSION
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.service.ConanVirtualService
-import com.tencent.bkrepo.conan.utils.PathUtils.isSearchPath
+import com.tencent.bkrepo.conan.utils.ConanPathUtils.isSearchPath
 import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
@@ -67,7 +66,6 @@ class ConanArtifactInfoResolver : ArtifactInfoResolver {
         val packageId = attributes[PACKAGE_ID]?.toString()
         val revision = attributes[REVISION]?.toString()
         val pRevision = attributes[PACKAGE_REVISION]?.toString()
-        val fileName = attributes[PATH]?.toString()
 
         val artifactInfo = ConanArtifactInfo(
             projectId = projectId,
@@ -80,7 +78,6 @@ class ConanArtifactInfoResolver : ArtifactInfoResolver {
             packageId = packageId,
             revision = revision,
             pRevision = pRevision,
-            fileName = fileName
         )
 
         val actualRepoName = getActualRepoName(repoName, request, artifactInfo)

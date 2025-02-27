@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.conan.artifact.repository
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -60,6 +61,7 @@ import com.tencent.bkrepo.conan.service.impl.CommonService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanPathUtils
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.buildConanFileName
+import com.tencent.bkrepo.conan.utils.ConanPathUtils.buildPackagePath
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.generateFullPath
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadResponse
@@ -67,7 +69,6 @@ import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildPackageVersionCreateR
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildRefStr
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.toConanFileReference
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.toMetadataList
-import com.tencent.bkrepo.conan.utils.PathUtils
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -112,11 +113,12 @@ class ConanLocalRepository : LocalRepository() {
     fun getRecipeLatestRevision(conanArtifactInfo: ConanArtifactInfo): RevisionInfo {
         with(conanArtifactInfo) {
             val conanFileReference = convertToConanFileReference(conanArtifactInfo)
-            commonService.getNodeDetail(projectId, repoName, PathUtils.buildReference(conanFileReference))
+            val path = PathUtils.normalizeFullPath(buildPackagePath(conanFileReference))
+            commonService.getNodeDetail(projectId, repoName, path)
             return commonService.getLastRevision(projectId, repoName, conanFileReference)
                 ?: throw ConanFileNotFoundException(
                     ConanMessageCode.CONAN_FILE_NOT_FOUND,
-                    PathUtils.buildReference(conanFileReference),
+                    path,
                     getRepoIdentify()
                 )
         }
@@ -284,7 +286,7 @@ class ConanLocalRepository : LocalRepository() {
         packageService.listAllPackageName(projectId, repoName).forEach { packageName ->
             packageService.listAllVersion(projectId, repoName, packageName, VersionListOption()).forEach { pv ->
                 val conanInfo = pv.packageMetadata.toConanFileReference()?.let {
-                    result.add(PathUtils.buildConanFileName(it))
+                    result.add(buildConanFileName(it))
                 }
             }
         }

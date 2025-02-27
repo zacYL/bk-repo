@@ -28,7 +28,11 @@
 package com.tencent.bkrepo.conan.utils
 
 import com.tencent.bkrepo.common.api.constant.CharPool
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
+import com.tencent.bkrepo.common.api.constant.StringPool.UNDERSCORE
 import com.tencent.bkrepo.conan.constant.CONANINFO
+import com.tencent.bkrepo.conan.constant.CONANS_URL_TAG
+import com.tencent.bkrepo.conan.constant.CONAN_V2
 import com.tencent.bkrepo.conan.constant.EXPORT_FOLDER
 import com.tencent.bkrepo.conan.constant.INDEX_JSON
 import com.tencent.bkrepo.conan.constant.PACKAGES_FOLDER
@@ -38,15 +42,23 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 
 object ConanPathUtils {
 
+    /**
+     * url解析为conanFileReference
+     * url例子：/{projectId}/{repoName}/v2/conans/{name}/{version}/{username}/{channel}
+     */
     fun String.extractConanFileReference(): ConanFileReference {
-        val pathList = this.trim('/').split("/")
-        if (pathList.size < 7) throw IllegalArgumentException("invalid path $this")
-        val userName = pathList[0]
-        val name = pathList[1]
-        val version = pathList[2]
-        val channel = pathList[3]
-        val revision = pathList[4]
-        return ConanFileReference(name, version, userName, channel, revision)
+        val trimStr = this.trim()
+        val cleanedUrl = if (trimStr.startsWith(SLASH)) trimStr.substring(1) else trimStr
+        val segments = cleanedUrl.split(SLASH)
+        if (segments.size < 7 || segments[2] != CONAN_V2 || segments[3] != CONANS_URL_TAG) {
+            throw IllegalArgumentException("Invalid URL format")
+        }
+
+        val name = segments[4]
+        val version = segments[5]
+        val userName = segments[6]
+        val channel = segments[7]
+        return ConanFileReference(name, version, userName, channel)
     }
 
     fun joinString(first: String, second: String, third: String? = null): String {
@@ -194,4 +206,24 @@ object ConanPathUtils {
         val temp = buildPackageRevisionFolderPath(packageReference)
         return joinString(temp, CONANINFO)
     }
+
+    fun getConanRecipePattern(conanFileReference: ConanFileReference): String {
+        with(conanFileReference) {
+            //如果userName和channel为_，则不拼接，而是拼接*
+            return if (userName == UNDERSCORE && channel == UNDERSCORE) {
+                "${name}/${version}*"
+            } else {
+                buildConanFileName(this)
+            }
+        }
+    }
+
+    fun isSearchPath(uri: String): Boolean {
+        return uri.endsWith("/conans/search")
+    }
+
+    fun isFirstQueryPath(uri: String): Boolean {
+        return isSearchPath(uri) || (uri.endsWith("/latest") && uri.contains("/packages").not())
+    }
+
 }

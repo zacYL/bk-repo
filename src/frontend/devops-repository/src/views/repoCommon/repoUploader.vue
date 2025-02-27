@@ -208,15 +208,15 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9.-]+$/,
-                            message: this.$t('fieldDescription'),
+                            regex: /^[a-zA-Z0-9._-]+(?<!\.)$/,
+                            message: this.$t('fieldDescription1'),
                             trigger: 'blur'
                         },
                         {
                             validator: (val) => {
                                 return !(val + '').startsWith('.')
                             },
-                            message: this.$t('fieldDescription'),
+                            message: this.$t('fieldDescription1'),
                             trigger: 'blur'
                         }
                     ],
@@ -227,15 +227,15 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9.-]+$/,
-                            message: this.$t('fieldDescription'),
+                            regex: /^[a-zA-Z0-9._-]+(?<!\.)$/,
+                            message: this.$t('fieldDescription1'),
                             trigger: 'blur'
                         },
                         {
                             validator: (val) => {
                                 return !(val + '').startsWith('.')
                             },
-                            message: this.$t('fieldDescription'),
+                            message: this.$t('fieldDescription1'),
                             trigger: 'blur'
                         }
                     ],
@@ -246,15 +246,15 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9.-]+$/,
-                            message: this.$t('fieldDescription'),
+                            regex: /^[a-zA-Z0-9._-]+(?<!\.)$/,
+                            message: this.$t('fieldDescription1'),
                             trigger: 'blur'
                         },
                         {
                             validator: (val) => {
                                 return !(val + '').startsWith('.')
                             },
-                            message: this.$t('fieldDescription'),
+                            message: this.$t('fieldDescription1'),
                             trigger: 'blur'
                         }
                     ]

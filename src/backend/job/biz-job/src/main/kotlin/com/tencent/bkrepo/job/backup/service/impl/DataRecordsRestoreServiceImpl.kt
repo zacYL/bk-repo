@@ -210,11 +210,12 @@ class DataRecordsRestoreServiceImpl(
 
     private fun loadAndStoreRecord(backupDataEnum: BackupDataEnum, context: BackupContext) {
         with(context) {
-            if (!Files.exists(Paths.get(currentFile))) {
+            val file = File(currentFile)
+
+            if (!file.exists()) {
                 logger.warn("$currentFile not exist!")
                 return
             }
-            val file = File(currentFile)
             file.forEachLine { line ->
                 val record = JsonUtils.objectMapper.readValue(line, backupDataEnum.backupClazz)
                 BackupDataMappings.storeRestoreDataHandler(record, backupDataEnum, context)

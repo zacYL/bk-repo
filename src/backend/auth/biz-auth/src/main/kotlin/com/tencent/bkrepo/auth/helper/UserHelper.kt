@@ -117,11 +117,20 @@ class UserHelper constructor(
             }
             RoleType.PROJECT -> {
                 if (request.source == null) {
-                    roleRepository.findFirstByTypeAndProjectIdAndName(
-                        type = RoleType.PROJECT,
-                        projectId = request.projectId,
-                        name = request.name
-                    )
+                    if (request.roleId != null) {
+                        roleRepository.findFirstByTypeAndRoleIdAndProjectId(
+                            type = RoleType.PROJECT,
+                            roleId = request.roleId,
+                            projectId = request.projectId
+                        )
+                    } else {
+                        roleRepository.findFirstByTypeAndProjectIdAndName(
+                            type = RoleType.PROJECT,
+                            projectId = request.projectId,
+                            name = request.name
+                        )
+                    }
+
                 } else {
                     require(request.roleId != null)
                     roleRepository.findFirstByTypeAndRoleIdAndProjectIdAndSource(

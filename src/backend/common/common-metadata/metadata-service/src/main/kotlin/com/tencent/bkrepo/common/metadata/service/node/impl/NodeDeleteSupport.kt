@@ -136,7 +136,6 @@ open class NodeDeleteSupport(
         operator: String
     ): NodeDeleteResult {
         val criteria = buildDeleteCriteria(projectId, repoName, fullPaths, operator)
-            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_EMPTY, "fullPaths is empty.")
         return delete(Query(criteria), operator, criteria, projectId, repoName, fullPaths)
     }
 
@@ -265,9 +264,10 @@ open class NodeDeleteSupport(
         repoName: String,
         fullPaths: List<String>,
         userId: String,
-    ): Criteria? {
+    ): Criteria {
+        val normalizedFullPaths = fullPaths.map { PathUtils.normalizeFullPath(it) }
         val userAuthPaths = nodeBaseService.getUserAuthPath(projectId, repoName, userId, PermissionAction.DELETE)
-        val existPaths = filterExistsFullPathAndCheckLock(projectId, repoName, fullPaths)
+        val existPaths = filterExistsFullPathAndCheckLock(projectId, repoName, normalizedFullPaths)
         return NodeDeleteHelper.buildDeleteCriteria(projectId, repoName, existPaths, userAuthPaths)
     }
 

@@ -32,15 +32,10 @@ object NodeDeleteHelper {
         repoName: String,
         existsPaths: List<String>,
         userAuthPaths: List<String>? = null
-    ): Criteria? {
-        // 检查路径是否存在及是否可删除
-        if (existsPaths.isEmpty() || userAuthPaths?.isEmpty() == true) {
-            return null
-        }
+    ): Criteria {
         val criteria = where(TNode::projectId).isEqualTo(projectId)
             .and(TNode::repoName).isEqualTo(repoName)
             .and(TNode::deleted).isEqualTo(null)
-            .and(TNode::folder).isEqualTo(false)
 
         if (userAuthPaths == null) {
             criteria.orOperator(buildFullPathOrChildrenCriteria(existsPaths))

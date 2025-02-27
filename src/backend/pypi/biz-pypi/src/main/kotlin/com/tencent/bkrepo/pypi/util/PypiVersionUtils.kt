@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.pypi.util
 
 import com.tencent.bkrepo.pypi.pojo.PypiPackagePojo
+import java.util.regex.Pattern
 
 object PypiVersionUtils {
     fun String.toPypiPackagePojo(): PypiPackagePojo {
@@ -39,5 +40,23 @@ object PypiVersionUtils {
         val name = pathList[0]
         val version = pathList[1]
         return PypiPackagePojo(name, version)
+    }
+
+
+    fun parsePypiNameAndVersion(file: String): PypiPackagePojo? {
+        return try {
+            val pattern = Pattern.compile("^(?<name>[a-zA-Z0-9_.-]+)-(?<version>[0-9]+(?:\\.[0-9]+)*)(\\..*)?$")
+            val matcher = pattern.matcher(file)
+            if (matcher.matches()) {
+                PypiPackagePojo(
+                    name = matcher.group("name")!!,
+                    version = matcher.group("version")!!
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
     }
 }

@@ -98,7 +98,3 @@ object FileNameParser {
         return list.joinToString(CharPool.DASH.toString())
     }
 }
-
-fun main() {
-    println(FileNameParser.parseNameAndVersion("/index.yaml"))
-}

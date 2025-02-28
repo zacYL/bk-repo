@@ -37,10 +37,11 @@ import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
-import com.tencent.bkrepo.pypi.constants.NAME
+import com.tencent.bkrepo.pypi.constants.FILE
+import com.tencent.bkrepo.pypi.util.PypiVersionUtils.parsePypiNameAndVersion
+import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
-import javax.servlet.http.HttpServletRequest
 
 @Component
 @Resolver(PypiSimpleArtifactInfo::class)
@@ -52,8 +53,12 @@ class PypiSimpleArtifactInfoResolver : ArtifactInfoResolver {
         request: HttpServletRequest
     ): PypiArtifactInfo {
         val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
-        val name = attributes[NAME]?.toString()?.trim()?.also { validatePackageName(it) }
-        return PypiSimpleArtifactInfo(projectId, repoName, name)
+        val fileName = attributes[FILE].toString().trim()
+        val nameAndVersion = parsePypiNameAndVersion(fileName)
+        if (nameAndVersion != null) {
+            validatePackageName(nameAndVersion.name.trim())
+        }
+        return PypiSimpleArtifactInfo(projectId, repoName, nameAndVersion?.name.orEmpty())
     }
 
     private fun validatePackageName(name: String) {

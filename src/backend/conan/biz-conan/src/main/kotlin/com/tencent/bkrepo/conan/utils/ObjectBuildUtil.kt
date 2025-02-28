@@ -56,6 +56,7 @@ import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToPackageRefe
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.buildConanFileName
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.buildPackageReference
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.buildReferenceWithoutVersion
+import com.tencent.bkrepo.conan.utils.ConanPathUtils.generateFullPath
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.getPackageRevisionsFile
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.getRecipeRevisionsFile
 import com.tencent.bkrepo.conan.utils.TimeFormatUtil.convertToUtcTime
@@ -88,7 +89,7 @@ object ObjectBuildUtil {
                 versionName = version,
                 size = size,
                 manifestPath = null,
-                artifactPath = ConanPathUtils.generateFullPath(artifactInfo),
+                artifactPath = generateFullPath(artifactInfo),
                 stageTag = null,
                 packageMetadata = addPackageMetadata(artifactInfo, sourceType),
                 createdBy = userId,
@@ -100,7 +101,7 @@ object ObjectBuildUtil {
     fun buildRefStr(artifactInfo: ConanArtifactInfo): String {
         // conan key中的name由 实际name+username+channel组成
         val conanFileReference = convertToConanFileReference(artifactInfo)
-        val refStr = PathUtils.buildReferenceWithoutVersion(conanFileReference)
+        val refStr = buildReferenceWithoutVersion(conanFileReference)
         return refStr
     }
 
@@ -287,7 +288,7 @@ object ObjectBuildUtil {
     fun buildDownloadRecordRequest(context: ArtifactDownloadContext): PackageDownloadRecord? {
         with(context) {
             val conanArtifactInfo = artifactInfo as ConanArtifactInfo
-            val fullPath = PathUtils.generateFullPath(conanArtifactInfo)
+            val fullPath = generateFullPath(conanArtifactInfo)
             return if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
                 PackageDownloadRecord(
                     projectId = projectId,

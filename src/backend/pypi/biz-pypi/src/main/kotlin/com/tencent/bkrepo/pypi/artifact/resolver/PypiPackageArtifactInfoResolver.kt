@@ -35,11 +35,11 @@ import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.PypiPackageArtifactInfo
-import com.tencent.bkrepo.pypi.constants.NAME
-import com.tencent.bkrepo.pypi.constants.VERSION
+import com.tencent.bkrepo.pypi.constants.FILE
+import com.tencent.bkrepo.pypi.util.PypiVersionUtils.parsePypiNameAndVersion
+import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
-import javax.servlet.http.HttpServletRequest
 
 @Component
 @Resolver(PypiPackageArtifactInfo::class)
@@ -51,8 +51,11 @@ class PypiPackageArtifactInfoResolver : ArtifactInfoResolver {
         request: HttpServletRequest
     ): PypiArtifactInfo {
         val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
-        val name = attributes[NAME].toString().trim()
-        val version = attributes[VERSION].toString().trim()
-        return PypiPackageArtifactInfo(projectId, repoName, name, version)
+        val fileName = attributes[FILE].toString().trim()
+        val nameAndVersion = parsePypiNameAndVersion(fileName)
+        return PypiPackageArtifactInfo(
+            projectId, repoName, artifactUri,
+            nameAndVersion?.name.orEmpty(), nameAndVersion?.version.orEmpty()
+        )
     }
 }

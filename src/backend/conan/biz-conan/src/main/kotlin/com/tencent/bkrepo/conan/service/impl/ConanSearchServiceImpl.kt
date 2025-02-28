@@ -28,7 +28,6 @@
 package com.tencent.bkrepo.conan.service.impl
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.conan.constant.ConanMessageCode
 import com.tencent.bkrepo.conan.exception.ConanSearchNotFoundException
 import com.tencent.bkrepo.conan.pojo.ConanInfo
@@ -38,15 +37,11 @@ import com.tencent.bkrepo.conan.service.ConanMetadataService
 import com.tencent.bkrepo.conan.service.ConanSearchService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanPathUtils.buildPackagePath
-import com.tencent.bkrepo.conan.utils.PathUtils.buildReference
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
 class ConanSearchServiceImpl : ConanSearchService {
-
-    @Autowired
-    lateinit var packageService: PackageService
 
     @Autowired
     lateinit var commonService: CommonService
@@ -66,7 +61,7 @@ class ConanSearchServiceImpl : ConanSearchService {
             val result = commonService.getPackageConanInfo(projectId, repoName, conanFileReference)
             if (result.isEmpty()) {
                 throw ConanSearchNotFoundException(
-                    ConanMessageCode.CONAN_SEARCH_NOT_FOUND, buildReference(conanFileReference), getRepoIdentify()
+                    ConanMessageCode.CONAN_SEARCH_NOT_FOUND, buildPackagePath(conanFileReference), getRepoIdentify()
                 )
             }
             return result

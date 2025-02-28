@@ -34,7 +34,7 @@ import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.common.storage.innercos.http.HttpMethod
 import com.tencent.bkrepo.conan.service.ConanRemoteService
 import com.tencent.bkrepo.conan.service.ConanVirtualService
-import com.tencent.bkrepo.conan.utils.PathUtils.isFirstQueryPath
+import com.tencent.bkrepo.conan.utils.ConanPathUtils.isFirstQueryPath
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse

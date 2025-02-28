@@ -42,7 +42,7 @@
                                     :key="tag">
                                     {{ tag }}
                                 </span>
-                                <scan-tag v-if="showRepoScan" class="ml5" :status="metadataMap.scanStatus"></scan-tag>
+                                <scan-tag v-if="showRepoScan" class="ml5" store-type-check :local-repo="sourceRepoName || repoName" :status="metadataMap.scanStatus"></scan-tag>
                                 <lock-tag v-if="metadataMap.lockStatus" :lock-user="metadataMap.lockUser" :lock-description="(detail.metadata.find(m => m.key === 'lockType') || {}).description"></lock-tag>
                                 <forbid-tag class="ml10"
                                     v-if="metadataMap.forbidStatus"
@@ -331,6 +331,7 @@
                     return target
                 }, {})
             },
+            
             // 是否是 软件源模式
             whetherSoftware () {
                 return this.$route.path.startsWith('/software')
@@ -342,7 +343,7 @@
                 const basic = this.detail.basic
                 const metadataMap = this.metadataMap
                 return [
-                    ...(!metadataMap.forbidStatus
+                    ...(!metadataMap.forbidStatus && this.versionNoInLockList
                         ? [
                             (this.showUpdateOperation && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') }
                             // this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
@@ -375,7 +376,7 @@
         watch: {
             version: {
                 handler (version) {
-                    version && this.getDetail()
+                    version && this.getDetail() && this.getIsLock(version)
                 },
                 immediate: true
             },
@@ -399,8 +400,26 @@
             ...mapActions([
                 'getVersionDetail',
                 'addPackageMetadata',
-                'deletePackageMetadata'
+                'deletePackageMetadata',
+                'blackWhiteListCheck'
             ]),
+            /**
+             * @description: 是否在黑名单里面
+             * @return {*}
+             */
+            getIsLock (version) {
+                return this.blackWhiteListCheck({
+                    projectId: this.projectId,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: version || this.version
+                    }
+                }).then(res => {
+                    this.versionNoInLockList = res
+                }).catch(() => {
+                    
+                })
+            },
             readmeClickEvent (event) {
                 const target = event.target
                 // 检查是否为a标签，并阻止点击事件
@@ -425,7 +444,7 @@
                 // 在每次重新获取接口详情时都需要先将此tab页的类型置为空，否则不会重新加载依赖tab页组件，也就不会重新获取数据
                 this.detailType = ''
                 this.removeReadmeAClick()
-                this.getVersionDetail({
+                return this.getVersionDetail({
                     projectId: this.projectId,
                     repoType: this.repoType,
                     repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,

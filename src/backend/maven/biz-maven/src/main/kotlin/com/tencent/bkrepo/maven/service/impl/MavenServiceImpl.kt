@@ -285,6 +285,7 @@ class MavenServiceImpl(
     private fun artifactInfo(request: MavenWebDeployRequest): Triple<Model, ByteArray, Path> {
         // 获取临时文件路径并根据请求的 UUID 解析出具体的文件路径。
         val path = storageService.getTempPath().resolve(request.uuid)
+        var model: Model? = null
         // 检查文件是否存在，如果不存在则抛出异常。
         if (Files.notExists(path)) {
             throw NodeNotFoundException(request.uuid)
@@ -293,14 +294,29 @@ class MavenServiceImpl(
         if (request.type == SOURCE_POM) {
             val bytes = Files.readAllBytes(path)
             return Triple(readModel(bytes.inputStream()), bytes, path)
+        } else {
+            // 不是pom类型的话
+            var pomName = request.uuid.substringBeforeLast(".jar") + ".pom"
+            // 对war包进行特殊处理
+            if (request.uuid.endsWith(".war")) {
+                pomName = request.uuid.substringBeforeLast(".war") + ".pom"
+            }
+            val pomPath = storageService.getTempPath().resolve(pomName)
+            if (Files.notExists(pomPath)) {
+                throw NodeNotFoundException(pomPath.toString())
+            }
+            val bytes = Files.readAllBytes(pomPath)
+            model = readModel(bytes.inputStream())
         }
         // 如果提取的 POM 文件信息与请求不匹配，则创建一个新的 Model 对象。
-        val model = Model().apply {
-            this.groupId = request.groupId
-            this.artifactId = request.artifactId
-            this.version = request.version
-            this.packaging = request.type
-        }
+//        if (model == null){
+//            model = Model().apply {
+//                this.groupId = request.groupId
+//                this.artifactId = request.artifactId
+//                this.version = request.version
+//                this.packaging = request.type
+//            }
+//        }
 
         // 将新的 Model 对象写入到字节数组输出流中。
         val os = ByteArrayOutputStream()
@@ -308,7 +324,6 @@ class MavenServiceImpl(
         // 返回包含新 Model、字节数组和路径的 Triple 对象。
         return Triple(model, os.toByteArray(), path)
     }
-
 
     private fun getSnapshotVersion(
         mavenArtifactInfo: MavenArtifactInfo,
@@ -457,24 +472,40 @@ class MavenServiceImpl(
         type = this.packaging.orEmpty()
     )
 
-
     override fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse {
         val filename = file.getFilename()
         val bytes = file.bytes
-        val model = if (!filename.endsWith(".pom")) JarUtils.parseModel(bytes.inputStream()) else {
-            readModel(bytes.inputStream()).apply {
+        var model: Model? = null
+        val path = storageService.getTempPath().resolve(filename)
+        if (Files.notExists(path.parent)) {
+            Files.createDirectories(path.parent)
+        }
+        if (!filename.endsWith(".pom")) {
+            // 对于jar包类的pom需要再上传
+            val pomByte = JarUtils.extractPom(bytes.inputStream())
+            // 拼接一下pom的文件名
+            var pomName = filename.substringBeforeLast(".jar") + ".pom"
+            // 对war包进行特殊处理
+            if (filename.endsWith(".war")) {
+                pomName = filename.substringBeforeLast(".war") + ".pom"
+            }
+
+            val pomPath = storageService.getTempPath().resolve(pomName)
+            if (Files.notExists(pomPath.parent)) {
+                Files.createDirectories(pomPath.parent)
+            }
+            Files.write(pomPath, pomByte)
+            model = if (JarUtils.isEmptyPom(pomByte)) Model() else readModel(pomByte.inputStream())
+        } else {
+            model = readModel(bytes.inputStream()).apply {
                 if (this.packaging != SOURCE_POM) {
                     throw JarFormatException("The packaging of the pom file is not pom")
                 }
             }
         }
-        val path = storageService.getTempPath().resolve(filename)
-        if (Files.notExists(path.parent)) {
-            Files.createDirectories(path.parent)
-        }
+
         return Files.write(path, bytes).let { model.toGav(filename) }
     }
-
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(MavenServiceImpl::class.java)

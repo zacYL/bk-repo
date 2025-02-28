@@ -65,7 +65,7 @@ object JarUtils {
      * @param inputStream 包含项目信息的输入流，通常是一个压缩文件流。
      * @return pom.xml文件的字节内容，如果没有找到则返回空字节数组。
      */
-    private fun extractPom(inputStream: InputStream): ByteArray {
+    fun extractPom(inputStream: InputStream): ByteArray {
         val bytes = try {
             DecompressUtils.doWithArchiver<ByteArray, ByteArray>(
                 inputStream,
@@ -87,7 +87,7 @@ object JarUtils {
      * @param pom pom.xml文件的字节内容。
      * @return 如果pom.xml内容为空则返回true，否则返回false。
      */
-    private fun isEmptyPom(pom: ByteArray) = pom === noPom
+    fun isEmptyPom(pom: ByteArray) = pom === noPom
 
     private fun Model.transform(): Model {
         val parent = this.parent
@@ -98,5 +98,4 @@ object JarUtils {
         }
         return this
     }
-
 }

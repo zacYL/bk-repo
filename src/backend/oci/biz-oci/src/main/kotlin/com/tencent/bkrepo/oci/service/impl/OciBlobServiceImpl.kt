@@ -31,13 +31,11 @@
 
 package com.tencent.bkrepo.oci.service.impl
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.DecompressUtils
-import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
@@ -81,6 +79,7 @@ import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import org.apache.commons.compress.archivers.ArchiveException
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.slf4j.LoggerFactory
 import org.springframework.data.util.CastUtils
 import org.springframework.stereotype.Service
@@ -90,7 +89,6 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
@@ -280,7 +278,7 @@ class OciBlobServiceImpl(
         try {
             val (index, manifestBytes) = decompressImage(file.inputStream)
             if (index == null) {
-                transferOldImage(JsonUtils.objectMapper.readValue<List<OldManifest>>(manifestBytes)).forEach { e ->
+                transferOldImage(manifestBytes.inputStream().readJsonString()).forEach { e ->
                     uploadImage(e, artifactInfo) { CastUtils.cast<DescriptorPath>(it).path!!.toFile() }
                 }
             } else {
@@ -288,7 +286,6 @@ class OciBlobServiceImpl(
                     return@layer storage
                         .getTempPath(null)
                         .resolve("blobs/${it.replace(":", "/")}")
-                        .assertExists()
                         .toFile()
                 }
                 index.manifests.forEach { e ->
@@ -311,12 +308,15 @@ class OciBlobServiceImpl(
             DecompressUtils.tryArchiverWithCompressor<Unit, Unit>(
                 inputStream,
                 callback = { stream, entry ->
+                    if (entry is TarArchiveEntry && entry.isSymbolicLink) {
+                        return@tryArchiverWithCompressor
+                    }
                     if (entry.name == "manifest.json") {
                         manifest = StreamUtils.copyToByteArray(stream)
                         return@tryArchiverWithCompressor
                     }
                     if (entry.name == "index.json") {
-                        index = JsonUtils.objectMapper.readValue(StreamUtils.copyToByteArray(stream))
+                        index = StreamUtils.copyToByteArray(stream).inputStream().readJsonString()
                         return@tryArchiverWithCompressor
                     }
                     val layer = path.resolve(entry.name)
@@ -344,16 +344,19 @@ class OciBlobServiceImpl(
         logger.info("will start transfer the manifest to manifest Schema2")
         val path = storage.getTempPath()
         return manifests.map { e ->
-            val layers = e.layers.map m@{
-                val layer = path.resolve(it).assertExists()
-                return@m LayerDescriptor(
+            val layers = e.layers.mapNotNull {
+                val layer = path.resolve(it)
+                if (Files.notExists(layer)) {
+                    return@mapNotNull null
+                }
+                return@mapNotNull LayerDescriptor(
                     mediaType = LAYER_TAR_MEDIA_TYPE,
                     size = Files.size(layer),
                     digest = "sha256:${Files.newInputStream(layer).sha256()}",
                     path = layer
                 )
             }
-            val config = path.resolve(e.config).assertExists().let {
+            val config = path.resolve(e.config).let {
                 return@let ConfigDescriptor(
                     IMAGE_CONFIG_MEDIA_TYPE,
                     Files.size(it),
@@ -363,14 +366,6 @@ class OciBlobServiceImpl(
             }
             return@map ManifestSchema2(2, OCI_IMAGE_MANIFEST_MEDIA_TYPE, config, layers)
         }
-    }
-
-    private fun Path.assertExists(): Path {
-        if (Files.notExists(this)) {
-            logger.warn("The content of ${toString().substringAfterLast("/")} is null")
-            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
-        }
-        return this
     }
 
     /**
@@ -389,13 +384,15 @@ class OciBlobServiceImpl(
     ) {
         // 解析manifest中的layers和config，逐个处理
         manifest.layers.plus(manifest.config).forEach { e ->
+            // 获取当前层的文件流并构建ArtifactFile对象
+            val file = layer(e)
+                .apply { if (!exists()) return@forEach }
+                .let { ArtifactFileFactory.build(layer(e).inputStream()) }
             // 创建一个唯一的UUID用于标识这次上传
             val uuid = storage.createAppendId(null)
             // 设置当前处理的blob的artifact信息到HTTP请求中
             HttpContextHolder.getRequest()
                 .setAttribute(ARTIFACT_INFO_KEY, artifactInfo.toOciBlobArtifactInfo(e.digest, uuid))
-            // 获取当前层的文件流并构建ArtifactFile对象
-            val file = ArtifactFileFactory.build(layer(e).inputStream())
             // 上传当前层的文件
             ArtifactContextHolder.getRepository().upload(ArtifactUploadContext(file))
         }

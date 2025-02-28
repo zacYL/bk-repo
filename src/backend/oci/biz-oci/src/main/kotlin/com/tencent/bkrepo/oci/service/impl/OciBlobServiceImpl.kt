@@ -31,15 +31,18 @@
 
 package com.tencent.bkrepo.oci.service.impl
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.DecompressUtils
+import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
+import com.tencent.bkrepo.common.artifact.hash.sha256
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -50,15 +53,19 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.oci.constant.BLOB_PATH_VERSION_KEY
 import com.tencent.bkrepo.oci.constant.BLOB_PATH_VERSION_VALUE
+import com.tencent.bkrepo.oci.constant.IMAGE_CONFIG_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.LAYER_TAR_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.OCI_IMAGE_MANIFEST_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.constant.REPO_TYPE
 import com.tencent.bkrepo.oci.exception.OciBadRequestException
 import com.tencent.bkrepo.oci.exception.OciImageUploadException
 import com.tencent.bkrepo.oci.model.ConfigDescriptor
+import com.tencent.bkrepo.oci.model.Descriptor
+import com.tencent.bkrepo.oci.model.DescriptorPath
 import com.tencent.bkrepo.oci.model.Index
 import com.tencent.bkrepo.oci.model.ManifestSchema2
 import com.tencent.bkrepo.oci.model.OldManifest
-import com.tencent.bkrepo.oci.model.Manifest
 import com.tencent.bkrepo.oci.model.LayerDescriptor
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
@@ -75,13 +82,16 @@ import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import org.apache.commons.compress.archivers.ArchiveException
 import org.slf4j.LoggerFactory
+import org.springframework.data.util.CastUtils
 import org.springframework.stereotype.Service
+import org.springframework.util.ObjectUtils
 import org.springframework.util.StreamUtils
 import org.springframework.web.multipart.MultipartFile
+import java.io.File
 import java.io.InputStream
-import java.security.MessageDigest
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.stream.Collectors
 
 @Service
 class OciBlobServiceImpl(
@@ -268,61 +278,124 @@ class OciBlobServiceImpl(
             throw OciImageUploadException(OciMessageCode.OCI_IMAGE_UPLOADING)
         }
         try {
-            val (index, manifest, blobs) = decompressImage(file.inputStream)
-            if (index.manifests.isEmpty()) {
-                // 旧版docker镜像的上传逻辑
-                // 获取manifest，通过转换适配v2版本manifest
-                val (manifestSchema2List, newBlobs) = transferOldImage(manifest, blobs)
-                manifestSchema2List.forEach {
-                    // 对每个manifest分别进行上传
-                    uploadOldImage(it, artifactInfo, newBlobs)
+            val (index, manifestBytes) = decompressImage(file.inputStream)
+            if (index == null) {
+                transferOldImage(JsonUtils.objectMapper.readValue<List<OldManifest>>(manifestBytes)).forEach { e ->
+                    uploadImage(e, artifactInfo) { CastUtils.cast<DescriptorPath>(it).path!!.toFile() }
                 }
             } else {
-                // 新版docker镜像
-                index.manifests.forEach { uploadImage(it.digest, artifactInfo, blobs) }
+                val layer: (String) -> File = layer@{
+                    return@layer storage
+                        .getTempPath(null)
+                        .resolve("blobs/${it.replace(":", "/")}")
+                        .assertExists()
+                        .toFile()
+                }
+                index.manifests.forEach { e ->
+                    layer(e.digest).inputStream().readJsonString<ManifestSchema2>().apply {
+                        uploadImage(this, artifactInfo) { layer(it.digest) }
+                    }
+                }
             }
         } finally {
             uploading.lazySet(false)
         }
     }
 
+    private fun decompressImage(inputStream: InputStream): Pair<Index?, ByteArray> {
+        logger.info("start decompress docker image")
+        val path = storage.getTempPath()
+        var index: Index? = null
+        var manifest: ByteArray? = null
+        try {
+            DecompressUtils.tryArchiverWithCompressor<Unit, Unit>(
+                inputStream,
+                callback = { stream, entry ->
+                    if (entry.name == "manifest.json") {
+                        manifest = StreamUtils.copyToByteArray(stream)
+                        return@tryArchiverWithCompressor
+                    }
+                    if (entry.name == "index.json") {
+                        index = JsonUtils.objectMapper.readValue(StreamUtils.copyToByteArray(stream))
+                        return@tryArchiverWithCompressor
+                    }
+                    val layer = path.resolve(entry.name)
+                    if (Files.notExists(layer)) {
+                        if (Files.notExists(layer.parent)) {
+                            Files.createDirectories(layer.parent)
+                        }
+                        Files.newOutputStream(layer).use { StreamUtils.copy(stream, it) }
+                    }
+                },
+                handleResult = { _, _, _ -> }
+            )
+        } catch (e: ArchiveException) {
+            logger.error("Illegal image files!", e)
+            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
+        }
+        if (index == null && ObjectUtils.isEmpty(manifest)) {
+            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
+        }
+        return index to manifest!!
+    }
+
+    // 转换manifest为schema2
+    private fun transferOldImage(manifests: List<OldManifest>): List<ManifestSchema2> {
+        logger.info("will start transfer the manifest to manifest Schema2")
+        val path = storage.getTempPath()
+        return manifests.map { e ->
+            val layers = e.layers.map m@{
+                val layer = path.resolve(it).assertExists()
+                return@m LayerDescriptor(
+                    mediaType = LAYER_TAR_MEDIA_TYPE,
+                    size = Files.size(layer),
+                    digest = "sha256:${Files.newInputStream(layer).sha256()}",
+                    path = layer
+                )
+            }
+            val config = path.resolve(e.config).assertExists().let {
+                return@let ConfigDescriptor(
+                    IMAGE_CONFIG_MEDIA_TYPE,
+                    Files.size(it),
+                    "sha256:${Files.newInputStream(it).sha256()}",
+                    it
+                )
+            }
+            return@map ManifestSchema2(2, OCI_IMAGE_MANIFEST_MEDIA_TYPE, config, layers)
+        }
+    }
+
+    private fun Path.assertExists(): Path {
+        if (Files.notExists(this)) {
+            logger.warn("The content of ${toString().substringAfterLast("/")} is null")
+            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
+        }
+        return this
+    }
+
     /**
-     * 上传镜像到仓库（旧版docker）
+     * 上传镜像到仓库
      *
-     * 该函数负责从每个manifest中解析config和layer并一同处理上传
+     * 该函数负责将镜像文件及其关联的元数据上传到仓库中它首先解析镜像的manifest文件，
+     * 然后逐层上传镜像的每一层及其配置文件最后，上传manifest本身
      *
-     * @param manifest 新版的manifest
+     * @param manifest 镜像manifest
      * @param artifactInfo 镜像的相关信息，包括名称、摘要等
-     * @param blobs 包含所有镜像层数据的字典，键为层的摘要值，值为层的数据
      */
-    private fun uploadOldImage(
+    private fun uploadImage(
         manifest: ManifestSchema2,
         artifactInfo: OciArtifactInfo,
-        blobs: Map<String, ByteArray>
+        layer: (Descriptor) -> File
     ) {
-        val config = manifest.config
-        val layers = manifest.layers
-        // 上传config
-        config.run {
+        // 解析manifest中的layers和config，逐个处理
+        manifest.layers.plus(manifest.config).forEach { e ->
             // 创建一个唯一的UUID用于标识这次上传
             val uuid = storage.createAppendId(null)
             // 设置当前处理的blob的artifact信息到HTTP请求中
             HttpContextHolder.getRequest()
-                .setAttribute(ARTIFACT_INFO_KEY, artifactInfo.toOciBlobArtifactInfo(this.digest, uuid))
+                .setAttribute(ARTIFACT_INFO_KEY, artifactInfo.toOciBlobArtifactInfo(e.digest, uuid))
             // 获取当前层的文件流并构建ArtifactFile对象
-            val file = ArtifactFileFactory.build(getOldLayer(this.digest, blobs).inputStream())
-            // 上传当前层的文件
-            ArtifactContextHolder.getRepository().upload(ArtifactUploadContext(file))
-        }
-        // 上传layers
-        layers.forEach { layer ->
-            // 创建一个唯一的UUID用于标识这次上传
-            val uuid = storage.createAppendId(null)
-            // 设置当前处理的blob的artifact信息到HTTP请求中
-            HttpContextHolder.getRequest()
-                .setAttribute(ARTIFACT_INFO_KEY, artifactInfo.toOciBlobArtifactInfo(layer.digest, uuid))
-            // 获取当前层的文件流并构建ArtifactFile对象
-            val file = ArtifactFileFactory.build(getOldLayer(layer.digest, blobs).inputStream())
+            val file = ArtifactFileFactory.build(layer(e).inputStream())
             // 上传当前层的文件
             ArtifactContextHolder.getRepository().upload(ArtifactUploadContext(file))
         }
@@ -332,213 +405,6 @@ class OciBlobServiceImpl(
         val context = ArtifactUploadContext(ArtifactFileFactory.build(manifest.toJsonString().byteInputStream()))
         // 上传manifest
         ArtifactContextHolder.getRepository().upload(context)
-        logger.info("Complete uploadOldImage")
-    }
-
-    private fun sha256FromByteArray(byteArr: ByteArray): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val result = digest.digest(byteArr)
-        return toHex(result)
-    }
-
-    // 将digest转换成Hex
-    private val hexNum = 0xFF
-    private fun toHex(byteArray: ByteArray): String {
-        // 转成16进制后是32字节
-        return with(StringBuilder(byteArray.size * 2)) {
-            byteArray.forEach {
-                val hex = it.toInt() and (hexNum)
-                if (hex < 0x10) {
-                    append("0")
-                }
-                append(Integer.toHexString(hex))
-            }
-            toString()
-        }
-    }
-
-    /**
-     * 解压缩镜像文件
-     *
-     * 该函数从输入流中读取数据，解压缩并解析镜像文件，同时提取索引信息和镜像数据块
-     * 使用了DecompressUtils工具类来处理解压缩逻辑，其中涉及对"index.json"的特殊处理，
-     * 以及对其他数据块的常规处理，并通过StreamUtils将流转换为字节数组
-     *
-     * @param inputStream 输入流，用于读取镜像数据
-     * @return 返回一个Pair对象，包含索引信息和镜像数据块的映射
-     * @throws OciImageUploadException 如果索引为空或数据块为空，则抛出异常，表示镜像无效
-     */
-    private fun decompressImage(inputStream: InputStream): Triple<Index, ByteArray, MutableMap<String, ByteArray>> {
-        logger.info("start decompress docker image")
-        // 初始化索引变量为null，后续将存储index.json的内容
-        var index: ByteArray? = null
-        // 适配旧版docker因此把manifest引出
-        var manifest: ByteArray? = null
-        // 使用DecompressUtils尝试解压缩输入流，返回一个可变映射和字节数组
-        // 该函数会尝试使用不同的解压缩器来解压输入流，直到成功为止
-        val blobs = try {
-            DecompressUtils.tryArchiverWithCompressor<MutableMap<String, ByteArray>, ByteArray>(
-                inputStream,
-                { mutableMapOf() },
-                callback = { stream, entry ->
-                    // 适配旧版docker
-                    if (entry.name.endsWith("manifest.json")) {
-                        manifest = StreamUtils.copyToByteArray(stream)
-                        // 返回的原因是新版的docker同样需要在blobs的manifest
-                        return@tryArchiverWithCompressor manifest
-                    }
-                    // 如果当前条目是index.json，将其内容复制到index变量中，并停止进一步处理
-                    if (entry.name.endsWith("index.json")) {
-                        index = StreamUtils.copyToByteArray(stream)
-                        return@tryArchiverWithCompressor null
-                    }
-                    // 对于其他条目，将其内容复制为字节数组并返回
-                    return@tryArchiverWithCompressor StreamUtils.copyToByteArray(stream)
-                },
-                handleResult = { r, e, entry ->
-                    // 如果处理过程中发生异常，将异常信息存储在结果映射中
-                    if (e != null) {
-                        r!![entry.name] = e
-                    }
-                    // 返回更新后的结果映射
-                    return@tryArchiverWithCompressor r
-                }
-            )
-        } catch (e: ArchiveException) {
-            logger.error("Illegal image files!", e)
-            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
-        }
-
-        // 如果索引为空或blobs为空，抛出异常，表示镜像无效
-        if (index?.isEmpty() == true || blobs.isNullOrEmpty() || manifest == null) {
-            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
-        }
-        // 适配旧版的docker镜像（可能存在没有index.json的情况）
-        if (index == null) {
-            // 返回包含空的Index的Triple
-            return Triple(Index(mutableListOf()), manifest!!, blobs)
-        }
-        // 解析index.json的内容，并与blobs一起作为Pair对象返回
-        return Triple(index!!.inputStream().readJsonString(), manifest!!, blobs)
-    }
-
-    // 转换manifest为schema2
-    private fun transferOldImage(
-        manifests: ByteArray,
-        blobs: MutableMap<String, ByteArray>
-    ): Pair<MutableList<ManifestSchema2>, MutableMap<String, ByteArray>> {
-        logger.info("will start transfer the manifest to manifest Schema2")
-        val manifestsV2: MutableList<ManifestSchema2> = mutableListOf()
-        var newBlobs: MutableMap<String, ByteArray> = mutableMapOf()
-        // 构建layers
-        var layers = mutableListOf<LayerDescriptor>()
-        // 计算文件的digest(过滤其他无关文件)
-        val blobDigests = blobs.entries.parallelStream()
-            .filter { entry ->
-                entry.key.endsWith("layer.tar") || entry.key.endsWith(".json")
-            }
-            .collect(
-                Collectors.toMap(
-                    { it.key },
-                    { sha256FromByteArray(it.value) }
-                )
-            )
-        // 获取旧版的manigest.json实例
-        manifests.inputStream().readJsonString<List<OldManifest>>().forEach {
-            var configDigest: String? = null
-            var configByteArray: ByteArray? = null
-            // 计算好digest之后重新加入到blobs,同时要构建临时gzip的ByteArray
-            blobs.entries.forEach { entry ->
-                // 处理layers
-                it.layers.forEach { layer ->
-                    if (entry.key.equals(layer)) {
-                        newBlobs.put("sha256:${blobDigests[entry.key]}", entry.value)
-                        val size = entry.value.size.toLong()
-                        layers.add(
-                            LayerDescriptor(
-                                mediaType = "application/vnd.oci.image.layer.v1.tar",
-                                size = size,
-                                digest = "sha256:${blobDigests[entry.key]}",
-                            )
-                        )
-                    }
-                }
-                // 处理config
-                if (entry.key.equals(it.config)) {
-                    configDigest = "sha256:${blobDigests[entry.key]}"
-                    configByteArray = entry.value
-                }
-            }
-            // 构建config
-            val configSize: Long = configByteArray!!.size.toLong()
-            val config = ConfigDescriptor(
-                mediaType = "application/vnd.oci.image.config.v1+json",
-                size = configSize,
-                digest = configDigest!!
-            )
-            // 把config和manifest的相关东西提交上去
-            newBlobs.put(configDigest!!, configByteArray!!)
-            // 构建manifest.json
-            manifestsV2.add(
-                ManifestSchema2(
-                    schemaVersion = 2,
-                    mediaType = "application/vnd.oci.image.manifest.v1+json",
-                    config = config,
-                    layers = layers,
-                )
-            )
-        }
-        return Pair(manifestsV2, newBlobs)
-    }
-
-    /**
-     * 上传镜像到仓库
-     *
-     * 该函数负责将镜像文件及其关联的元数据上传到仓库中它首先解析镜像的manifest文件，
-     * 然后逐层上传镜像的每一层及其配置文件最后，上传manifest本身
-     *
-     * @param manifestDigest 镜像manifest的摘要值，用于唯一标识镜像
-     * @param artifactInfo 镜像的相关信息，包括名称、摘要等
-     * @param blobs 包含所有镜像层数据的字典，键为层的摘要值，值为层的数据
-     */
-    private fun uploadImage(manifestDigest: String, artifactInfo: OciArtifactInfo, blobs: Map<String, ByteArray>) {
-        // 获取并解析manifest层
-        val manifest = getLayer(manifestDigest, blobs)
-        // 解析manifest中的layers和config，逐个处理
-        manifest.inputStream().readJsonString<Manifest>().let { it.layers.plus(it.config) }.forEach { e ->
-            // 创建一个唯一的UUID用于标识这次上传
-            val uuid = storage.createAppendId(null)
-            // 设置当前处理的blob的artifact信息到HTTP请求中
-            HttpContextHolder.getRequest()
-                .setAttribute(ARTIFACT_INFO_KEY, artifactInfo.toOciBlobArtifactInfo(e.digest, uuid))
-            // 获取当前层的文件流并构建ArtifactFile对象
-            val file = ArtifactFileFactory.build(getLayer(e.digest, blobs).inputStream())
-            // 上传当前层的文件
-            ArtifactContextHolder.getRepository().upload(ArtifactUploadContext(file))
-        }
-        // 设置manifest的artifact信息到HTTP请求中
-        HttpContextHolder.getRequest().setAttribute(ARTIFACT_INFO_KEY, artifactInfo.toOciManifestArtifactInfo())
-        // 构建manifest的ArtifactFile对象
-        val context = ArtifactUploadContext(ArtifactFileFactory.build(manifest.inputStream()))
-        // 上传manifest
-        ArtifactContextHolder.getRepository().upload(context)
-    }
-
-    private fun getLayer(digest: String, blobs: Map<String, ByteArray>): ByteArray {
-        val sha256 = "blobs/${digest.replace(":", "/")}"
-        return blobs[sha256] ?: run {
-            logger.warn("The content of $sha256 is null")
-            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
-        }
-    }
-
-    // 获取旧版镜像层
-    private fun getOldLayer(digest: String, blobs: Map<String, ByteArray>): ByteArray {
-        val sha256 = digest
-        return blobs[sha256] ?: run {
-            logger.warn("The content of $sha256 is null")
-            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
-        }
     }
 
     companion object {

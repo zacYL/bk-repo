@@ -62,10 +62,6 @@ interface ServiceUserClient {
         @RequestBody request: CreateUserRequest
     ): Response<Boolean>
 
-    @ApiOperation("创建项目用户")
-    @PostMapping("/create/project")
-    fun createUserToProject(@RequestBody request: CreateUserToProjectRequest): Response<Boolean>
-
     @ApiOperation("用户详情")
     @GetMapping("/detail/{uid}")
     @Deprecated("仅用于兼容旧接口", ReplaceWith("userInfoById"))

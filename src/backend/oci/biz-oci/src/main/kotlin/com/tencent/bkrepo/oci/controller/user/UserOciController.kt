@@ -61,6 +61,7 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.http.MediaType
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -76,7 +77,9 @@ import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.HandlerMapping
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import javax.validation.constraints.Pattern
 
+@Validated
 @Suppress("MVCPathVariableInspection")
 @Api("oci产品接口")
 @RestController
@@ -215,6 +218,7 @@ class UserOciController(
         )
     }
 
+    @Validated
     @PutMapping("/upload/{projectId}/{repoName}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
 
@@ -225,9 +229,11 @@ class UserOciController(
         repoName: String,
 
         @RequestParam
+        @Pattern(regexp = "[a-z0-9]+(([_.]|__|-*)[a-z0-9]+)*") //规范参考https://pkg.go.dev/github.com/distribution/reference#section-readme
         packageName: String,
 
         @RequestParam
+        @Pattern(regexp = "\\w[\\w.-]{0,127}")
         version: String,
 
         @RequestPart(value = "file")

@@ -4,6 +4,7 @@ import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.query.model.PageLimit
@@ -13,6 +14,7 @@ import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
@@ -31,9 +33,12 @@ import com.tencent.bkrepo.repository.api.VersionDependentsClient
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import org.apache.maven.model.Model
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -45,7 +50,8 @@ class MavenExtService(
     private val nodeClient: NodeClient,
     private val packageClient: PackageClient,
     private val repositoryClient: RepositoryClient,
-    private val versionDependentsClient: VersionDependentsClient
+    private val versionDependentsClient: VersionDependentsClient,
+    private val storageManager: StorageManager
 ) {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -178,7 +184,7 @@ class MavenExtService(
             optional = null
         )
         val searchStr = mavenDependency.toReverseSearchString()
-        val response =  versionDependentsClient.dependenciesReverse(
+        val response = versionDependentsClient.dependenciesReverse(
             searchStr = searchStr,
             projectId = projectId,
             repoName = repoName,
@@ -201,13 +207,15 @@ class MavenExtService(
                     dependencies = null
             )
         }
-        return ResponseBuilder.success(Page(
+        return ResponseBuilder.success(
+            Page(
             pageNumber = response.data!!.pageNumber,
             pageSize = response.data!!.pageSize,
             totalRecords = response.data!!.totalRecords,
             totalPages = response.data!!.totalPages,
             records = relations!!
-        ))
+            )
+        )
     }
 
     private fun <T> page(
@@ -248,6 +256,7 @@ class MavenExtService(
         packageKey: String,
         version: String,
     ): Pair<Set<MavenDependency>, Set<MavenPlugin>> {
+        logger.info("start query the info of dependents")
         val result = versionDependentsClient.get(
             VersionDependentsRequest(
                 projectId = projectId,
@@ -256,8 +265,9 @@ class MavenExtService(
                 version = version,
             )
         ).data
-        val dependencies = mutableSetOf<MavenDependency>()
+        var dependencies = mutableSetOf<MavenDependency>()
         val plugins = mutableSetOf<MavenPlugin>()
+        // 先处理result
         result?.let {
             it.forEach { dependents ->
                 if (dependents.startsWith("dependency")) {
@@ -267,7 +277,134 @@ class MavenExtService(
                 }
             }
         }
+
+        // 判断是否需要获取pom
+        dependencies = transferDependencies(dependencies, projectId, repoName, packageKey, version)
+        // 更新旧的数据
+        if (dependencies.any { it.version == "null" }) {
+            versionDependentsClient.insert(
+                VersionDependentsRelation(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = packageKey,
+                    version = version,
+                    ext = null,
+                    dependencies = mutableSetOf<String>().apply {
+                        addAll(
+                            dependencies.map {
+                                it.toSearchString()
+                            }
+                        )
+                        addAll(
+                            plugins.map {
+                                it.toSearchString()
+                            }
+                        )
+                    }
+                )
+            )
+        }
         return Pair(dependencies, plugins)
+    }
+
+    private fun transferDependencies(
+        dependencies: MutableSet<MavenDependency>,
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): MutableSet<MavenDependency> {
+        // 二次处理的依赖信息(从pom文件重新读取)
+        var dependenciesFromPom = dependencies
+        var model: Model? = null
+        if (dependenciesFromPom.any { it.version == "null" }) {
+            // 当前的pom文件
+            val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+            packageVersion?.run {
+                // 判断封装类型
+                model = getPom(this, projectId, repoName)
+            }
+        }
+
+        // 处理父pom问题(存在空版本问题),总共要找三层
+        var deep: Int = 1
+        // 子pom
+        var childModel: Model? = null
+        childModel = model
+        while (childModel != null && dependenciesFromPom.any { it.version == "null" }) {
+            logger.info("resolve parent pom")
+            if (deep > 3) break
+            // 无论如何都要更新层数
+            logger.info("the depth: $deep")
+            deep++
+            // 父model
+            var parentPom: Model? = null
+
+            parentPom = getParentPom(projectId, repoName, model!!)
+
+            parentPom?.run {
+                logger.info("start assign value for version")
+                // model对应就是当前处理的jar包依赖，这块是保持不变，childModel和parentModel只是辅助
+                val newDependencies = model!!.dependencies
+                // val newPlugins = model!!.build.plugins
+                // 单独处理denpendencies
+                dependenciesFromPom = newDependencies.map { dependency ->
+                    DependencyUtils.parseDependency(dependency, model!!, parentPom)
+                }.toMutableSet()
+                // 将当前的parentPom赋值给model继续下一个循环
+            }
+            // 若parent不存在刚好就赋值为null，退出循环
+            childModel = parentPom
+        }
+        return dependenciesFromPom
+    }
+
+    private fun getPom(
+        packageVersion: PackageVersion,
+        projectId: String,
+        repoName: String,
+    ): Model? {
+        val packaging = packageVersion.metadata["packaging"] as String? ?: run {
+            val matcher = Pattern.compile(PACKAGE_SUFFIX_REGEX).matcher(packageVersion.contentPath!!)
+            require(matcher.matches()) {
+                "Invalid artifact file format [${packageVersion.contentPath}] in $projectId/$repoName"
+            }
+            matcher.group(2)
+        }
+
+        // 存储信息获取
+        val node = nodeClient.getNodeDetail(projectId, repoName, packageVersion.contentPath!!).data
+        val storageCredentials = repositoryClient.getRepoDetail(
+            projectId, repoName
+        ).data?.storageCredentials
+        val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials)
+
+        return if (packaging != "pom") {
+            // 查询同一目录下的所有节点
+            getPomFromNodeList(node, projectId, repoName, storageCredentials)
+        } else {
+            inputStream?.use { MavenXpp3Reader().read(it) }
+        }
+    }
+
+    // 从同一目录下获取Pom
+    private fun getPomFromNodeList(
+        node: NodeDetail?,
+        projectId: String,
+        repoName: String,
+        storageCredentials: StorageCredentials?
+    ): Model? {
+        node?.let {
+            val nodeList = nodeClient.listNodePage(projectId, repoName, node.path).data?.records
+            val fullPath = nodeList?.find { nodeInfo -> nodeInfo.fullPath.endsWith(".pom") }?.fullPath
+            fullPath?.run {
+                val pomNode = nodeClient.getNodeDetail(projectId, repoName, fullPath!!).data
+                val inputStreamPom = storageManager.loadArtifactInputStream(pomNode, storageCredentials)
+                // 当前的封装类型
+                return inputStreamPom?.use { MavenXpp3Reader().read(it) }
+            }
+        }
+        return null
     }
 
     fun addVersionDependents(mavenGavc: MavenGAVC, model: Model, projectId: String, repoName: String) {
@@ -288,6 +425,8 @@ class MavenExtService(
             logger.warn("Failed to parse plugins from pom.xml")
             listOf()
         }
+        // 处理父pom问题
+        val parentPom = getParentPom(projectId, repoName, model)
         versionDependentsClient.insert(
             VersionDependentsRelation(
                 projectId = projectId,
@@ -298,7 +437,7 @@ class MavenExtService(
                 dependencies = mutableSetOf<String>().apply {
                     addAll(
                         dependencies.map {
-                            DependencyUtils.parseDependency(it, model).toSearchString()
+                            DependencyUtils.parseDependency(it, model, parentPom).toSearchString()
                         }
                     )
                     addAll(
@@ -309,6 +448,47 @@ class MavenExtService(
                 }
             )
         )
+    }
+
+    // 获取父pom
+    private fun getParentPom(projectId: String, repoName: String, model: Model): Model? {
+        val parent = model.parent ?: null
+        var parentPom: Model? = null
+        // 不存在parent标签
+        if (parent == null) {
+            return null
+        }
+        with(parent) {
+            logger.info("正在处理父pom")
+            // 父pom肯定在同个仓库里
+            if (groupId == null || artifactId == null) {
+                // 不存在parent信息
+                return null
+            }
+            val packageKey = PackageKeys.ofGav(groupId, artifactId)
+            val packageVersion = packageClient.findVersionByName(
+                projectId,
+                repoName,
+                packageKey,
+                version
+            ).data
+            packageVersion?.run {
+                // 获取仓库的存储凭证
+                val storageCredentials = repositoryClient.getRepoDetail(
+                    projectId,
+                    repoName
+                ).data?.storageCredentials
+                // 获取父pom的node信息
+                val node = nodeClient.getNodeDetail(
+                    projectId,
+                    repoName,
+                    contentPath!!
+                ).data
+                val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials)
+                parentPom = inputStream.use { MavenXpp3Reader().read(it) }
+            }
+        }
+        return parentPom
     }
 
     companion object {

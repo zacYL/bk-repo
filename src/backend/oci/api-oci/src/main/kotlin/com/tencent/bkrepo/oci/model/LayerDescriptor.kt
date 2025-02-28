@@ -27,9 +27,15 @@
 
 package com.tencent.bkrepo.oci.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import java.nio.file.Path
+
 data class LayerDescriptor(
     override var mediaType: String,
     override var size: Long,
     override var digest: String,
-    var annotations: Map<String, String> = emptyMap()
-) : Descriptor(mediaType, size, digest)
+    var annotations: Map<String, String> = emptyMap(),
+
+    @JsonIgnore
+    override val path: Path?
+) : Descriptor(mediaType, size, digest), DescriptorPath

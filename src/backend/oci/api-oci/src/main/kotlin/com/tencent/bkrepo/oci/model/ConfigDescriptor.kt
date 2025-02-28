@@ -27,8 +27,14 @@
 
 package com.tencent.bkrepo.oci.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import java.nio.file.Path
+
 data class ConfigDescriptor(
     override var mediaType: String,
     override var size: Long,
-    override var digest: String
-) : Descriptor(mediaType, size, digest)
+    override var digest: String,
+
+    @JsonIgnore
+    override val path: Path?
+) : Descriptor(mediaType, size, digest), DescriptorPath

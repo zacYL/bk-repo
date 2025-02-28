@@ -36,7 +36,8 @@ class DataBackupServiceImpl(
     private val backupTaskDao: BackupTaskDao,
     private val dataRecordsBackupService: DataRecordsBackupService,
     private val dataRecordsRestoreService: DataRecordsRestoreService,
-    private val applicationContext: ApplicationContext
+    private val applicationContext: ApplicationContext,
+    private val heartbeatManager: HeartbeatManager,
 ) : DataBackupService {
     override fun createTask(taskRequest: BackupTaskRequest): String {
         contentCheck(taskRequest)
@@ -55,14 +56,19 @@ class DataBackupServiceImpl(
     override fun executeTask(taskId: String) {
         val task = backupTaskDao.findTasksById(taskId)
             ?: throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, "taskId")
-        if (task.state != BackupTaskState.PENDING.name)
-            throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, "state")
-        if (task.type == DATA_RECORDS_BACKUP) {
-            val context = BackupContext(task = task)
-            dataRecordsBackupService.projectDataBackup(context)
-        } else {
-            val context = BackupContext(task = task)
-            dataRecordsRestoreService.projectDataRestore(context)
+        heartbeatManager.startHeartbeat(taskId)
+        try {
+            if (task.state != BackupTaskState.PENDING.name)
+                throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, "state")
+            if (task.type == DATA_RECORDS_BACKUP) {
+                val context = BackupContext(task = task)
+                dataRecordsBackupService.projectDataBackup(context)
+            } else {
+                val context = BackupContext(task = task)
+                dataRecordsRestoreService.projectDataRestore(context)
+            }
+        } finally {
+            heartbeatManager.stopHeartbeat(taskId)
         }
     }
 

@@ -65,6 +65,7 @@ import com.tencent.bkrepo.job.backup.pojo.task.BackupContent
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.mapping.Document
+import java.time.Instant
 import java.time.LocalDateTime
 
 /**
@@ -91,6 +92,7 @@ data class TBackupTask(
     val startDate: LocalDateTime? = null,
     val endDate: LocalDateTime? = null,
     val backupFilePaths: MutableList<String> = mutableListOf(),
+    var lastHeartbeat: Instant? = null,
 ) {
     companion object {
         const val TASK_STATE_IDX = "state_idx"

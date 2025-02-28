@@ -66,6 +66,7 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.stereotype.Repository
+import java.time.Instant
 import java.time.LocalDateTime
 
 @Repository
@@ -81,6 +82,21 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
         criteria.and(TBackupTask::type.name).isEqualTo(type)
         return findOne(Query(criteria))
     }
+
+    fun find(option: BackupTaskOption): List<TBackupTask> {
+        with(option) {
+            val criteria = Criteria()
+            type?.let { criteria.and(TBackupTask::type.name).isEqualTo(it) }
+            state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
+            repoNames?.let { criteria.and("content.projects.repoList").regex(repoNames, "i") }
+            name?.let { criteria.and(TBackupTask::name.name).regex(name, "i") }
+            if (!projectIds.isNullOrEmpty()){
+                criteria.and("content.projects.projectId").`in`(projectIds)
+            }
+            return find(Query(criteria))
+        }
+    }
+
 
     fun find(option: BackupTaskOption, pageRequest: PageRequest): List<TBackupTask> {
         with(option) {
@@ -127,6 +143,16 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
         endDate?.let { update.set(TBackupTask::endDate.name, endDate) }
         backupFilePaths?.let { update.set(TBackupTask::backupFilePaths.name, backupFilePaths) }
         message?.let { update.set(TBackupTask::message.name, message) }
+        this.updateFirst(Query(criteria), update)
+    }
+
+
+    fun updateLastHeartbeat(
+        taskId: String,
+        lastHeartbeat: Instant,
+    ) {
+        val criteria = Criteria().and(ID).isEqualTo(taskId)
+        val update = Update.update(TBackupTask::lastHeartbeat.name, lastHeartbeat)
         this.updateFirst(Query(criteria), update)
     }
 }

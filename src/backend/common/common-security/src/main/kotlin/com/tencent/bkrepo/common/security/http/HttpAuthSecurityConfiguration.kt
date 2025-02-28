@@ -101,7 +101,7 @@ class HttpAuthSecurityConfiguration(
             httpAuthSecurity.addHttpAuthHandler(BasicAuthHandler(authenticationManager))
         }
 
-        httpAuthSecurity.addHttpAuthHandler(CookieAuthHandler(jwtAuthProperties))
+//        httpAuthSecurity.addHttpAuthHandler(CookieAuthHandler(jwtAuthProperties))
 
         if (httpAuthSecurity.platformAuthEnabled) {
             httpAuthSecurity.addHttpAuthHandler(PlatformAuthHandler(authenticationManager))

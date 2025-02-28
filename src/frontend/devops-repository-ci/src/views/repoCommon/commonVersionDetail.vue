@@ -42,7 +42,7 @@
                                     :key="tag">
                                     {{ tag }}
                                 </span>
-                                <scan-tag v-if="showRepoScan" class="ml5" :status="metadataMap.scanStatus"></scan-tag>
+                                <scan-tag v-if="showRepoScan" class="ml5" store-type-check :local-repo="sourceRepoName || repoName" :status="metadataMap.scanStatus"></scan-tag>
                                 <lock-tag v-if="metadataMap.lockStatus" :lock-user="metadataMap.lockUser" :lock-description="(detail.metadata.find(m => m.key === 'lockType') || {}).description"></lock-tag>
                                 <forbid-tag class="ml10"
                                     v-if="metadataMap.forbidStatus"

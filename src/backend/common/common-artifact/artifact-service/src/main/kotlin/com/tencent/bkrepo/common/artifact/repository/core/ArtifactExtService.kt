@@ -179,8 +179,15 @@ abstract class ArtifactExtService : ArtifactService() {
         manifestPath: String?,
         artifactPath: String?
     ) {
+        val nodeList = getArtifactNodes(srcProjectId, srcRepoName, packageKey, version, manifestPath, artifactPath)
+        // 待复制的目录的子节点过多会导致复制超时
+        nodeList.filter { it.folder }.forEach {
+            if (nodeClient.countFileNode(srcProjectId, srcRepoName, it.fullPath).data!! > 1000) {
+                throw ErrorCodeException(ArtifactMessageCode.NODE_LIST_TOO_LARGE)
+            }
+        }
         val operator = SecurityUtils.getUserId()
-        getArtifactNodes(srcProjectId, srcRepoName, packageKey, version, manifestPath, artifactPath).forEach {
+        nodeList.forEach {
             // 目录/文件 -> 已存在的目录: 作为已存在目录的子目录/文件
             val dstNode = nodeClient.getNodeDetail(dstProjectId, dstRepoName, it.fullPath).data
             if (dstNode?.folder == true) nodeClient.deleteNode(

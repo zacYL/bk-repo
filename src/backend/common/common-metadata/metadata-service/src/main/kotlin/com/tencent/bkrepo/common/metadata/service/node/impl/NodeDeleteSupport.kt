@@ -283,7 +283,7 @@ open class NodeDeleteSupport(
             where(TNode::projectId).isEqualTo(projectId)
                 .and(TNode::repoName).isEqualTo(repoName)
                 .and(TNode::deleted).isEqualTo(null)
-                .and(TNode::fullPath).inValues(fullPaths)
+                .orOperator(NodeDeleteHelper.buildFullPathOrChildrenCriteria(fullPaths))
         )
         val nodes = nodeDao.find(query)
         val containLockedNode = nodes.any { node ->

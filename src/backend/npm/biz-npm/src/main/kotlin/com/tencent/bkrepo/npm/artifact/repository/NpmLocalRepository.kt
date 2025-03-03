@@ -92,6 +92,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import okhttp3.Response
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -374,11 +375,15 @@ class NpmLocalRepository(
             originalMetadata
         }
         val oldTarball = versionMetadata.dist?.tarball!!
-        packageMetadata.versions.map[version]!!.dist?.tarball =
+        val dist = packageMetadata.versions.map[version]!!.dist
+        dist?.tarball =
             NpmUtils.buildPackageTgzTarball(
                 oldTarball, npmProperties.domain, npmProperties.tarball.prefix, name,
                 NpmArtifactInfo(projectId, repoName, name, version)
             )
+        if (StringUtils.isNotBlank(dist?.resolvedHsp)) {
+            dist?.resolvedHsp = dist?.tarball?.substringBeforeLast(".") + HSP_FILE_EXT
+        }
         val credential = repositoryClient.getRepoDetail(projectId, repoName).data!!.storageCredentials
         return packageMetadata.toJsonString().byteInputStream().let { ArtifactFileFactory.build(it, credential) }
     }

@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.oci.service.impl
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.HttpStatus
@@ -89,6 +90,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
@@ -278,7 +280,7 @@ class OciBlobServiceImpl(
         try {
             val (index, manifestBytes) = decompressImage(file.inputStream)
             if (index == null) {
-                transferOldImage(manifestBytes.inputStream().readJsonString()).forEach { e ->
+                manifestBytes.inputStream().readJsonString<List<OldManifest>>().transferOldImage().forEach { e ->
                     uploadImage(e, artifactInfo) { CastUtils.cast<DescriptorPath>(it).path!!.toFile() }
                 }
             } else {
@@ -339,14 +341,24 @@ class OciBlobServiceImpl(
         return index to manifest!!
     }
 
-    // 转换manifest为schema2
-    private fun transferOldImage(manifests: List<OldManifest>): List<ManifestSchema2> {
+    /**
+     * 将旧的镜像清单转换为新的ManifestSchema2格式
+     * 此函数用于处理和转换旧的镜像清单数据结构到新的格式，以确保兼容性和更新
+     * 它首先检查和准备必要的层，然后根据需要更新配置文件，以生成最终的新的镜像清单
+     *
+     * @return 转换后的ManifestSchema2列表，表示更新后的镜像清单
+     */
+    private fun List<OldManifest>.transferOldImage(): List<ManifestSchema2> {
         logger.info("will start transfer the manifest to manifest Schema2")
         val path = storage.getTempPath()
-        return manifests.map { e ->
+        return map { e ->
+            // 标记是否需要重置配置
+            var resetConfig = false
+            // 处理和转换层，如果层不存在，则标记需要重置配置，并跳过该层
             val layers = e.layers.mapNotNull {
                 val layer = path.resolve(it)
                 if (Files.notExists(layer)) {
+                    resetConfig = true
                     return@mapNotNull null
                 }
                 return@mapNotNull LayerDescriptor(
@@ -356,17 +368,36 @@ class OciBlobServiceImpl(
                     path = layer
                 )
             }
-            val config = path.resolve(e.config).let {
-                return@let ConfigDescriptor(
-                    IMAGE_CONFIG_MEDIA_TYPE,
-                    Files.size(it),
-                    "sha256:${Files.newInputStream(it).sha256()}",
-                    it
-                )
+
+            // 根据是否需要重置配置，处理配置文件
+            val config = if (!resetConfig) path.resolve(e.config).toConfigDescriptor() else {
+                // 读取配置文件的JSON内容，去除因软链问题可能的重复项
+                val json = path.resolve(e.config).toFile().inputStream().readJsonString<JsonNode>()
+                val digest = mutableSetOf<String>()
+                val iterator = json.at("/rootfs/diff_ids").iterator()
+                while (iterator.hasNext()) {
+                    if (!digest.add(iterator.next().asText())) {
+                        iterator.remove()
+                    }
+                }
+                // 将更新后的JSON内容转换回字符串，并保存到新的文件中
+                val jsonStr = json.toJsonString()
+                path
+                    .resolve(jsonStr.sha256())
+                    .apply { Files.newOutputStream(this).use { StreamUtils.copy(jsonStr.toByteArray(), it) } }
+                    .toConfigDescriptor()
             }
+            // 返回映射到新的ManifestSchema2格式的镜像清单
             return@map ManifestSchema2(2, OCI_IMAGE_MANIFEST_MEDIA_TYPE, config, layers)
         }
     }
+
+    private fun Path.toConfigDescriptor() = ConfigDescriptor(
+        IMAGE_CONFIG_MEDIA_TYPE,
+        Files.size(this),
+        "sha256:${Files.newInputStream(this).sha256()}",
+        this
+    )
 
     /**
      * 上传镜像到仓库

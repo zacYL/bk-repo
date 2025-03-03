@@ -91,6 +91,7 @@
                         :target-project="planForm.targetProject"
                         :target-store="planForm.targetStore"
                         :disabled="disabled"
+                        @packageTableChoose="tableChoose"
                         @clearError="clearError">
                     </package-table>
                 </template>
@@ -101,6 +102,7 @@
                         :target-project="planForm.targetProject"
                         :target-store="planForm.targetStore"
                         :disabled="disabled"
+                        @pathTableChoose="tableChoose"
                         @clearError="clearError">
                     </path-table>
                 </template>
@@ -346,6 +348,8 @@
                 if (val === 'REPOSITORY' && !this.init) {
                     this.planForm.syncDeletion = false
                 }
+                this.planForm.targetProject = ''
+                this.planForm.targetStore = ''
             },
             'planForm.syncDeletion' (val) {
                 const planConfig = this.$refs.planConfig
@@ -386,6 +390,11 @@
                 'getPlanDetail',
                 'updatePlan'
             ]),
+            tableChoose () {
+                const [project, repo] = this.$refs.planConfig.getTarget()
+                if (!this.planForm.targetProject) this.planForm.targetProject = project
+                if (!this.planForm.targetStore) this.planForm.targetStore = repo
+            },
             checkDateIsValid (date) {
                 // date 对其的是当前日期的24点，因此判断小于时，需要判断是否等于小于当前日期的0点
                 return date <= (new Date().setHours(0, 0, 0, 0) - 24 * 60 * 60 * 1000)

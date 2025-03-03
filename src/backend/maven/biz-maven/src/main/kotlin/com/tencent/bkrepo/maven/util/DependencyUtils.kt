@@ -21,19 +21,7 @@ object DependencyUtils {
         } else {
             parentPom?.run {
                 // 版本version不存在但存在父pom文件的情况
-                var version: String = "null"
-                dependencyManagement.dependencies.forEach { ptDependency ->
-                    if (dependency.groupId == ptDependency.groupId &&
-                        dependency.artifactId == ptDependency.artifactId
-                    ) {
-                        // 匹配了version之后就及时返回
-                        if (ptDependency.version != null && isProperty(ptDependency.version)) {
-                            version = properties.getProperty(extractProperty(ptDependency.version))
-                        }
-                        return@forEach
-                    }
-                }
-                version
+                handleDependencies(dependency, parentPom)
             } ?: versionStr
         }
         return MavenDependency(
@@ -45,6 +33,26 @@ object DependencyUtils {
             classifier = dependency.classifier,
             optional = dependency.optional.toBoolean()
         )
+    }
+
+    private fun handleDependencies(
+        dependency: Dependency,
+        parentPom: Model
+    ): String {
+        var version: String = "null"
+
+        parentPom.dependencyManagement.dependencies.forEach { ptDependency ->
+            if (dependency.groupId == ptDependency.groupId &&
+                dependency.artifactId == ptDependency.artifactId
+            ) {
+                // 匹配了version之后就及时返回
+                if (ptDependency.version != null && isProperty(ptDependency.version)) {
+                    version = parentPom.properties.getProperty(extractProperty(ptDependency.version))
+                }
+                return@forEach
+            }
+        }
+        return version
     }
 
     fun parsePlugin(plugin: Plugin) = MavenPlugin(

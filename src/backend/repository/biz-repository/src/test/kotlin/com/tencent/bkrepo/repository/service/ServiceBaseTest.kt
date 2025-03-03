@@ -80,6 +80,7 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -178,7 +179,7 @@ open class ServiceBaseTest {
         whenever(servicePermissionClient.checkPermission(any())).thenReturn(
             ResponseBuilder.success()
         )
-        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), anyString())).thenReturn(
+        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), anyString(), isNull())).thenReturn(
             ResponseBuilder.success()
         )
         whenever(servicePermissionClient.listPermissionPath(anyString(), anyString(), anyString())).thenReturn(

@@ -46,13 +46,14 @@
                                     
                                     ...(
                                         // 禁用或者黑名单时，不支持下载
-                                        (!$version.metadata.forbidStatus && versionNoInLockList)
+                                        (!$version.metadata.forbidStatus)
                                             ? [
                                                 (showPromotion && !$version.metadata.lockStatus) && {
-                                                    label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
+                                                    label: $t('upgrade'),
+                                                    clickEvent: () => changeStageTagHandler($version),
                                                     disabled: ($version.stageTag || '').includes('@release')
                                                 },
-                                                !['conan', 'docker'].includes(repoType) && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }
+                                                ...versionNoInLockList ? [!['conan', 'docker'].includes(repoType) && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }] : []
                                             ]
                                             :
                                                 []),

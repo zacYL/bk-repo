@@ -343,9 +343,13 @@
                 const basic = this.detail.basic
                 const metadataMap = this.metadataMap
                 return [
-                    ...(!metadataMap.forbidStatus && this.versionNoInLockList
+                    ...(!metadataMap.forbidStatus
                         ? [
-                            (this.showUpdateOperation && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') }
+                            (this.showUpdateOperation && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && {
+                                clickEvent: () => this.$emit('tag'),
+                                label: this.$t('upgrade'),
+                                disabled: (basic.stageTag || '').includes('@release')
+                            }
                             // this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
                         ]
                         : []),
@@ -376,7 +380,7 @@
         watch: {
             version: {
                 handler (version) {
-                    version && this.getDetail() && this.getIsLock(version)
+                    version && this.getDetail()
                 },
                 immediate: true
             },
@@ -400,26 +404,8 @@
             ...mapActions([
                 'getVersionDetail',
                 'addPackageMetadata',
-                'deletePackageMetadata',
-                'blackWhiteListCheck'
+                'deletePackageMetadata'
             ]),
-            /**
-             * @description: 是否在黑名单里面
-             * @return {*}
-             */
-            getIsLock (version) {
-                return this.blackWhiteListCheck({
-                    projectId: this.projectId,
-                    body: {
-                        packageKey: this.packageKey,
-                        version: version || this.version
-                    }
-                }).then(res => {
-                    this.versionNoInLockList = res
-                }).catch(() => {
-                    
-                })
-            },
             readmeClickEvent (event) {
                 const target = event.target
                 // 检查是否为a标签，并阻止点击事件

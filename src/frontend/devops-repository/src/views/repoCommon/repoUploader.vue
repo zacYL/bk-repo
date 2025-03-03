@@ -267,15 +267,8 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9.-]+$/,
-                            message: this.$t('fieldDescription'),
-                            trigger: 'blur'
-                        },
-                        {
-                            validator: (val) => {
-                                return !(val + '').startsWith('.')
-                            },
-                            message: this.$t('fieldDescription'),
+                            regex: /^[a-z0-9]+(([_.]|__|-*)[a-z0-9]+)*$/,
+                            message: this.$t('fieldDescription2'),
                             trigger: 'blur'
                         }
                     ],
@@ -286,15 +279,8 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9.-]+$/,
-                            message: this.$t('fieldDescription'),
-                            trigger: 'blur'
-                        },
-                        {
-                            validator: (val) => {
-                                return !(val + '').startsWith('.')
-                            },
-                            message: this.$t('fieldDescription'),
+                            regex: /^\w[\w.-]{0,127}$/,
+                            message: this.$t('fieldDescription3'),
                             trigger: 'blur'
                         }
                     ]

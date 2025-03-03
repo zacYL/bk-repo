@@ -79,6 +79,11 @@
             }
         },
         watch: {
+            selectedRepoName: {
+                handler (val) {
+                    this.$emit('packageTableChoose', val)
+                }
+            },
             initData: {
                 handler (data) {
                     const { remoteRepoName, remoteProjectId, repoType, packageConstraints = [], localRepoName } = JSON.parse(JSON.stringify(data))[0] || {}
@@ -99,6 +104,9 @@
             confirm (pkgList) {
                 this.packageConstraints = pkgList
                 this.$emit('clearError')
+            },
+            getTarget () {
+                return [this.targetProject || this.projectId, this.targetStore || this.selectedRepoName]
             },
             getConfig () {
                 return new Promise((resolve, reject) => {

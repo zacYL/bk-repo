@@ -294,7 +294,7 @@ class MavenServiceImpl(
         if (request.type == SOURCE_POM) {
             val bytes = Files.readAllBytes(path)
             return Triple(readModel(bytes.inputStream()), bytes, path)
-        } else {
+        } else if (request.type == "jar" || request.type == "war") {
             // 不是pom类型的话
             var pomName = request.uuid.substringBeforeLast(".jar") + ".pom"
             // 对war包进行特殊处理
@@ -302,21 +302,22 @@ class MavenServiceImpl(
                 pomName = request.uuid.substringBeforeLast(".war") + ".pom"
             }
             val pomPath = storageService.getTempPath().resolve(pomName)
-            if (Files.notExists(pomPath)) {
-                throw NodeNotFoundException(pomPath.toString())
+            if (!Files.notExists(pomPath)) {
+                val bytes = Files.readAllBytes(pomPath)
+                model = readModel(bytes.inputStream())
+            } else {
+                model = null
             }
-            val bytes = Files.readAllBytes(pomPath)
-            model = readModel(bytes.inputStream())
         }
         // 如果提取的 POM 文件信息与请求不匹配，则创建一个新的 Model 对象。
-//        if (model == null){
-//            model = Model().apply {
-//                this.groupId = request.groupId
-//                this.artifactId = request.artifactId
-//                this.version = request.version
-//                this.packaging = request.type
-//            }
-//        }
+        if (model == null) {
+            model = Model().apply {
+                this.groupId = request.groupId
+                this.artifactId = request.artifactId
+                this.version = request.version
+                this.packaging = request.type
+            }
+        }
 
         // 将新的 Model 对象写入到字节数组输出流中。
         val os = ByteArrayOutputStream()
@@ -494,8 +495,14 @@ class MavenServiceImpl(
             if (Files.notExists(pomPath.parent)) {
                 Files.createDirectories(pomPath.parent)
             }
-            Files.write(pomPath, pomByte)
-            model = if (JarUtils.isEmptyPom(pomByte)) Model() else readModel(pomByte.inputStream())
+
+            model = if (JarUtils.isEmptyPom(pomByte)) {
+                Model()
+            } else {
+                // 保存文件
+                Files.write(pomPath, pomByte)
+                readModel(pomByte.inputStream())
+            }
         } else {
             model = readModel(bytes.inputStream()).apply {
                 if (this.packaging != SOURCE_POM) {

@@ -110,10 +110,10 @@
             <!-- 目标项目，目标路径 -->
             <template v-if="['PACKAGE','PATH'].includes(planForm.replicaObjectType)">
                 <bk-form-item :label="$t('TargetProject')" property="targetProject" error-display-type="normal">
-                    <bk-input class="w480" v-model.trim="planForm.targetProject" maxlength="6" show-word-limit :disabled="disabled"></bk-input>
+                    <bk-input class="w480" v-model.trim="planForm.targetProject" :placeholder="targetProjectPlaceholder" maxlength="6" show-word-limit :disabled="disabled"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('TargetStore')" property="targetStore" error-display-type="normal">
-                    <bk-input class="w480" v-model.trim="planForm.targetStore" maxlength="31" show-word-limit :disabled="disabled"></bk-input>
+                    <bk-input class="w480" v-model.trim="planForm.targetStore" :placeholder="targetStorePlaceholder" maxlength="31" show-word-limit :disabled="disabled"></bk-input>
                 </bk-form-item>
             </template>
             <bk-form-item :label="$t('targetNode')" :required="true" property="remoteClusterIds" error-display-type="normal">
@@ -225,6 +225,8 @@
                     createdDate: '',
                     description: ''
                 },
+                targetProjectPlaceholder: '',
+                targetStorePlaceholder: '',
                 rules: {
                     name: [
                         {
@@ -390,10 +392,15 @@
                 'getPlanDetail',
                 'updatePlan'
             ]),
-            tableChoose () {
+            tableChoose (val) {
+                if (!val) {
+                    this.targetProjectPlaceholder = ''
+                    this.targetStorePlaceholder = ''
+                    return
+                }
                 const [project, repo] = this.$refs.planConfig.getTarget()
-                if (!this.planForm.targetProject) this.planForm.targetProject = project
-                if (!this.planForm.targetStore) this.planForm.targetStore = repo
+                this.targetProjectPlaceholder = project
+                this.targetStorePlaceholder = repo
             },
             checkDateIsValid (date) {
                 // date 对其的是当前日期的24点，因此判断小于时，需要判断是否等于小于当前日期的0点

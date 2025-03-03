@@ -77,7 +77,7 @@
         watch: {
             selectedRepoName: {
                 handler (val) {
-                    val && this.$emit('pathTableChoose')
+                    this.$emit('pathTableChoose', val)
                 }
             },
             initData: {

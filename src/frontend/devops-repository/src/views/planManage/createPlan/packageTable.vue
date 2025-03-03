@@ -81,7 +81,7 @@
         watch: {
             selectedRepoName: {
                 handler (val) {
-                    val && this.$emit('packageTableChoose')
+                    this.$emit('packageTableChoose', val)
                 }
             },
             initData: {

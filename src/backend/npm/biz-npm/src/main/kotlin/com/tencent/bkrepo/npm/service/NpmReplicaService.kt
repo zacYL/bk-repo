@@ -6,6 +6,7 @@ import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.storage.core.StorageProperties
+import com.tencent.bkrepo.npm.constants.HSP_FILE_EXT
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.repository.api.NodeClient
@@ -14,6 +15,7 @@ import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -63,7 +65,11 @@ class NpmReplicaService(
         indexFileInputStream.use {
             val packageMetaData = JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
             val tarball = "$domain/npm/$projectId/$repoName/$packageFilePath"
-            packageMetaData.versions.map[version]?.dist?.tarball = tarball
+            val dist = packageMetaData.versions.map[version]?.dist
+            dist?.tarball = tarball
+            if (StringUtils.isNotBlank(dist?.resolvedHsp)) {
+                dist?.resolvedHsp = tarball.substringBeforeLast(".") + HSP_FILE_EXT
+            }
             // 重新上传
             val inputStream = JsonUtils.objectMapper.writeValueAsString(packageMetaData).byteInputStream()
             val artifactFile =

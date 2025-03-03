@@ -254,7 +254,7 @@ class NodeSearchServiceTest @Autowired constructor(
         whenever(servicePermissionClient.listPermissionPath(anyString(), anyString(), anyString())).thenReturn(
             ResponseBuilder.success(ListPathResult(status = true, path = mapOf(OperationType.NIN to listOf("/a"))))
         )
-        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), isNull())).thenReturn(
+        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), isNull(), isNull())).thenReturn(
             ResponseBuilder.success(listOf(UT_REPO_NAME, utRepoName2, utRepoName3))
         )
         // 创建仓库
@@ -318,7 +318,7 @@ class NodeSearchServiceTest @Autowired constructor(
                 ListPathResult(status = true, path = mapOf(OperationType.IN to listOf("/a/a1.txt")))
             )
         )
-        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), isNull())).thenReturn(
+        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), isNull(), isNull())).thenReturn(
             ResponseBuilder.success(listOf(UT_REPO_NAME))
         )
 

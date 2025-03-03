@@ -324,6 +324,15 @@
                 }
             }
         },
+        beforeDestroy () {
+            if (this.uploadPercent !== 0 && this.uploadPercent !== 100) {
+                this.$bkMessage({
+                    theme: 'error',
+                    message: this.$t('uploadCancel')
+                })
+                this.uploadXhr && this.uploadXhr.abort()
+            }
+        },
         methods: {
             ...mapActions([
                 'uploadArtifactory',

@@ -1,4 +1,5 @@
 {
+    "pageUploadCancel": "Page upload cancel",
     "modulePathTips": "Enter the complete modulePath",
     "syncObjTips": "The [Target Project] and [Target Repository] parameters can be left empty. If [Target Project] is empty, it defaults to the current project identifier. If [Target Repository] is empty, it defaults to the source repository name.",
     "specsDownloadUrl": "Specs download URL",

@@ -268,7 +268,7 @@
                         },
                         {
                             regex: /^[a-z0-9]+(([_.]|__|-*)[a-z0-9]+)*$/,
-                            message: this.$t('fieldDescription2'),
+                            message: this.$t('checkRegexp', ['[a-z0-9]+(([_.]|__|-*)[a-z0-9]+)*']),
                             trigger: 'blur'
                         }
                     ],
@@ -280,7 +280,7 @@
                         },
                         {
                             regex: /^\w[\w.-]{0,127}$/,
-                            message: this.$t('fieldDescription3'),
+                            message: this.$t('checkRegexp', ['\\w[\\w.-]{0,127}']),
                             trigger: 'blur'
                         }
                     ]

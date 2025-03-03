@@ -325,13 +325,7 @@
             }
         },
         beforeDestroy () {
-            if (this.uploadPercent !== 0 && this.uploadPercent !== 100) {
-                this.$bkMessage({
-                    theme: 'error',
-                    message: this.$t('uploadCancel')
-                })
-                this.uploadXhr && this.uploadXhr.abort()
-            }
+            this.loadingCancel()
         },
         methods: {
             ...mapActions([
@@ -339,6 +333,14 @@
                 'submitMavenArtifactory',
                 'deleteUselessPackage'
             ]),
+            loadingCancel () {
+                if (this.uploadPercent > 0 && this.uploadPercent !== 1) {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('pageUploadCancel')
+                    })
+                }
+            },
             handleClickClose () {
                 this.customSettings = {
                     isShow: false,
@@ -346,6 +348,7 @@
                     uploadFlag: true, // 是否显示上传组件
                     saveBtnDisable: false // 确认按钮是否禁用
                 }
+                this.loadingCancel()
                 // 关闭弹窗时重置滚动条需要的数据
                 this.onAbortUpload()
                 this.cancel()

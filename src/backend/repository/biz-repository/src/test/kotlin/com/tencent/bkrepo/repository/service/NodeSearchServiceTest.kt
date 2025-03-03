@@ -65,6 +65,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.assertThrows
+import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.whenever
@@ -254,9 +255,10 @@ class NodeSearchServiceTest @Autowired constructor(
         whenever(servicePermissionClient.listPermissionPath(anyString(), anyString(), anyString())).thenReturn(
             ResponseBuilder.success(ListPathResult(status = true, path = mapOf(OperationType.NIN to listOf("/a"))))
         )
-        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), isNull(), isNull())).thenReturn(
-            ResponseBuilder.success(listOf(UT_REPO_NAME, utRepoName2, utRepoName3))
-        )
+        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), isNull(), isNull(), anyBoolean()))
+            .thenReturn(
+                ResponseBuilder.success(listOf(UT_REPO_NAME, utRepoName2, utRepoName3))
+            )
         // 创建仓库
         val repoCreateRequest = RepoCreateRequest(
             projectId = UT_PROJECT_ID,
@@ -318,9 +320,10 @@ class NodeSearchServiceTest @Autowired constructor(
                 ListPathResult(status = true, path = mapOf(OperationType.IN to listOf("/a/a1.txt")))
             )
         )
-        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), isNull(), isNull())).thenReturn(
-            ResponseBuilder.success(listOf(UT_REPO_NAME))
-        )
+        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), isNull(), isNull(), anyBoolean()))
+            .thenReturn(
+                ResponseBuilder.success(listOf(UT_REPO_NAME))
+            )
 
         // 创建node
         val createNodeRequest = createRequest("/a/a1.txt", false)

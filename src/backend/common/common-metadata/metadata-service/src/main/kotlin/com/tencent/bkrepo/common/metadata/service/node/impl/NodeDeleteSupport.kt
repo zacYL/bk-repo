@@ -279,12 +279,6 @@ open class NodeDeleteSupport(
         repoName: String,
         fullPaths: List<String>
     ): List<String> {
-        fullPaths.forEach {
-            // 不允许直接删除根目录
-            if (PathUtils.isRoot(it)) {
-                throw ErrorCodeException(CommonMessageCode.METHOD_NOT_ALLOWED, "Can't delete root node.")
-            }
-        }
         val query = Query(
             where(TNode::projectId).isEqualTo(projectId)
                 .and(TNode::repoName).isEqualTo(repoName)

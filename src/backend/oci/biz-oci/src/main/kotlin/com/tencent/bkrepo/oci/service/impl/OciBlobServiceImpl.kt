@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.oci.service.impl
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.HttpStatus
@@ -63,9 +62,9 @@ import com.tencent.bkrepo.oci.model.ConfigDescriptor
 import com.tencent.bkrepo.oci.model.Descriptor
 import com.tencent.bkrepo.oci.model.DescriptorPath
 import com.tencent.bkrepo.oci.model.Index
+import com.tencent.bkrepo.oci.model.LayerDescriptor
 import com.tencent.bkrepo.oci.model.ManifestSchema2
 import com.tencent.bkrepo.oci.model.OldManifest
-import com.tencent.bkrepo.oci.model.LayerDescriptor
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
@@ -91,6 +90,7 @@ import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
@@ -278,9 +278,9 @@ class OciBlobServiceImpl(
             throw OciImageUploadException(OciMessageCode.OCI_IMAGE_UPLOADING)
         }
         try {
-            val (index, manifestBytes) = decompressImage(file.inputStream)
+            val (index, manifestBytes, link) = decompressImage(file.inputStream)
             if (index == null) {
-                manifestBytes.inputStream().readJsonString<List<OldManifest>>().transferOldImage().forEach { e ->
+                manifestBytes.inputStream().readJsonString<List<OldManifest>>().transferOldImage(link).forEach { e ->
                     uploadImage(e, artifactInfo) { CastUtils.cast<DescriptorPath>(it).path!!.toFile() }
                 }
             } else {
@@ -301,25 +301,26 @@ class OciBlobServiceImpl(
         }
     }
 
-    private fun decompressImage(inputStream: InputStream): Pair<Index?, ByteArray> {
+    private fun decompressImage(inputStream: InputStream): Triple<Index?, ByteArray, Map<String, String>> {
         logger.info("start decompress docker image")
         val path = storage.getTempPath()
         var index: Index? = null
         var manifest: ByteArray? = null
-        try {
-            DecompressUtils.tryArchiverWithCompressor<Unit, Unit>(
+        val link = try {
+            DecompressUtils.tryArchiverWithCompressor<MutableMap<String, String>, Pair<String, String>?>(
                 inputStream,
+                resultFactory = { mutableMapOf() },
                 callback = { stream, entry ->
                     if (entry is TarArchiveEntry && entry.isSymbolicLink) {
-                        return@tryArchiverWithCompressor
+                        return@tryArchiverWithCompressor entry.name to entry.linkName
                     }
                     if (entry.name == "manifest.json") {
                         manifest = StreamUtils.copyToByteArray(stream)
-                        return@tryArchiverWithCompressor
+                        return@tryArchiverWithCompressor null
                     }
                     if (entry.name == "index.json") {
                         index = StreamUtils.copyToByteArray(stream).inputStream().readJsonString()
-                        return@tryArchiverWithCompressor
+                        return@tryArchiverWithCompressor null
                     }
                     val layer = path.resolve(entry.name)
                     if (Files.notExists(layer)) {
@@ -328,8 +329,12 @@ class OciBlobServiceImpl(
                         }
                         Files.newOutputStream(layer).use { StreamUtils.copy(stream, it) }
                     }
+                    return@tryArchiverWithCompressor null
                 },
-                handleResult = { _, _, _ -> }
+                handleResult = { link, entry, _ ->
+                    if (entry != null) link!![entry.first] = entry.second
+                    return@tryArchiverWithCompressor link
+                }
             )
         } catch (e: ArchiveException) {
             logger.error("Illegal image files!", e)
@@ -338,7 +343,7 @@ class OciBlobServiceImpl(
         if (index == null && ObjectUtils.isEmpty(manifest)) {
             throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
         }
-        return index to manifest!!
+        return Triple(index, manifest!!, link.orEmpty())
     }
 
     /**
@@ -348,20 +353,18 @@ class OciBlobServiceImpl(
      *
      * @return 转换后的ManifestSchema2列表，表示更新后的镜像清单
      */
-    private fun List<OldManifest>.transferOldImage(): List<ManifestSchema2> {
+    private fun List<OldManifest>.transferOldImage(link: Map<String, String>): List<ManifestSchema2> {
         logger.info("will start transfer the manifest to manifest Schema2")
         val path = storage.getTempPath()
         return map { e ->
-            // 标记是否需要重置配置
-            var resetConfig = false
-            // 处理和转换层，如果层不存在，则标记需要重置配置，并跳过该层
-            val layers = e.layers.mapNotNull {
-                val layer = path.resolve(it)
-                if (Files.notExists(layer)) {
-                    resetConfig = true
-                    return@mapNotNull null
+            val layers = e.layers.map m@{
+                val layer = if (!link.containsKey(it)) path.resolve(it).assertExists() else {
+                    // 处理软链
+                    path
+                        .resolve(Paths.get("/", link[it]).normalize().toString().substring(1))
+                        .assertExists()
                 }
-                return@mapNotNull LayerDescriptor(
+                return@m LayerDescriptor(
                     mediaType = LAYER_TAR_MEDIA_TYPE,
                     size = Files.size(layer),
                     digest = "sha256:${Files.newInputStream(layer).sha256()}",
@@ -369,35 +372,25 @@ class OciBlobServiceImpl(
                 )
             }
 
-            // 根据是否需要重置配置，处理配置文件
-            val config = if (!resetConfig) path.resolve(e.config).toConfigDescriptor() else {
-                // 读取配置文件的JSON内容，去除因软链问题可能的重复项
-                val json = path.resolve(e.config).toFile().inputStream().readJsonString<JsonNode>()
-                val digest = mutableSetOf<String>()
-                val iterator = json.at("/rootfs/diff_ids").iterator()
-                while (iterator.hasNext()) {
-                    if (!digest.add(iterator.next().asText())) {
-                        iterator.remove()
-                    }
-                }
-                // 将更新后的JSON内容转换回字符串，并保存到新的文件中
-                val jsonStr = json.toJsonString()
-                path
-                    .resolve(jsonStr.sha256())
-                    .apply { Files.newOutputStream(this).use { StreamUtils.copy(jsonStr.toByteArray(), it) } }
-                    .toConfigDescriptor()
+            val config = path.resolve(e.config).assertExists().let {
+                return@let ConfigDescriptor(
+                    IMAGE_CONFIG_MEDIA_TYPE,
+                    Files.size(it),
+                    "sha256:${Files.newInputStream(it).sha256()}",
+                    it
+                )
             }
             // 返回映射到新的ManifestSchema2格式的镜像清单
             return@map ManifestSchema2(2, OCI_IMAGE_MANIFEST_MEDIA_TYPE, config, layers)
         }
     }
 
-    private fun Path.toConfigDescriptor() = ConfigDescriptor(
-        IMAGE_CONFIG_MEDIA_TYPE,
-        Files.size(this),
-        "sha256:${Files.newInputStream(this).sha256()}",
-        this
-    )
+    private fun Path.assertExists(): Path {
+        if (!Files.exists(this)) {
+            throw OciImageUploadException(OciMessageCode.OCI_IMAGE_INVALID)
+        }
+        return this
+    }
 
     /**
      * 上传镜像到仓库

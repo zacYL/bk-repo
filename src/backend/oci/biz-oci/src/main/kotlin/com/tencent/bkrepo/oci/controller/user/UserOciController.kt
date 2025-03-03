@@ -229,11 +229,11 @@ class UserOciController(
         repoName: String,
 
         @RequestParam
-        @Pattern(regexp = "[a-z0-9]+(([_.]|__|-*)[a-z0-9]+)*") //规范参考https://pkg.go.dev/github.com/distribution/reference#section-readme
+        @Pattern(regexp = "[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*")
         packageName: String,
 
         @RequestParam
-        @Pattern(regexp = "\\w[\\w.-]{0,127}")
+        @Pattern(regexp = "\\w[\\w.-]{0,127}")//规范参考https://pkg.go.dev/github.com/distribution/reference#section-readme
         version: String,
 
         @RequestPart(value = "file")

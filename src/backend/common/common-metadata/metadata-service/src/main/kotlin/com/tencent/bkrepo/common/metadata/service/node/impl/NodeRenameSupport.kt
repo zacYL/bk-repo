@@ -65,9 +65,11 @@ open class NodeRenameSupport(
                 throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, fullPath)
             }
             doRename(node, newFullPath, operator)
-            // 更新父目录的最后修改信息
-            val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
-            nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator)
+            if (nodeBaseService.repositoryProperties.parentFolderUpdateEnabled) {
+                // 更新父目录的最后修改信息
+                val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+                nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator)
+            }
             publishEvent(buildRenamedEvent(renameRequest))
             logger.info("Rename node [$this] success.")
         }

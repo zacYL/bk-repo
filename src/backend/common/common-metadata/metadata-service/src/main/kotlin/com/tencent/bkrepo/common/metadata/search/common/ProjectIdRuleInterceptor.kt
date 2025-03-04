@@ -32,11 +32,10 @@
 package com.tencent.bkrepo.common.metadata.search.common
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.READ
-import com.tencent.bkrepo.common.artifact.constant.PAAS_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
+import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.query.enums.OperationType
@@ -47,6 +46,7 @@ import com.tencent.bkrepo.common.query.model.Rule.NestedRule
 import com.tencent.bkrepo.common.query.model.Rule.NestedRule.RelationType
 import com.tencent.bkrepo.common.query.model.Rule.QueryRule
 import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import org.springframework.context.annotation.Conditional
@@ -59,6 +59,7 @@ import org.springframework.stereotype.Component
 class ProjectIdRuleInterceptor(
     private val nodePermissionService: NodePermissionService,
     private val repositoryService: RepositoryService,
+    private val repositoryProperties: RepositoryProperties,
 ) : QueryRuleInterceptor {
 
     override fun match(rule: Rule): Boolean {
@@ -70,7 +71,9 @@ class ProjectIdRuleInterceptor(
         with(rule) {
             require(context is CommonQueryContext)
             val projectId = rule.value.toString()
-            if (SecurityUtils.isServiceRequest() || projectId in builtInProjectList)
+            if (HttpContextHolder.getRequestOrNull() == null ||
+                SecurityUtils.isServiceRequest() || projectId in repositoryProperties.excludeProjectLists
+            )
                 return Criteria.where(PROJECT_ID).isEqualTo(projectId)
             val repoName = context.findRepoName().toMutableList()
             val userId = SecurityUtils.getUserId()
@@ -108,7 +111,7 @@ class ProjectIdRuleInterceptor(
                     QueryRule(NodeInfo::fullPath.name, authPathAncestorFolder, OperationType.EQ).toFixed()
                 }
 
-                val repoAuthPathNestedRule = Rule.NestedRule(
+                val repoAuthPathNestedRule = NestedRule(
                     repoAuthPathRules.plus(authPathAncestorFolderRules).toMutableList(), RelationType.OR
                 )
                 // 当前仓库查询条件
@@ -139,7 +142,4 @@ class ProjectIdRuleInterceptor(
         }
     }
 
-    companion object {
-        private val builtInProjectList = listOf(PUBLIC_GLOBAL_PROJECT, PAAS_PROJECT)
-    }
 }

@@ -63,4 +63,14 @@ data class RepositoryProperties(
      */
     var returnEnabled: Boolean = true,
     var cleanStrategyTime: String = "0 30 14 * * ?",
+    // 是否开启回收站功能
+    var recycleBinEnabled: Boolean = false,
+    // 是否更新父目录信息
+    var parentFolderUpdateEnabled: Boolean = false,
+    // 是否判断node的lock status
+    var lockStatusCheckEnabled: Boolean = false,
+    // cpack batch node delete
+    var cpackBatchNodeDeleteEnabled: Boolean = false,
+    // exclude project enabled (listOf(PUBLIC_GLOBAL_PROJECT, PAAS_PROJECT, PUBLIC_PROXY_PROJECT))
+    var excludeProjectLists: List<String> = emptyList(),
 )

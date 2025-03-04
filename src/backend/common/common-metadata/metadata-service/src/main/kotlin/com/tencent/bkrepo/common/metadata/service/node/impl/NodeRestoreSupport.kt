@@ -53,19 +53,17 @@ import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeDeletedPointQ
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeListQuery
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeQuery
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeRestoreUpdate
-import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeTreeCriteria
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.fs.server.constant.FS_ATTR_KEY
 import com.tencent.bkrepo.repository.pojo.node.NodeDeletedPoint
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.NodeRestoreResult
+import java.time.Instant
+import java.time.ZoneId
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.FindAndModifyOptions
-import org.springframework.data.mongodb.core.query.Query
-import java.time.Instant
-import java.time.ZoneId
 
 /**
  * 节点统计接口实现
@@ -167,10 +165,12 @@ open class NodeRestoreSupport(
                         skipCount += 1
                         return
                     }
+
                     ConflictStrategy.OVERWRITE -> {
                         deleteExistedNode(node, operator)
                         conflictCount += 1
                     }
+
                     ConflictStrategy.FAILED -> throw ErrorCodeException(ArtifactMessageCode.NODE_CONFLICT, fullPath)
                 }
             }

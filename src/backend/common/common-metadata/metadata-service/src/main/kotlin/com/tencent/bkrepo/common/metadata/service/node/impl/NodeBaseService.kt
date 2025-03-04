@@ -479,8 +479,10 @@ abstract class NodeBaseService(
             nodes.addAll(creates)
             nodes.add(node)
         } else {
-            // 更新已存在的最近父目录的最后修改信息
-            updateModifiedInfo(projectId, repoName, fullPath, createdBy, currentTime)
+            if (repositoryProperties.parentFolderUpdateEnabled) {
+                // 更新已存在的最近父目录的最后修改信息
+                updateModifiedInfo(projectId, repoName, fullPath, createdBy, currentTime)
+            }
         }
         return nodes
     }

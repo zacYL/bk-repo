@@ -118,9 +118,11 @@ class RMetadataServiceImpl(
                 node.lastModifiedBy = operator
                 node.lastModifiedDate = currentTime
                 nodeDao.save(node)
-                // 更新父目录的修改时间
-                val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
-                updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
+                if (repositoryProperties.parentFolderUpdateEnabled) {
+                    // 更新父目录的修改时间
+                    val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+                    updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
+                }
             }
             publishEvent(buildMetadataSavedEvent(request))
             logger.info("Save metadata[$newMetadata] on node[/$projectId/$repoName$fullPath] success.")
@@ -170,9 +172,11 @@ class RMetadataServiceImpl(
                 Query.query(where(TMetadata::key).inValues(keyList))
             ).set(TNode::lastModifiedDate.name, currentTime).set(TNode::lastModifiedBy.name, operator)
             nodeDao.updateMulti(query, update)
-            // 更新父目录的修改时间
-            val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
-            updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
+            if (repositoryProperties.parentFolderUpdateEnabled) {
+                // 更新父目录的修改时间
+                val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+                updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
+            }
             publishEvent(buildMetadataDeletedEvent(this))
             logger.info("Delete metadata[$keyList] on node[/$projectId/$repoName$fullPath] success.")
         }

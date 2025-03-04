@@ -347,7 +347,8 @@
                 }
             },
             'planForm.replicaObjectType' (val) {
-                if (val === 'REPOSITORY' && !this.init) {
+                if (this.init) return
+                if (val === 'REPOSITORY') {
                     this.planForm.syncDeletion = false
                 }
                 this.planForm.targetProject = ''

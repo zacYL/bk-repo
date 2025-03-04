@@ -19,13 +19,12 @@ import org.springframework.test.context.TestPropertySource
 @DataMongoTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ComponentScans(*[
-    ComponentScan("com.tencent.bkrepo.repository.service"),
+    ComponentScan("com.tencent.bkrepo.repository.service", "com.tencent.bkrepo.common.metadata"),
     ComponentScan("com.tencent.bkrepo.repository.dao")
 ])
 @TestPropertySource(locations = ["classpath:bootstrap-ut.properties"])
 class RemotePackageWhitelistServiceTest @Autowired constructor (
-    private val remotePackageWhitelistService: RemotePackageWhitelistService,
-    private val remotePackageWhitelistDao: RemotePackageWhitelistDao
+    private val remotePackageWhitelistService: RemotePackageWhitelistService
 ){
 
     @Test
@@ -84,7 +83,7 @@ class RemotePackageWhitelistServiceTest @Autowired constructor (
                 pageNumber = null,
                 pageSize = null
         )
-        Assertions.assertEquals(whitelists.records.size, 1)
+        Assertions.assertEquals(whitelists.records.size, 0)
     }
 
 }

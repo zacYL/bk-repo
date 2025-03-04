@@ -288,15 +288,4 @@ class RepoCleanTest {
         println(flattenRule?.size)
         println(flattenRule?.toJsonString())
     }
-
-    @Test
-    @DisplayName("测试节点清理")
-    fun `node clean test`() {
-        val `metadata?` = nodeInfo.nodeMetadata?.firstOrNull {
-            it.key == "pipelineId"
-        }
-        val `medadata!` = nodeInfo.nodeMetadata?.first {
-            it.key == "pipelineId"
-        }
-    }
 }

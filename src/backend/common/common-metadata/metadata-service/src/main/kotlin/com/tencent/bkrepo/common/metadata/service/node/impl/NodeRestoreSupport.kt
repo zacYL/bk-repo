@@ -51,6 +51,7 @@ import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeDeletedPointL
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeDeletedPointListQueryBySha256
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeDeletedPointQuery
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeListQuery
+import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeQuery
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeRestoreUpdate
 import com.tencent.bkrepo.common.metadata.util.NodeQueryHelper.nodeTreeCriteria
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -201,11 +202,11 @@ open class NodeRestoreSupport(
         userId: String
     ) {
         with(node) {
-            val query = Query(nodeTreeCriteria(projectId, repoName, fullPath))
+            val query = nodeQuery(projectId, repoName, fullPath)
             if (node.sha256 == FAKE_SHA256 || node.metadata?.find { it.key == FS_ATTR_KEY } != null) {
                 blockNodeService.deleteBlocks(projectId, repoName, fullPath)
             }
-            nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(userId))
+            nodeDao.updateFirst(query, NodeQueryHelper.nodeDeleteUpdate(userId))
         }
     }
 

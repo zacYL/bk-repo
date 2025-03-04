@@ -71,4 +71,6 @@ data class RepositoryProperties(
     var lockStatusCheckEnabled: Boolean = false,
     // cpack batch node delete
     var cpackBatchNodeDeleteEnabled: Boolean = false,
+    // exclude project enabled (listOf(PUBLIC_GLOBAL_PROJECT, PAAS_PROJECT, PUBLIC_PROXY_PROJECT))
+    var excludeProjectLists: List<String> = emptyList(),
 )

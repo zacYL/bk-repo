@@ -32,11 +32,10 @@
 package com.tencent.bkrepo.common.metadata.search.common
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.READ
-import com.tencent.bkrepo.common.artifact.constant.PAAS_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
+import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.service.node.NodePermissionService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.query.enums.OperationType
@@ -60,6 +59,7 @@ import org.springframework.stereotype.Component
 class ProjectIdRuleInterceptor(
     private val nodePermissionService: NodePermissionService,
     private val repositoryService: RepositoryService,
+    private val repositoryProperties: RepositoryProperties,
 ) : QueryRuleInterceptor {
 
     override fun match(rule: Rule): Boolean {
@@ -72,7 +72,7 @@ class ProjectIdRuleInterceptor(
             require(context is CommonQueryContext)
             val projectId = rule.value.toString()
             if (HttpContextHolder.getRequestOrNull() == null ||
-                SecurityUtils.isServiceRequest() || projectId in builtInProjectList
+                SecurityUtils.isServiceRequest() || projectId in repositoryProperties.excludeProjectLists
             )
                 return Criteria.where(PROJECT_ID).isEqualTo(projectId)
             val repoName = context.findRepoName().toMutableList()
@@ -142,7 +142,4 @@ class ProjectIdRuleInterceptor(
         }
     }
 
-    companion object {
-        private val builtInProjectList = listOf(PUBLIC_GLOBAL_PROJECT, PAAS_PROJECT)
-    }
 }

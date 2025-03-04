@@ -250,7 +250,8 @@ class ArtifactContextHolder(
         private fun queryRepoDetail(repositoryId: RepositoryId): RepositoryDetail {
             with(repositoryId) {
                 val repoType = getCurrentArtifactConfigurer().getRepositoryType().name
-                publicGlobalRepoHandler(projectId, repoName, repoType)
+                // 临时先禁用自动创建public global repo
+//                publicGlobalRepoHandler(projectId, repoName, repoType)
                 return artifactClient.getRepositoryDetailOrNull(projectId, repoName, repoType)
                     ?: queryRepoDetailFormExtraRepoType(projectId, repoName)
             }

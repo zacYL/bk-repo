@@ -267,8 +267,9 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-z0-9]+(([_.]|__|-*)[a-z0-9]+)*$/,
-                            message: this.$t('checkRegexp', ['[a-z0-9]+(([_.]|__|-*)[a-z0-9]+)*']),
+                           
+                            regex: /^[a-z0-9]+([._-][a-z0-9]+)*(\/[a-z0-9]+([._-][a-z0-9]+)*)*$/,
+                            message: this.$t('checkRegexp', ['[a-z0-9]+([._-][a-z0-9]+)*(\/[a-z0-9]+([._-][a-z0-9]+)*)*']),
                             trigger: 'blur'
                         }
                     ],

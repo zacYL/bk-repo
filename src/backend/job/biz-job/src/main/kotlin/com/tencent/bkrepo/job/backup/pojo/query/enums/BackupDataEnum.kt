@@ -21,68 +21,79 @@ enum class BackupDataEnum(
     val parentData: Boolean = true,
     val relatedData: String? = null,
     val specialData: Boolean = false,
+    val sort: Int = 0,
 ) {
     USER_DATA(
         "user",
         "user.json",
         BackupUser::class.java,
-        "PUBLIC"
+        "PUBLIC",
+        sort = 200
     ),
     ROLE_DATA(
         "role",
         "role.json",
         BackupRole::class.java,
-        "PUBLIC"
+        "PUBLIC",
+        sort = 190
     ),
     TEMPORARY_TOKEN_DATA(
         "temporary_token",
         "temporary_token.json",
         BackupTemporaryToken::class.java,
-        "PUBLIC"
+        "PUBLIC",
+        sort = 180
     ),
     PERMISSION_DATA(
         "permission",
         "permission.json",
         BackupPermission::class.java,
-        "PUBLIC"
+        "PUBLIC",
+        sort = 170
     ),
     ACCOUNT_DATA(
         "account",
         "account.json",
         BackupAccount::class.java,
-        "PUBLIC"
+        "PUBLIC",
+        sort = 160
     ),
     PROJECT_DATA(
         "project",
         "project.json",
         BackupProjectInfo::class.java,
-        "PRIVATE"
+        "PRIVATE",
+        sort = 150
     ),
     REPOSITORY_DATA(
         "repository",
         "repository.json",
         BackupRepositoryInfo::class.java,
-        "PRIVATE"
-    ),
-    PACKAGE_DATA(
-        "package",
-        "package.json",
-        BackupPackageInfo::class.java,
         "PRIVATE",
-        relatedData = "package_version"
+        sort = 140
     ),
     PACKAGE_VERSION_DATA(
         "package_version",
         "package-version.json",
         BackupPackageVersionInfoWithKeyInfo::class.java,
         "PRIVATE",
-        false
+        false,
+        sort = 130
+    ),
+    PACKAGE_DATA(
+        "package",
+        "package.json",
+        BackupPackageInfo::class.java,
+        "PRIVATE",
+        relatedData = "package_version",
+        sort = 120
     ),
     NODE_DATA(
         "node",
         "node.json",
         BackupNodeInfo::class.java,
-        "PRIVATE"
+        "PRIVATE",
+        sort = 110
     ),
     MAVEN_METADATA_DATA(
         "maven_metadata",
@@ -90,7 +101,8 @@ enum class BackupDataEnum(
         BackupMavenMetadata::class.java,
         "PRIVATE",
         false,
-        specialData = true
+        specialData = true,
+        sort = 100
     ),
     CONAN_METADATA_DATA(
         "conan_metadata",
@@ -98,7 +110,8 @@ enum class BackupDataEnum(
         BackupConanMetadata::class.java,
         "PRIVATE",
         false,
-        specialData = true
+        specialData = true,
+        sort = 90
     ),
     ;
 
@@ -124,7 +137,7 @@ enum class BackupDataEnum(
         }
 
         fun getNonSpecialDataList(type: String): List<BackupDataEnum> {
-            return values().filter { it.type == type && it.specialData == false }
+            return values().filter { it.type == type && it.specialData == false }.sortedByDescending { it.sort }
         }
 
         const val PUBLIC_TYPE = "PUBLIC"

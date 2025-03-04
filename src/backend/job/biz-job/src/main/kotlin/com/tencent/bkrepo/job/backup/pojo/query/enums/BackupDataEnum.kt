@@ -72,20 +72,20 @@ enum class BackupDataEnum(
         "PRIVATE",
         sort = 140
     ),
-    PACKAGE_VERSION_DATA(
-        "package_version",
-        "package-version.json",
-        BackupPackageVersionInfoWithKeyInfo::class.java,
-        "PRIVATE",
-        false,
-        sort = 130
-    ),
     PACKAGE_DATA(
         "package",
         "package.json",
         BackupPackageInfo::class.java,
         "PRIVATE",
         relatedData = "package_version",
+        sort = 130
+    ),
+    PACKAGE_VERSION_DATA(
+        "package_version",
+        "package-version.json",
+        BackupPackageVersionInfoWithKeyInfo::class.java,
+        "PRIVATE",
+        false,
         sort = 120
     ),
     NODE_DATA(

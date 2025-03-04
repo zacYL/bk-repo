@@ -49,7 +49,6 @@ class BackupPackageDataHandler(
         val existRecord = findExistPackage(record)
         if (existRecord != null) {
             if (context.task.backupSetting.conflictStrategy == BackupConflictStrategy.SKIP) {
-                updatePackageInfo(record)
                 return
             }
             updateExistPackage(record)
@@ -81,24 +80,6 @@ class BackupPackageDataHandler(
         mongoTemplate.updateFirst(packageQuery, update, BackupDataEnum.PACKAGE_DATA.collectionName)
         logger.info(
             "update exist package ${packageInfo.key} " +
-                    "success with name ${packageInfo.projectId}|${packageInfo.repoName}"
-        )
-    }
-
-    private fun updatePackageInfo(packageInfo: BackupPackageInfo) {
-        // 跳过 包的信息需要重新计算，更新最新版本和版本数
-        val packageVersions =
-            packageClient.listAllVersion(packageInfo.projectId, packageInfo.repoName, packageInfo.key).data ?: return
-        // 返回列表已默认根据版本排序，取第一个为最新
-        val lastVersion = if (packageVersions.isEmpty()) null else packageVersions[0]
-        val packageQuery = buildQuery(packageInfo)
-        val update = Update()
-            .set(BackupPackageInfo::latest.name, lastVersion?.name)
-            .set(BackupPackageInfo::versions.name, packageVersions.size)
-
-        mongoTemplate.updateFirst(packageQuery, update, BackupDataEnum.PACKAGE_DATA.collectionName)
-        logger.info(
-            "recount package info ${packageInfo.key} " +
                     "success with name ${packageInfo.projectId}|${packageInfo.repoName}"
         )
     }

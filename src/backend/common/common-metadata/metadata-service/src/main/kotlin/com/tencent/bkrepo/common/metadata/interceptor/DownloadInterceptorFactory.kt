@@ -99,7 +99,7 @@ class DownloadInterceptorFactory(
                     )
                 }
                 val customInterceptors = SpringContextUtils.getBeansWithType(DownloadInterceptor::class.java)
-                    .map { it as DownloadInterceptor<*, NodeDetail> }
+                    .map { it as DownloadInterceptor<*, A> }
                 interceptorList.addAll(customInterceptors)
             } catch (e: Exception) {
                 logger.warn("fail to get download interceptor by settings[$settings]: $e")

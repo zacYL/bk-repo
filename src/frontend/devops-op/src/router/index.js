@@ -27,6 +27,8 @@ export const ROUTER_NAME_REPO_CONFIG = 'RepoConfig'
 export const ROUTER_NAME_RATE_LIMITER_CONFIG = 'RateLimiterConfig'
 export const ROUTER_NAME_PRELOAD_CONFIG = 'PreloadConfig'
 export const ROUTER_NAME_EXECUTION_CLUSTERS_CONFIG = 'ExecutionClustersConfig'
+export const ROUTER_NAME_SEPARATION_CONFIG = 'SeparationConfig'
+export const ROUTER_NAME_SEPARATION_RECORD = 'SeparationRecord'
 
 Vue.use(Router)
 
@@ -141,12 +143,6 @@ export const asyncRoutes = [
         component: () => import('@/views/node/index')
       },
       {
-        path: 'fileCache',
-        name: ROUTER_NAME_FILE_CACHE,
-        meta: { title: '缓存管理', icon: 'file' },
-        component: () => import('@/views/node/FileCache')
-      },
-      {
         path: 'fileSystem',
         name: ROUTER_NAME_FILE_SYSTEM,
         meta: { title: '客户端管理', icon: 'file' },
@@ -175,12 +171,6 @@ export const asyncRoutes = [
         name: ROUTER_NAME_PROJECT_METRICS,
         meta: { title: '仓库大小统计', icon: 'file' },
         component: () => import('@/views/node/ProjectMetrics')
-      },
-      {
-        path: 'preloadConfig',
-        name: ROUTER_NAME_PRELOAD_CONFIG,
-        meta: { title: '制品预加载配置', icon: 'service-config' },
-        component: () => import('@/views/preload/index')
       }
     ]
   },
@@ -337,6 +327,46 @@ export const asyncRoutes = [
         name: ROUTER_NAME_RATE_LIMITER_CONFIG,
         meta: { title: '限流管理', icon: 'permission' },
         component: () => import('@/views/rateLimitConfg/RateLimiter')
+      }
+    ]
+  },
+  {
+    path: '/fileCache',
+    component: Layout,
+    meta: { title: '文件缓存', icon: 'file' },
+    redirect: '/fileCache/fileCacheManage',
+    children: [
+      {
+        path: 'fileCacheManage',
+        name: ROUTER_NAME_FILE_CACHE,
+        meta: { title: '缓存管理', icon: 'file' },
+        component: () => import('@/views/node/FileCache')
+      },
+      {
+        path: 'preloadConfig',
+        name: ROUTER_NAME_PRELOAD_CONFIG,
+        meta: { title: '制品预加载配置', icon: 'service-config' },
+        component: () => import('@/views/preload/index')
+      }
+    ]
+  },
+  {
+    path: '/separation-config',
+    component: Layout,
+    meta: { title: '降冷任务配置', icon: 'separate' },
+    redirect: '/separation-config/task',
+    children: [
+      {
+        path: 'task',
+        name: ROUTER_NAME_SEPARATION_CONFIG,
+        meta: { title: '降冷任务', icon: 'separate' },
+        component: () => import('@/views/separation/index')
+      },
+      {
+        path: 'infos',
+        name: ROUTER_NAME_SEPARATION_RECORD,
+        meta: { title: '数据查询', icon: 'separate' },
+        component: () => import('@/views/separation/ShowData')
       }
     ]
   },

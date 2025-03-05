@@ -77,6 +77,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.RequestHeader
 import java.util.Base64
+import java.util.Base64
+import javax.servlet.http.Cookie
 
 @RestController
 @RequestMapping(AUTH_API_USER_PREFIX)
@@ -228,6 +230,7 @@ class UserController @Autowired constructor(
 
     @ApiOperation("校验用户token")
     @PostMapping("/token")
+    @Deprecated("no need work")
     fun checkToken(@RequestParam uid: String, @RequestParam token: String): Response<Boolean> {
         preCheckContextUser(uid)
         userService.findUserByUserToken(uid, token) ?: return ResponseBuilder.success(false)

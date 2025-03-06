@@ -46,7 +46,6 @@ class ServiceUserController @Autowired constructor(
     private val userService: UserService
 ) : ServiceUserClient {
 
-
     override fun createUser(request: CreateUserRequest): Response<Boolean> {
         userService.createUser(request)
         return ResponseBuilder.success(true)

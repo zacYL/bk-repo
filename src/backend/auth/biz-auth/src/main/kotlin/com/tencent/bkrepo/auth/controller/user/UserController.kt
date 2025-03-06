@@ -61,7 +61,6 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import io.swagger.annotations.ApiOperation
-import javax.servlet.http.Cookie
 import org.bouncycastle.crypto.CryptoException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -76,7 +75,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.RequestHeader
-import java.util.Base64
 import java.util.Base64
 import javax.servlet.http.Cookie
 

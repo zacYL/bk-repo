@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.cocoapods.service
 
+import com.tencent.bkrepo.cocoapods.artifact.response.ArtifactResourceWriterContext
 import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.event.consumer.RemoteEventJobExecutor
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
@@ -46,7 +47,6 @@ import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
-import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriterContext
 import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.encodeDisposition
 import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService

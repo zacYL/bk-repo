@@ -26,10 +26,15 @@
  */
 
 
-package com.tencent.bkrepo.common.artifact.resolve.response
+package com.tencent.bkrepo.cocoapods.artifact.response
 
 import com.tencent.bkrepo.common.api.constant.MediaTypes
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
+import com.tencent.bkrepo.common.artifact.resolve.response.DefaultArtifactResourceWriter
+import org.springframework.stereotype.Component
 
+@Component
 class ArtifactResourceWriterContext(
     private val writers: List<ArtifactResourceWriter>,
 ) {

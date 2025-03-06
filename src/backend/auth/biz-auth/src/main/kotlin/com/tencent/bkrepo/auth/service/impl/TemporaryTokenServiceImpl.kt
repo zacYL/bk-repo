@@ -107,7 +107,7 @@ class TemporaryTokenServiceImpl(
         private val logger = LoggerFactory.getLogger(TemporaryTokenServiceImpl::class.java)
 
         private fun generateToken(): String {
-            return UUID.randomUUID().toString().replace(StringPool.DASH, StringPool.EMPTY).toLowerCase()
+            return UUID.randomUUID().toString().replace(StringPool.DASH, StringPool.EMPTY).lowercase()
         }
 
         private fun computeExpireDate(expireSeconds: Long?): LocalDateTime? {

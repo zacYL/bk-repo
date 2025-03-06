@@ -87,6 +87,7 @@ class UserController @Autowired constructor(
     permissionService: PermissionService
 ) : OpenResource(permissionService) {
 
+
     private val signingKey = JwtUtils.createSigningKey(jwtProperties.secretKey)
 
     @ApiOperation("创建用户")

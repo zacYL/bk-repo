@@ -189,6 +189,9 @@ class GenericLocalRepository(
 
         when {
             isSeparateUpload(uploadType) -> {
+                if (uploadId.isNullOrEmpty()) {
+                    throw ErrorCodeException(GenericMessageCode.BLOCK_UPLOADID_ERROR, uploadId)
+                }
                 onSeparateUpload(context, uploadId)
             }
             isBlockUpload(uploadId, sequence) -> {

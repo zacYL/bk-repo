@@ -41,7 +41,7 @@ dependencies {
     api(project(":common:common-lock"))
     implementation("com.google.guava:guava")
     implementation("com.tencent.bk.sdk:iam-java-sdk:${Versions.IamJavaSdk}")
-    implementation("cn.hutool:hutool-crypto:${Versions.HutoolCrypto}")
+    implementation("cn.hutool:hutool-crypto:${Versions.Hutool}")
     implementation("org.apache.httpcomponents:httpclient")
     implementation("com.tencent.bk.sdk:crypto-java-sdk")
     implementation("io.micrometer:micrometer-registry-prometheus")

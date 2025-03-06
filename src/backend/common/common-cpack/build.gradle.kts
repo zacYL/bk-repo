@@ -5,8 +5,8 @@ dependencies {
     api(project(":auth:api-auth"))
     api(project(":common:common-devops:api"))
     implementation("org.springframework.boot:spring-boot-starter-mail")
-    implementation("cn.hutool:hutool-extra:${Versions.HutoolCrypto}")
-    implementation("cn.hutool:hutool-core:${Versions.HutoolCrypto}")
+    implementation("cn.hutool:hutool-extra:${Versions.Hutool}")
+    implementation("cn.hutool:hutool-core:${Versions.Hutool}")
     implementation("com.google.zxing:core:3.4.1")
     implementation("org.apache.commons:commons-lang3")
 }

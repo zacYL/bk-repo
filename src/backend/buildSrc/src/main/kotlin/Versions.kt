@@ -38,23 +38,30 @@ object Versions {
     const val Redline = "1.2.10"
     const val SkyWalkingApmToolkit = "8.10.0"
     const val Gson = "2.9.0"
+    // upgraded from 3.19.4 (CVE-2022-3509, CVE-2022-3510, CVE-2022-3171)
     const val ProtobufJava = "3.19.6"
+    // upgraded from 31.1-jre (CVE-2023-2976, CVE-2020-8908)
     const val Guava = "32.0.1-jre"
     const val Shedlock = "4.12.0"
     const val JGit = "5.11.0.202103091610-r"
     const val JavaSemver = "0.9.0"
+    // upgraded from 1.21 (CVE-2024-26308)
     const val CommonsCompress = "1.26.2"
+    // upgraded from 2.11.0 (incompatible with easyexcel 4.0.3)
     const val CommonsIO = "2.16.1"
     const val OKhttp = "4.9.0"
     const val Polaris = "1.5.2"
+    // upgraded from 1.9 (CVE-2022-42889)
     const val CommonsText = "1.10.0"
     const val EmbeddedRedis = "0.7.3"
     const val JMH = "0.5.3"
-    const val HutoolCrypto = "5.8.25"
+    // upgraded from 5.5.4 (CVE-2023-51075/42278/42277/42276/33695/3276/4565)
+    const val Hutool = "5.8.25"
     const val JSR311API = "1.1.1"
     const val MAVEN = "3.8.2"
     const val MavenArtifact = "3.8.3"
     const val MockitoKotlin = "4.0.0"
+    // upgraded from 1.4.19 (CVE-2022-41966, CVE-2022-40151)
     const val XStream = "1.4.20"
     const val DockerJava = "3.2.13"
     const val H2 = "2.1.210"
@@ -65,25 +72,32 @@ object Versions {
     const val ReactiveFeign = "3.2.6"
     const val Jasypt = "3.0.5"
     const val CryptoJavaSdk = "1.1.0"
+    // upgraded from 1.29 (CVE-2022-1471)
     const val SnakeYaml = "2.0"
-    const val Okio = "1.17.6"
+    // upgraded from 1.2.11 (CVE-2023-6378)
     const val Logback = "1.2.13"
+    // upgraded from 1.4 (CVE-2023-24998)
     const val CommonsFileupload = "1.5"
+    // upgraded from 2.13.4 (CVE-2022-42003)
     const val Jackson = "2.14.3"
+    // upgraded from 6.3.1 (CVE-2022-40152)
     const val Woodstox = "6.4.0"
+    // upgraded from 0.7.8 (CVE-2023-51775, CVE-2023-31582)
     const val Jose4j = "0.9.4"
+    // upgraded from 2.2.20.Final (CVE-2024-1459)
     const val Undertow = "2.2.31.Final"
+    // upgraded from 5.3.23 (CVE-2023-20860)
     const val SpringWebmvc = "5.3.26"
-    const val SpringBeans = "5.3.20"
-    const val SpringWeb = "5.3.34"
+    // upgraded from 2.4.8 (CVE-2023-1370)
     const val JsonSmart = "2.4.9"
-    const val SpringBootAutoconfigure = "2.5.15"
+    // upgraded from 2.6.13 (CVE-2023-20873)
+    const val SpringBootAutoconfigure = "2.6.15"
     const val TongWeb = "7.0.E.6_P6"
     const val CommonsLang3 = "3.14.0"
+    // upgraded from 3.1.1 (incompatible with commons-compress 1.26)
     const val Easyexcel = "4.0.3"
     const val IamJavaSdk = "1.0.30-SNAPSHOT"
     const val Dom4j = "2.1.0"
-    const val TiKa = "2.9.1"
     const val Tika = "2.9.2"
     const val ivy = "2.5.2"
     const val FFmpegPlatform = "6.0-1.5.9"
@@ -95,5 +109,6 @@ object Versions {
     const val Galimatias = "0.2.1"
     const val CommonsNet = "3.9.0"
     const val JuniversalCharDet = "1.0.3"
+    // upgraded from 3.8.7 (CVE-2023-5685)
     const val Xnio = "3.8.14.Final"
 }

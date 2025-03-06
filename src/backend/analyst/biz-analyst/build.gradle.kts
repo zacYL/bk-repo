@@ -48,4 +48,6 @@ dependencies {
         implementation("org.bitbucket.b_c:jose4j:${Versions.Jose4j}")
         implementation("org.apache.poi:poi-ooxml:5.3.0")
     }
+    testImplementation("io.mockk:mockk")
+    testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
 }

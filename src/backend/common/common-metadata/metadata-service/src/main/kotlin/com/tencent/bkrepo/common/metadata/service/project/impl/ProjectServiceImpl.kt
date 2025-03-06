@@ -128,7 +128,12 @@ class ProjectServiceImpl(
 
     override fun listProject(): List<ProjectInfo> {
         val query = buildListQuery()
-        return projectDao.find(Query().addCriteria(excludeCri)).map { convert(it)!! }
+        val realQuery = if (repositoryProperties.excludeProjectLists.isEmpty()) {
+            query
+        } else {
+            query.addCriteria(TProject::name.nin(repositoryProperties.excludeProjectLists))
+        }
+        return projectDao.find(realQuery).map { convert(it)!! }
     }
 
     override fun searchProject(option: ProjectSearchOption): Page<ProjectInfo> {
@@ -171,7 +176,11 @@ class ProjectServiceImpl(
     override fun rangeQuery(request: ProjectRangeQueryRequest): Page<ProjectInfo?> {
         val limit = request.limit
         val skip = request.offset
-        val query = buildRangeQuery(request).addCriteria(excludeCri)
+        val query = if (request.projectIds.isEmpty() && repositoryProperties.excludeProjectLists.isNotEmpty()) {
+            buildRangeQuery(request).addCriteria(TProject::name.nin(repositoryProperties.excludeProjectLists))
+        } else {
+            buildRangeQuery(request)
+        }
         val totalCount = projectDao.count(query)
         val records = projectDao.find(query.limit(limit).skip(skip)).map { convert(it) }
         return Page(0, limit, totalCount, records)

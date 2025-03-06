@@ -58,6 +58,7 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
+import com.tencent.bkrepo.pypi.artifact.PypiPackageArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.PypiProperties
 import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.url.UrlPatternUtil.parameterMaps
@@ -540,7 +541,8 @@ class PypiLocalRepository(
                 PypiPackagePojo(request.getParameter("name"), request.getParameter("version"))
             } else {
                 try {
-                    artifactInfo.getArtifactFullPath().toPypiPackagePojo()
+                    val pypiPackageArtifactInfo = artifactInfo as PypiPackageArtifactInfo
+                    PypiPackagePojo(pypiPackageArtifactInfo.packageName, pypiPackageArtifactInfo.version)
                 } catch (e: Exception) {
                     logger.error("parse pypi package failed", e)
                     null

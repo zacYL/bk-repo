@@ -13,7 +13,10 @@ class NpmUtilsTest {
         val domain = "http://bkrepo.example.com/npm"
         val tarballPrefix = "http://bkrepo.example.com/npm"
         val name = "@test/bkrepo-test"
-        val artifactInfo = NpmArtifactInfo(projectId = "blueking", repoName = "npm-local", artifactUri = "/")
+        val artifactInfo = NpmArtifactInfo(
+            projectId = "blueking", repoName = "npm-local",
+            packageName = "bkrepo-test", version = "1.0.0"
+        )
 
         // not return repo id
         var tarball = NpmUtils.buildPackageTgzTarball(

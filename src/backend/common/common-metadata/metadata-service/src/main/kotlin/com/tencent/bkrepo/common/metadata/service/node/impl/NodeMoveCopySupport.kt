@@ -118,9 +118,11 @@ open class NodeMoveCopySupport(
             }
             if (move) {
                 publishEvent(NodeEventFactory.buildMovedEvent(request))
-                // 更新源节点父目录的最后修改信息
-                val srcParentFullPath = PathUtils.toFullPath(resolveParent(srcNode.fullPath))
-                nodeBaseService.updateModifiedInfo(srcRepo.projectId, srcRepo.name, srcParentFullPath, operator)
+                if (nodeBaseService.repositoryProperties.parentFolderUpdateEnabled) {
+                    // 更新源节点父目录的最后修改信息
+                    val srcParentFullPath = PathUtils.toFullPath(resolveParent(srcNode.fullPath))
+                    nodeBaseService.updateModifiedInfo(srcRepo.projectId, srcRepo.name, srcParentFullPath, operator)
+                }
             } else {
                 publishEvent(NodeEventFactory.buildCopiedEvent(request))
             }

@@ -44,7 +44,9 @@ object FileNameParser {
      * 包名：bcs-api-gateway  版本：1.26.0-alpha.6
      */
     fun parseNameAndVersion(fullPath: String): Map<String, Any> {
-        val substring = fullPath.trimStart('/').substring(0, fullPath.lastIndexOf(".tgz") - 1)
+        val index = fullPath.lastIndexOf(".tgz")
+        if (index == -1) return emptyMap()
+        val substring = fullPath.trimStart('/').substring(0, index - 1)
         val parts = substring.split('-')
         val lastIndex = parts.size - 1
         var name = parts[0]
@@ -79,7 +81,9 @@ object FileNameParser {
      *  `(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?`
      */
     fun parseNameAndVersionWithRegex(fullPath: String): Map<String, Any> {
-        val substring = fullPath.trimStart('/').substring(0, fullPath.lastIndexOf(".tgz") - 1)
+        val index = fullPath.lastIndexOf(".tgz")
+        if (index == -1) return emptyMap()
+        val substring = fullPath.trimStart('/').substring(0, index - 1)
         val pattern = Pattern.compile(VERSION_REGEX)
         val matcher = pattern.matcher(substring)
         var version = StringPool.EMPTY

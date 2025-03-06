@@ -39,7 +39,7 @@ open class PypiArtifactInfo(
     artifactUri: String
 ) : ArtifactInfo(projectId, repoName, artifactUri) {
     companion object {
-        const val PYPI_PACKAGES_MAPPING_URI = "/{projectId}/{repoName}/packages/**/{name}-{version}-*"
+        const val PYPI_PACKAGES_MAPPING_URI = "/{projectId}/{repoName}/packages/**/{file}"
         const val PYPI_ROOT_POST_URI = "/{projectId}/{repoName}"
 
         // RPM 产品接口

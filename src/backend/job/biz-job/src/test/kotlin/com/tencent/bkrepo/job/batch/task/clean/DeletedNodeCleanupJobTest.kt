@@ -18,6 +18,7 @@ import com.tencent.bkrepo.job.batch.JobBaseTest
 import com.tencent.bkrepo.job.batch.context.DeletedNodeCleanupJobContext
 import com.tencent.bkrepo.job.migrate.MigrateRepoStorageService
 import com.tencent.bkrepo.job.separation.service.SeparationTaskService
+import com.tencent.bkrepo.repository.api.GlobalConfigClient
 import com.tencent.bkrepo.router.api.RouterControllerClient
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -67,6 +68,10 @@ class DeletedNodeCleanupJobTest @Autowired constructor(
 
     @MockBean
     private lateinit var storageCredentialService: StorageCredentialService
+
+    @MockBean
+    private lateinit var globalConfigClient: GlobalConfigClient
+
 
     @MockBean
     lateinit var separationTaskService: SeparationTaskService

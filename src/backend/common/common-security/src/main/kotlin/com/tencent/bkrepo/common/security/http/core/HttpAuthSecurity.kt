@@ -53,6 +53,7 @@ open class HttpAuthSecurity {
     var temporaryTokenEnabled: Boolean = true
     var signAuthEnabled: Boolean = true
     var devopsAccessTokenAuthEnabled: Boolean = false
+    var cookieAuthEnabled: Boolean = false
     var authenticationManager: AuthenticationManager? = null
     var jwtAuthProperties: JwtAuthProperties? = null
     val customizers: MutableList<HttpAuthSecurityCustomizer> = mutableListOf()
@@ -123,6 +124,14 @@ open class HttpAuthSecurity {
      */
     fun enableDevopsAccessTokenAuth(): HttpAuthSecurity {
         devopsAccessTokenAuthEnabled = true
+        return this
+    }
+
+    /**
+     * 启用cookie认证, 默认关闭
+     */
+    fun enableCookieAuth(): HttpAuthSecurity {
+        cookieAuthEnabled = true
         return this
     }
 

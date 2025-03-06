@@ -31,14 +31,13 @@
 
 package com.tencent.bkrepo.pypi.artifact
 
-import com.tencent.bkrepo.common.api.constant.StringPool
-
 class PypiPackageArtifactInfo(
     projectId: String,
     repoName: String,
+    artifactUri: String,
     val packageName: String,
     val version: String
-) : PypiArtifactInfo(projectId, repoName, StringPool.EMPTY) {
+) : PypiArtifactInfo(projectId, repoName, artifactUri) {
 
     override fun getArtifactName() = packageName
 

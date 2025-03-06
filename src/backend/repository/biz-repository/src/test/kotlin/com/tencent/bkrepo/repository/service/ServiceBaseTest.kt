@@ -36,6 +36,7 @@ import com.tencent.bkrepo.auth.api.ServiceBkiamV3ResourceClient
 import com.tencent.bkrepo.auth.api.ServicePermissionClient
 import com.tencent.bkrepo.auth.api.ServiceRoleClient
 import com.tencent.bkrepo.auth.api.ServiceUserClient
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.ListPathResult
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.project.ProjectCreatedEvent
@@ -76,10 +77,13 @@ import com.tencent.bkrepo.router.api.RouterControllerClient
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import org.mockito.ArgumentMatchers.anyBoolean
+import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -178,12 +182,19 @@ open class ServiceBaseTest {
         whenever(servicePermissionClient.checkPermission(any())).thenReturn(
             ResponseBuilder.success()
         )
-        whenever(servicePermissionClient.listPermissionRepo(anyString(), anyString(), anyString())).thenReturn(
+        whenever(
+            servicePermissionClient.listPermissionRepo(anyString(), anyString(), isNull(), isNull(), anyBoolean())
+        ).thenReturn(
             ResponseBuilder.success()
         )
         whenever(servicePermissionClient.listPermissionPath(anyString(), anyString(), anyString())).thenReturn(
             ResponseBuilder.success(ListPathResult(status = false, path = emptyMap()))
         )
+        whenever(servicePermissionClient.getAuthRepoPaths(anyString(), anyString(), anyList(), any<PermissionAction>()))
+            .thenReturn(
+                ResponseBuilder.success(listOf(UT_REPO_NAME).associateWith { listOf("/") })
+            )
+
         whenever(messageSupplier.delegateToSupplier(any<ArtifactEvent>(), anyOrNull(), anyString(), anyOrNull(), any()))
             .then {}
         whenever(resourcePermissionListener.handle(any<ProjectCreatedEvent>())).then {}

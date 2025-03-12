@@ -281,7 +281,7 @@ class MavenExtService(
         }
 
         // 更新旧的数据
-        if (dependencies.any { it.version == "null" } || plugins.any { it.version == "null" }) {
+        if (dependencies.any { it.version == "null" } || plugins.any { it.version == "null" || it.version == null }) {
             // TODO 添加plugins的处理逻辑。
             val (newDependencies, newPlugins, updateFlag) = transferDependencies(
                 dependencies, plugins, projectId, repoName, packageKey, version

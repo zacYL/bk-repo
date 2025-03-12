@@ -42,9 +42,9 @@ object DependencyUtils {
     }
 
     // 如果是直接存在就返回，如果是占位符号的形式存在，那就寻找对应的属性
-    private fun versionResolver(versionStr: String, model: Model): String? =
+    private fun versionResolver(versionStr: String, model: Model): String =
         if (isProperty(versionStr)) {
-            model.properties.getProperty(extractProperty(versionStr))
+            model.properties.getProperty(extractProperty(versionStr)) ?: "null"
         } else {
             versionStr
         }

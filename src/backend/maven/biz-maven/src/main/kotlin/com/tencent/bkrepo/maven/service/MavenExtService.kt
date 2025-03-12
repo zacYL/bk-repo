@@ -562,7 +562,7 @@ class MavenExtService(
     ): Model? {
         node?.let {
             val nodeList = nodeClient.listNodePage(projectId, repoName, node.path).data?.records
-            val fullPath = nodeList?.find { nodeInfo -> nodeInfo.fullPath.endsWith(".pom") }?.fullPath
+            val fullPath = nodeList?.findLast { nodeInfo -> nodeInfo.fullPath.endsWith(".pom") }?.fullPath
             fullPath?.run {
                 val pomNode = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
                 val inputStreamPom = storageManager.loadArtifactInputStream(pomNode, storageCredentials)

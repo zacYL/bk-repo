@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.generic.artifact
 
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.ACCEPT_ENCODING
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.urlEncode
@@ -119,6 +120,7 @@ class GenericRemoteRepository(
                 // 支持分片下载
                 HttpContextHolder.getRequestOrNull()?.getHeader(HttpHeaders.RANGE)
                     ?.let { header(HttpHeaders.RANGE, it) }
+                header(ACCEPT_ENCODING, "identity")
             }.build()
 
             // 发起请求

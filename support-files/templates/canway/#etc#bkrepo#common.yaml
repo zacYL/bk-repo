@@ -39,6 +39,15 @@ spring:
                 tokenAuthValue: __BK_REPO_PULSAR_AUTH_JWT_TOKEN__
                 tenant: __BK_REPO_PULSAR_TENANT__
                 namespace: __BK_REPO_PULSAR_NAMESPACE__
+        extend-rabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                virtual-host: __BK_CI_RABBITMQ_VHOST__
+                username: __BK_CI_RABBITMQ_USER__
+                password: __BK_CI_RABBITMQ_PASSWORD__
+                addresses: __BK_CI_RABBITMQ_ADDR__
       function:
         autodetect: false
       default-binder: noop
@@ -65,6 +74,25 @@ spring:
       # Comma delimited list of master_ip:port pairs
       nodes: __BK_CI_REDIS_SENTINEL_ADDR__
       password: __BK_CI_REDIS_SENTINEL_PASSWORD__
+
+  # rabbitmq config
+  rabbitmq:
+    virtual-host: __BK_CI_RABBITMQ_VHOST__
+    username: __BK_CI_RABBITMQ_USER__
+    password: __BK_CI_RABBITMQ_PASSWORD__
+    addresses: __BK_CI_RABBITMQ_ADDR__
+    # 引擎核心业务MQ
+    core:
+      virtual-host: __BK_CI_RABBITMQ_VHOST__
+      username: __BK_CI_RABBITMQ_USER__
+      password: __BK_CI_RABBITMQ_PASSWORD__
+      addresses: __BK_CI_RABBITMQ_ADDR__
+    # 拓展功能模块MQ -- 如果主rabbitmq出现性能瓶颈, 可以考虑使用额外的实例
+    extend:
+      virtual-host: __BK_CI_RABBITMQ_VHOST__
+      username: __BK_CI_RABBITMQ_USER__
+      password: __BK_CI_RABBITMQ_PASSWORD__
+      addresses: __BK_CI_RABBITMQ_ADDR__
 
 server:
   tongweb:
@@ -144,6 +172,7 @@ storage:
     region: __BK_REPO_COS_REGION__
     bucket: __BK_REPO_COS_BUCKET__
     public: true
+    lazyRequest: true
     cache:
       enabled: __BK_REPO_CACHE_ENABLE__
       path: __BK_REPO_CACHE_MOUNT_PATH__
@@ -223,8 +252,8 @@ cluster:
 
 bk:
   ci:
-    # license使用的域名
-    domain: __BK_DOMAIN__
+    # license使用的域名, 需要与许可申请一致
+    domain: __BK_CI_DOMAIN__
   paas:
     host: __BK_PAAS_PUBLIC_URL__
     version: "__BK_PAAS_VERSION__"

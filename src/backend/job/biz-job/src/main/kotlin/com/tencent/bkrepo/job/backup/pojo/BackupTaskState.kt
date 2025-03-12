@@ -34,5 +34,7 @@ enum class BackupTaskState {
 
     RUNNING,
 
-    FINISHED,
+    FAILURE,
+
+    SUCCESS,
 }

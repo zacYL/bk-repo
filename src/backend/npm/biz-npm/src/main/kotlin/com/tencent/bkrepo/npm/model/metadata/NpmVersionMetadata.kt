@@ -153,6 +153,9 @@ class NpmVersionMetadata : Serializable {
         @JsonProperty("tarball")
         var tarball: String? = null
 
+        @JsonProperty("resolved_hsp")
+        var resolvedHsp: String? = null
+
         @JsonProperty("shasum")
         var shasum: String? = null
 

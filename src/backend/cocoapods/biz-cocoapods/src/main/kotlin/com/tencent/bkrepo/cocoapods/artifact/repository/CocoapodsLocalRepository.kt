@@ -33,6 +33,7 @@ import com.tencent.bkrepo.cocoapods.constant.SPECS_FILE_NAME
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsException
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsFileParseException
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
+import com.tencent.bkrepo.cocoapods.pojo.PodSpec
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.service.CocoapodsPackageService
 import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.getPodSpec
@@ -75,7 +76,7 @@ class CocoapodsLocalRepository(
                     throw CocoapodsFileParseException(CocoapodsMessageCode.COCOAPODS_FILE_PARSE_ERROR)
                 }
             }
-            validateName(podSpec.name, artifactInfo.name)
+            validateNameAndVersion(podSpec, artifactInfo)
             putAttribute(SPECS_FILE_NAME, podSpec.fileName)
             putAttribute(SPECS_FILE_CONTENT, podSpec.content)
         }
@@ -88,13 +89,19 @@ class CocoapodsLocalRepository(
         super.onUploadBefore(context)
     }
 
-    private fun validateName(podSpecName: String?, artifactName: String) {
+    private fun validateNameAndVersion(podSpec: PodSpec, artifactInfo: CocoapodsArtifactInfo) {
         // 校验包名与spec内容的name要一致
-        if (podSpecName == null) {
+        if (podSpec.name == null) {
             throw CocoapodsException("podspec name cannot be empty.")
         }
-        if (artifactName != podSpecName) {
+        if (artifactInfo.name != podSpec.name) {
             throw CocoapodsException("package name should be consistent with the name attribute in the podspec file.")
+        }
+        if (podSpec.version == null) {
+            throw CocoapodsException("podspec version cannot be empty.")
+        }
+        if (artifactInfo.version != podSpec.version) {
+            throw CocoapodsException("package version should be consistent with the version attribute in the podspec file.")
         }
     }
 

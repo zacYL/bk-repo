@@ -59,12 +59,13 @@ import com.tencent.bkrepo.job.backup.model.TBackupTask.Companion.TASK_STATE_IDX
 import com.tencent.bkrepo.job.backup.model.TBackupTask.Companion.TASK_STATE_IDX_DEF
 import com.tencent.bkrepo.job.backup.model.TBackupTask.Companion.TASK_TYPE_IDX
 import com.tencent.bkrepo.job.backup.model.TBackupTask.Companion.TASK_TYPE_IDX_DEF
-import com.tencent.bkrepo.job.backup.pojo.task.BackupContent
 import com.tencent.bkrepo.job.backup.pojo.BackupTaskState
 import com.tencent.bkrepo.job.backup.pojo.setting.BackupSetting
+import com.tencent.bkrepo.job.backup.pojo.task.BackupContent
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.mapping.Document
+import java.time.Instant
 import java.time.LocalDateTime
 
 /**
@@ -83,12 +84,15 @@ data class TBackupTask(
     var content: BackupContent? = null,
     val backupSetting: BackupSetting,
     val state: String = BackupTaskState.PENDING.name,
+    val message: String = "",
     val createdBy: String,
     val createdDate: LocalDateTime,
     val lastModifiedBy: String,
     val lastModifiedDate: LocalDateTime,
     val startDate: LocalDateTime? = null,
     val endDate: LocalDateTime? = null,
+    val backupFilePaths: MutableList<String> = mutableListOf(),
+    var lastHeartbeat: Instant? = null,
 ) {
     companion object {
         const val TASK_STATE_IDX = "state_idx"

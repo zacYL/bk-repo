@@ -51,17 +51,14 @@ class CocoapodsReplicaService(
             val nodeDetail = nodeService
                 .getNodeDetail(ArtifactInfo(projectId, repoName, indexFilePath)) as NodeDetail
 
-            //索引源文件InputStream
+            // 索引源文件InputStream
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
             val domain =
                 data["domain"] as? String ?: throw IllegalArgumentException("domain is missing or not a string")
 
             //目标地址,ex:"http://xxx/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
-            val sourcePath = "${domain}/${projectId}/${repoName}/${packageFilePath}"
-
-            logger.info("replace with sourcePath: $sourcePath")
-
+            val sourcePath = "$domain/cocoapods/$projectId/$repoName/$packageFilePath"
             when (type) {
                 1 -> handleForPodSpec(indexFileInputStream, sourcePath, repoDetail, indexFilePath)
                 2 -> handleForPodSpecJson(indexFileInputStream, sourcePath, repoDetail, indexFilePath)
@@ -79,7 +76,7 @@ class CocoapodsReplicaService(
         inputStream: ArtifactInputStream,
         sourcePath: String,
         repoDetail: RepositoryDetail,
-        indexFilePath: String
+        indexFilePath: String,
     ) {
         val jsonStr = JsonParser.parseReader(InputStreamReader(inputStream)).toJsonString()
         val newJsonStr = CocoapodsUtil.updatePodspecJsonSource(jsonStr, sourcePath)
@@ -122,7 +119,7 @@ class CocoapodsReplicaService(
         inputStream: ArtifactInputStream,
         sourcePath: String,
         repoDetail: RepositoryDetail,
-        indexFilePath: String
+        indexFilePath: String,
     ) {
         val specStr = getSpecStr(inputStream)
         val newSpecStr = CocoapodsUtil.updatePodspecSource(specStr, sourcePath)
@@ -151,11 +148,10 @@ class CocoapodsReplicaService(
      */
     private fun getIndexFilePath(projectId: String, repoName: String, packageFilePath: String): String {
         val split = packageFilePath.split('/')
-        val orgName = split[1]
         val artifactName = split[2]
         val versionName = split[3]
-        val specsPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec"
-        val jsonPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec.json"
+        val specsPath = "/.specs/$artifactName/$versionName/$artifactName.podspec"
+        val jsonPath = "/.specs/$artifactName/$versionName/$artifactName.podspec.json"
         val pathList: List<String> =
             nodeService.listExistFullPath(projectId, repoName, listOf(specsPath, jsonPath))
         if (pathList.isEmpty()) return ""

@@ -14,7 +14,7 @@ spring:
         scanEventConsumer-in-0:
           group: analyst
           destination: artifactEvent
-          binder: pulsar
+          binder: __BK_REPO_STREAM_BINDER__
 
 
 server:

@@ -121,8 +121,9 @@ export default {
     },
     // 删除包
     deletePackage (_, { projectId, repoType, repoName, packageKey }) {
+        const type = repoType === 'ohpm' ? 'npm' : repoType
         return Vue.prototype.$ajax.delete(
-            `${repoType}/ext/package/delete/${projectId}/${repoName}`,
+            `${type}/ext/package/delete/${projectId}/${repoName}`,
             {
                 params: {
                     packageKey
@@ -164,8 +165,9 @@ export default {
     },
     // 删除包版本
     deleteVersion (_, { projectId, repoType, repoName, packageKey, version }) {
+        const type = repoType === 'ohpm' ? 'npm' : repoType
         return Vue.prototype.$ajax.delete(
-            `${repoType}/ext/version/delete/${projectId}/${repoName}`,
+            `${type}/ext/version/delete/${projectId}/${repoName}`,
             {
                 params: {
                     packageKey,
@@ -190,8 +192,9 @@ export default {
     },
     // 查询包版本详情
     getVersionDetail (_, { projectId, repoType, repoName, packageKey, version }) {
+        const type = repoType === 'ohpm' ? 'npm' : repoType
         return Vue.prototype.$ajax.get(
-            `${repoType}/ext/version/detail/${projectId}/${repoName}`,
+            `${type}/ext/version/detail/${projectId}/${repoName}`,
             {
                 params: {
                     packageKey,
@@ -246,7 +249,8 @@ export default {
     getDomain ({ state, commit }, repoType) {
         const urlMap = {
             docker: 'docker/ext/addr',
-            npm: 'npm/ext/address'
+            npm: 'npm/ext/address',
+            ohpm: 'ohpm/ext/address'
         }
         if (!urlMap[repoType] || state.domain[repoType]) return
         Vue.prototype.$ajax.get(
@@ -278,7 +282,7 @@ export default {
                 commit('SET_ARTIFACT_LIST', res)
             })
     },
-    
+
     /**
      * @description: 更新索引
      * @param {*} _

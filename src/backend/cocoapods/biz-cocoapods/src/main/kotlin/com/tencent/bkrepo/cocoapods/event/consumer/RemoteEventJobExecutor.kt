@@ -98,7 +98,7 @@ class RemoteEventJobExecutor(
      * 提交任务到线程池执行
      * @param action 执行函数
      */
-    protected fun submit(action: () -> Unit): Future<ExecutionResult> {
+    private fun submit(action: () -> Unit): Future<ExecutionResult> {
         return threadPoolExecutor.submit<ExecutionResult> {
             try {
                 val status = ExecutionStatus.SUCCESS

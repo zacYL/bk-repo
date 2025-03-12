@@ -78,122 +78,124 @@ import java.io.InputStream
 @Suppress("LateinitUsage")
 open class AbstractNpmService : ArtifactService() {
 
-	@Autowired
-	lateinit var nodeService: NodeService
+    @Autowired
+    lateinit var nodeService: NodeService
 
-	@Autowired
-	lateinit var nodeSearchService: NodeSearchService
+    @Autowired
+    lateinit var nodeSearchService: NodeSearchService
 
-	@Autowired
-	lateinit var repositoryService: RepositoryService
+    @Autowired
+    lateinit var repositoryService: RepositoryService
 
-	@Autowired
-	lateinit var packageService: PackageService
+    @Autowired
+    lateinit var packageService: PackageService
 
-	@Autowired
-	lateinit var npmProperties: NpmProperties
+    @Autowired
+    lateinit var npmProperties: NpmProperties
 
-	@Autowired
-	lateinit var storageManager: StorageManager
+    @Autowired
+    lateinit var storageManager: StorageManager
 
-	@Autowired
-	lateinit var artifactResourceWriter: ArtifactResourceWriter
+    @Autowired
+    lateinit var artifactResourceWriter: ArtifactResourceWriter
 
-	/**
-	 * 查询仓库是否存在
-	 */
-	fun checkRepositoryExist(projectId: String, repoName: String): RepositoryDetail {
-		return ArtifactContextHolder.getRepoDetailOrNull() ?: run {
-			logger.error("check repository [$repoName] in projectId [$projectId] failed!")
-			throw NpmRepoNotFoundException("repository [$repoName] in projectId [$projectId] not existed.")
-		}
-	}
+    /**
+     * 查询仓库是否存在
+     */
+    fun checkRepositoryExist(projectId: String, repoName: String): RepositoryDetail {
+        return ArtifactContextHolder.getRepoDetailOrNull() ?: run {
+            logger.error("check repository [$repoName] in projectId [$projectId] failed!")
+            throw NpmRepoNotFoundException("repository [$repoName] in projectId [$projectId] not existed.")
+        }
+    }
 
-	/**
-	 * check package exists
-	 */
-	fun packageExist(projectId: String, repoName: String, key: String): Boolean {
-		return packageService.findPackageByKey(projectId, repoName, key)?.let { true } ?: false
-	}
+    /**
+     * check package exists
+     */
+    fun packageExist(projectId: String, repoName: String, key: String): Boolean {
+        return packageService.findPackageByKey(projectId, repoName, key)?.let { true } ?: false
+    }
 
-	/**
-	 * check package version exists
-	 */
-	fun packageVersionExist(projectId: String, repoName: String, key: String, version: String): Boolean {
-		return packageService.findVersionByName(projectId, repoName, key, version)?.let { true } ?: false
-	}
+    /**
+     * check package version exists
+     */
+    fun packageVersionExist(projectId: String, repoName: String, key: String, version: String): Boolean {
+        return packageService.findVersionByName(projectId, repoName, key, version)?.let { true } ?: false
+    }
 
-	/**
-	 * check package history version exists
-	 */
-	fun packageHistoryVersionExist(projectId: String, repoName: String, key: String, version: String): Boolean {
-		val packageSummary = packageService.findPackageByKey(projectId, repoName, key) ?: return false
-		return packageSummary.historyVersion.contains(version)
-	}
+    /**
+     * check package history version exists
+     */
+    fun packageHistoryVersionExist(projectId: String, repoName: String, key: String, version: String): Boolean {
+        val packageSummary = packageService.findPackageByKey(projectId, repoName, key) ?: return false
+        return packageSummary.historyVersion.contains(version)
+    }
 
-	fun queryPackageInfo(artifactInfo: NpmArtifactInfo) {
-		val context = ArtifactQueryContext()
-		context.putAttribute(NPM_FILE_FULL_PATH, NpmUtils.getPackageMetadataPath(artifactInfo.packageName))
-		context.putAttribute(REQUEST_URI, artifactInfo.packageName)
-		val artifactStream = (repository.query(context) as ArtifactInputStream?)?.let {
-			if (!showDefaultTarball()) {
-				it.readText().replace(tarballRegex) { matchRes ->
-					val originTarball = matchRes.groupValues[1]
-					val newTarball = NpmUtils.buildPackageTgzTarball(
-						originTarball, npmProperties.domain, npmProperties.tarball.prefix, npmProperties.returnRepoId,
-						artifactInfo.packageName, artifactInfo
-					)
-					matchRes.value.replace(originTarball, newTarball)
-				}.toArtifactStream()
-			} else it
-		} ?: throw NpmArtifactNotFoundException("document not found")
-		val artifactResource = ArtifactResource(
-			inputStream = artifactStream,
-			artifactName = PACKAGE_JSON,
-			srcRepo = RepositoryIdentify(context.projectId, context.repoName)
-		)
-		artifactResourceWriter.write(artifactResource)
-	}
+    fun queryPackageInfo(artifactInfo: NpmArtifactInfo) {
+        val context = ArtifactQueryContext()
+        context.putAttribute(NPM_FILE_FULL_PATH, NpmUtils.getPackageMetadataPath(artifactInfo.packageName))
+        context.putAttribute(REQUEST_URI, artifactInfo.packageName)
+        val artifactStream = (repository.query(context) as ArtifactInputStream?)?.let {
+            if (!showDefaultTarball()) {
+                it.readText().replace(tarballRegex) { matchRes ->
+                    val originTarball = matchRes.groupValues[1]
+                    val newTarball = NpmUtils.buildPackageTgzTarball(
+                        originTarball, npmProperties.domain, npmProperties.tarball.prefix, npmProperties.returnRepoId,
+                        artifactInfo.packageName, artifactInfo
+                    )
+                    matchRes.value.replace(originTarball, newTarball)
+                }.toArtifactStream()
+            } else {
+                it
+            }
+        } ?: throw NpmArtifactNotFoundException("document not found")
+        val artifactResource = ArtifactResource(
+            inputStream = artifactStream,
+            artifactName = PACKAGE_JSON,
+            srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+        )
+        artifactResourceWriter.write(artifactResource)
+    }
 
-	/**
-	 * query package metadata
-	 */
-	fun queryPackageInfo(
-		artifactInfo: NpmArtifactInfo,
-		name: String,
-		showCustomTarball: Boolean
-	): NpmPackageMetaData {
-		val packageFullPath = NpmUtils.getPackageMetadataPath(name)
-		val context = ArtifactQueryContext()
-		context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
-		context.putAttribute(REQUEST_URI, name)
-		val inputStream = repository.query(context) as? InputStream
-				?: throw NpmArtifactNotFoundException("document not found")
-		val packageMetaData = inputStream.use { JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java) }
-		if (showCustomTarball && !showDefaultTarball()) {
-			val versionsMap = packageMetaData.versions.map
-			val iterator = versionsMap.entries.iterator()
-			while (iterator.hasNext()) {
-				val entry = iterator.next()
-				modifyVersionMetadataTarball(artifactInfo, name, entry.value)
-			}
-		}
-		return packageMetaData
-	}
+    /**
+     * query package metadata
+     */
+    fun queryPackageInfo(
+        artifactInfo: NpmArtifactInfo,
+        name: String,
+        showCustomTarball: Boolean
+    ): NpmPackageMetaData {
+        val packageFullPath = NpmUtils.getPackageMetadataPath(name)
+        val context = ArtifactQueryContext()
+        context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
+        context.putAttribute(REQUEST_URI, name)
+        val inputStream = repository.query(context) as? InputStream
+            ?: throw NpmArtifactNotFoundException("document not found")
+        val packageMetaData = inputStream.use { JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java) }
+        if (showCustomTarball && !showDefaultTarball()) {
+            val versionsMap = packageMetaData.versions.map
+            val iterator = versionsMap.entries.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                modifyVersionMetadataTarball(artifactInfo, name, entry.value)
+            }
+        }
+        return packageMetaData
+    }
 
-	private fun showDefaultTarball(): Boolean {
-		val domain = npmProperties.domain
-		val tarballPrefix = npmProperties.tarball.prefix
-		val npmPrefixHeader = HeaderUtils.getHeader(NPM_TGZ_TARBALL_PREFIX).orEmpty()
-		return npmPrefixHeader.isEmpty() && tarballPrefix.isEmpty() && domain.isEmpty()
-	}
+    private fun showDefaultTarball(): Boolean {
+        val domain = npmProperties.domain
+        val tarballPrefix = npmProperties.tarball.prefix
+        val npmPrefixHeader = HeaderUtils.getHeader(NPM_TGZ_TARBALL_PREFIX).orEmpty()
+        return npmPrefixHeader.isEmpty() && tarballPrefix.isEmpty() && domain.isEmpty()
+    }
 
-	protected fun modifyVersionMetadataTarball(
-		artifactInfo: NpmArtifactInfo,
-		name: String,
-		versionMetadata: NpmVersionMetadata
-	) {
-		val oldTarball = versionMetadata.dist?.tarball!!
+    protected fun modifyVersionMetadataTarball(
+        artifactInfo: NpmArtifactInfo,
+        name: String,
+        versionMetadata: NpmVersionMetadata
+    ) {
+        val oldTarball = versionMetadata.dist?.tarball!!
         versionMetadata.dist?.tarball = NpmUtils.buildPackageTgzTarball(
             oldTarball,
             npmProperties.domain,
@@ -202,65 +204,65 @@ open class AbstractNpmService : ArtifactService() {
             name,
             artifactInfo
         )
-		resolveOhpmHsp(versionMetadata)
-	}
+        resolveOhpmHsp(versionMetadata)
+    }
 
-	protected fun resolveOhpmHsp(versionMetadata: NpmVersionMetadata) {
-		if (versionMetadata.dist?.any()?.get(INTEGRITY_HSP) == null) {
-			return
-		}
-		// OHPM HSP包
-		val hspTarball = NpmUtils.harPathToHspPath(versionMetadata.dist?.tarball!!)
-		versionMetadata.dist!!.set(RESOLVED_HSP, hspTarball)
-	}
+    protected fun resolveOhpmHsp(versionMetadata: NpmVersionMetadata) {
+        if (versionMetadata.dist?.any()?.get(INTEGRITY_HSP) == null) {
+            return
+        }
+        // OHPM HSP包
+        val hspTarball = NpmUtils.harPathToHspPath(versionMetadata.dist?.tarball!!)
+        versionMetadata.dist!!.set(RESOLVED_HSP, hspTarball)
+    }
 
-	private fun checkAndCompletePackageMetadata(
-		artifactInfo: NpmArtifactInfo,
-		packageMetaData: NpmPackageMetaData,
-		versionsInPackageMetadata: Set<String>,
-		upload: Boolean
-	) {
-		val name = packageMetaData.name.orEmpty()
-		val existVersions = queryExistVersion(artifactInfo.projectId, artifactInfo.repoName, name)
-		val missingVersions = (existVersions - versionsInPackageMetadata).takeUnless { it.isEmpty() } ?: return
+    private fun checkAndCompletePackageMetadata(
+        artifactInfo: NpmArtifactInfo,
+        packageMetaData: NpmPackageMetaData,
+        versionsInPackageMetadata: Set<String>,
+        upload: Boolean
+    ) {
+        val name = packageMetaData.name.orEmpty()
+        val existVersions = queryExistVersion(artifactInfo.projectId, artifactInfo.repoName, name)
+        val missingVersions = (existVersions - versionsInPackageMetadata).takeUnless { it.isEmpty() } ?: return
 
-		missingVersions.forEach {
-			val versionMetaData = queryVersionMetadata(artifactInfo, name, it) ?: return@forEach
-			modifyPackageMetadata(packageMetaData, versionMetaData, it)
-			logger.info("complete package.json of [$name]: add metadata of version [$it] when query package info")
-		}
-		if (upload) {
-			uploadPackageMetadata(packageMetaData)
-		}
-	}
+        missingVersions.forEach {
+            val versionMetaData = queryVersionMetadata(artifactInfo, name, it) ?: return@forEach
+            modifyPackageMetadata(packageMetaData, versionMetaData, it)
+            logger.info("complete package.json of [$name]: add metadata of version [$it] when query package info")
+        }
+        if (upload) {
+            uploadPackageMetadata(packageMetaData)
+        }
+    }
 
-	protected fun modifyPackageMetadata(
-		packageMetadata: NpmPackageMetaData,
-		versionMetadata: NpmVersionMetadata,
-		version: String = versionMetadata.version.orEmpty()
-	) {
-		val time = TimeUtil.getGMTTime()
-		packageMetadata.versions.map[version] = versionMetadata
-		packageMetadata.time.add(MODIFIED, time)
-		packageMetadata.time.add(version, time)
-	}
+    protected fun modifyPackageMetadata(
+        packageMetadata: NpmPackageMetaData,
+        versionMetadata: NpmVersionMetadata,
+        version: String = versionMetadata.version.orEmpty()
+    ) {
+        val time = TimeUtil.getGMTTime()
+        packageMetadata.versions.map[version] = versionMetadata
+        packageMetadata.time.add(MODIFIED, time)
+        packageMetadata.time.add(version, time)
+    }
 
-	protected fun uploadPackageMetadata(packageInfo: NpmPackageMetaData) {
-		val name = packageInfo.name.orEmpty()
-		val artifactFile = JsonUtils.objectMapper.writeValueAsBytes(packageInfo).inputStream()
-			.use { ArtifactFileFactory.build(it) }
-		val context = ArtifactUploadContext(artifactFile)
-		val fullPath = String.format(NPM_PKG_METADATA_FULL_PATH, name)
-		context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
-		repository.upload(context)
-	}
+    protected fun uploadPackageMetadata(packageInfo: NpmPackageMetaData) {
+        val name = packageInfo.name.orEmpty()
+        val artifactFile = JsonUtils.objectMapper.writeValueAsBytes(packageInfo).inputStream()
+            .use { ArtifactFileFactory.build(it) }
+        val context = ArtifactUploadContext(artifactFile)
+        val fullPath = String.format(NPM_PKG_METADATA_FULL_PATH, name)
+        context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
+        repository.upload(context)
+    }
 
-	protected fun queryVersionMetadata(
-		artifactInfo: NpmArtifactInfo,
-		name: String,
-		version: String
-	): NpmVersionMetadata? {
-		val versionMetadataPath = NpmUtils.getVersionPackageMetadataPath(name, version)
+    protected fun queryVersionMetadata(
+        artifactInfo: NpmArtifactInfo,
+        name: String,
+        version: String
+    ): NpmVersionMetadata? {
+        val versionMetadataPath = NpmUtils.getVersionPackageMetadataPath(name, version)
         val node = nodeService.getNodeDetail(
             ArtifactInfo(
                 artifactInfo.projectId,
@@ -268,35 +270,35 @@ open class AbstractNpmService : ArtifactService() {
                 versionMetadataPath
             )
         )
-		return storageManager.loadArtifactInputStream(node, null)?.use {
-			JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
-		}
-	}
+        return storageManager.loadArtifactInputStream(node, null)?.use {
+            JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
+        }
+    }
 
-	private fun queryExistVersion(projectId: String, repoName: String, packageName: String): List<String> {
-		val metadataPath = NpmUtils.getPackageMetadataPath(packageName).removeSuffix("/package.json")
-		val versionMetadataNodes = queryNodes(projectId, repoName, metadataPath)
-		return versionMetadataNodes.filterNot { it.name == "package.json" }
-			.map { NpmUtils.analyseVersionFromVersionMetadataName(it.name, packageName) }
-	}
+    private fun queryExistVersion(projectId: String, repoName: String, packageName: String): List<String> {
+        val metadataPath = NpmUtils.getPackageMetadataPath(packageName).removeSuffix("/package.json")
+        val versionMetadataNodes = queryNodes(projectId, repoName, metadataPath)
+        return versionMetadataNodes.filterNot { it.name == "package.json" }
+            .map { NpmUtils.analyseVersionFromVersionMetadataName(it.name, packageName) }
+    }
 
-	private fun queryNodes(projectId: String, repoName: String, fullPath: String): List<NodeDetail> {
-		val nodes = mutableListOf<NodeDetail>()
-		val option = NodeListOption(
-			pageNumber = 1,
-			pageSize = 1000,
-			includeFolder = false
-		)
-		while (true) {
-			val records = nodeService.listNodePage(ArtifactInfo(projectId, repoName, fullPath), option).records
-				.takeUnless { it.isEmpty() } ?: return nodes
-			option.pageNumber ++
-			nodes.addAll(records.map { NodeDetail(it) })
-		}
-	}
+    private fun queryNodes(projectId: String, repoName: String, fullPath: String): List<NodeDetail> {
+        val nodes = mutableListOf<NodeDetail>()
+        val option = NodeListOption(
+            pageNumber = 1,
+            pageSize = 1000,
+            includeFolder = false
+        )
+        while (true) {
+            val records = nodeService.listNodePage(ArtifactInfo(projectId, repoName, fullPath), option).records
+                .takeUnless { it.isEmpty() } ?: return nodes
+            option.pageNumber ++
+            nodes.addAll(records.map { NodeDetail(it) })
+        }
+    }
 
-	companion object {
-		val logger: Logger = LoggerFactory.getLogger(AbstractNpmService::class.java)
-		private val tarballRegex = Regex("\"tarball\"\\s?:\\s?\"(.+?)\"")
-	}
+    companion object {
+        val logger: Logger = LoggerFactory.getLogger(AbstractNpmService::class.java)
+        private val tarballRegex = Regex("\"tarball\"\\s?:\\s?\"(.+?)\"")
+    }
 }

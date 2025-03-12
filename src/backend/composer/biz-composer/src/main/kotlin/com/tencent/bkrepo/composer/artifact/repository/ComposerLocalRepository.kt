@@ -226,9 +226,9 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
             artifactInfo.setArtifactMappingUri(artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS"))
             val node = ArtifactContextHolder.getNodeDetail(artifactInfo)
             if (node != null) {
-                val name = node.metadata[METADATA_KEY_PACKAGE_KEY].toString()
+                val packageKey = node.metadata[METADATA_KEY_PACKAGE_KEY].toString()
                 val version = node.metadata[METADATA_KEY_VERSION]?.toString()
-                checkPackageAccessRule(projectId, PackageType.COMPOSER, name, version)
+                checkPackageAccessRule(projectId, PackageType.COMPOSER, PackageKeys.resolveName(packageKey), version)
             }
             downloadIntercept(context, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null

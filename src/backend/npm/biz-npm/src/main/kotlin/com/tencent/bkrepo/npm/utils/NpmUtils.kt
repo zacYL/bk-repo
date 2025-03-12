@@ -112,6 +112,8 @@ object NpmUtils {
         return filename.substringBeforeLast(ext).substringAfter("$unscopedName-")
     }
 
+    fun analyseExtFromPackageName(filename: String) = filename.substringAfterLast(".")
+
     fun analyseVersionFromVersionMetadataName(filename: String, name: String): String {
         return filename.substringBeforeLast(".json").substringAfter("$name-")
     }

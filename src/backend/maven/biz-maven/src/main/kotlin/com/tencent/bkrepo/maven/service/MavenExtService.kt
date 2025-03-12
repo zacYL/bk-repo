@@ -193,11 +193,11 @@ class MavenExtService(
                 repoName = it.repoName,
                 packageKey = it.packageKey,
                 groupId = arr[0],
-                    artifactId = arr[1],
+                artifactId = arr[1],
                 version = it.version,
-                    type = type,
-                    classifier = classifier,
-                    dependencies = null
+                type = type,
+                classifier = classifier,
+                dependencies = null
             )
         }
         return ResponseBuilder.success(Page(

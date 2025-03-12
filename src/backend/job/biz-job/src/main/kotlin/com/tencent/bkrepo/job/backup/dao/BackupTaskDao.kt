@@ -57,13 +57,16 @@ package com.tencent.bkrepo.job.backup.dao
 import com.tencent.bkrepo.common.mongo.dao.simple.SimpleMongoDao
 import com.tencent.bkrepo.job.backup.model.TBackupTask
 import com.tencent.bkrepo.job.backup.pojo.BackupTaskState
+import com.tencent.bkrepo.job.backup.pojo.task.BackupTaskOption
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.stereotype.Repository
+import java.time.Instant
 import java.time.LocalDateTime
 
 @Repository
@@ -74,23 +77,63 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
         return findOne(Query(criteria))
     }
 
-    fun find(state: String?, pageRequest: PageRequest): List<TBackupTask> {
-        val criteria = Criteria()
-        state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
-        return find(Query(criteria).with(pageRequest))
+    fun findTasksByName(name: String,type:String): TBackupTask? {
+        val criteria = Criteria().and(TBackupTask::name.name).isEqualTo(name)
+        criteria.and(TBackupTask::type.name).isEqualTo(type)
+        return findOne(Query(criteria))
     }
 
-    fun count(state: String?): Long {
-        val criteria = Criteria()
-        state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
-        return count(Query(criteria))
+    fun find(option: BackupTaskOption): List<TBackupTask> {
+        with(option) {
+            val criteria = Criteria()
+            type?.let { criteria.and(TBackupTask::type.name).isEqualTo(it) }
+            state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
+            repoNames?.let { criteria.and("content.projects.repoList").regex(repoNames, "i") }
+            name?.let { criteria.and(TBackupTask::name.name).regex(name, "i") }
+            if (!projectIds.isNullOrEmpty()){
+                criteria.and("content.projects.projectId").`in`(projectIds)
+            }
+            return find(Query(criteria))
+        }
+    }
+
+
+    fun find(option: BackupTaskOption, pageRequest: PageRequest): List<TBackupTask> {
+        with(option) {
+            val criteria = Criteria()
+            type?.let { criteria.and(TBackupTask::type.name).isEqualTo(it) }
+            state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
+            repoNames?.let { criteria.and("content.projects.repoList").regex(repoNames, "i") }
+            name?.let { criteria.and(TBackupTask::name.name).regex(name, "i") }
+            if (!projectIds.isNullOrEmpty()){
+                criteria.and("content.projects.projectId").`in`(projectIds)
+            }
+            val sort = Sort.by(Sort.Direction.DESC, TBackupTask::createdDate.name)
+            return find(Query(criteria).with(pageRequest).with(sort))
+        }
+    }
+
+    fun count(option: BackupTaskOption): Long {
+        with(option) {
+            val criteria = Criteria()
+            type?.let { criteria.and(TBackupTask::type.name).isEqualTo(it) }
+            state?.let { criteria.and(TBackupTask::state.name).isEqualTo(it) }
+            repoNames?.let { criteria.and("content.projects.repoList").regex(repoNames, "i") }
+            name?.let { criteria.and(TBackupTask::name.name).regex(name, "i") }
+            if (!projectIds.isNullOrEmpty()){
+                criteria.and("content.projects.projectId").`in`(projectIds)
+            }
+            return count(Query(criteria))
+        }
     }
 
     fun updateState(
         taskId: String,
         state: BackupTaskState,
+        message: String? = null,
         startDate: LocalDateTime? = null,
-        endDate: LocalDateTime? = null
+        endDate: LocalDateTime? = null,
+        backupFilePaths: List<String>? = null,
     ) {
         val criteria = Criteria().and(ID).isEqualTo(taskId)
         val update = Update.update(TBackupTask::lastModifiedBy.name, SYSTEM_USER)
@@ -98,6 +141,18 @@ class BackupTaskDao : SimpleMongoDao<TBackupTask>() {
             .set(TBackupTask::state.name, state.name)
         startDate?.let { update.set(TBackupTask::startDate.name, startDate) }
         endDate?.let { update.set(TBackupTask::endDate.name, endDate) }
+        backupFilePaths?.let { update.set(TBackupTask::backupFilePaths.name, backupFilePaths) }
+        message?.let { update.set(TBackupTask::message.name, message) }
+        this.updateFirst(Query(criteria), update)
+    }
+
+
+    fun updateLastHeartbeat(
+        taskId: String,
+        lastHeartbeat: Instant,
+    ) {
+        val criteria = Criteria().and(ID).isEqualTo(taskId)
+        val update = Update.update(TBackupTask::lastHeartbeat.name, lastHeartbeat)
         this.updateFirst(Query(criteria), update)
     }
 }

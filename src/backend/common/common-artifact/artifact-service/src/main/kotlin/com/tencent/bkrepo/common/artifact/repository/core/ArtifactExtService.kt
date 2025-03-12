@@ -106,7 +106,7 @@ abstract class ArtifactExtService : ArtifactService() {
                     tags = srcVersion.tags,
                     extension = srcVersion.extension,
                     overwrite = true,
-                    createdBy = SecurityUtils.getPrincipal()
+                    createdBy = SecurityUtils.getUserId()
                 )
             )
             logger.info(
@@ -118,7 +118,7 @@ abstract class ArtifactExtService : ArtifactService() {
                 val versionDeleteInfo = buildVersionDeleteArtifactInfo(srcProjectId, srcRepoName, packageKey, version)
                 HttpContextHolder.getRequest().setAttribute(ARTIFACT_INFO_KEY, versionDeleteInfo)
                 logger.info("prepare to remove [$packageKey/$version] from [$srcProjectId/$srcRepoName]")
-                deleteVersion(SecurityUtils.getPrincipal(), versionDeleteInfo)
+                deleteVersion(SecurityUtils.getUserId(), versionDeleteInfo)
             }
         }
     }
@@ -179,8 +179,15 @@ abstract class ArtifactExtService : ArtifactService() {
         manifestPath: String?,
         artifactPath: String?
     ) {
-        val operator = SecurityUtils.getPrincipal()
-        getArtifactNodes(srcProjectId, srcRepoName, packageKey, version, manifestPath, artifactPath).forEach {
+        val nodeList = getArtifactNodes(srcProjectId, srcRepoName, packageKey, version, manifestPath, artifactPath)
+        // 待复制的目录的子节点过多会导致复制超时
+        nodeList.filter { it.folder }.forEach {
+            if (nodeClient.countFileNode(srcProjectId, srcRepoName, it.fullPath).data!! > 1000) {
+                throw ErrorCodeException(ArtifactMessageCode.NODE_LIST_TOO_LARGE)
+            }
+        }
+        val operator = SecurityUtils.getUserId()
+        nodeList.forEach {
             // 目录/文件 -> 已存在的目录: 作为已存在目录的子目录/文件
             val dstNode = nodeService.getNodeDetail(ArtifactInfo(dstProjectId, dstRepoName, it.fullPath))
             if (dstNode?.folder == true) nodeService.deleteNode(

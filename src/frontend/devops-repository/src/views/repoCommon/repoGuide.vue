@@ -12,7 +12,7 @@
                 <bk-button v-if="ciMode" text theme="primary" @click="jumpCCommonUserToken">{{ $t('token') }}</bk-button>
                 <router-link v-else :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
             </div>
-            <div v-if="repoType !== 'npm'">
+            <div v-if="repoType !== 'npm' && repoType !== 'ohpm'">
                 <div>{{$t('accessTokenPlaceholder')}}</div>
                 <bk-input
                     class="mt10"

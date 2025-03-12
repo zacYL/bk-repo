@@ -8,6 +8,7 @@ import com.tencent.bkrepo.job.backup.pojo.query.enums.BackupDataEnum
 import com.tencent.bkrepo.job.backup.pojo.record.BackupContext
 import com.tencent.bkrepo.job.backup.pojo.setting.BackupConflictStrategy
 import com.tencent.bkrepo.job.backup.service.BackupDataHandler
+import com.tencent.bkrepo.repository.api.PackageClient
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component
 @Component
 class BackupPackageVersionDataHandler(
     private val mongoTemplate: MongoTemplate,
+    private val packageClient: PackageClient,
 ) : BackupDataHandler {
     override fun dataType(): BackupDataEnum {
         return BackupDataEnum.PACKAGE_VERSION_DATA
@@ -59,7 +61,7 @@ class BackupPackageVersionDataHandler(
             mongoTemplate.save(storeRecord, BackupDataEnum.PACKAGE_VERSION_DATA.collectionName)
             logger.info("Create version ${record.name} of packageId ${record.packageId} success!")
         }
-
+        updatePackageInfo(record)
     }
 
     private fun findExistPackageVersion(
@@ -113,6 +115,28 @@ class BackupPackageVersionDataHandler(
             BackupDataEnum.PACKAGE_VERSION_DATA.collectionName
         )
         logger.info("update exist version ${versionInfo.name} of package ${versionInfo.packageId} success")
+    }
+
+    private fun updatePackageInfo(versionInfo: BackupPackageVersionInfoWithKeyInfo) {
+        // 包的信息需要重新计算，更新最新版本和版本数
+        val packageVersions =
+            packageClient.listAllVersion(versionInfo.projectId!!, versionInfo.repoName!!, versionInfo.key!!).data ?: return
+        // 返回列表已默认根据版本排序，取第一个为最新
+        val lastVersion = if (packageVersions.isEmpty()) null else packageVersions[0]
+        val packageQuery = Query(
+            Criteria.where(BackupPackageInfo::projectId.name).isEqualTo(versionInfo.projectId)
+                .and(BackupPackageInfo::repoName.name).isEqualTo(versionInfo.repoName)
+                .and(BackupPackageInfo::key.name).isEqualTo(versionInfo.key)
+        )
+        val update = Update()
+            .set(BackupPackageInfo::latest.name, lastVersion?.name)
+            .set(BackupPackageInfo::versions.name, packageVersions.size)
+
+        mongoTemplate.updateFirst(packageQuery, update, BackupDataEnum.PACKAGE_DATA.collectionName)
+        logger.info(
+            "recount package info ${versionInfo.key} " +
+                    "success with name ${versionInfo.projectId}|${versionInfo.repoName}"
+        )
     }
 
     fun convert(versionInfo: BackupPackageVersionInfoWithKeyInfo): BackupPackageVersionInfo {

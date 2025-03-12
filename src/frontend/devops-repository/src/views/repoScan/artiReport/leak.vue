@@ -62,7 +62,7 @@
                         <!-- 黑白名单icon -->
                         <Icon v-if="row.pass !== null"
                             v-bk-tooltips="{
-                                content: row.pass ? $t('alreadyJoinWhiteList') : $t('alreadyJoinBlackList')
+                                content: row.pass ? $t('alreadyJoinLeakWhiteList') : $t('alreadyJoinLeakBlackList')
                             }"
                             size="16" :style="{
                                 flexShrink: 0,
@@ -177,7 +177,7 @@
                 }).then((res) => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: !pass ? this.$t('alreadyJoinBlackList') : this.$t('alreadyJoinWhiteList')
+                        message: !pass ? this.$t('alreadyJoinLeakBlackList') : this.$t('alreadyJoinLeakWhiteList')
                     })
                     this.pagination.current = 1
                     this.handlerPaginationChange()

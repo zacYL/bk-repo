@@ -7,7 +7,7 @@ spring:
       bindings:
         artifactEvent-out-0:
           destination: artifactEvent
-          binder: pulsar
+          binder: __BK_REPO_STREAM_BINDER__
 server:
   port: __BK_REPO_GENERIC_PORT__
 logging:

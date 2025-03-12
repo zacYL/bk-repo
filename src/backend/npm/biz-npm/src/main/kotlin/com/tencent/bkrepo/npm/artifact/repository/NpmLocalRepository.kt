@@ -90,6 +90,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import okhttp3.Response
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -283,7 +284,12 @@ class NpmLocalRepository(
         if (nodeService.checkExist(ArtifactInfo(projectId, repoName, versionMetadataFullPath)) != true) {
             throw NodeNotFoundException("$projectId/$repoName/$versionMetadataFullPath")
         }
-        return listOf(artifactPath, versionMetadataFullPath)
+        val fullPaths = mutableListOf(artifactPath, versionMetadataFullPath)
+        if (artifactPath.endsWith(HAR_FILE_EXT)) {
+            val hspFullPath = artifactPath.removeSuffix(HAR_FILE_EXT) + HSP_FILE_EXT
+            if (nodeClient.checkExist(projectId, repoName, hspFullPath).data == true) fullPaths.add(hspFullPath)
+        }
+        return fullPaths
     }
 
     /**
@@ -364,11 +370,15 @@ class NpmLocalRepository(
             originalMetadata
         }
         val oldTarball = versionMetadata.dist?.tarball!!
-        packageMetadata.versions.map[version]!!.dist?.tarball =
+        val dist = packageMetadata.versions.map[version]!!.dist
+        dist?.tarball =
             NpmUtils.buildPackageTgzTarball(
                 oldTarball, npmProperties.domain, npmProperties.tarball.prefix, npmProperties.returnRepoId, name,
                 NpmArtifactInfo(projectId, repoName, name, version)
             )
+        if (StringUtils.isNotBlank(dist?.resolvedHsp)) {
+            dist?.resolvedHsp = dist?.tarball?.substringBeforeLast(".") + HSP_FILE_EXT
+        }
         val credential = ArtifactContextHolder.getRepoDetail(RepositoryId(projectId, repoName)).storageCredentials
         return packageMetadata.toJsonString().byteInputStream().let { ArtifactFileFactory.build(it, credential) }
     }
@@ -424,7 +434,7 @@ class NpmLocalRepository(
                 }.apply {
                     logger.info(
                         "migrate npm package [$name] for version [$version] success, elapse $this ms. " +
-                            "process rate: [${++count}/$totalSize]"
+                                "process rate: [${++count}/$totalSize]"
                     )
                 }
                 packageMigrateDetail.addSuccessVersion(version)
@@ -529,7 +539,7 @@ class NpmLocalRepository(
         migrateLatest(distTags, originalDistTags, timeMap, originalTimeMap)
         logger.info(
             "the different versions of the  package [$name] is [$remoteVersionList], " +
-                "size : ${remoteVersionList.size}"
+                    "size : ${remoteVersionList.size}"
         )
         if (remoteVersionList.isEmpty()) return originalPackageMetadata
         // 说明有版本更新，将新增的版本迁移过来
@@ -656,7 +666,7 @@ class NpmLocalRepository(
             if (nodeService.checkExist(ArtifactInfo(projectId, repoName, fullPath))) {
                 logger.info(
                     "package [$name] with version metadata [$name-$version.json] " +
-                        "is already exists in repository [$projectId/$repoName], skip migration."
+                            "is already exists in repository [$projectId/$repoName], skip migration."
                 )
                 return
             }
@@ -683,7 +693,7 @@ class NpmLocalRepository(
             if (nodeService.checkExist(ArtifactInfo(projectId, repoName, fullPath))) {
                 logger.info(
                     "package [$name] with tgz file [$fullPath] is " +
-                        "already exists in repository [$projectId/$repoName], skip migration."
+                            "already exists in repository [$projectId/$repoName], skip migration."
                 )
                 return 0L
             }
@@ -766,7 +776,7 @@ class NpmLocalRepository(
                 nodeService.deleteNode(nodeDeleteRequest)
                 logger.info(
                     "migrate package [$name] with version [$version] failed, " +
-                        "delete package version metadata [$fullPath] success."
+                            "delete package version metadata [$fullPath] success."
                 )
             }
         }

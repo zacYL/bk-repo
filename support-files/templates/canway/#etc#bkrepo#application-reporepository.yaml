@@ -14,18 +14,18 @@ spring:
       bindings:
         artifactEvent-out-0:
           destination: artifactEvent
-          binder: pulsar
+          binder: __BK_REPO_STREAM_BINDER__
         bkrepo_artifact_repo:
           destination: bkrepo_artifact_repo
-          binder: pulsar
+          binder: __BK_REPO_STREAM_BINDER__
         devopsProjectDeleted-in-0:
-          group: repository
-          destination: devopsProjectDeleted
-          binder: pulsar
+          group: q.cpack.project.delete.event
+          destination: e.devops.project.delete.event
+          binder: __BK_REPO_STREAM_BINDER__
         devopsProjectUpdated-in-0:
-          group: repository
-          destination: devopsProjectUpdated
-          binder: pulsar
+          group: q.cpack.project.update.event
+          destination: e.devops.project.update.event
+          binder: __BK_REPO_STREAM_BINDER__
 server:
   port: __BK_REPO_REPOSITORY_PORT__
 logging:

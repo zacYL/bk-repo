@@ -126,7 +126,6 @@ class NpmClientController(
     fun ohpmStreamPublishOrUpdatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @PathVariable name: String,
         artifactFileMap: ArtifactFileMap,
     ): OhpmResponse {
         val npmPackageMetadata = HttpContextHolder

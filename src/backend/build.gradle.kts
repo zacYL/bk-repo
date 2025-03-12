@@ -132,6 +132,10 @@ allprojects {
                 entry("jackson-dataformat-cbor")
             }
             dependency("com.tongweb.springboot:tongweb-spring-boot-starter-2.x:${Versions.TongWeb}")
+            dependencySet("org.jboss.xnio:${Versions.Xnio}") {
+                entry("xnio-api")
+                entry("xnio-nio")
+            }
 
         }
     }
@@ -223,8 +227,8 @@ allprojects {
                 it.replace(
                     "@release.cicd@",
                     System.getenv("BK_CI_PROJECT_NAME") +
-                        "/${System.getenv("BK_CI_PIPELINE_ID")}/${System.getenv("BK_CI_BUILD_NUM")} ." +
-                        " Build branch: [${System.getenv("branch") ?: ""}]"
+                            "/${System.getenv("BK_CI_PIPELINE_ID")}/${System.getenv("BK_CI_BUILD_NUM")} ." +
+                            " Build branch: [${System.getenv("branch") ?: ""}]"
                 )
             }
             filter {

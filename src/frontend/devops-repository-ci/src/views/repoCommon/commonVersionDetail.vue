@@ -25,9 +25,9 @@
                         </span>
                     </template>
                 </div>
-                <div v-if="detail.basic.os" class="package-name grid-item">
+                <div v-if="detail.basic.platform" class="package-name grid-item">
                     <label>OS/ARCH</label>
-                    <span class="flex-1 text-overflow" :title="detail.basic.os.join()">{{ detail.basic.os.join() }}</span>
+                    <span class="flex-1 text-overflow" :title="detail.basic.platform.join()">{{ detail.basic.platform.join() }}</span>
                 </div>
                 <template v-if="detail.basic.version">
                     <div class="grid-item"
@@ -42,7 +42,7 @@
                                     :key="tag">
                                     {{ tag }}
                                 </span>
-                                <scan-tag v-if="showRepoScan" class="ml5" :status="metadataMap.scanStatus"></scan-tag>
+                                <scan-tag v-if="showRepoScan" class="ml5" store-type-check :local-repo="sourceRepoName || repoName" :status="metadataMap.scanStatus"></scan-tag>
                                 <lock-tag v-if="metadataMap.lockStatus" :lock-user="metadataMap.lockUser" :lock-description="(detail.metadata.find(m => m.key === 'lockType') || {}).description"></lock-tag>
                                 <forbid-tag class="ml10"
                                     v-if="metadataMap.forbidStatus"
@@ -193,9 +193,15 @@
                     :data-title="type">
                     <template v-if="detail.dependencyInfo[type].length">
                         <template
+                            v-if="type !== 'dependents'"
                             v-for="{ name, version } in detail.dependencyInfo[type]">
                             <div class="version-dependencies-key text-overflow" :key="name" :title="name">{{ name }}</div>
-                            <div v-if="type !== 'dependents'" class="version-dependencies-value text-overflow" :key="name + version" :title="version">{{ version }}</div>
+                            <div class="version-dependencies-value text-overflow" :key="name + version" :title="version">{{ version }}</div>
+                        </template>
+                        <template
+                            v-else
+                            v-for="(item,index) in detail.dependencyInfo['dependents']">
+                            <div class="version-dependencies-key text-overflow" :key="index" :title="item">{{ item }}</div>
                         </template>
                     </template>
                     <empty-data v-else class="version-dependencies-empty"></empty-data>
@@ -325,12 +331,13 @@
                     return target
                 }, {})
             },
+            
             // 是否是 软件源模式
             whetherSoftware () {
                 return this.$route.path.startsWith('/software')
             },
             showRepoScan () {
-                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !(this.storeType === 'virtual')
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType)
             },
             operationBtns () {
                 const basic = this.detail.basic
@@ -338,7 +345,11 @@
                 return [
                     ...(!metadataMap.forbidStatus
                         ? [
-                            (this.showUpdateOperation && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') }
+                            (this.showUpdateOperation && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && {
+                                clickEvent: () => this.$emit('tag'),
+                                label: this.$t('upgrade'),
+                                disabled: (basic.stageTag || '').includes('@release')
+                            }
                             // this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
                         ]
                         : []),
@@ -419,7 +430,7 @@
                 // 在每次重新获取接口详情时都需要先将此tab页的类型置为空，否则不会重新加载依赖tab页组件，也就不会重新获取数据
                 this.detailType = ''
                 this.removeReadmeAClick()
-                this.getVersionDetail({
+                return this.getVersionDetail({
                     projectId: this.projectId,
                     repoType: this.repoType,
                     repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
@@ -453,6 +464,11 @@
                             }
                         })
                     }
+                }).catch((err) => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: err?.message || this.$t('unknownError')
+                    })
                 }).finally(() => {
                     this.initReadmeAClick()
                     this.isLoading = false

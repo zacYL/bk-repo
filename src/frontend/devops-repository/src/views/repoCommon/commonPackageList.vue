@@ -186,6 +186,9 @@
             this.getRepoListAll({ projectId: this.projectId })
             this.handlerPaginationChange()
         },
+        beforeDestroy () {
+            this.$hiddenGlobalUploadFiles && this.$hiddenGlobalUploadFiles()
+        },
         methods: {
             ...mapActions([
                 'getRepoListAll',

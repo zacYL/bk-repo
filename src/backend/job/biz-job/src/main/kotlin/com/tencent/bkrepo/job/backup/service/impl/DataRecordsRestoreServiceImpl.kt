@@ -36,30 +36,42 @@ class DataRecordsRestoreServiceImpl(
 ) : DataRecordsRestoreService, BaseService() {
     override fun projectDataRestore(context: BackupContext) {
         with(context) {
-            logger.info("Start to run restore task ${context.task}.")
-            startDate = LocalDateTime.now()
-            backupTaskDao.updateState(taskId, BackupTaskState.RUNNING, startDate)
-            // TODO 需要进行磁盘判断
-            // TODO 异常需要捕获
-            if (task.content == null) return
-            preProcessFile(context)
-            // 恢复公共基础数据
-            if (task.content!!.commonData) {
-                context.currentPath = context.targertPath
-                commonDataRestore(context)
-            }
-            // 备份业务数据
-            findSecondLevelDirectories(context.targertPath).forEach {
-                if (filterFolder(it, task.content)) {
-                    context.currentPath = it
-                    customDataRestore(context)
+            try {
+                logger.info("Start to run restore task ${context.task}.")
+                startDate = LocalDateTime.now()
+                backupTaskDao.updateState(taskId, BackupTaskState.RUNNING, startDate = startDate)
+                // TODO 需要进行磁盘判断
+                // TODO 异常需要捕获
+                if (task.content == null) return
+                preProcessFile(context)
+                // 恢复公共基础数据
+                if (task.content!!.commonData) {
+                    context.currentPath = context.targertPath
+                    commonDataRestore(context)
                 }
+                // 备份业务数据
+                findSecondLevelDirectories(context.targertPath).forEach {
+                    if (filterFolder(it, task.content)) {
+                        context.currentPath = it
+                        customDataRestore(context)
+                    }
+                }
+                if (task.content!!.compression) {
+                    deleteFolder(targertPath)
+                }
+                backupTaskDao.updateState(taskId, BackupTaskState.SUCCESS, endDate = LocalDateTime.now())
+                logger.info("Restore task ${context.task} has been success!")
+            } catch (e: Exception) {
+                backupTaskDao.updateState(
+                    taskId,
+                    BackupTaskState.FAILURE,
+                    message = e.message,
+                    endDate = LocalDateTime.now()
+                )
+                logger.error("Restore task ${context.task} has been failed!")
+                throw e
             }
-            if (task.content!!.compression) {
-                deleteFolder(targertPath)
-            }
-            backupTaskDao.updateState(taskId, BackupTaskState.FINISHED, endDate = LocalDateTime.now())
-            logger.info("Restore task ${context.task} has been finished!")
+
         }
     }
 
@@ -109,9 +121,9 @@ class DataRecordsRestoreServiceImpl(
         Files.walk(directory, 2)
             .filter {
                 Files.isDirectory(it) &&
-                    it != directory &&
-                    it.parent.name != BaseService.FILE_STORE_FOLDER
-                    && it.parent != directory
+                        it != directory &&
+                        it.parent.name != BaseService.FILE_STORE_FOLDER
+                        && it.parent != directory
             }
             .forEach { secondLevelDirectories.add(it) }
 
@@ -199,11 +211,12 @@ class DataRecordsRestoreServiceImpl(
 
     private fun loadAndStoreRecord(backupDataEnum: BackupDataEnum, context: BackupContext) {
         with(context) {
-            if (!Files.exists(Paths.get(currentFile))) {
+            val file = File(currentFile)
+
+            if (!file.exists()) {
                 logger.warn("$currentFile not exist!")
                 return
             }
-            val file = File(currentFile)
             file.forEachLine { line ->
                 val record = JsonUtils.objectMapper.readValue(line, backupDataEnum.backupClazz)
                 BackupDataMappings.storeRestoreDataHandler(record, backupDataEnum, context)

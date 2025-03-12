@@ -262,6 +262,7 @@ abstract class AbstractReplicaService(
                     replicaProgress.conflict++
                     task.setting.conflictStrategy
                 } else null
+                // 初始化分发记录详情 & 记录 artifactName
                 val replicaExecutionContext = initialExecutionContext(
                     context = replicaContext,
                     artifactName = node.fullPath,
@@ -405,25 +406,7 @@ abstract class AbstractReplicaService(
                     else -> {
                         replicator.replicaPackageVersion(replicaContext, packageSummary, version)
 
-                        //仅针对Cocoapods制品同步，发送消息给Cocoapods服务，通知处理包文件索引
-                        if (packageSummary.type == PackageType.COCOAPODS) {
-                            //构建消息对象，传入的参数是有关同步接收方节点的信息
-                            val event = ReplicaEvent(
-                                projectId = replicaContext.remoteProjectId!!,
-                                repoName = replicaContext.remoteRepoName!!,
-                                fullPath = version.contentPath!!,
-                                cluster = replicaContext.cluster,
-                                repoType = RepositoryType.COCOAPODS,
-                                packageType = PackageType.COCOAPODS,
-                                userId = SecurityUtils.getUserId()
-                            )
-                            logger.info("send cocoapods replica event[$event]")
-                            eventSupplier.delegateToSupplier(
-                                data = event,
-                                topic = BINDING_OUT_NAME,
-                                key = event.getFullResourceKey()
-                            )
-                        }
+                        sendEventIfNecessary(packageSummary, version)
                         true
                     }
                 }
@@ -457,6 +440,7 @@ abstract class AbstractReplicaService(
                 }
             } finally {
                 updateTaskProgressCache(context.taskKey)
+                // 记录每一个制品的同步记录详情，如果不记录，则删除初始化记录
                 if (context.replicaContext.task.record == false
                     && replicaContext.task.replicaObjectType == ReplicaObjectType.REPOSITORY
                 ) {
@@ -531,6 +515,32 @@ abstract class AbstractReplicaService(
         )
     }
 
+    private fun ReplicaExecutionContext.sendEventIfNecessary(packageSummary: PackageSummary, version: PackageVersion) {
+        val repoTypes = listOf(PackageType.COCOAPODS, PackageType.OHPM, PackageType.NPM)
+        if (repoTypes.contains(packageSummary.type)) {
+            // 构建消息对象，传入的参数是有关同步接收方节点的信息
+            val event = ReplicaEvent(
+                projectId = replicaContext.remoteProjectId!!,
+                repoName = replicaContext.remoteRepoName!!,
+                fullPath = version.contentPath!!,
+                cluster = replicaContext.cluster,
+                packageType = packageSummary.type,
+                userId = SecurityUtils.getUserId(),
+                packageName = packageSummary.name,
+                packageVersion = version.name
+            )
+            logger.info(
+                "send replica event,projectId [${event.projectId}], repoName [${event.repoName}]," +
+                        "fullPath [${event.fullPath}]"
+            )
+            eventSupplier.delegateToSupplier(
+                data = event,
+                topic = BINDING_OUT_NAME,
+                key = event.getFullResourceKey()
+            )
+        }
+    }
+
     /**
      * 初始化执行过程context
      */
@@ -598,7 +608,9 @@ abstract class AbstractReplicaService(
 
     private fun getActionType(context: ReplicaContext): ActionType? {
         with(context) {
-            return if (!eventExists()) null else {
+            return if (!eventExists()) {
+                null
+            } else {
                 when (event.type) {
                     EventType.NODE_MOVED -> ActionType.MOVE
                     EventType.NODE_COPIED -> ActionType.COPY

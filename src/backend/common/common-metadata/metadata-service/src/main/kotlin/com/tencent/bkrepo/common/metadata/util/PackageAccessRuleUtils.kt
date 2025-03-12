@@ -27,7 +27,7 @@ object PackageAccessRuleUtils {
                 VersionRuleType.NE -> packageSemVersion != ruleSemVersion
                 VersionRuleType.GT -> packageSemVersion > ruleSemVersion
                 VersionRuleType.GTE -> packageSemVersion >= ruleSemVersion
-                VersionRuleType.LE -> packageSemVersion < ruleSemVersion
+                VersionRuleType.LT -> packageSemVersion < ruleSemVersion
                 VersionRuleType.LTE -> packageSemVersion <= ruleSemVersion
             }
         } catch (e: IllegalArgumentException) {

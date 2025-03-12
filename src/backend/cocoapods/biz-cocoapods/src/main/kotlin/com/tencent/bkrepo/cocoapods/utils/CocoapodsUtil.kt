@@ -88,7 +88,6 @@ object CocoapodsUtil {
         return jsonObject.toString()
     }
 
-
     // 解析 Podspec 内容并返回 Source 对象
     fun parseSourceFromContent(content: String, contentType: PodSpecType): ArchiveModifier.Podspec? {
         return when (contentType) {
@@ -131,7 +130,7 @@ object CocoapodsUtil {
             }
         }
 
-        //tag可能是v#{s.version.to_s}这样的 Ruby 语言中的一个 字符串插值表达式
+        // tag可能是v#{s.version.to_s}这样的 Ruby 语言中的一个 字符串插值表达式
         if (gitTag?.contains("version") == true) {
             resolveTag(gitTag, version ?: gitTag).also { gitTag = it }
         }
@@ -170,15 +169,15 @@ object CocoapodsUtil {
         }
     }
 
-    fun extractNameFromPodspec(podspecContent: String): String? {
-        return podspecContent.lines().find { it.contains(".name") }.let {
+    fun extractValueFromPodspec(podspecContent: String, key: String): String? {
+        return podspecContent.lines().find { it.contains(key) }.let {
             getValueFromPodspecLine(it)
         }
     }
 
-    fun extractNameFromPodspecJson(content: String): String? {
+    fun extractValueFromPodspecJson(content: String, key: String): String? {
         val jsonObject = JsonParser.parseString(content).asJsonObject
-        return jsonObject.get("name").asString
+        return jsonObject.get(key).asString
     }
 
     private fun getValueFromPodspecLine(line: String?): String? {
@@ -195,4 +194,9 @@ object CocoapodsUtil {
         val regex = Regex("""#\{([^}]+)}""")
         return regex.replace(template, version)
     }
+
+    const val PODSPEC_KEY_DOT_NAME = ".name"
+    const val PODSPEC_KEY_NAME = "name"
+    const val PODSPEC_KEY_DOT_VERSION = ".version"
+    const val PODSPEC_KEY_VERSION = "version"
 }

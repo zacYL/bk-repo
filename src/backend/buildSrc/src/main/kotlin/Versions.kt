@@ -95,4 +95,5 @@ object Versions {
     const val Galimatias = "0.2.1"
     const val CommonsNet = "3.9.0"
     const val JuniversalCharDet = "1.0.3"
+    const val Xnio = "3.8.14.Final"
 }

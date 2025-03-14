@@ -40,6 +40,7 @@ import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
@@ -191,7 +192,7 @@ class NpmRemoteRepository(
     ): NpmVersionMetadata? {
         with(context) {
             val pkgMetadataFullPath = NpmUtils.getPackageMetadataPath(packageInfo.first)
-            val originMetadataNode = nodeClient.getNodeDetail(projectId, repoName, pkgMetadataFullPath).data
+            val originMetadataNode = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, pkgMetadataFullPath))
                 ?: throw NodeNotFoundException("$projectId/$repoName/$pkgMetadataFullPath")
             return storageManager.loadArtifactInputStream(
                 originMetadataNode, repositoryDetail.storageCredentials

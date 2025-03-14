@@ -4,8 +4,11 @@ import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.metadata.service.node.NodeSearchService
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
@@ -16,6 +19,7 @@ import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
@@ -31,7 +35,10 @@ import com.tencent.bkrepo.repository.api.VersionDependentsClient
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import org.apache.maven.model.Dependency
 import org.apache.maven.model.Model
@@ -45,10 +52,12 @@ import java.util.regex.Pattern
 
 @Service
 class MavenExtService(
+    private val nodeService: NodeService,
     private val nodeSearchService: NodeSearchService,
     private val packageService: PackageService,
     private val repositoryService: RepositoryService,
-    private val versionDependentsClient: VersionDependentsClient
+    private val versionDependentsClient: VersionDependentsClient,
+    private val storageManager: StorageManager
 ) {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -320,7 +329,7 @@ class MavenExtService(
         var model: Model? = null
 
         // 当前的pom文件
-        val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+        val packageVersion = packageService.findVersionByName(projectId, repoName, packageKey, version)
         packageVersion?.run {
             // 判断封装类型
             model = getPom(this, projectId, repoName)
@@ -530,10 +539,8 @@ class MavenExtService(
         }
 
         // 存储信息获取
-        val node = nodeClient.getNodeDetail(projectId, repoName, packageVersion.contentPath!!).data
-        val storageCredentials = repositoryClient.getRepoDetail(
-            projectId, repoName
-        ).data?.storageCredentials
+        val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, packageVersion.contentPath!!))
+        val storageCredentials = repositoryService.getRepoDetail(projectId, repoName)?.storageCredentials
         val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials)
 
         return if (packaging != "pom") {
@@ -552,10 +559,11 @@ class MavenExtService(
         storageCredentials: StorageCredentials?
     ): Model? {
         node?.let {
-            val nodeList = nodeClient.listNodePage(projectId, repoName, node.path).data?.records
-            val fullPath = nodeList?.findLast { nodeInfo -> nodeInfo.fullPath.endsWith(".pom") }?.fullPath
+            val nodeList =
+                nodeService.listNodePage(ArtifactInfo(projectId, repoName, node.path), NodeListOption()).records
+            val fullPath = nodeList.findLast { nodeInfo -> nodeInfo.fullPath.endsWith(".pom") }?.fullPath
             fullPath?.run {
-                val pomNode = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
+                val pomNode = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, fullPath))
                 val inputStreamPom = storageManager.loadArtifactInputStream(pomNode, storageCredentials)
                 // 当前的封装类型
                 return inputStreamPom?.use { MavenXpp3Reader().read(it) }
@@ -621,24 +629,12 @@ class MavenExtService(
                 return null
             }
             val packageKey = PackageKeys.ofGav(groupId, artifactId)
-            val packageVersion = packageClient.findVersionByName(
-                projectId,
-                repoName,
-                packageKey,
-                version
-            ).data
+            val packageVersion = packageService.findVersionByName(projectId, repoName, packageKey, version)
             packageVersion?.run {
                 // 获取仓库的存储凭证
-                val storageCredentials = repositoryClient.getRepoDetail(
-                    projectId,
-                    repoName
-                ).data?.storageCredentials
+                val storageCredentials = repositoryService.getRepoDetail(projectId, repoName)?.storageCredentials
                 // 获取父pom的node信息
-                val node = nodeClient.getNodeDetail(
-                    projectId,
-                    repoName,
-                    contentPath!!
-                ).data
+                val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, contentPath!!))
                 val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials)
                 parentPom = inputStream.use { MavenXpp3Reader().read(it) }
             }

@@ -2,14 +2,15 @@ package com.tencent.bkrepo.npm.service
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
-import com.tencent.bkrepo.common.storage.core.StorageProperties
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
+import com.tencent.bkrepo.common.storage.config.StorageProperties
 import com.tencent.bkrepo.npm.constants.HSP_FILE_EXT
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.utils.NpmUtils
-import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class NpmReplicaService(
-    private val nodeClient: NodeClient,
+    private val nodeService: NodeService,
     private val repoClient: RepositoryClient,
     private val storageManager: StorageManager,
     private val storageProperties: StorageProperties,
@@ -58,7 +59,7 @@ class NpmReplicaService(
         packageFilePath: String,
         version: String,
     ) {
-        val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, packageJsonPath).data as NodeDetail
+        val nodeDetail = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, packageJsonPath)) as NodeDetail
         val indexFileInputStream =
             storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials?: storageProperties.defaultStorageCredentials()) ?: return
 

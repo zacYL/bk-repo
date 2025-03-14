@@ -5,14 +5,14 @@ import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.event.repo.RepositoryCleanEvent
-import com.tencent.bkrepo.common.artifact.util.okhttp.BasicAuthInterceptor
-import com.tencent.bkrepo.common.artifact.util.okhttp.HttpClientBuilderFactory
+import com.tencent.bkrepo.common.service.util.okhttp.BasicAuthInterceptor
+import com.tencent.bkrepo.common.service.util.okhttp.HttpClientBuilderFactory
 import com.tencent.bkrepo.npm.constants.NPM_REPLICA_RESOLVE
 import com.tencent.bkrepo.npm.constants.NPM_REPO_TYPE
 import com.tencent.bkrepo.npm.constants.OHPM_REPO_TYPE
 import com.tencent.bkrepo.npm.service.ServiceNpmClientService
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -56,7 +56,7 @@ class EventConsumer(
             val httpClient = buildHttpClient()
 
             val requestBody = RequestBody.create(
-                MediaType.parse(MediaTypes.APPLICATION_JSON),
+                MediaTypes.APPLICATION_JSON.toMediaTypeOrNull(),
                 event.toJsonString()
             )
             val url = "$domain/npm${NPM_REPLICA_RESOLVE.replace("{projectId}", projectId)
@@ -68,7 +68,7 @@ class EventConsumer(
             try {
                 httpClient.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
-                        logger.info("response:${response.body()!!.string()}")
+                        logger.info("response:${response.body!!.string()}")
                     }
                 }
             } catch (e: IOException) {

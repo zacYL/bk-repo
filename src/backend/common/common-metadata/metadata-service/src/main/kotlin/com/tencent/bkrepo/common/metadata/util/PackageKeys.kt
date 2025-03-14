@@ -139,7 +139,6 @@ object PackageKeys {
         return ofName(HELM, name)
     }
 
-
     /**
      * 生成rpm格式key
      * 例子: rpm://test
@@ -195,16 +194,6 @@ object PackageKeys {
      */
     fun ofCocoapods(name: String): String {
         return ofName(COCOAPODS, name)
-    }
-
-
-    /**
-     * 生成ohpm格式key
-     *
-     * 例子: ohpm://test
-     */
-    fun ofOhpm(name: String): String {
-        return ofName(PackageType.OHPM.schema, name)
     }
 
     /**
@@ -310,15 +299,6 @@ object PackageKeys {
      */
     fun resolveCocoapods(goKey: String): String {
         return resolveName(COCOAPODS, goKey)
-    }
-
-    /**
-     * 解析ohpm格式的key
-     *
-     * 例子: ohpm://test  ->  test
-     */
-    fun resolveOhpm(ohpmKey: String): String {
-        return resolveName(PackageType.OHPM.schema, ohpmKey)
     }
 
     /**

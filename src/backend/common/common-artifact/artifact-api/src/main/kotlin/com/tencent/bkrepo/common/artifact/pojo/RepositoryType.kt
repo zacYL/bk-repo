@@ -59,7 +59,6 @@ enum class RepositoryType(val supportPackage: Boolean) {
     COCOAPODS(true),
     GRADLE(true),
     IVY(true),
-    OHPM(true),
     ;
 
     companion object {

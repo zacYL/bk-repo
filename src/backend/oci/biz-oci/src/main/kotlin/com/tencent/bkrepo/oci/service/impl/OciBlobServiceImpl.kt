@@ -80,7 +80,6 @@ import com.tencent.bkrepo.oci.util.ObjectBuildUtils
 import com.tencent.bkrepo.oci.util.OciLocationUtils
 import com.tencent.bkrepo.oci.util.OciResponseUtils
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
-import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import org.apache.commons.compress.archivers.ArchiveException
@@ -92,11 +91,9 @@ import org.springframework.util.ObjectUtils
 import org.springframework.util.StreamUtils
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
 class OciBlobServiceImpl(

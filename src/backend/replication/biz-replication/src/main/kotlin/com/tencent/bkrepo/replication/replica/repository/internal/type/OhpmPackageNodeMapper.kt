@@ -25,12 +25,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.replication.replica.base.impl.internal.type
+package com.tencent.bkrepo.replication.replica.repository.internal.type
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.replication.replica.base.impl.internal.type.NpmPackageNodeMapper.Companion.NPM_PKG_METADATA_FULL_PATH
-import com.tencent.bkrepo.replication.replica.base.impl.internal.type.NpmPackageNodeMapper.Companion.NPM_PKG_VERSION_METADATA_FULL_PATH
+import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.springframework.stereotype.Component
@@ -59,5 +57,7 @@ class OhpmPackageNodeMapper : PackageNodeMapper {
 
     companion object {
         const val OHPM_PKG_HAR_FULL_PATH = "/%s/-/%s-%s.har"
+        const val NPM_PKG_VERSION_METADATA_FULL_PATH = "/.npm/%s/%s-%s.json"
+        const val NPM_PKG_METADATA_FULL_PATH = "/.npm/%s/package.json"
     }
 }

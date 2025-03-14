@@ -287,7 +287,7 @@ class NpmLocalRepository(
         val fullPaths = mutableListOf(artifactPath, versionMetadataFullPath)
         if (artifactPath.endsWith(HAR_FILE_EXT)) {
             val hspFullPath = artifactPath.removeSuffix(HAR_FILE_EXT) + HSP_FILE_EXT
-            if (nodeClient.checkExist(projectId, repoName, hspFullPath).data == true) fullPaths.add(hspFullPath)
+            if (nodeService.checkExist(ArtifactInfo(projectId, repoName, hspFullPath))) fullPaths.add(hspFullPath)
         }
         return fullPaths
     }

@@ -60,8 +60,8 @@ class NpmReplicaService(
         version: String,
     ) {
         val nodeDetail = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, packageJsonPath)) as NodeDetail
-        val indexFileInputStream =
-            storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials?: storageProperties.defaultStorageCredentials()) ?: return
+        val credentials = repoDetail.storageCredentials?: storageProperties.defaultStorageCredentials()
+        val indexFileInputStream = storageManager.loadArtifactInputStream(nodeDetail, credentials) ?: return
 
         indexFileInputStream.use {
             val packageMetaData = JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)

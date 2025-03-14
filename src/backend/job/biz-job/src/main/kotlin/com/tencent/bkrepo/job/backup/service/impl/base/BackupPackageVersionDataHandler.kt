@@ -120,7 +120,8 @@ class BackupPackageVersionDataHandler(
     private fun updatePackageInfo(versionInfo: BackupPackageVersionInfoWithKeyInfo) {
         // 包的信息需要重新计算，更新最新版本和版本数
         val packageVersions =
-            packageClient.listAllVersion(versionInfo.projectId!!, versionInfo.repoName!!, versionInfo.key!!).data ?: return
+            packageClient.listAllVersion(versionInfo.projectId!!, versionInfo.repoName!!, versionInfo.key!!).data
+                ?: return
         // 返回列表已默认根据版本排序，取第一个为最新
         val lastVersion = if (packageVersions.isEmpty()) null else packageVersions[0]
         val packageQuery = Query(

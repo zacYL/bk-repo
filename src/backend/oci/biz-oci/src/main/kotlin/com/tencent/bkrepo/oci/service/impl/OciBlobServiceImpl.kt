@@ -304,9 +304,8 @@ class OciBlobServiceImpl(
                         .toFile()
                 }
                 index.manifests.forEach { e ->
-                    layer(e.digest).inputStream().readJsonString<ManifestSchema2>().apply {
-                        uploadImage(this, artifactInfo) { layer(it.digest) }
-                    }
+                    val manifest = layer(e.digest).inputStream().readJsonString<ManifestSchema2>()
+                    uploadImage(manifest, artifactInfo) { layer(it.digest) }
                 }
             }
         } finally {

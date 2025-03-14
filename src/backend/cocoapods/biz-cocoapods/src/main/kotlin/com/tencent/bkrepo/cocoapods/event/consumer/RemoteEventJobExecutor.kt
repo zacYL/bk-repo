@@ -150,13 +150,10 @@ class RemoteEventJobExecutor(
             .post(requestBody)
             .build()
         try {
-            httpClient.newCall(request).execute().use { response ->
-                if (response.isSuccessful) {
-                    logger.info("response:${response.body!!.string()}")
-                }
-            }
+            val response = httpClient.newCall(request).execute()
+            logger.info("response: ${response.body!!.string()}")
         } catch (e: IOException) {
-            e.printStackTrace()
+            logger.warn("Error occurred while executing the request: ", e)
         }
     }
 

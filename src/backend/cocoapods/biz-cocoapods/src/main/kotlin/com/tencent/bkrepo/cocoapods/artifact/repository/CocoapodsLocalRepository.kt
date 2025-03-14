@@ -101,7 +101,9 @@ class CocoapodsLocalRepository(
             throw CocoapodsException("podspec version cannot be empty.")
         }
         if (artifactInfo.version != podSpec.version) {
-            throw CocoapodsException("package version should be consistent with the version attribute in the podspec file.")
+            throw CocoapodsException(
+                "package version should be consistent with the version attribute in the podspec file."
+            )
         }
     }
 

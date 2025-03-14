@@ -510,37 +510,25 @@ class NpmClientServiceImpl(
             if (!npmMetadata.dist!!.any().containsKey(SIZE)) {
                 npmMetadata.dist!!.set(SIZE, size)
             }
-            // 第一次上传
-            if (!packageExist(projectId, repoName, packageKey)) {
-                val lock = lockOperation.getLock(packageKey)
-                if (lockOperation.acquireLock(packageKey, lock)) {
-                    try {
-                        if (!packageExist(projectId, repoName, packageKey)) {//二次判断
-                            if (ohpm) {
-                                npmPackageMetaData.rev = npmPackageMetaData.versions.map.size.toString()
-                            }
-                            npmPackageMetaData.time.add(CREATED, gmtTime)
-                            npmPackageMetaData.time.add(MODIFIED, gmtTime)
-                            npmPackageMetaData.time.add(npmMetadata.version!!, gmtTime)
-                            doPackageFileUpload(userId, artifactInfo, npmPackageMetaData)
-                            return
-                        }
-                    } finally {
-                        lockOperation.close(packageKey, lock)
-                    }
-                }
-            }
             lockOperation.doWithLock(packageKey) {
-                val originalPackageInfo = queryPackageInfo(artifactInfo, npmPackageMetaData.name!!, false)
-                originalPackageInfo.versions.map.putAll(npmPackageMetaData.versions.map)
-                originalPackageInfo.distTags.getMap().putAll(npmPackageMetaData.distTags.getMap())
-                originalPackageInfo.time.add(MODIFIED, gmtTime)
-                originalPackageInfo.time.add(npmMetadata.version!!, gmtTime)
-                if (ohpm) {
-                    NpmUtils.updateLatestVersion(originalPackageInfo)
-                    originalPackageInfo.rev = originalPackageInfo.versions.map.size.toString()
+                val isFirstVersion = !packageExist(projectId, repoName, packageKey)
+                val packageMetadata = if (isFirstVersion) npmPackageMetaData
+                    else queryPackageInfo(artifactInfo, npmPackageMetaData.name!!, false)
+
+                packageMetadata.time.add(MODIFIED, gmtTime)
+                packageMetadata.time.add(npmMetadata.version!!, gmtTime)
+
+                if (isFirstVersion) {
+                    packageMetadata.time.add(CREATED, gmtTime)
+                } else {
+                    packageMetadata.versions.map.putAll(npmPackageMetaData.versions.map)
+                    packageMetadata.distTags.getMap().putAll(npmPackageMetaData.distTags.getMap())
+                    NpmUtils.updateLatestVersion(packageMetadata)
                 }
-                doPackageFileUpload(userId, artifactInfo, originalPackageInfo)
+                if (ohpm) {
+                    packageMetadata.rev = packageMetadata.versions.map.size.toString()
+                }
+                doPackageFileUpload(userId, artifactInfo, packageMetadata)
             }
         }
     }

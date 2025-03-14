@@ -44,18 +44,7 @@ class DataRecordsRestoreServiceImpl(
                 // TODO 异常需要捕获
                 if (task.content == null) return
                 preProcessFile(context)
-                // 恢复公共基础数据
-                if (task.content!!.commonData) {
-                    context.currentPath = context.targertPath
-                    commonDataRestore(context)
-                }
-                // 备份业务数据
-                findSecondLevelDirectories(context.targertPath).forEach {
-                    if (filterFolder(it, task.content)) {
-                        context.currentPath = it
-                        customDataRestore(context)
-                    }
-                }
+                restoreData(context, task.content!!)
                 if (task.content!!.compression) {
                     deleteFolder(targertPath)
                 }
@@ -97,6 +86,21 @@ class DataRecordsRestoreServiceImpl(
             }
             logger.info("restore root folder is $targetFolder")
             context.targertPath = targetFolder
+        }
+    }
+
+    private fun restoreData(context: BackupContext, content: BackupContent) {
+        // 恢复公共基础数据
+        if (content.commonData) {
+            context.currentPath = context.targertPath
+            commonDataRestore(context)
+        }
+        // 恢复业务数据
+        findSecondLevelDirectories(context.targertPath).forEach {
+            if (filterFolder(it, content)) {
+                context.currentPath = it
+                customDataRestore(context)
+            }
         }
     }
 

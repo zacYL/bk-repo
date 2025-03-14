@@ -63,21 +63,7 @@ class DataRecordsBackupServiceImpl(
                 customDataBackup(context)
                 //  最后进行压缩
                 if (task.content!!.compression) {
-                    // TODO 使用压缩需要关注对CPU的影响
-                    logger.info("start to compress file and upload to cos")
-                    val zipFileName = buildZipFileName(context)
-                    val zipFilePath = buildZipFilePath(context)
-                    try {
-                        ZipFileUtil.compressDirectory(targertPath.toString(), zipFilePath)
-                        val zipFile = File(zipFilePath)
-                        val cosClient = onCreateClient(dataBackupConfig.cos)
-                        cosClient.putFileObject(zipFileName, zipFile)
-                    } catch (e: Exception) {
-                        logger.error("compress or upload zip file to cos error, $e")
-                        throw StorageErrorException(StorageMessageCode.STORE_ERROR)
-                    }
-                    context.task.backupFilePaths.add(zipFilePath)
-                    deleteFolder(targertPath)
+                    compressAndUploadToCos(context)
                 } else {
                     context.task.backupFilePaths.add(targertPath.toString())
                 }
@@ -98,6 +84,26 @@ class DataRecordsBackupServiceImpl(
                 logger.error("Backup task ${context.task} has been failure!", e)
                 throw e
             }
+        }
+    }
+
+    private fun compressAndUploadToCos(context: BackupContext) {
+        with(context) {
+            // TODO 使用压缩需要关注对CPU的影响
+            logger.info("start to compress file and upload to cos")
+            val zipFileName = buildZipFileName(context)
+            val zipFilePath = buildZipFilePath(context)
+            try {
+                ZipFileUtil.compressDirectory(targertPath.toString(), zipFilePath)
+                val zipFile = File(zipFilePath)
+                val cosClient = onCreateClient(dataBackupConfig.cos)
+                cosClient.putFileObject(zipFileName, zipFile)
+            } catch (e: Exception) {
+                logger.error("compress or upload zip file to cos error, $e")
+                throw StorageErrorException(StorageMessageCode.STORE_ERROR)
+            }
+            context.task.backupFilePaths.add(zipFilePath)
+            deleteFolder(targertPath)
         }
     }
 

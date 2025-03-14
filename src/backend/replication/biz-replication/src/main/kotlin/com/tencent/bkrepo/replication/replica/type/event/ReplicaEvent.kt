@@ -29,7 +29,6 @@ package com.tencent.bkrepo.replication.replica.type.event
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.service.cluster.ClusterInfo
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 

@@ -115,31 +115,22 @@ open class BaseService {
                 // 每次重试前删除可能存在的残损文件
                 if (retryCount > 0 && file.exists()) {
                     file.delete()
-                    println("Deleted incomplete file before retry $retryCount")
+                    logger.info("Deleted incomplete file before retry $retryCount")
                 }
 
                 // 获取新的输入流并写入文件
-                inputStream.use { ins ->
-                    BufferedOutputStream(FileOutputStream(file)).use { outputStream ->
-                        val buffer = ByteArray(1024 * 8)
-                        var bytesRead: Int
-                        while (ins.read(buffer).also { bytesRead = it } != -1) {
-                            outputStream.write(buffer, 0, bytesRead)
-                        }
-                        return
-                    }
-                }
+                write(inputStream, file)
             } catch (e: IOException) {
-                println("Attempt ${retryCount + 1} failed: ${e.javaClass.simpleName} - ${e.message}")
+                logger.info("Attempt ${retryCount + 1} failed: ${e.javaClass.simpleName} - ${e.message}")
                 if (retryCount == maxRetries) {
                     // 最终失败后清理
-                    if (file.exists()) file.delete()
+                    file.exists() && file.delete()
                     throw e
                 }
 
                 // 指数退避计算延迟时间
                 val delayMs = initialDelayMs * 2.0.pow(retryCount.toDouble()).toLong()
-                println("Retrying in ${delayMs}ms...")
+                logger.info("Retrying in ${delayMs}ms...")
                 Thread.sleep(delayMs)
                 retryCount++
             }
@@ -155,6 +146,19 @@ open class BaseService {
             Files.walk(directory)
                 .sorted(Comparator.reverseOrder())
                 .forEach { Files.delete(it) }
+        }
+    }
+
+    private fun write(inputStream: InputStream, file: File) {
+        inputStream.use { ins ->
+            BufferedOutputStream(FileOutputStream(file)).use { outputStream ->
+                val buffer = ByteArray(1024 * 8)
+                var bytesRead: Int
+                while (ins.read(buffer).also { bytesRead = it } != -1) {
+                    outputStream.write(buffer, 0, bytesRead)
+                }
+                return
+            }
         }
     }
 

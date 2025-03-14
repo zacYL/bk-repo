@@ -14,27 +14,21 @@ object DependencyUtils {
     // 属性为空时的占位符
     private const val PLACEHOLDER = StringPool.POUND
 
+    // 处理dependency
     fun parseDependency(dependency: Dependency, model: Model, parentPom: Model?): MavenDependency {
         val versionStr = dependency.version
-        val version: String? = if (versionStr != null && isProperty(versionStr)) {
-            model.properties.getProperty(extractProperty(versionStr))
+        val version: String? = if (versionStr != null) {
+            versionResolver(versionStr, model)
         } else {
-            parentPom?.run {
-                // 版本version不存在但存在父pom文件的情况
-                var version: String = "null"
-                dependencyManagement.dependencies.forEach { ptDependency ->
-                    if (dependency.groupId == ptDependency.groupId &&
-                        dependency.artifactId == ptDependency.artifactId
-                    ) {
-                        // 匹配了version之后就及时返回
-                        if (ptDependency.version != null && isProperty(ptDependency.version)) {
-                            version = properties.getProperty(extractProperty(ptDependency.version))
-                        }
-                        return@forEach
-                    }
+            if (model.dependencyManagement != null) {
+                var versionTemp = handleDependenciesFromManagement(dependency, model)
+                if (versionTemp == "null") {
+                    versionTemp = handleDependenciesFromParent(dependency, parentPom)
                 }
-                version
-            } ?: versionStr
+                versionTemp
+            } else {
+                handleDependenciesFromParent(dependency, parentPom)
+            }
         }
         return MavenDependency(
             groupId = dependency.groupId,
@@ -47,11 +41,149 @@ object DependencyUtils {
         )
     }
 
-    fun parsePlugin(plugin: Plugin) = MavenPlugin(
-        groupId = plugin.groupId,
-        artifactId = plugin.artifactId,
-        version = plugin.version
-    )
+    // 如果是直接存在就返回，如果是占位符号的形式存在，那就寻找对应的属性
+    private fun versionResolver(versionStr: String, model: Model): String =
+        if (isProperty(versionStr)) {
+            model.properties.getProperty(extractProperty(versionStr)) ?: "null"
+        } else {
+            versionStr
+        }
+
+    // 从dependencyManagement中查找版本信息
+    private fun handleDependenciesFromManagement(
+        dependency: Dependency,
+        pom: Model
+    ): String? {
+        var version: String? = "null"
+
+        pom.dependencyManagement.dependencies.forEach { ptDependency ->
+            if (dependency.groupId == ptDependency.groupId &&
+                dependency.artifactId == ptDependency.artifactId
+            ) {
+                // 匹配了version之后就及时返回
+                if (ptDependency.version != null) {
+                    version = versionResolver(ptDependency.version, pom)
+                }
+                return@forEach
+            }
+        }
+        return version
+    }
+
+    // 从父pom中查找依赖版本信息
+    private fun handleDependenciesFromParent(
+        dependency: Dependency,
+        parentPom: Model?
+    ): String? {
+        return if (parentPom == null) {
+            "null"
+        } else {
+            var version: String? = "null"
+            version = handleDependencyFromDependencies(parentPom, dependency)
+            if (version == "null" && parentPom.dependencyManagement != null) {
+                version = handleDependenciesFromManagement(dependency, parentPom)
+            }
+            version
+        }
+    }
+
+    // 从父pom中的dependencies中进行匹配
+    private fun handleDependencyFromDependencies(
+        parentPom: Model,
+        dependency: Dependency
+    ): String? {
+        var newVersion: String? = "null"
+        parentPom.dependencies.forEach { ptDependency ->
+            if (dependency.groupId == ptDependency.groupId &&
+                dependency.artifactId == ptDependency.artifactId
+            ) {
+
+                if (ptDependency.version != null) {
+                    newVersion = versionResolver(ptDependency.version, parentPom)
+                }
+            }
+        }
+        return newVersion
+    }
+
+    // 处理插件版本信息
+    fun parsePlugin(plugin: Plugin, model: Model, parentPom: Model?): MavenPlugin {
+        val versionStr = plugin.version
+        val version: String? = if (versionStr != null) {
+            versionResolver(versionStr, model)
+        } else {
+            if (model.build.pluginManagement != null) {
+                var versionTemp = handlePluginsFromManagement(plugin, model)
+                if (versionTemp == "null") {
+                    versionTemp = handlePluginsFromParent(plugin, parentPom)
+                }
+                versionTemp
+            } else {
+                handlePluginsFromParent(plugin, parentPom)
+            }
+        }
+        return MavenPlugin(
+            groupId = plugin.groupId,
+            artifactId = plugin.artifactId,
+            version = version
+        )
+    }
+
+    // 从pluginManagement中查找插件版本信息
+    private fun handlePluginsFromManagement(
+        plugin: Plugin,
+        pom: Model
+    ): String? {
+        var version: String? = "null"
+        pom.build.pluginManagement.plugins.forEach { ptPlugin ->
+            if (plugin.groupId == ptPlugin.groupId &&
+                plugin.artifactId == ptPlugin.artifactId
+            ) {
+                // 匹配了version之后就及时返回
+                if (ptPlugin.version != null) {
+                    version = versionResolver(ptPlugin.version, pom)
+                }
+                return@forEach
+            }
+        }
+        return version
+    }
+
+    // 从父pom中查找插件依赖信息
+    private fun handlePluginsFromParent(
+        plugin: Plugin,
+        parentPom: Model?
+    ): String? {
+        return if (parentPom == null) {
+            "null"
+        } else {
+            var version: String? = "null"
+            version = handlePluginFromPlugins(parentPom, plugin)
+            if (version == "null" && parentPom.build.pluginManagement != null) {
+                version = handlePluginsFromManagement(plugin, parentPom)
+            }
+            version
+        }
+    }
+
+    // 从父pom中plugins中一个个匹配查找
+    private fun handlePluginFromPlugins(
+        parentPom: Model,
+        plugin: Plugin
+    ): String? {
+        var newVersion: String? = "null"
+        parentPom.build.plugins.forEach { ptPlugin ->
+            if (plugin.groupId == ptPlugin.groupId &&
+                plugin.artifactId == ptPlugin.artifactId
+            ) {
+
+                if (ptPlugin.version != null) {
+                    newVersion = versionResolver(ptPlugin.version, parentPom)
+                }
+            }
+        }
+        return newVersion
+    }
 
     /**
      * [MavenDependency] 生成可检索字符串

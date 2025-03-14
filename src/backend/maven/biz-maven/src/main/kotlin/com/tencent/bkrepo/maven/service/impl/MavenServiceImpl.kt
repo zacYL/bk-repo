@@ -500,8 +500,14 @@ class MavenServiceImpl(
             if (Files.notExists(pomPath.parent)) {
                 Files.createDirectories(pomPath.parent)
             }
-            Files.write(pomPath, pomByte)
-            model = if (JarUtils.isEmptyPom(pomByte)) Model() else readModel(pomByte.inputStream())
+
+            model = if (JarUtils.isEmptyPom(pomByte)) {
+                Model()
+            } else {
+                // 保存文件
+                Files.write(pomPath, pomByte)
+                readModel(pomByte.inputStream())
+            }
         } else {
             model = readModel(bytes.inputStream()).apply {
                 if (this.packaging != SOURCE_POM) {

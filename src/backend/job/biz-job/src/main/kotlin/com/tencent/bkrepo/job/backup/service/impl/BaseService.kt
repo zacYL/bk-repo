@@ -23,6 +23,7 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.math.pow
 
 
 open class BaseService {
@@ -100,14 +101,47 @@ open class BaseService {
     }
 
     @Throws(IOException::class)
-    fun streamToFile(inputStream: InputStream, filePath: String) {
-        inputStream.use { inputStream ->
-            BufferedOutputStream(FileOutputStream(filePath)).use { outputStream ->
-                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                var bytesRead: Int
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
+    fun streamToFile(
+        inputStream: InputStream,
+        filePath: String,
+        maxRetries: Int = 3,
+        initialDelayMs: Long = 1000
+    ) {
+        var retryCount = 0
+        val file = File(filePath)
+
+        while (retryCount <= maxRetries) {
+            try {
+                // 每次重试前删除可能存在的残损文件
+                if (retryCount > 0 && file.exists()) {
+                    file.delete()
+                    println("Deleted incomplete file before retry $retryCount")
                 }
+
+                // 获取新的输入流并写入文件
+                inputStream.use { ins ->
+                    BufferedOutputStream(FileOutputStream(file)).use { outputStream ->
+                        val buffer = ByteArray(1024 * 8)
+                        var bytesRead: Int
+                        while (ins.read(buffer).also { bytesRead = it } != -1) {
+                            outputStream.write(buffer, 0, bytesRead)
+                        }
+                        return
+                    }
+                }
+            } catch (e: IOException) {
+                println("Attempt ${retryCount + 1} failed: ${e.javaClass.simpleName} - ${e.message}")
+                if (retryCount == maxRetries) {
+                    // 最终失败后清理
+                    if (file.exists()) file.delete()
+                    throw e
+                }
+
+                // 指数退避计算延迟时间
+                val delayMs = initialDelayMs * 2.0.pow(retryCount.toDouble()).toLong()
+                println("Retrying in ${delayMs}ms...")
+                Thread.sleep(delayMs)
+                retryCount++
             }
         }
     }

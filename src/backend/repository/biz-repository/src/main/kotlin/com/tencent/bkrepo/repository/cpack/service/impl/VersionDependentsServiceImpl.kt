@@ -30,10 +30,13 @@ class VersionDependentsServiceImpl(
         val update = Update.update(
             TPackageVersionDependents::dependents.name,
             relation.dependencies
-        ).set(
-            TPackageVersionDependents::ext.name,
-            relation.ext
         )
+        if (relation.ext != null) {
+            update.set(
+                TPackageVersionDependents::ext.name,
+                relation.ext
+            )
+        }
         packageVersionDependentsDao.upsert(query, update)
         return true
     }

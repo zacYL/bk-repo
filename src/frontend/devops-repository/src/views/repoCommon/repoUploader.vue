@@ -269,7 +269,7 @@
                         {
                            
                             regex: /^[a-z0-9]+([._-][a-z0-9]+)*(\/[a-z0-9]+([._-][a-z0-9]+)*)*$/,
-                            message: this.$t('checkRegexp', ['[a-z0-9]+([._-][a-z0-9]+)*(\/[a-z0-9]+([._-][a-z0-9]+)*)*']),
+                            message: this.$t('dockerUploaderCheck1'),
                             trigger: 'blur'
                         }
                     ],
@@ -281,7 +281,7 @@
                         },
                         {
                             regex: /^\w[\w.-]{0,127}$/,
-                            message: this.$t('checkRegexp', ['\\w[\\w.-]{0,127}']),
+                            message: this.$t('dockerUploaderCheck'),
                             trigger: 'blur'
                         }
                     ]

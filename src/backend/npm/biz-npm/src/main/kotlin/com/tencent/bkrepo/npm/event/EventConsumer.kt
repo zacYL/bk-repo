@@ -18,7 +18,6 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -68,8 +67,8 @@ class EventConsumer(
             try {
                 val response = httpClient.newCall(request).execute()
                 logger.info("response: ${response.body!!.string()}")
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (e: Exception) {
+                logger.error("An error occurred while requesting the dest node to post-process received data", e)
             }
         }
     }

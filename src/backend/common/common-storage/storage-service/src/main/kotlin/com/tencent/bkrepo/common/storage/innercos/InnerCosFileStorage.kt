@@ -71,7 +71,7 @@ open class InnerCosFileStorage : AbstractEncryptorFileStorage<InnerCosCredential
             // 确定范围可以使用并发下载
             GetObjectRequest(name, range.start, range.end)
         }
-        return if (storageProperties.innercos.lazyRequest) {
+        return if (storageProperties.innercos.download.lazyRequest) {
             if (exist(path, name, client)) {
                 LazyCosInputStream(client, request)
             } else null

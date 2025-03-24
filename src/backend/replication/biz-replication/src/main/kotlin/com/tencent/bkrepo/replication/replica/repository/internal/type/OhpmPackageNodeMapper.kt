@@ -27,14 +27,17 @@
 
 package com.tencent.bkrepo.replication.replica.repository.internal.type
 
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
+import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.springframework.stereotype.Component
 
 @Component
-class OhpmPackageNodeMapper : PackageNodeMapper {
+class OhpmPackageNodeMapper(private val nodeService: NodeService) : PackageNodeMapper {
 
     override fun type() = RepositoryType.OHPM
     override fun extraType(): RepositoryType? {
@@ -48,11 +51,18 @@ class OhpmPackageNodeMapper : PackageNodeMapper {
     ): List<String> {
         val name = PackageKeys.resolveOhpm(packageSummary.key)
         val version = packageVersion.name
+        val tarballPath = packageVersion.contentPath!!
+        val readmeNodes = nodeService.listNode(
+            ArtifactInfo(
+                packageSummary.projectId, packageSummary.repoName, tarballPath.substring(0, tarballPath.length - 4)
+            ),
+            NodeListOption(includeFolder = false, deep = true)
+        ).map { it.fullPath }
         return listOf(
             OHPM_PKG_HAR_FULL_PATH.format(name, name, version),
             NPM_PKG_VERSION_METADATA_FULL_PATH.format(name, name, version),
             NPM_PKG_METADATA_FULL_PATH.format(name)
-        )
+        ) + readmeNodes
     }
 
     companion object {

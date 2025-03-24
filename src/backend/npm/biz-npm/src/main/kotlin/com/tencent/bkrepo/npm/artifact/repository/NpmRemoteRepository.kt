@@ -134,7 +134,7 @@ class NpmRemoteRepository(
                 queryContext.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
                 queryContext.putAttribute(REQUEST_URI, "/${packageInfo.first}/${packageInfo.second}")
                 executor.execute {
-                    val versionMetadata = getVersionMetadata(
+                    val versionMetadata = queryAndStoreVersionMetadata(
                         queryContext, context, packageInfo, versionMetadataFullPath
                     )
                     versionMetadata?.let { metadata ->
@@ -150,7 +150,7 @@ class NpmRemoteRepository(
         }
     }
 
-    private fun getVersionMetadata(
+    private fun queryAndStoreVersionMetadata(
         queryContext: ArtifactQueryContext,
         context: ArtifactDownloadContext,
         packageInfo: Pair<String, String>,

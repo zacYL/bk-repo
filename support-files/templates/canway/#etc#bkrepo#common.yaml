@@ -172,7 +172,6 @@ storage:
     region: __BK_REPO_COS_REGION__
     bucket: __BK_REPO_COS_BUCKET__
     public: true
-    lazyRequest: true
     cache:
       enabled: __BK_REPO_CACHE_ENABLE__
       path: __BK_REPO_CACHE_MOUNT_PATH__
@@ -181,6 +180,8 @@ storage:
     # 上传文件临时目录，可以不在服务实例间共享
     upload:
       location: __BK_REPO_UPLOAD_TEMP_PATH__
+    download:
+      lazyRequest: true
   redirect:
     enabled: __BK_REPO_STORAGE_REDIRECT_ENABLED__
     minDirectDownloadSize: __BK_REPO_STORAGE_REDIRECT_THRESHOLD__

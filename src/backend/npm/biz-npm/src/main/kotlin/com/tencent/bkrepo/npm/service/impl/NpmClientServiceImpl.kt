@@ -84,7 +84,6 @@ import com.tencent.bkrepo.npm.constants.PACKAGE_JSON
 import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
 import com.tencent.bkrepo.npm.constants.SIZE
-import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH
 import com.tencent.bkrepo.npm.exception.NpmArtifactExistException
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
@@ -305,16 +304,23 @@ class NpmClientServiceImpl(
 
     override fun deleteVersion(artifactInfo: NpmArtifactInfo) {
         with(artifactInfo) {
-            logger.info("npm delete package version request: [$this]")
+            logger.info("handling delete version [$version] request for package [${packageName}].")
+            val fullPathList = mutableListOf<String>()
             val ohpm = ArtifactContextHolder.getRepoDetail()?.type == RepositoryType.OHPM
             val packageKey = NpmUtils.packageKey(packageName, ohpm)
             val versionInfo = packageService.findVersionByName(projectId, repoName, packageKey, version!!)
                 ?: throw VersionNotFoundException("$packageKey/$version")
+            fullPathList.add(versionInfo.contentPath!!)
+            if (ohpm) {
+                val hspPath = NpmUtils.harPathToHspPath(versionInfo.contentPath!!)
+                fullPathList.add(hspPath)
+                fullPathList.add(NpmUtils.getReadmeDirFromTarballPath(versionInfo.contentPath!!))
+            }
+            fullPathList.add(NpmUtils.getVersionPackageMetadataPath(packageName, version!!))
             val context = ArtifactRemoveContext()
-            // todo 此处ohpm路径是否要特殊处理？
-            context.putAttribute(TARBALL_FULL_PATH, versionInfo.contentPath!!)
             // 删除包管理中对应的version
             npmPackageHandler.deleteVersion(context.userId, packageName, version!!, artifactInfo)
+            context.putAttribute(NPM_FILE_FULL_PATH, fullPathList)
             repository.remove(context)
             logger.info("userId [${context.userId}] delete version [$version] for package [$packageName] success.")
         }

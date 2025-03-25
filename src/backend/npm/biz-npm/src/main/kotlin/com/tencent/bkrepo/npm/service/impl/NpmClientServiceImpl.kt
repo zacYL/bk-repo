@@ -458,20 +458,23 @@ class NpmClientServiceImpl(
             if (ohpm) {
                 resolveOhpm(npmPackageMetaData)
             }
-            handlerAttachmentsUpload(userId, artifactInfo, npmPackageMetaData, artifactFile)
-            handlerPackageFileUpload(userId, artifactInfo, npmPackageMetaData, size, ohpm)
-            handlerVersionFileUpload(userId, artifactInfo, npmPackageMetaData, size)
-            if (npmPackageMetaData.distTags.getMap().containsKey(LATEST)) {
-                npmDependentHandler.updatePackageDependents(
-                    userId,
-                    artifactInfo,
-                    npmPackageMetaData,
-                    NpmOperationAction.PUBLISH,
-                    ohpm
-                )
+            val packageKey = NpmUtils.packageKeyByRepoType(npmPackageMetaData.name.orEmpty())
+            lockOperation.doWithLock(packageUploadLockKey(artifactInfo.projectId, artifactInfo.repoName, packageKey)) {
+                handlerAttachmentsUpload(userId, artifactInfo, npmPackageMetaData, artifactFile)
+                handlerPackageFileUpload(userId, artifactInfo, npmPackageMetaData, size, ohpm)
+                handlerVersionFileUpload(userId, artifactInfo, npmPackageMetaData, size)
+                if (npmPackageMetaData.distTags.getMap().containsKey(LATEST)) {
+                    npmDependentHandler.updatePackageDependents(
+                        userId,
+                        artifactInfo,
+                        npmPackageMetaData,
+                        NpmOperationAction.PUBLISH,
+                        ohpm
+                    )
+                }
+                val versionMetadata = npmPackageMetaData.versions.map.values.iterator().next()
+                npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size, ohpm)
             }
-            val versionMetadata = npmPackageMetaData.versions.map.values.iterator().next()
-            npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size, ohpm)
         } catch (exception: IOException) {
             val version = NpmUtils.getLatestVersionFormDistTags(npmPackageMetaData.distTags)
             logger.error(
@@ -516,26 +519,24 @@ class NpmClientServiceImpl(
             if (!npmMetadata.dist!!.any().containsKey(SIZE)) {
                 npmMetadata.dist!!.set(SIZE, size)
             }
-            lockOperation.doWithLock(packageKey) {
-                val isFirstVersion = !packageExist(projectId, repoName, packageKey)
-                val packageMetadata = if (isFirstVersion) npmPackageMetaData
-                    else queryPackageInfo(artifactInfo, npmPackageMetaData.name!!, false)
+            val isFirstVersion = !packageExist(projectId, repoName, packageKey)
+            val packageMetadata = if (isFirstVersion) npmPackageMetaData
+                else queryPackageInfo(artifactInfo, npmPackageMetaData.name!!, false)
 
-                packageMetadata.time.add(MODIFIED, gmtTime)
-                packageMetadata.time.add(npmMetadata.version!!, gmtTime)
+            packageMetadata.time.add(MODIFIED, gmtTime)
+            packageMetadata.time.add(npmMetadata.version!!, gmtTime)
 
-                if (isFirstVersion) {
-                    packageMetadata.time.add(CREATED, gmtTime)
-                } else {
-                    packageMetadata.versions.map.putAll(npmPackageMetaData.versions.map)
-                    packageMetadata.distTags.getMap().putAll(npmPackageMetaData.distTags.getMap())
-                    NpmUtils.updateLatestVersion(packageMetadata)
-                }
-                if (ohpm) {
-                    packageMetadata.rev = packageMetadata.versions.map.size.toString()
-                }
-                doPackageFileUpload(userId, artifactInfo, packageMetadata)
+            if (isFirstVersion) {
+                packageMetadata.time.add(CREATED, gmtTime)
+            } else {
+                packageMetadata.versions.map.putAll(npmPackageMetaData.versions.map)
+                packageMetadata.distTags.getMap().putAll(npmPackageMetaData.distTags.getMap())
+                NpmUtils.updateLatestVersion(packageMetadata)
             }
+            if (ohpm) {
+                packageMetadata.rev = packageMetadata.versions.map.size.toString()
+            }
+            doPackageFileUpload(userId, artifactInfo, packageMetadata)
         }
     }
 
@@ -856,6 +857,9 @@ class NpmClientServiceImpl(
             }
         }
     }
+
+    private fun packageUploadLockKey(projectId: String, repoName: String, packageKey: String) =
+        "package:upload:$projectId:$repoName:$packageKey"
 
     companion object {
 

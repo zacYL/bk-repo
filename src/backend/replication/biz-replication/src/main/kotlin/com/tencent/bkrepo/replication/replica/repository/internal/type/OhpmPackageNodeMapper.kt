@@ -58,15 +58,19 @@ class OhpmPackageNodeMapper(private val nodeService: NodeService) : PackageNodeM
             ),
             NodeListOption(includeFolder = false, deep = true)
         ).map { it.fullPath }
-        return listOf(
+        val hspFullPath = OHPM_PKG_HSP_FULL_PATH.format(name, name, version)
+        val isHspExist =
+            nodeService.checkExist(ArtifactInfo(packageSummary.projectId, packageSummary.repoName, hspFullPath))
+        return mutableListOf(
             OHPM_PKG_HAR_FULL_PATH.format(name, name, version),
             NPM_PKG_VERSION_METADATA_FULL_PATH.format(name, name, version),
             NPM_PKG_METADATA_FULL_PATH.format(name)
-        ) + readmeNodes
+        ).apply { if (isHspExist) add(hspFullPath) } + readmeNodes
     }
 
     companion object {
         const val OHPM_PKG_HAR_FULL_PATH = "/%s/-/%s-%s.har"
+        const val OHPM_PKG_HSP_FULL_PATH = "/%s/-/%s-%s.hsp"
         const val NPM_PKG_VERSION_METADATA_FULL_PATH = "/.npm/%s/%s-%s.json"
         const val NPM_PKG_METADATA_FULL_PATH = "/.npm/%s/package.json"
     }

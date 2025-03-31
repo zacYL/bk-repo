@@ -10,10 +10,10 @@ spring:
         artifactEvent-in-0:
           group: replication
           destination: artifactEvent
-          binder: pulsar
+          binder: __BK_REPO_STREAM_BINDER__
         artifactEvent-out-0:
           destination: artifactEvent
-          binder: pulsar
+          binder: __BK_REPO_STREAM_BINDER__
 server:
   port: __BK_REPO_REPLICATION_PORT__
 logging:

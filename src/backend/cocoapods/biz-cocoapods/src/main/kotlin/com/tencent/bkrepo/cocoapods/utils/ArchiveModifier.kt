@@ -19,6 +19,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 object ArchiveModifier {
@@ -126,15 +127,6 @@ object ArchiveModifier {
             modifyPodspecFile(podspec, targetPath)
         }
 
-        // 重新压缩文件，tar.gz
-//        GzipCompressorOutputStream(archiveOutputStream).use { gzipOut ->
-//            TarArchiveOutputStream(gzipOut).use { tarOut ->
-//                val files = tempDir.listFiles()
-//                files?.forEach { file ->
-//                    addFileToTar(file, tarOut, "")
-//                }
-//            }
-//        }
         compressFilesInBatches(tempDir, archiveOutputStream)
         // 清理临时文件
         deleteDirectory(tempDir)
@@ -194,61 +186,9 @@ object ArchiveModifier {
         podspecFile.writeText(updateContent)
     }
 
-//    @Throws(IOException::class)
-//    private fun addFileToZip(file: File, zos: ZipOutputStream, parentDir: String) {
-//        if (file.isDirectory) {
-//            // 如果是目录，递归添加
-//            zos.putNextEntry(ZipEntry(parentDir + file.name + "/"))
-//            zos.closeEntry()
-//            file.listFiles()?.forEach { subFile ->
-//                addFileToZip(subFile, zos, "$parentDir${file.name}/")
-//            }
-//        } else {
-//            // 如果是文件，直接添加
-//            zos.putNextEntry(ZipEntry(parentDir + file.name))
-//            FileInputStream(file).use { fis ->
-//                val buffer = ByteArray(1024)
-//                var len: Int
-//                while (fis.read(buffer).also { len = it } > 0) {
-//                    zos.write(buffer, 0, len)
-//                }
-//            }
-//            zos.closeEntry()
-//        }
-//    }
-
-//    @Throws(IOException::class)
-//    private fun addFileToTar(file: File, tarOut: TarArchiveOutputStream, parentDir: String) {
-//        // 设置长路径处理模式为 GNU
-//        tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU)
-//        if (file.isDirectory) {
-//            // 如果是目录，递归添加
-//            tarOut.putArchiveEntry(TarArchiveEntry(file, "$parentDir${file.name}/"))
-//            tarOut.closeArchiveEntry()
-//            file.listFiles()?.forEach { subFile ->
-//                addFileToTar(subFile, tarOut, "$parentDir${file.name}/")
-//            }
-//        } else {
-//            // 如果是文件，直接添加
-//            try {
-//                tarOut.putArchiveEntry(TarArchiveEntry(file, "$parentDir${file.name}"))
-//                FileInputStream(file).use { fis ->
-//                    val buffer = ByteArray(1024)
-//                    var len: Int
-//                    while (fis.read(buffer).also { len = it } > 0) {
-//                        tarOut.write(buffer, 0, len)
-//                    }
-//                }
-//                tarOut.closeArchiveEntry()
-//            } catch (e: Exception) {
-//                logger.warn("Failed to add file to tar: ${e.message}")
-//            }
-//        }
-//    }
-
     private fun compressFilesInBatches(tempDir: File, archiveOutputStream: OutputStream, batchCount: Int = 10) {
-        // 检查是否有 Specs 目录
-        val specsDir = File(tempDir, "Specs")
+        // 检查是否有 Specs/0 目录，即判断为github中央仓库，其索引太多需进入Specs目录进行分批
+        val specsDir = File(tempDir, "Specs/0")
         val files = if (specsDir.exists() && specsDir.isDirectory) {
             specsDir.listFiles()
         } else {
@@ -267,8 +207,6 @@ object ArchiveModifier {
         println("Total files: $totalFiles, Processing in $batchCount batches (batch size: $batchSize)")
         // 处理每一批文件
         TarArchiveOutputStream(BufferedOutputStream(GzipCompressorOutputStream(archiveOutputStream))).use { tarOut ->
-//        GzipCompressorOutputStream(archiveOutputStream).use { gzipOut ->
-//            TarArchiveOutputStream(gzipOut).use { tarOut ->
             tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU) // 支持长路径
 
             for (batchIndex in 0 until batchCount) {
@@ -339,5 +277,5 @@ object ArchiveModifier {
         var fileType: PodSpecType? = null,
     )
 
-    val logger = LoggerFactory.getLogger(this::class.java)
+    val logger: Logger = LoggerFactory.getLogger(this::class.java)
 }

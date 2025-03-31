@@ -214,7 +214,7 @@ class BackupNodeDataHandler(
         mongoTemplate.updateFirst(nodeQuery, update, nodeCollectionName)
         logger.info(
             "update exist node success with id ${nodeInfo.id} " +
-                "and fullPath ${nodeInfo.fullPath} in ${nodeInfo.projectId}|${nodeInfo.repoName}"
+                    "and fullPath ${nodeInfo.fullPath} in ${nodeInfo.projectId}|${nodeInfo.repoName}"
         )
     }
 
@@ -222,7 +222,12 @@ class BackupNodeDataHandler(
     fun uploadFile(record: BackupNodeInfo, context: BackupContext, repo: RepositoryDetail) {
         if (!sha256Check(record.folder, record.sha256)) return
         val filePath = generateRandomPath(context.targertPath, record.sha256!!)
-        val artifactFile = filePath.toFile().toArtifactFile()
+        val file = filePath.toFile()
+        if (!file.exists()){
+            logger.warn("file not exist [${filePath}]")
+            return
+        }
+        val artifactFile = file.toArtifactFile()
         // TODO 增加重试以及异常捕获
         storageService.store(record.sha256!!, artifactFile, repo.storageCredentials)
     }
@@ -286,6 +291,7 @@ class BackupNodeDataHandler(
                 .and(BackupNodeInfo::projectId.name).isEqualTo(record.projectId)
                 .and(BackupNodeInfo::fullPath.name).isEqualTo(record.fullPath)
                 .and(BackupNodeInfo::id.name).isEqualTo(record.id)
+                .and(BackupNodeInfo::deleted.name).isEqualTo(null)
         )
     }
 

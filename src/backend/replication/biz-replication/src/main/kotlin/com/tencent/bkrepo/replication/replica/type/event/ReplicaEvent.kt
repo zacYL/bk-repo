@@ -29,7 +29,6 @@ package com.tencent.bkrepo.replication.replica.type.event
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.service.cluster.ClusterInfo
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 
@@ -41,11 +40,12 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageType
 data class ReplicaEvent(
     override val projectId: String,
     override val repoName: String,
-    private val packageType: PackageType,
-    private val fullPath: String,
-    private var cluster: ClusterInfo,
-    private val repoType: RepositoryType,
+    val packageType: PackageType,
+    val fullPath: String,
+    var cluster: ClusterInfo,
     override val userId: String,
+    val packageName: String,
+    val packageVersion: String
 ) : ArtifactEvent(
     type = EventType.REPLICATION,
     projectId = projectId,
@@ -56,8 +56,9 @@ data class ReplicaEvent(
         "packageType" to packageType,
         "fullPath" to fullPath,
         "domain" to cluster.url.substring(0, cluster.url.indexOf("/replication")),
-        "repoType" to repoType,
         "username" to (cluster.username ?: ""),
-        "password" to (cluster.password ?: "")
+        "password" to (cluster.password ?: ""),
+        "packageName" to packageName,
+        "packageVersion" to packageVersion
     )
 )

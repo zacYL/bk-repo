@@ -44,7 +44,7 @@ dependencies {
         implementation("io.opentelemetry:opentelemetry-exporter-otlp")
     }
 
-    api("cn.hutool:hutool-crypto:${Versions.HutoolCrypto}")
+    api("cn.hutool:hutool-crypto:${Versions.Hutool}")
     compileOnly(project(":common:common-mongo"))
 
     val assemblyMode = project.findPropertyOrNull("devops.assemblyMode")

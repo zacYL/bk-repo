@@ -179,19 +179,14 @@ class UserNpmController(
 
     @PostMapping("/upload/{projectId}/{repoName}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
-
         @PathVariable
         projectId: String,
-
         @PathVariable
         repoName: String,
-
         @RequestPart(value = "file")
         file: MultipartFile
-
     ): Response<Boolean> {
         npmClientService.upload(projectId, repoName, file)
         return ResponseBuilder.success()
     }
-
 }

@@ -83,7 +83,7 @@ allprojects {
             }
             dependency("com.playtika.reactivefeign:feign-reactor-spring-cloud-starter:${Versions.ReactiveFeign}")
             dependency("com.tencent.bk.sdk:crypto-java-sdk:${Versions.CryptoJavaSdk}")
-            dependency("org.apache.tika:tika-core:${Versions.TiKa}")
+            dependency("org.apache.tika:tika-core:${Versions.Tika}")
             dependency("com.tencent.bk.sdk:spring-boot-bk-audit-starter:${Versions.Audit}")
             dependency("com.tencent.devops:devops-schedule-common:${Versions.DevopsBootSNAPSHOT}")
             dependency("com.tencent.devops:devops-schedule-model:${Versions.DevopsBootSNAPSHOT}")
@@ -101,7 +101,6 @@ allprojects {
                 entry("undertow-servlet")
             }
             dependency("org.springframework:spring-webmvc:${Versions.SpringWebmvc}")
-            dependency("org.springframework:spring-beans:${Versions.SpringBeans}")
             dependencySet("org.springframework.boot:${Versions.SpringBootAutoconfigure}") {
                 entry("spring-boot-autoconfigure")
                 entry("spring-boot-actuator-autoconfigure")
@@ -132,13 +131,16 @@ allprojects {
                 entry("jackson-dataformat-cbor")
             }
             dependency("com.tongweb.springboot:tongweb-spring-boot-starter-2.x:${Versions.TongWeb}")
+            dependencySet("org.jboss.xnio:${Versions.Xnio}") {
+                entry("xnio-api")
+                entry("xnio-nio")
+            }
 
         }
     }
 
     dependencies {
         constraints {
-            implementation("com.squareup.okio:okio:${Versions.Okio}")
             implementation("commons-fileupload:commons-fileupload:${Versions.CommonsFileupload}")
             implementation("com.fasterxml.woodstox:woodstox-core:${Versions.Woodstox}")
         }
@@ -223,8 +225,8 @@ allprojects {
                 it.replace(
                     "@release.cicd@",
                     System.getenv("BK_CI_PROJECT_NAME") +
-                        "/${System.getenv("BK_CI_PIPELINE_ID")}/${System.getenv("BK_CI_BUILD_NUM")} ." +
-                        " Build branch: [${System.getenv("branch") ?: ""}]"
+                            "/${System.getenv("BK_CI_PIPELINE_ID")}/${System.getenv("BK_CI_BUILD_NUM")} ." +
+                            " Build branch: [${System.getenv("branch") ?: ""}]"
                 )
             }
             filter {

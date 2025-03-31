@@ -126,7 +126,6 @@ class NpmClientController(
     fun ohpmStreamPublishOrUpdatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @PathVariable name: String,
         artifactFileMap: ArtifactFileMap,
     ): OhpmResponse {
         val npmPackageMetadata = HttpContextHolder
@@ -315,7 +314,7 @@ class NpmClientController(
         "/@{scope}/{name}/{delimiter:-}/{fileName}/-rev/{rev}",
         "/@{scope}/{name}/{delimiter:-|download}/@{repeatedScope}/{fileName}/-rev/{rev}"
     )
-    @Permission(ResourceType.REPO, PermissionAction.DELETE)
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun deleteVersion(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable rev: String

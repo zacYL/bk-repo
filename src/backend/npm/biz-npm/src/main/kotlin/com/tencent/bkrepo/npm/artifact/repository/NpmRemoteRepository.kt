@@ -36,10 +36,12 @@ import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toCompactJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
+import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
@@ -119,7 +121,7 @@ class NpmRemoteRepository(
     override fun onDownloadSuccess(
         context: ArtifactDownloadContext,
         artifactResource: ArtifactResource,
-        throughput: Throughput
+        throughput: Throughput,
     ) {
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
@@ -132,8 +134,10 @@ class NpmRemoteRepository(
                 queryContext.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
                 queryContext.putAttribute(REQUEST_URI, "/${packageInfo.first}/${packageInfo.second}")
                 executor.execute {
-                    query(queryContext)?.use {
-                        val versionMetadata = it.readJsonString<NpmVersionMetadata>()
+                    val versionMetadata = queryAndStoreVersionMetadata(
+                        queryContext, context, packageInfo, versionMetadataFullPath
+                    )
+                    versionMetadata?.let { metadata ->
                         val size = artifactResource.getTotalSize()
                         val ohpm = context.repo.type == RepositoryType.OHPM
                         npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size, ohpm)
@@ -143,6 +147,58 @@ class NpmRemoteRepository(
             } else {
                 super.onDownloadSuccess(this, artifactResource, throughput)
             }
+        }
+    }
+
+    private fun queryAndStoreVersionMetadata(
+        queryContext: ArtifactQueryContext,
+        context: ArtifactDownloadContext,
+        packageInfo: Pair<String, String>,
+        versionMetadataFullPath: String
+    ): NpmVersionMetadata? {
+        return query(queryContext)?.use { it.readJsonString<NpmVersionMetadata>() }
+            ?: getVersionMetadataFromPackage(context, packageInfo)?.also { metadata ->
+                storageVersionMetadata(context, metadata, versionMetadataFullPath)
+            }
+    }
+
+    private fun storageVersionMetadata(
+        context: ArtifactDownloadContext,
+        metadata: NpmVersionMetadata,
+        versionMetadataFullPath: String,
+    ) {
+        val specArtifact =
+            ArtifactFileFactory.build(
+                metadata.toJsonString().toByteArray().inputStream(),
+                context.repositoryDetail.storageCredentials
+            )
+        val nodeCreateRequest = NodeCreateRequest(
+            projectId = context.projectId,
+            repoName = context.repoName,
+            fullPath = versionMetadataFullPath,
+            folder = false,
+            size = specArtifact.getSize(),
+            sha256 = specArtifact.getFileSha256(),
+            md5 = specArtifact.getFileMd5(),
+            overwrite = true,
+            operator = context.userId
+        )
+        storageManager.storeArtifactFile(nodeCreateRequest, specArtifact, null)
+    }
+
+    private fun getVersionMetadataFromPackage(
+        context: ArtifactDownloadContext,
+        packageInfo: Pair<String, String>
+    ): NpmVersionMetadata? {
+        with(context) {
+            val pkgMetadataFullPath = NpmUtils.getPackageMetadataPath(packageInfo.first)
+            val originMetadataNode = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, pkgMetadataFullPath))
+                ?: throw NodeNotFoundException("$projectId/$repoName/$pkgMetadataFullPath")
+            return storageManager.loadArtifactInputStream(
+                originMetadataNode, repositoryDetail.storageCredentials
+            ).use {
+                JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
+            }.versions.map[packageInfo.second]
         }
     }
 
@@ -163,7 +219,9 @@ class NpmRemoteRepository(
             ?: super.query(context) as ArtifactInputStream?
             ?: if (context.getStringAttribute(NPM_FILE_FULL_PATH)?.endsWith("/$PACKAGE_JSON") == true) {
                 findCacheNodeDetail(context)?.let { loadArtifactResource(it, context) }?.getSingleStream()
-            } else null
+            } else {
+                null
+            }
     }
 
     override fun checkQueryResponse(response: Response): Boolean {
@@ -185,7 +243,9 @@ class NpmRemoteRepository(
                     findCacheNodeDetail(context)?.let { loadArtifactResource(it, context) }
                 } else if (context.getRemoteConfiguration().cache.expiration > 0) {
                     super.getCacheArtifactResource(context)
-                } else null
+                } else {
+                    null
+                }
             }
             else -> null
         }
@@ -218,16 +278,16 @@ class NpmRemoteRepository(
 
     override fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {
         return NodeCreateRequest(
-                projectId = context.repositoryDetail.projectId,
-                repoName = context.repositoryDetail.name,
-                folder = false,
-                fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!,
-                size = artifactFile.getSize(),
-                sha256 = artifactFile.getFileSha256(),
-                md5 = artifactFile.getFileMd5(),
-                overwrite = true,
-                operator = context.userId,
-                nodeMetadata = listOf(MetadataModel(SOURCE_TYPE, ArtifactChannel.PROXY))
+            projectId = context.repositoryDetail.projectId,
+            repoName = context.repositoryDetail.name,
+            folder = false,
+            fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!,
+            size = artifactFile.getSize(),
+            sha256 = artifactFile.getFileSha256(),
+            md5 = artifactFile.getFileMd5(),
+            overwrite = true,
+            operator = context.userId,
+            nodeMetadata = listOf(MetadataModel(SOURCE_TYPE, ArtifactChannel.PROXY))
         )
     }
 
@@ -247,7 +307,7 @@ class NpmRemoteRepository(
 
     override fun buildDownloadRecord(
         context: ArtifactDownloadContext,
-        artifactResource: ArtifactResource
+        artifactResource: ArtifactResource,
     ): PackageDownloadRecord? {
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())

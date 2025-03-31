@@ -189,7 +189,7 @@ class OciExceptionHandler(
         val uri = HttpContextHolder.getRequest().requestURI
         logger.warn(
             "User[$userId] access oci resource[$uri] failed[${exception.javaClass.simpleName}]:" +
-                " ${responseObject.message}"
+                " ${responseObject.message},${exception.message}",
         )
     }
 

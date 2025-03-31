@@ -15,7 +15,8 @@ export const repoEnum = [
     { label: 'Cocoapods', value: 'cocoapods' },
     { label: 'Gradle', value: 'gradle' },
     { label: 'Ivy', value: 'ivy' },
-    { label: 'Sbt', value: 'sbt' }
+    { label: 'Sbt', value: 'sbt' },
+    { label: 'Ohpm', value: 'ohpm' }
 ]
 // 虚拟仓库支持创建的仓库
 export const repoSupportEnum = [
@@ -32,8 +33,9 @@ export const repoSupportEnum = [
 // 远程仓库支持创建的仓库
 export const remoteRepoSupportEnum = [
     { label: 'Generic', value: 'generic' },
+    ...repoSupportEnum,
     { label: 'Cocoapods', value: 'cocoapods' },
-    ...repoSupportEnum
+    { label: 'Ohpm', value: 'ohpm' }
 ]
 
 // 文件类型
@@ -260,7 +262,7 @@ export const DockerVersionComparisonOperator = [
 export const OperatorMap = {
     EQ: '==',
     NE: '!=',
-    LE: '<',
+    LT: '<',
     LTE: '<=',
     GT: '>',
     GTE: '>='

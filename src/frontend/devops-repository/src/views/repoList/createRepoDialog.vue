@@ -62,7 +62,7 @@
                 <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
                     <!-- todo 测试链接暂未支持 -->
-                    <bk-button v-if="repoBaseInfo.type !== 'generic'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                    <bk-button v-if="!['generic', 'cocoapods'].includes(repoBaseInfo.type)" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                 </bk-form-item>
                 <template v-if="repoBaseInfo.type === 'cocoapods'">
                     <!-- 远程仓库类型 -->

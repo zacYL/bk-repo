@@ -46,13 +46,14 @@
                                     
                                     ...(
                                         // 禁用或者黑名单时，不支持下载
-                                        (!$version.metadata.forbidStatus || versionNoInLockList)
+                                        (!$version.metadata.forbidStatus)
                                             ? [
                                                 (showPromotion && !$version.metadata.lockStatus) && {
-                                                    label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
+                                                    label: $t('upgrade'),
+                                                    clickEvent: () => changeStageTagHandler($version),
                                                     disabled: ($version.stageTag || '').includes('@release')
                                                 },
-                                                !['conan', 'docker'].includes(repoType) && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }
+                                                ...versionNoInLockList ? [!['conan', 'docker'].includes(repoType) && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }] : []
                                             ]
                                             :
                                                 []),
@@ -223,7 +224,7 @@
             },
             // 是否可以移动/复制
             canMoveOrCopy () {
-                return ['maven', 'docker', 'npm', 'go'].includes(this.repoType)
+                return ['maven', 'docker', 'npm', 'go', 'ohpm'].includes(this.repoType)
             }
         },
         created () {
@@ -509,7 +510,7 @@
                             type: 'warning',
                             confirmFn: () => {
                                 this.$refs.repoListDialog.loading()
-                                apiMehods({ repoType: this.repoType, body }).then(res => {
+                                apiMehods({ repoType: this.repoType === 'ohpm' ? 'npm' : this.repoType, body }).then(res => {
                                     this.$refs.repoListDialog.close()
                                     this.$bkMessage({
                                         theme: 'success',
@@ -517,6 +518,18 @@
                                     })
                                     if (type === 'move') {
                                         this.getVersionListHandler()
+                                    }
+                                }).catch((error) => {
+                                    if (error?.status?.toString() === '403') {
+                                        this.$bkMessage({
+                                            theme: 'error',
+                                            message: this.$t('noBusinessTip')
+                                        })
+                                    } else {
+                                        this.$bkMessage({
+                                            theme: 'error',
+                                            message: error.message
+                                        })
                                     }
                                 }).finally(() => {
                                     this.$refs.repoListDialog.loading(false)
@@ -526,7 +539,7 @@
                         return
                     }
                     this.$refs.repoListDialog.loading()
-                    apiMehods({ repoType: this.repoType, body }).then(res => {
+                    apiMehods({ repoType: this.repoType === 'ohpm' ? 'npm' : this.repoType, body }).then(res => {
                         this.$refs.repoListDialog.close()
                         this.$bkMessage({
                             theme: 'success',
@@ -534,6 +547,18 @@
                         })
                         if (type === 'move') {
                             this.getVersionListHandler()
+                        }
+                    }).catch((error) => {
+                        if (error?.status?.toString() === '403') {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('noBusinessTip')
+                            })
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: error.message
+                            })
                         }
                     }).finally(() => {
                         this.$refs.repoListDialog.loading(false)

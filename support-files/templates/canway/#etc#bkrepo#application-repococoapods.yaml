@@ -10,7 +10,7 @@ spring:
         artifactEvent-in-0:
           group: cocoapods
           destination: artifactEvent
-          binder: pulsar
+          binder: __BK_REPO_STREAM_BINDER__
 
 server:
   port: __BK_REPO_COCOAPODS_PORT__

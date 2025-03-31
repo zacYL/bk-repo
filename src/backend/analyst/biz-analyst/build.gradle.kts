@@ -26,7 +26,7 @@
  */
 
 dependencies {
-    implementation("com.alibaba:easyexcel:3.1.1")
+    implementation("com.alibaba:easyexcel:${Versions.Easyexcel}")
     implementation(project(":analyst:api-analyst"))
     implementation(project(":analysis-executor:api-analysis-executor"))
     implementation(project(":oci:api-oci"))

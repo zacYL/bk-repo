@@ -30,7 +30,8 @@
                             <template #content>
                                 <div>{{$t('project') + ': ' + (projectList.find(p => p.id === row.projectId)).name }}</div>
                                 <div>{{$t('repository') + ': ' + replaceRepoName(row.repoName) }}</div>
-                                <div>{{$t('fileStoragePath') + ': ' + row.fullPath }}</div>
+                                <div>{{$t('fileName') + ': ' + (row.name || row.file.name) }}</div>
+                                <div v-if="row.fullPath">{{$t('fileStoragePath') + ': ' + row.fullPath }}</div>
                             </template>
                         </bk-popover>
                     </template>
@@ -55,7 +56,7 @@
                     <template #default="{ row }">
                         <bk-button v-if="row.status === 'INIT' || row.status === 'UPLOADING'"
                             text theme="primary" @click="cancelUpload(row)">{{$t('cancel')}}</bk-button>
-                        <bk-button v-else-if="row.status === 'SUCCESS'"
+                        <bk-button v-else-if="row.status === 'SUCCESS' && !rootData.uploadType"
                             text theme="primary" @click="$router.push({
                                 name: 'repoGeneric',
                                 params: { projectId: row.projectId },
@@ -110,6 +111,7 @@
         },
         mounted () {
             Vue.prototype.$globalUploadFiles = this.selectFiles
+            Vue.prototype.$hiddenGlobalUploadFiles = this.hidden
         },
         methods: {
             ...mapActions([
@@ -123,6 +125,12 @@
                     folder: false,
                     fullPath: ''
                 }
+            },
+            hidden () {
+                console.log(1231)
+                
+                this.initData()
+                this.show = false
             },
             selectFiles (data = {}) {
                 this.initData()
@@ -219,7 +227,7 @@
                         resolve()
                     }).catch(error => {
                         data.status = 'FAILED'
-                        data.errMsg = `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                        data.errMsg = `${error.message || error.error || this.$t('uploadMavenErrorMsgTip')}`
                         reject(error)
                     }).finally(() => {
                         if (index !== -1) {

@@ -165,7 +165,7 @@ class NpmPackageHandler {
                     repoName = repoName,
                     packageName = name,
                     packageKey = NpmUtils.packageKey(name, ohpm),
-                    packageType = if (ohpm)  PackageType.OHPM else PackageType.NPM,
+                    packageType = if (ohpm) PackageType.OHPM else PackageType.NPM,
                     packageDescription = description,
                     versionName = version,
                     size = size,

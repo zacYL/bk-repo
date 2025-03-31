@@ -29,6 +29,7 @@
                         <span class="ml10 flex-1 text-overflow" :title="row.key">{{ row.key }}</span>
                         <div class="ml10" style="width:200px" @click.stop="">
                             <bk-select
+                                class="bk-select-icon-size"
                                 size="small"
                                 searchable
                                 multiple
@@ -160,6 +161,11 @@
         }
         .target-list {
             flex: 2;
+        }
+    }
+    .bk-select-icon-size {
+        ::v-deep .bk-icon {
+            font-size: 12px !important;
         }
     }
 }

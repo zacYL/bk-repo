@@ -4,8 +4,11 @@ import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.metadata.service.node.NodeSearchService
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.metadata.service.node.NodeService
 import com.tencent.bkrepo.common.metadata.service.packages.PackageService
 import com.tencent.bkrepo.common.metadata.service.repo.RepositoryService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
@@ -16,6 +19,7 @@ import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
@@ -31,9 +35,15 @@ import com.tencent.bkrepo.repository.api.VersionDependentsClient
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
+import org.apache.maven.model.Dependency
 import org.apache.maven.model.Model
+import org.apache.maven.model.Plugin
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -42,10 +52,12 @@ import java.util.regex.Pattern
 
 @Service
 class MavenExtService(
+    private val nodeService: NodeService,
     private val nodeSearchService: NodeSearchService,
     private val packageService: PackageService,
     private val repositoryService: RepositoryService,
-    private val versionDependentsClient: VersionDependentsClient
+    private val versionDependentsClient: VersionDependentsClient,
+    private val storageManager: StorageManager
 ) {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -193,11 +205,11 @@ class MavenExtService(
                 repoName = it.repoName,
                 packageKey = it.packageKey,
                 groupId = arr[0],
-                    artifactId = arr[1],
+                artifactId = arr[1],
                 version = it.version,
-                    type = type,
-                    classifier = classifier,
-                    dependencies = null
+                type = type,
+                classifier = classifier,
+                dependencies = null
             )
         }
         return ResponseBuilder.success(Page(
@@ -255,8 +267,9 @@ class MavenExtService(
                 version = version,
             )
         ).data
-        val dependencies = mutableSetOf<MavenDependency>()
-        val plugins = mutableSetOf<MavenPlugin>()
+        var dependencies = mutableSetOf<MavenDependency>()
+        var plugins = mutableSetOf<MavenPlugin>()
+        // 先处理result
         result?.let {
             it.forEach { dependents ->
                 if (dependents.startsWith("dependency")) {
@@ -266,7 +279,297 @@ class MavenExtService(
                 }
             }
         }
+
+        // 更新旧的数据
+        if (dependencies.any { it.version == "null" } || plugins.any { it.version == "null" || it.version == null }) {
+            // TODO 添加plugins的处理逻辑。
+            val (newDependencies, newPlugins, updateFlag) = transferDependencies(
+                dependencies, plugins, projectId, repoName, packageKey, version
+            )
+            dependencies = newDependencies
+            plugins = newPlugins
+            if (updateFlag) {
+                versionDependentsClient.insert(
+                    VersionDependentsRelation(
+                        projectId = projectId,
+                        repoName = repoName,
+                        packageKey = packageKey,
+                        version = version,
+                        ext = null,
+                        dependencies = mutableSetOf<String>().apply {
+                            addAll(
+                                dependencies.map {
+                                    it.toSearchString()
+                                }
+                            )
+                            addAll(
+                                plugins.map {
+                                    it.toSearchString()
+                                }
+                            )
+                        }
+                    )
+                )
+            }
+        }
         return Pair(dependencies, plugins)
+    }
+
+    private fun transferDependencies(
+        dependencies: MutableSet<MavenDependency>,
+        plugins: MutableSet<MavenPlugin>,
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): Triple<MutableSet<MavenDependency>, MutableSet<MavenPlugin>, Boolean> {
+        // 二次处理的依赖信息(从pom文件重新读取)
+        val dependenciesFromPom = mutableSetOf<MavenDependency>()
+        val pluginsFromPom = mutableSetOf<MavenPlugin>()
+        var model: Model? = null
+
+        // 当前的pom文件
+        val packageVersion = packageService.findVersionByName(projectId, repoName, packageKey, version)
+        packageVersion?.run {
+            // 判断封装类型
+            model = getPom(this, projectId, repoName)
+        }
+
+        // 处理父pom问题(存在空版本问题),总共要找三层
+        var deep: Int = 1
+        // 子pom
+        var childModel: Model? = model
+        // 更新标志
+        var updateFlag = false
+
+        // map存放了处理后的dependency以及对应处理前的信息
+        var handledDependencyMap = mutableMapOf<Dependency, MavenDependency>()
+
+        // map存放处理后的plugin以及对应处理前的信息
+        var handledPluginMap = mutableMapOf<Plugin, MavenPlugin>()
+        // model对应就是当前处理的jar包依赖，这块是保持不变，childModel和parentModel只是辅助
+
+        // 筛选出version为null的dependency
+        val preHandleDependencies = model?.dependencies.orEmpty().filter {
+            it.version == null
+        }
+
+        // 筛选出version为null的plugin
+        val preHandlePlugins = model?.build?.plugins.orEmpty().filter {
+            it.version == null
+        }
+        while (childModel != null && (preHandleDependencies.isNotEmpty() || preHandlePlugins.isNotEmpty())) {
+            logger.info("resolve parent pom")
+
+            if (deep > 3) break
+            // 无论如何都要更新层数
+            logger.info("the depth: $deep")
+            deep++
+            // 父model
+            val parentPom: Model? = getParentPom(projectId, repoName, childModel)
+
+            parentPom?.run {
+                logger.info("start assign value for version")
+                // 单独处理dependencies
+                handledDependencyMap = getHandledMap(preHandleDependencies, handledDependencyMap, model!!, parentPom)
+                if (handledDependencyMap.isNotEmpty()) {
+                    updateFlag = true
+                }
+                // 单独处理plugins
+                handledPluginMap = getHandledMapForPlugins(preHandlePlugins, handledPluginMap, model!!, parentPom)
+                if (handledPluginMap.isNotEmpty()) {
+                    updateFlag = true
+                }
+            }
+            // 将当前的parentPom赋值给model继续下一个循环
+            // 若parent不存在刚好就赋值为null，退出循环
+            childModel = parentPom
+        }
+        // 更新dependenciesFromPom
+        // 未处理的依赖(包括version不为空的，以及不出在已处理map中的)
+        val versionDependencies = dependencies.filter {
+            it.version != "null"
+        }
+
+        // 未处理的插件(包括version不为空的，以及不出在已处理map中的)
+        val versionPlugins = plugins.filter {
+            it.version != "null"
+        }
+        // 从version为空的依赖中筛选出处理后仍然为空的依赖
+        val nonHandledDependencies = preHandleDependencies.filter {
+            !handledDependencyMap.containsKey(it)
+        }
+
+        // 从version为空的插件中筛选出处理后仍然为空的插件
+        val nonHandledPlugins = preHandlePlugins.filter {
+            !handledPluginMap.containsKey(it)
+        }
+        // 获取未处理的mavenDependency
+        val nonMavenDependencies = getNonHandledMavenDependency(nonHandledDependencies, dependencies)
+
+        // 获取未处理的mavenPlugin
+        val nonMavenPlugins = getNonHandledMavenPlugin(nonHandledPlugins, plugins)
+        // 最终组装依赖
+        dependenciesFromPom.run {
+            addAll(
+                // 经过处理后的依赖
+                handledDependencyMap.values
+            )
+            addAll(
+                // 不需要处理的依赖（即version不为空）
+                versionDependencies
+            )
+            addAll(
+                // 未处理的依赖
+                nonMavenDependencies
+            )
+        }
+        // 最终组装插件
+        pluginsFromPom.run {
+            addAll(
+                handledPluginMap.values
+            )
+            addAll(
+                versionPlugins
+            )
+            addAll(
+                nonMavenPlugins
+            )
+        }
+        // 如果刚好version全部都加上了，还要判断一次,同样需要更新
+        if (!dependenciesFromPom.any { it.version == "null" } ||
+            !pluginsFromPom.any { it.version == "null" }
+        ) {
+            updateFlag = true
+        }
+        return Triple(dependenciesFromPom, pluginsFromPom, updateFlag)
+    }
+
+    private fun getNonHandledMavenDependency(
+        nonHandleDependencies: List<Dependency>,
+        dependencies: MutableSet<MavenDependency>
+    ): List<MavenDependency> {
+        val result = mutableListOf<MavenDependency>()
+        dependencies.filter {
+            it.version == "null"
+        }.forEach {
+            var flag = false
+            nonHandleDependencies.forEach { dependency ->
+                if (dependency.groupId == it.groupId &&
+                    dependency.artifactId == it.artifactId
+                ) {
+                    flag = true
+                }
+            }
+            if (flag) {
+                result.add(it)
+            }
+        }
+        return result
+    }
+
+    private fun getNonHandledMavenPlugin(
+        nonHandlePlugins: List<Plugin>,
+        plugins: MutableSet<MavenPlugin>
+    ): List<MavenPlugin> {
+        val result = mutableListOf<MavenPlugin>()
+        plugins.filter {
+            it.version == "null"
+        }.forEach {
+            var flag = false
+            nonHandlePlugins.forEach { plugin ->
+                if (plugin.groupId == it.groupId &&
+                    plugin.artifactId == it.artifactId
+                ) {
+                    flag = true
+                }
+            }
+            if (flag) {
+                result.add(it)
+            }
+        }
+        return result
+    }
+
+    private fun getHandledMap(
+        newDependencies: List<Dependency>,
+        map: MutableMap<Dependency, MavenDependency>,
+        model: Model,
+        parentPom: Model
+    ): MutableMap<Dependency, MavenDependency> {
+        newDependencies.filter {
+            !map.containsKey(it)
+        }.forEach { dependency ->
+            val parseDependency = DependencyUtils.parseDependency(dependency, model, parentPom)
+            if (parseDependency.version != "null" && parseDependency.version != null) {
+                map.set(dependency, parseDependency)
+            }
+        }
+        return map
+    }
+    // 处理plugins的map存储
+    private fun getHandledMapForPlugins(
+        newPlugins: List<Plugin>,
+        map: MutableMap<Plugin, MavenPlugin>,
+        model: Model,
+        parentPom: Model
+    ): MutableMap<Plugin, MavenPlugin> {
+        newPlugins.filter {
+            !map.containsKey(it)
+        }.forEach { plugin ->
+            val parsePlugin = DependencyUtils.parsePlugin(plugin, model, parentPom)
+            if (parsePlugin.version != "null" && parsePlugin.version != null) {
+                map.set(plugin, parsePlugin)
+            }
+        }
+        return map
+    }
+
+    private fun getPom(
+        packageVersion: PackageVersion,
+        projectId: String,
+        repoName: String,
+    ): Model? {
+        val packaging = packageVersion.metadata["packaging"] as String? ?: run {
+            val matcher = Pattern.compile(PACKAGE_SUFFIX_REGEX).matcher(packageVersion.contentPath!!)
+            require(matcher.matches()) {
+                "Invalid artifact file format [${packageVersion.contentPath}] in $projectId/$repoName"
+            }
+            matcher.group(2)
+        }
+
+        // 存储信息获取
+        val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, packageVersion.contentPath!!))
+        val storageCredentials = repositoryService.getRepoDetail(projectId, repoName)?.storageCredentials
+        val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials)
+
+        return if (packaging != "pom") {
+            // 查询同一目录下的所有节点
+            getPomFromNodeList(node, projectId, repoName, storageCredentials)
+        } else {
+            inputStream?.use { MavenXpp3Reader().read(it) }
+        }
+    }
+
+    // 从同一目录下获取Pom
+    private fun getPomFromNodeList(
+        node: NodeDetail?,
+        projectId: String,
+        repoName: String,
+        storageCredentials: StorageCredentials?
+    ): Model? {
+        node?.let {
+            val nodeList =
+                nodeService.listNodePage(ArtifactInfo(projectId, repoName, node.path), NodeListOption()).records
+            val fullPath = nodeList.findLast { nodeInfo -> nodeInfo.fullPath.endsWith(".pom") }?.fullPath
+            fullPath?.run {
+                val pomNode = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, fullPath))
+                val inputStreamPom = storageManager.loadArtifactInputStream(pomNode, storageCredentials)
+                // 当前的封装类型
+                return inputStreamPom?.use { MavenXpp3Reader().read(it) }
+            }
+        }
+        return null
     }
 
     fun addVersionDependents(mavenGavc: MavenGAVC, model: Model, projectId: String, repoName: String) {
@@ -297,17 +600,46 @@ class MavenExtService(
                 dependencies = mutableSetOf<String>().apply {
                     addAll(
                         dependencies.map {
-                            DependencyUtils.parseDependency(it, model).toSearchString()
+                            DependencyUtils.parseDependency(it, model, null).toSearchString()
                         }
                     )
                     addAll(
                         plugins.map {
-                            DependencyUtils.parsePlugin(it).toSearchString()
+                            DependencyUtils.parsePlugin(it, model, null).toSearchString()
                         }
                     )
                 }
             )
         )
+    }
+
+    // 获取父pom
+    private fun getParentPom(projectId: String, repoName: String, model: Model): Model? {
+        val parent = model.parent ?: null
+        var parentPom: Model? = null
+        // 不存在parent标签
+        if (parent == null) {
+            return null
+        }
+        with(parent) {
+            logger.info("正在处理父pom")
+            // 父pom肯定在同个仓库里
+            if (groupId == null || artifactId == null) {
+                // 不存在parent信息
+                return null
+            }
+            val packageKey = PackageKeys.ofGav(groupId, artifactId)
+            val packageVersion = packageService.findVersionByName(projectId, repoName, packageKey, version)
+            packageVersion?.run {
+                // 获取仓库的存储凭证
+                val storageCredentials = repositoryService.getRepoDetail(projectId, repoName)?.storageCredentials
+                // 获取父pom的node信息
+                val node = nodeService.getNodeDetail(ArtifactInfo(projectId, repoName, contentPath!!))
+                val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials)
+                parentPom = inputStream.use { MavenXpp3Reader().read(it) }
+            }
+        }
+        return parentPom
     }
 
     companion object {

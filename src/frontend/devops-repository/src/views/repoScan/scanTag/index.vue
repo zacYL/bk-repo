@@ -48,7 +48,15 @@
             status: String,
             repoType: String,
             fullPath: String,
-            readonly: Boolean
+            readonly: Boolean,
+            storeTypeCheck: {
+                type: Boolean,
+                default: false
+            },
+            localRepo: {
+                type: String,
+                default: ''
+            }
         },
         data () {
             return {
@@ -76,11 +84,11 @@
                 this.openScanList(e)
                 this.isLoading = true
                 const { projectId, repoType = this.repoType } = this.$route.params
-                const { repoName, version, packageKey } = this.$route.query
+                const { repoName, version, packageKey, storeType } = this.$route.query
                 this.getArtiScanList({
                     projectId,
                     repoType,
-                    repoName,
+                    repoName: this.storeTypeCheck && storeType === 'virtual' ? this.localRepo : repoName,
                     packageKey: packageKey || undefined,
                     version: version || undefined,
                     fullPath: this.fullPath || undefined

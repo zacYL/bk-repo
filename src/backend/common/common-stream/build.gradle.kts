@@ -33,4 +33,5 @@ dependencies {
     api("commons-io:commons-io")
     api("org.springframework.cloud:spring-cloud-starter-stream-kafka")
     api("net.jodah:typetools:0.6.2")
+    api("org.springframework.cloud:spring-cloud-starter-stream-rabbit")
 }

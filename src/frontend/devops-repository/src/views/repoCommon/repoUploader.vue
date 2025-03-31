@@ -10,7 +10,7 @@
             <div v-if="customSettings.uploadFlag">
                 <div class="content-info">
                     <p v-if="repoType === 'MAVEN'">{{ $t('selectMavenArtifact') }}</p>
-                    <p v-if="repoType === 'NPM'">{{ $t('selectMavenArtifact') }}</p>
+                    <p v-if="repoType === 'NPM'">{{ $t('selectNpmArtifact') }}</p>
                     <p v-if="repoType === 'DOCKER'">{{ $t('selectDockerImage') }}</p>
                 </div>
                 <bk-upload
@@ -35,7 +35,7 @@
                         form-type="vertical"
                     >
                         <bk-form-item :label="$t('currentFile')" v-if="npmFormData.currentFile" required>
-                            <bk-input disabled v-model="npmFormData.currentFile" />
+                            <bk-input disabled v-model.trim="npmFormData.currentFile" />
                         </bk-form-item>
                     </bk-form>
                     <div class="g-flex mt10">
@@ -53,13 +53,13 @@
                         :rules="dockerRules"
                     >
                         <bk-form-item :label="$t('currentFile')" v-if="dockerFormData.currentFile" required>
-                            <bk-input disabled v-model="dockerFormData.currentFile" />
+                            <bk-input disabled v-model.trim="dockerFormData.currentFile" />
                         </bk-form-item>
                         <bk-form-item label="Package Name" property="packageName" required>
-                            <bk-input v-model="dockerFormData.packageName" />
+                            <bk-input v-model.trim="dockerFormData.packageName" />
                         </bk-form-item>
                         <bk-form-item label="Version" property="version" required>
-                            <bk-input v-model="dockerFormData.version" />
+                            <bk-input v-model.trim="dockerFormData.version" />
                         </bk-form-item>
                     </bk-form>
                     <div class="g-flex mt10">
@@ -110,19 +110,19 @@
                         :rules="mavenRules"
                     >
                         <bk-form-item label="Group ID" property="groupId" :required="checkFail">
-                            <bk-input :readonly="!checkFail" v-model="mavenFormData.groupId" />
+                            <bk-input :readonly="!checkFail" v-model.trim="mavenFormData.groupId" />
                         </bk-form-item>
                         <bk-form-item label="Artifact ID" property="artifactId" :required="checkFail">
-                            <bk-input :readonly="!checkFail" v-model="mavenFormData.artifactId" />
+                            <bk-input :readonly="!checkFail" v-model.trim="mavenFormData.artifactId" />
                         </bk-form-item>
                         <bk-form-item label="Version" property="version" :required="checkFail">
-                            <bk-input :readonly="!checkFail" v-model="mavenFormData.version" />
+                            <bk-input :readonly="!checkFail" v-model.trim="mavenFormData.version" />
                         </bk-form-item>
                         <bk-form-item v-if="mavenFormData.classifier" label="Classifier" property="classifier">
-                            <bk-input readonly v-model="mavenFormData.classifier" />
+                            <bk-input readonly v-model.trim="mavenFormData.classifier" />
                         </bk-form-item>
                         <bk-form-item label="Type" property="type">
-                            <bk-input readonly v-model="mavenFormData.type" />
+                            <bk-input readonly v-model.trim="mavenFormData.type" />
                         </bk-form-item>
                         <bk-form-item v-if="checkFail">
                             <bk-button
@@ -152,7 +152,7 @@
             </div>
         </div>
         <div slot="footer">
-            <bk-button @click.stop.prevent="cancel">{{ $t('cancel') }}</bk-button>
+            <bk-button @click.stop.prevent="btnCancel">{{ $t('cancel') }}</bk-button>
             <bk-button
                 class="ml10"
                 theme="primary"
@@ -201,10 +201,22 @@
         data () {
             return {
                 mavenRules: {
-                    groupID: [
+                    groupId: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'groupID',
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9._-]+(?<!\.)$/,
+                            message: this.$t('fieldDescription1'),
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: (val) => {
+                                return !(val + '').startsWith('.')
+                            },
+                            message: this.$t('fieldDescription1'),
                             trigger: 'blur'
                         }
                     ],
@@ -213,12 +225,36 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'Version',
                             trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9._-]+(?<!\.)$/,
+                            message: this.$t('fieldDescription1'),
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: (val) => {
+                                return !(val + '').startsWith('.')
+                            },
+                            message: this.$t('fieldDescription1'),
+                            trigger: 'blur'
                         }
                     ],
                     artifactId: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'artifactID',
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9._-]+(?<!\.)$/,
+                            message: this.$t('fieldDescription1'),
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: (val) => {
+                                return !(val + '').startsWith('.')
+                            },
+                            message: this.$t('fieldDescription1'),
                             trigger: 'blur'
                         }
                     ]
@@ -229,12 +265,23 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'Package Name',
                             trigger: 'blur'
+                        },
+                        {
+                           
+                            regex: /^[a-z0-9]+([._-][a-z0-9]+)*(\/[a-z0-9]+([._-][a-z0-9]+)*)*$/,
+                            message: this.$t('dockerUploaderCheck1'),
+                            trigger: 'blur'
                         }
                     ],
                     version: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + 'Version',
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^\w[\w.-]{0,127}$/,
+                            message: this.$t('dockerUploaderCheck'),
                             trigger: 'blur'
                         }
                     ]
@@ -278,12 +325,23 @@
                 }
             }
         },
+        beforeDestroy () {
+            this.loadingCancel()
+        },
         methods: {
             ...mapActions([
                 'uploadArtifactory',
                 'submitMavenArtifactory',
                 'deleteUselessPackage'
             ]),
+            loadingCancel () {
+                if (this.uploadPercent > 0 && this.uploadPercent !== 1) {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('pageUploadCancel')
+                    })
+                }
+            },
             handleClickClose () {
                 this.customSettings = {
                     isShow: false,
@@ -291,6 +349,7 @@
                     uploadFlag: true, // 是否显示上传组件
                     saveBtnDisable: false // 确认按钮是否禁用
                 }
+                this.loadingCancel()
                 // 关闭弹窗时重置滚动条需要的数据
                 this.onAbortUpload()
                 this.cancel()
@@ -366,8 +425,15 @@
                         }
                     }
                 }).catch(error => {
-                    // error &&  this.errorMsg = error.message || error.error || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'
-                    this.errorMsg = error.message || error.error || error
+                    if (uploadType === 'pomUpload') {
+                        this.$bkMessage({
+                            theme: 'error',
+                            message: error?.message || this.$t('fileUploadErrorInfo')
+                        })
+                    } else {
+                        // error &&  this.errorMsg = error.message || error.error || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'
+                        this.errorMsg = error?.message || error?.error || error || this.$t('fileUploadErrorInfo')
+                    }
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -380,6 +446,10 @@
                 this.uploadPercent = 0
                 this.currentFileName = ''
                 this.errorMsg = ''
+            },
+            btnCancel () {
+                this.onAbortUpload()
+                this.cancel()
             },
             cancel () {
                 this.$emit('cancel', false)
@@ -430,7 +500,7 @@
                                         .catch(error => {
                                             this.$bkMessage({
                                                 theme: 'error',
-                                                message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                                                message: `${error?.errors?.[0]?.message || error.message || this.$t('uploadMavenErrorMsgTip')}`
                                             })
                                             reject(error)
                                         })
@@ -453,7 +523,7 @@
                                             resolve()
                                         })
                                         .catch(error => {
-                                            this.errorMsg = error.message || error.error || error
+                                            this.errorMsg = error?.errors?.[0]?.message || error.message || error.error || error
                                             reject(this.errorMsg)
                                         })
                                     break
@@ -473,7 +543,7 @@
                                             resolve()
                                         })
                                         .catch(error => {
-                                            this.errorMsg = error.message || error.error || error
+                                            this.errorMsg = error?.errors?.[0]?.message || error.message || error.error || error
                                             reject(this.errorMsg)
                                         })
                                     break

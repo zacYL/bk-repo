@@ -75,6 +75,11 @@
             }
         },
         watch: {
+            selectedRepoName: {
+                handler (val) {
+                    this.$emit('pathTableChoose', val)
+                }
+            },
             initData: {
                 handler (data) {
                     const { pathConstraints = [], localRepoName } = JSON.parse(JSON.stringify(data))[0] || {}
@@ -89,6 +94,9 @@
             confirm (pathConstraints) {
                 this.pathConstraints = pathConstraints
                 this.$emit('clearError')
+            },
+            getTarget () {
+                return [this.targetProject || this.projectId, this.targetStore || this.selectedRepoName]
             },
             getConfig () {
                 return new Promise((resolve, reject) => {

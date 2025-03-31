@@ -10,11 +10,11 @@ spring:
         remoteRepo-in-0:
           destination: bkrepo_artifact_repo
           group: bkrepo_sub
-          binder: pulsar
+          binder: __BK_REPO_STREAM_BINDER__
         artifactEvent-in-0:
           group: docker
           destination: artifactEvent
-          binder: pulsar
+          binder: __BK_REPO_STREAM_BINDER__
 server:
   port: __BK_REPO_HELM_PORT__
 logging:

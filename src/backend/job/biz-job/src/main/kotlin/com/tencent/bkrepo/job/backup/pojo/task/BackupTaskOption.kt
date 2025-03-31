@@ -25,22 +25,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+package com.tencent.bkrepo.job.backup.pojo.task
 
-package com.tencent.bkrepo.common.artifact.resolve.response
+import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
+import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 
-import com.tencent.bkrepo.common.api.constant.MediaTypes
-
-class ArtifactResourceWriterContext(
-    private val writers: List<ArtifactResourceWriter>,
-) {
-    fun getWriter(resource: ArtifactResource): ArtifactResourceWriter {
-        return if (MediaTypes.APPLICATION_GZIP == resource.contentType) {
-            writers.find { it is GzArtifactResourceWriter }
-                ?: throw IllegalArgumentException("No suitable writer found for gz")
-        } else {
-            // 默认选择
-            writers.find { it is DefaultArtifactResourceWriter }
-                ?: throw IllegalArgumentException("No default writer found")
-        }
-    }
-}
+data class BackupTaskOption(
+    val name: String? = null,
+    val type: String? = null,
+    val state: String? = null,
+    val repoNames: String? = null,
+    val projectIds: List<String>? = emptyList(),
+    val pageNumber: Int = DEFAULT_PAGE_NUMBER,
+    val pageSize: Int = DEFAULT_PAGE_SIZE,
+)

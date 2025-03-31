@@ -221,6 +221,11 @@
                             lastModifiedDate: basic.lastModifiedDate && formatDate(basic.lastModifiedDate)
                         }
                     }
+                }).catch((err) => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: err?.message || this.$t('unknownError')
+                    })
                 }).finally(() => {
                     this.isLoading = false
                 })

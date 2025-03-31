@@ -40,6 +40,7 @@ import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
 import com.tencent.bkrepo.common.artifact.audit.REPO_EDIT_ACTION
 import com.tencent.bkrepo.common.artifact.audit.REPO_RESOURCE
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.oci.constant.OCI_PACKAGE_NAME
 import com.tencent.bkrepo.oci.constant.OCI_PROJECT_ID
@@ -67,6 +68,7 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.http.MediaType
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -81,7 +83,10 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.HandlerMapping
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
+import javax.validation.constraints.Pattern
 
+@Validated
 @Suppress("MVCPathVariableInspection")
 @Api("oci产品接口")
 @RestController
@@ -256,6 +261,7 @@ class UserOciController(
         )
     }
 
+    @Validated
     @PutMapping("/upload/{projectId}/{repoName}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
 
@@ -266,9 +272,11 @@ class UserOciController(
         repoName: String,
 
         @RequestParam
+        @Pattern(regexp = "[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*")
         packageName: String,
 
         @RequestParam
+        @Pattern(regexp = "\\w[\\w.-]{0,127}")//规范参考https://pkg.go.dev/github.com/distribution/reference#section-readme
         version: String,
 
         @RequestPart(value = "file")
@@ -276,7 +284,14 @@ class UserOciController(
 
     ): Response<Boolean> {
         ociBlobService.uploadImage(OciArtifactInfo(projectId, repoName, packageName, version), file)
-        return ResponseBuilder.success()
+        with(HttpContextHolder.getResponse()) {
+            status = HttpServletResponse.SC_OK
+            setHeader("Docker-Content-Digest", null)
+            setHeader("Docker-Distribution-Api-Version", null)
+            setHeader("Location", null)
+            setHeader("Content-Length", null)
+        }
+        return ResponseBuilder.success(true)
     }
 
     @ApiOperation("移动包版本")

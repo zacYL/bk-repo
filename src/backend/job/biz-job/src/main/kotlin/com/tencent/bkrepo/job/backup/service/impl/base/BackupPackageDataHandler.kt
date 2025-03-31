@@ -7,6 +7,7 @@ import com.tencent.bkrepo.job.backup.pojo.query.enums.BackupDataEnum
 import com.tencent.bkrepo.job.backup.pojo.record.BackupContext
 import com.tencent.bkrepo.job.backup.pojo.setting.BackupConflictStrategy
 import com.tencent.bkrepo.job.backup.service.BackupDataHandler
+import com.tencent.bkrepo.repository.api.PackageClient
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component
 @Component
 class BackupPackageDataHandler(
     private val mongoTemplate: MongoTemplate,
+    private val packageClient: PackageClient,
 ) : BackupDataHandler {
     override fun dataType(): BackupDataEnum {
         return BackupDataEnum.PACKAGE_DATA
@@ -78,7 +80,7 @@ class BackupPackageDataHandler(
         mongoTemplate.updateFirst(packageQuery, update, BackupDataEnum.PACKAGE_DATA.collectionName)
         logger.info(
             "update exist package ${packageInfo.key} " +
-                "success with name ${packageInfo.projectId}|${packageInfo.repoName}"
+                    "success with name ${packageInfo.projectId}|${packageInfo.repoName}"
         )
     }
 

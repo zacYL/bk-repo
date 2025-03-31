@@ -59,6 +59,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveConte
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.lock.service.LockOperation
 import com.tencent.bkrepo.common.metadata.service.metadata.MetadataService
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -83,7 +84,6 @@ import com.tencent.bkrepo.npm.constants.PACKAGE_JSON
 import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
 import com.tencent.bkrepo.npm.constants.SIZE
-import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH
 import com.tencent.bkrepo.npm.exception.NpmArtifactExistException
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
@@ -112,6 +112,7 @@ import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import org.apache.commons.codec.binary.Base64
+import org.apache.commons.compress.archivers.ArchiveException
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.lang3.StringUtils
@@ -131,7 +132,8 @@ class NpmClientServiceImpl(
     private val metadataService: MetadataService,
     private val npmPackageHandler: NpmPackageHandler,
     private val npmOperationService: NpmOperationService,
-    ) : NpmClientService, AbstractNpmService() {
+    private val lockOperation: LockOperation
+) : NpmClientService, AbstractNpmService() {
 
     @Transactional(rollbackFor = [Throwable::class])
     override fun publishOrUpdatePackage(
@@ -153,7 +155,7 @@ class NpmClientServiceImpl(
                     }.apply {
                         logger.info(
                             "user [$userId] public npm package [$name] " +
-                                "to repo [${realArtifactInfo.getRepoIdentify()}] success, elapse $this ms"
+                                    "to repo [${realArtifactInfo.getRepoIdentify()}] success, elapse $this ms"
                         )
                     }
                     return NpmSuccessResponse.createEntitySuccess()
@@ -212,7 +214,7 @@ class NpmClientServiceImpl(
         with(artifactInfo) {
             logger.info(
                 "handling query package version metadata request for package [$name] " +
-                    "and version [$version] in repo [$projectId/$repoName]"
+                        "and version [$version] in repo [$projectId/$repoName]"
             )
             if (StringUtils.equals(version, LATEST)) {
                 return searchLatestVersionMetadata(artifactInfo, name)
@@ -252,7 +254,7 @@ class NpmClientServiceImpl(
         } ?: artifactInfo
         logger.info(
             "handling add distTags [$tag] request for package [$name] " +
-                "in repo [${realArtifactInfo.getRepoIdentify()}]"
+                    "in repo [${realArtifactInfo.getRepoIdentify()}]"
         )
         val packageMetaData = queryPackageInfo(realArtifactInfo, name, false)
         val repoId = RepositoryId(artifactInfo.projectId, artifactInfo.repoName)
@@ -274,12 +276,12 @@ class NpmClientServiceImpl(
         } ?: artifactInfo
         logger.info(
             "handling delete distTags [$tag] request for package [$name] " +
-                "in repo [${realArtifactInfo.getRepoIdentify()}]"
+                    "in repo [${realArtifactInfo.getRepoIdentify()}]"
         )
         if (LATEST == tag) {
             logger.warn(
                 "dist tag for [latest] with package [$name] " +
-                    "in repo [${realArtifactInfo.getRepoIdentify()}] cannot be deleted."
+                        "in repo [${realArtifactInfo.getRepoIdentify()}] cannot be deleted."
             )
             return
         }
@@ -302,15 +304,23 @@ class NpmClientServiceImpl(
 
     override fun deleteVersion(artifactInfo: NpmArtifactInfo) {
         with(artifactInfo) {
-            logger.info("npm delete package version request: [$this]")
+            logger.info("handling delete version [$version] request for package [${packageName}].")
+            val fullPathList = mutableListOf<String>()
             val ohpm = ArtifactContextHolder.getRepoDetail()?.type == RepositoryType.OHPM
             val packageKey = NpmUtils.packageKey(packageName, ohpm)
             val versionInfo = packageService.findVersionByName(projectId, repoName, packageKey, version!!)
                 ?: throw VersionNotFoundException("$packageKey/$version")
+            fullPathList.add(versionInfo.contentPath!!)
+            if (ohpm) {
+                val hspPath = NpmUtils.harPathToHspPath(versionInfo.contentPath!!)
+                fullPathList.add(hspPath)
+                fullPathList.add(NpmUtils.getReadmeDirFromTarballPath(versionInfo.contentPath!!))
+            }
+            fullPathList.add(NpmUtils.getVersionPackageMetadataPath(packageName, version!!))
             val context = ArtifactRemoveContext()
-            context.putAttribute(TARBALL_FULL_PATH, versionInfo.contentPath!!)
             // 删除包管理中对应的version
             npmPackageHandler.deleteVersion(context.userId, packageName, version!!, artifactInfo)
+            context.putAttribute(NPM_FILE_FULL_PATH, fullPathList)
             repository.remove(context)
             logger.info("userId [${context.userId}] delete version [$version] for package [$packageName] success.")
         }
@@ -448,25 +458,28 @@ class NpmClientServiceImpl(
             if (ohpm) {
                 resolveOhpm(npmPackageMetaData)
             }
-            handlerAttachmentsUpload(userId, artifactInfo, npmPackageMetaData, artifactFile)
-            handlerPackageFileUpload(userId, artifactInfo, npmPackageMetaData, size, ohpm)
-            handlerVersionFileUpload(userId, artifactInfo, npmPackageMetaData, size)
-            if (npmPackageMetaData.distTags.getMap().containsKey(LATEST)) {
-                npmDependentHandler.updatePackageDependents(
-                    userId,
-                    artifactInfo,
-                    npmPackageMetaData,
-                    NpmOperationAction.PUBLISH,
-                    ohpm
-                )
+            val packageKey = NpmUtils.packageKeyByRepoType(npmPackageMetaData.name.orEmpty())
+            lockOperation.doWithLock(packageUploadLockKey(artifactInfo.projectId, artifactInfo.repoName, packageKey)) {
+                handlerAttachmentsUpload(userId, artifactInfo, npmPackageMetaData, artifactFile)
+                handlerPackageFileUpload(userId, artifactInfo, npmPackageMetaData, size, ohpm)
+                handlerVersionFileUpload(userId, artifactInfo, npmPackageMetaData, size)
+                if (npmPackageMetaData.distTags.getMap().containsKey(LATEST)) {
+                    npmDependentHandler.updatePackageDependents(
+                        userId,
+                        artifactInfo,
+                        npmPackageMetaData,
+                        NpmOperationAction.PUBLISH,
+                        ohpm
+                    )
+                }
+                val versionMetadata = npmPackageMetaData.versions.map.values.iterator().next()
+                npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size, ohpm)
             }
-            val versionMetadata = npmPackageMetaData.versions.map.values.iterator().next()
-            npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size, ohpm)
         } catch (exception: IOException) {
             val version = NpmUtils.getLatestVersionFormDistTags(npmPackageMetaData.distTags)
             logger.error(
                 "userId [$userId] publish package [${npmPackageMetaData.name}] for version [$version] " +
-                    "to repo [${artifactInfo.projectId}/${artifactInfo.repoName}] failed."
+                        "to repo [${artifactInfo.projectId}/${artifactInfo.repoName}] failed."
             )
         }
     }
@@ -499,30 +512,31 @@ class NpmClientServiceImpl(
             val packageKey = NpmUtils.packageKeyByRepoType(npmPackageMetaData.name.orEmpty())
             val gmtTime = TimeUtil.getGMTTime()
             val npmMetadata = npmPackageMetaData.versions.map.values.iterator().next()
+            // 处理没有latest标签的问题
+            if (!npmPackageMetaData.distTags.getMap().containsKey(LATEST)) {
+                npmPackageMetaData.distTags.getMap().set(LATEST, npmMetadata.version!!)
+            }
             if (!npmMetadata.dist!!.any().containsKey(SIZE)) {
                 npmMetadata.dist!!.set(SIZE, size)
             }
-            // 第一次上传
-            if (!packageExist(projectId, repoName, packageKey)) {
-                if (ohpm) {
-                    npmPackageMetaData.rev = npmPackageMetaData.versions.map.size.toString()
-                }
-                npmPackageMetaData.time.add(CREATED, gmtTime)
-                npmPackageMetaData.time.add(MODIFIED, gmtTime)
-                npmPackageMetaData.time.add(npmMetadata.version!!, gmtTime)
-                doPackageFileUpload(userId, artifactInfo, npmPackageMetaData)
-                return
+            val isFirstVersion = !packageExist(projectId, repoName, packageKey)
+            val packageMetadata = if (isFirstVersion) npmPackageMetaData
+                else queryPackageInfo(artifactInfo, npmPackageMetaData.name!!, false)
+
+            packageMetadata.time.add(MODIFIED, gmtTime)
+            packageMetadata.time.add(npmMetadata.version!!, gmtTime)
+
+            if (isFirstVersion) {
+                packageMetadata.time.add(CREATED, gmtTime)
+            } else {
+                packageMetadata.versions.map.putAll(npmPackageMetaData.versions.map)
+                packageMetadata.distTags.getMap().putAll(npmPackageMetaData.distTags.getMap())
+                NpmUtils.updateLatestVersion(packageMetadata)
             }
-            val originalPackageInfo = queryPackageInfo(artifactInfo, npmPackageMetaData.name!!, false)
-            originalPackageInfo.versions.map.putAll(npmPackageMetaData.versions.map)
-            originalPackageInfo.distTags.getMap().putAll(npmPackageMetaData.distTags.getMap())
-            originalPackageInfo.time.add(MODIFIED, gmtTime)
-            originalPackageInfo.time.add(npmMetadata.version!!, gmtTime)
             if (ohpm) {
-                NpmUtils.updateLatestVersion(originalPackageInfo)
-                originalPackageInfo.rev = originalPackageInfo.versions.map.size.toString()
+                packageMetadata.rev = packageMetadata.versions.map.size.toString()
             }
-            doPackageFileUpload(userId, artifactInfo, originalPackageInfo)
+            doPackageFileUpload(userId, artifactInfo, packageMetadata)
         }
     }
 
@@ -540,7 +554,7 @@ class NpmClientServiceImpl(
             repository.upload(context).also {
                 logger.info(
                     "user [$userId] upload npm package metadata file [$fullPath] " +
-                        "into repo [$projectId/$repoName] success."
+                            "into repo [$projectId/$repoName] success."
                 )
             }
             artifactFile.delete()
@@ -568,7 +582,7 @@ class NpmClientServiceImpl(
             repository.upload(context).also {
                 logger.info(
                     "user [$userId] upload npm package version metadata file [$fullPath] " +
-                        "into repo [$projectId/$repoName] success."
+                            "into repo [$projectId/$repoName] success."
                 )
             }
             artifactFile.delete()
@@ -589,11 +603,11 @@ class NpmClientServiceImpl(
             val coverStrategy = ArtifactContextHolder.getRepoDetailOrNull()?.coverStrategy ?: CoverStrategy.DISABLE
             logger.info("projectId[$projectId] npm repo[$repoName] coverStrategy[$coverStrategy]")
             if ((packageVersionExist(projectId, repoName, packageKey, version) ||
-                packageHistoryVersionExist(projectId, repoName, packageKey, version)) &&
+                        packageHistoryVersionExist(projectId, repoName, packageKey, version)) &&
                 coverStrategy == CoverStrategy.UNCOVER) {
                 throw NpmArtifactExistException(
                     "You cannot publish over the previously published versions: ${versionMetadata.version}." +
-                        "projectId[$projectId] repo[$repoName] cover strategy uncover."
+                            "projectId[$projectId] repo[$repoName] cover strategy uncover."
                 )
             }
         }
@@ -739,7 +753,7 @@ class NpmClientServiceImpl(
     ) {
         logger.info(
             "userId [$userId] handler deprecated request: [$npmPackageMetaData] " +
-                "in repo [${artifactInfo.projectId}]"
+                    "in repo [${artifactInfo.projectId}]"
         )
         doPackageFileUpload(userId, artifactInfo, npmPackageMetaData)
         // 元数据增加过期信息
@@ -777,13 +791,19 @@ class NpmClientServiceImpl(
         val repoType = ArtifactContextHolder.getRepoDetail(RepositoryId(projectId, repoName)).type
         require(repoType == RepositoryType.NPM)
         val bytes = file.bytes
-        val packageVersion = DecompressUtils.tryArchiverWithCompressor<NpmVersionMetadata, ByteArray>(
-            bytes.inputStream(),
-            callbackPre = { it.name.endsWith(PACKAGE_JSON) },
-            callback = { stream, _ -> stream.readBytes() },
-            handleResult = { _, packageJson, _ -> packageJson?.readPackageJson(bytes) },
-            callbackPost = { _, _ -> false }
-        ) ?: throw NpmBadRequestException("Invalid npm package")
+        val packageVersion = try {
+            DecompressUtils.tryArchiverWithCompressor<NpmVersionMetadata, ByteArray>(
+                bytes.inputStream(),
+                callbackPre = { it.name.endsWith(PACKAGE_JSON) },
+                callback = { stream, _ -> stream.readBytes() },
+                handleResult = { _, packageJson, _ -> packageJson?.readPackageJson(bytes) },
+                callbackPost = { _, _ -> false }
+            )
+        } catch (e: ArchiveException) {
+            logger.error("Invalid npm package", e)
+            throw NpmBadRequestException("Invalid npm package")
+        }
+        packageVersion ?: throw NpmBadRequestException("Invalid npm package")
         with(packageVersion) {
             val artifactInfo = NpmArtifactInfo(projectId, repoName, name!!, version)
             HttpContextHolder.getRequest().setAttribute(ARTIFACT_INFO_KEY, artifactInfo)
@@ -837,6 +857,9 @@ class NpmClientServiceImpl(
             }
         }
     }
+
+    private fun packageUploadLockKey(projectId: String, repoName: String, packageKey: String) =
+        "package:upload:$projectId:$repoName:$packageKey"
 
     companion object {
 

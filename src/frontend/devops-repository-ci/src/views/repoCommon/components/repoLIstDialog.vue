@@ -1,3 +1,9 @@
+<!--
+ * @Date: 2025-01-09 15:22:35
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2025-01-23 14:50:22
+ * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoCommon/components/repoLIstDialog.vue
+-->
 <template>
     <div>
         <canway-dialog
@@ -15,7 +21,7 @@
                     right-icon="bk-icon icon-search">
                 </bk-input>
                 <div class="content" v-if="computedDataList.length">
-                    <div class="flex-align-center flex-1 content-item" :class="selectData.name === item.name ? 'active' : ''" v-for="item in computedDataList" :key="item.id" @click="selectData = item">
+                    <div class="flex-align-center flex-1 content-item" style="cursor: pointer;" :class="selectData.name === item.name ? 'active' : ''" v-for="item in computedDataList" :key="item.id" @click="selectData = item">
                         <Icon size="16" :name="item.type.toLowerCase()" />
                         <span class="ml10 flex-1 text-overflow" :title="item.name">{{ item.name }}</span>
                     </div>
@@ -47,7 +53,7 @@
         },
         computed: {
             computedDataList () {
-                return this.dataList.filter(item => item.name.includes(this.importantSearch) && item.name !== this.srcRepoName)
+                return this.dataList.filter(item => item.name.includes(this.importantSearch) && item.name !== this.srcRepoName && item.category === 'LOCAL')
             }
         },
         methods: {

@@ -29,6 +29,7 @@ package com.tencent.bkrepo.cocoapods.pojo
 
 class PodSpec(
     val name: String?,
+    val version: String?,
     val fileName: String,
     val content: String,
 )

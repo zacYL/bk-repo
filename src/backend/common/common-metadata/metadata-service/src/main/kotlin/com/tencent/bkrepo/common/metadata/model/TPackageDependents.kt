@@ -52,5 +52,5 @@ data class TPackageDependents(
     var projectId: String,
     var repoName: String? = null,
     var key: String,
-    var dependents: MutableSet<String>
+    var dependents: MutableSet<String> = mutableSetOf()
 )

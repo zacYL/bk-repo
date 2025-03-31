@@ -125,7 +125,7 @@ export default {
                         main: [
                             {
                                 subTitle: this.$t('dockerPushGuideSubTitle1'),
-                                codeList: [`docker tag ${this.dependInputValue3 || '<LOCAL_IMAGE_TAG>'} ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
+                                codeList: [`docker tag ${this.dependInputValue3 || '<IMAGE_ID>'} ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
                             },
                             {
                                 subTitle: this.$t('dockerPushGuideSubTitle2'),
@@ -233,11 +233,11 @@ export default {
                                 subTitle: this.$t('npmPushGuideSubTitle1'),
                                 codeList: [
                                     ' {',
-                                    `    "name": "${this.dependInputValue1 || '<PACKAGE_NAME>'}"`,
-                                    `    "version": "${this.dependInputValue2 || '<PACKAGE_VERSION>'}"`,
-                                    '    "description": ""',
-                                    '    "main": "index.js"',
-                                    '    "author": ""',
+                                    `    "name": "${this.dependInputValue1 || '<PACKAGE_NAME>'}",`,
+                                    `    "version": "${this.dependInputValue2 || '<PACKAGE_VERSION>'}",`,
+                                    '    "description": "",',
+                                    '    "main": "index.js",',
+                                    '    "author": "",',
                                     '    "license": "MIT"',
                                     ' }'
                                 ]
@@ -613,7 +613,7 @@ export default {
                             subTitle: this.$t('ivyCreditGuideSubTitle1'),
                             codeList: [
                                 '<ivysettings>',
-                                `   <credentials host="${location.host}" realm="Authentication Required" 
+                                `   <credentials host="${location.host}" realm="Authentication Required"
     username="${this.userName || 'userId'}" passwd="${this.accessToken || 'PERSONAL_ACCESS_TOKEN'}"/>`,
                                 '</ivysettings>'
                             ]
@@ -665,16 +665,16 @@ export default {
                 const obj = findTargetObj(this.metadataDataList, 'qualifiedExtraAttributes', 'key')?.value || {}
                 return Object.keys(obj).map(key => `${key}="${obj[key]}"`).join(' ')
             }
-            
+
             const getDependencyCode = () => {
                 const org = findTargetObj(this.metadataDataList, 'org', 'key')?.value || ''
                 const name = findTargetObj(this.metadataDataList, 'name', 'key')?.value || ''
                 const rev = findTargetObj(this.metadataDataList, 'rev', 'key')?.value || ''
                 const branch = findTargetObj(this.metadataDataList, 'branch', 'key')?.value || ''
-            
+
                 return `<dependency org="${org}" name="${name}" rev="${rev}" ${branch ? `branch="${branch}" ` : ''}${getQualifiedExtraAttributesText()} />`
             }
-            
+
             return [
                 {
                     main: [
@@ -1791,7 +1791,7 @@ export default {
                         {
                             subTitle: this.$t('pypiInstallGuideSubTitle'),
                             codeList: [
-                                `pip3 install -i ${this.repoUrl}/simple ${this.packageName}==${this.versionLabel}`
+                                `pip3 install ${this.packageName}==${this.versionLabel}`
                             ]
                         }
                     ]
@@ -2098,6 +2098,105 @@ export default {
                         },
                         {
                             subTitle: this.$t('cocoapodsCreditGuideSubTitle8')
+                        }
+                    ]
+                }
+            ]
+        },
+        ohpmGuide () {
+            return [
+                {
+                    title: this.$t('npmCreditGuideSubTitle1'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('npmCreditGuideSubTitle3'),
+                            codeList: [
+                                'node -e "require(\'readline\') .createInterface({input:process.stdin,output:process.stdout,historySize:0}) .question(\'PAT> \',p => { b64=Buffer.from(p.trim()).toString(\'base64\');console.log(b64);process.exit(); })"'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('ohpmCreditGuideSubTitle4', { 0: this.userName })
+                        },
+                        {
+                            subTitle: this.$t('ohpmCreditGuideSubTitle5'),
+                            codeList: [
+                                `registry=${this.domain.ohpm}/${this.projectId}/${this.repoName}/`,
+                                `publish_registry=${this.domain.ohpm}/${this.projectId}/${this.repoName}/`,
+                                `//${this.domain.ohpm.split('//')[1]}/${this.projectId}/${this.repoName}/:_auth=Basic <BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>`
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: this.$t('push'),
+                    optionType: 'push',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('filePath'), // 输入框左侧label文案
+                            placeholder: this.$t('ohpmPushPlaceHolder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        }
+                    ],
+                    main: [
+                        {
+                            subTitle: this.$t('ohpmPushGuideSubTitle1'),
+                            codeList: [
+                                `ohpm publish ${this.dependInputValue1 || '<PATH_TO_PACKAGE_FILE>'}`
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('ohpmPushGuideSubTitle2'),
+                            codeList: [`ohpm publish ${this.dependInputValue1 || '<PATH_TO_PACKAGE_FILE>'} --publish_registry ${this.domain.ohpm}/${this.projectId}/${this.repoName}/`]
+                        }
+                    ]
+                },
+                {
+                    title: this.$t('pull'),
+                    optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('npmVersionInputPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
+                    main: [
+                        {
+                            subTitle: this.$t('npmDownloadGuideSubTitle1'),
+                            codeList: [`ohpm install ${this.dependInputValue1 || this.packageName + '@' + this.versionLabel}${this.dependInputValue1 && this.dependInputValue2 ? '@' + this.dependInputValue2 : ''}`]
+                        },
+                        {
+                            subTitle: this.$t('npmDownloadGuideSubTitle1'),
+                            codeList: [`ohpm install ${this.dependInputValue1 || this.packageName + '@' + this.versionLabel}${this.dependInputValue1 && this.dependInputValue2 ? '@' + this.dependInputValue2 : ''} --registry ${this.domain.ohpm}/${this.projectId}/${this.repoName}`]
+                        }
+                    ]
+                }
+            ]
+        },
+        ohpmInstall () {
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: this.$t('npmDownloadGuideSubTitle1'),
+                            codeList: [
+                                `ohpm install ${this.packageName}@${this.versionLabel}`
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('npmDownloadGuideSubTitle2'),
+                            codeList: [
+                                `ohpm install ${this.packageName}@${this.versionLabel} --registry ${this.domain.ohpm}/${this.projectId}/${this.repoName}/`
+                            ]
                         }
                     ]
                 }

@@ -40,6 +40,7 @@ import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
+import com.tencent.bkrepo.common.artifact.pojo.RegistryDomainInfo
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactExtService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
@@ -104,6 +105,9 @@ class GoExtService(
     override fun deletePackage(userId: String, artifactInfo: ArtifactInfo) = delete(artifactInfo as GoArtifactInfo)
 
     override fun deleteVersion(userId: String, artifactInfo: ArtifactInfo) = delete(artifactInfo as GoArtifactInfo)
+    override fun getRegistryDomain(repositoryType: String): RegistryDomainInfo {
+        return RegistryDomainInfo(goProperties.domain)
+    }
 
     override fun buildVersionDeleteArtifactInfo(
         projectId: String,

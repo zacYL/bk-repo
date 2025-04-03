@@ -42,16 +42,16 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
 import com.tencent.bkrepo.common.artifact.audit.REPO_EDIT_ACTION
 import com.tencent.bkrepo.common.artifact.audit.REPO_RESOURCE
-import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
+import com.tencent.bkrepo.common.artifact.pojo.RegistryDomainInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.USER_API_PREFIX
-import com.tencent.bkrepo.npm.pojo.NpmDomainInfo
 import com.tencent.bkrepo.npm.pojo.user.NpmPackageVersionInfo
 import com.tencent.bkrepo.npm.service.NpmClientService
-import com.tencent.bkrepo.npm.service.impl.NpmWebService
+import com.tencent.bkrepo.npm.service.NpmWebService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -158,7 +158,7 @@ class UserNpmController(
     @GetMapping("/address")
     fun getRegistryDomain(
         @RequestParam(required = false, defaultValue = "NPM") repositoryType: String = RepositoryType.NPM.name
-    ): Response<NpmDomainInfo> {
+    ): Response<RegistryDomainInfo> {
         return ResponseBuilder.success(npmWebService.getRegistryDomain(repositoryType))
     }
 

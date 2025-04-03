@@ -54,6 +54,7 @@ import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
 import com.tencent.bkrepo.auth.util.query.UserQueryHelper
 import com.tencent.bkrepo.auth.util.request.UserRequestUtil
+import com.tencent.bkrepo.auth.util.request.UserRequestUtil.convToUserInfo
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -387,6 +388,11 @@ open class CpackUserServiceImpl constructor(
     override fun getUserInfoById(userId: String): UserInfo? {
         val tUser = userDao.findFirstByUserId(userId) ?: return null
         return transferUserInfo(tUser)
+    }
+
+    override fun getUserInfoByToken(token: String): UserInfo? {
+        val tUser = userDao.findFirstByToken(token) ?: return null
+        return convToUserInfo(tUser)
     }
 
     override fun updatePassword(userId: String, oldPwd: String, newPwd: String): Boolean {

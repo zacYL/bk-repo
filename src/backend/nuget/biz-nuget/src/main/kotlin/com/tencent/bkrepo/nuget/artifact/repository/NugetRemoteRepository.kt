@@ -102,7 +102,7 @@ class NugetRemoteRepository(
 ) : RemoteRepository() {
 
     override fun query(context: ArtifactQueryContext): Any? {
-        return when(context.getAttribute<NugetQueryType>(QUERY_TYPE)!!) {
+        return when (context.getAttribute<NugetQueryType>(QUERY_TYPE)!!) {
             NugetQueryType.PACKAGE_VERSIONS -> enumerateVersions(context, context.getStringAttribute(PACKAGE_NAME)!!)
             NugetQueryType.SERVICE_INDEX -> feed(context.artifactInfo as NugetArtifactInfo)
             NugetQueryType.REGISTRATION_INDEX -> registrationIndex(context)
@@ -146,7 +146,12 @@ class NugetRemoteRepository(
         return super.onDownload(context)
     }
 
-    override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
+    override fun onDownloadResponse(
+        context: ArtifactDownloadContext,
+        response: Response,
+        useDisposition: Boolean,
+        syncCache: Boolean
+    ): ArtifactResource {
         val artifactFile = createTempFile(response.body!!)
         val size = artifactFile.getSize()
         if ((context.artifactInfo as NugetDownloadArtifactInfo).type != MANIFEST) {

@@ -29,11 +29,19 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.npm.service.impl
+package com.tencent.bkrepo.npm.service
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
+import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
+import com.tencent.bkrepo.common.artifact.pojo.RegistryDomainInfo
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryId
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactExtService
@@ -42,17 +50,13 @@ import com.tencent.bkrepo.common.metadata.service.packages.PackageDependentsServ
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
-import com.tencent.bkrepo.npm.constants.TGZ_FULL_PATH_WITH_DASH_SEPARATOR
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
-import com.tencent.bkrepo.npm.pojo.NpmDomainInfo
 import com.tencent.bkrepo.npm.pojo.user.DependenciesInfo
 import com.tencent.bkrepo.npm.pojo.user.NpmPackageVersionInfo
 import com.tencent.bkrepo.npm.pojo.user.VersionDependenciesInfo
 import com.tencent.bkrepo.npm.properties.NpmProperties
-import com.tencent.bkrepo.npm.service.NpmClientService
-import com.tencent.bkrepo.npm.service.NpmOperationService
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -111,8 +115,10 @@ class NpmWebService(
         packageKey: String,
         versionMetadata: NpmVersionMetadata
     ): VersionDependenciesInfo {
-        val packageDependents = packageDependentsService.findByPackageKey(artifactInfo.projectId,
-            artifactInfo.repoName, packageKey)
+        val packageDependents = packageDependentsService.findByPackageKey(
+            artifactInfo.projectId,
+            artifactInfo.repoName, packageKey
+        )
         val dependenciesList = parseDependencies(versionMetadata)
         val devDependenciesList = parseDevDependencies(versionMetadata)
         return VersionDependenciesInfo(dependenciesList, devDependenciesList, packageDependents)
@@ -162,13 +168,11 @@ class NpmWebService(
         )
     }
 
-    fun getRegistryDomain(): NpmDomainInfo {
-        return NpmDomainInfo(UrlFormatter.formatHost(npmProperties.domain))
-    override fun getRegistryDomain(repositoryType: String): NpmDomainInfo {
+    override fun getRegistryDomain(repositoryType: String): RegistryDomainInfo {
         return if (repositoryType == RepositoryType.NPM.name) {
-            NpmDomainInfo(UrlFormatter.formatHost(npmProperties.domain))
+            RegistryDomainInfo(UrlFormatter.formatHost(npmProperties.domain))
         } else {
-            NpmDomainInfo(UrlFormatter.formatHost(npmProperties.ohpmDomain))
+            RegistryDomainInfo(UrlFormatter.formatHost(npmProperties.ohpmDomain))
         }
     }
 
@@ -223,7 +227,7 @@ class NpmWebService(
             repository.upload(context).also {
                 logger.info(
                     "user [${context.userId}] upload npm package metadata file [$fullPath] " +
-                            "to repo [$projectId/$repoName] success."
+                        "to repo [$projectId/$repoName] success."
                 )
             }
             artifactFile.delete()

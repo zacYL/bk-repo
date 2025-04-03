@@ -86,8 +86,6 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
-import java.time.format.DateTimeFormatter
-import java.util.regex.Pattern
 import okhttp3.Request
 import okhttp3.Response
 import org.apache.commons.lang3.StringUtils
@@ -98,6 +96,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Component
+import java.time.format.DateTimeFormatter
+import java.util.regex.Pattern
 
 @Component
 class MavenRemoteRepository(
@@ -227,7 +227,12 @@ class MavenRemoteRepository(
     }
 
     @Suppress("NestedBlockDepth")
-    override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
+    override fun onDownloadResponse(
+        context: ArtifactDownloadContext,
+        response: Response,
+        useDisposition: Boolean,
+        syncCache: Boolean
+    ): ArtifactResource {
         val fullPath = context.artifactInfo.getArtifactFullPath()
         val matcher = Pattern.compile(PACKAGE_SUFFIX_REGEX).matcher(fullPath)
         logger.info(
@@ -370,7 +375,7 @@ class MavenRemoteRepository(
         } catch (ignore: DuplicateKeyException) {
             logger.warn(
                 "The package info has been created for version[${mavenGAVC.version}] " +
-                        "and package[${mavenGAVC.artifactId}] in repo ${context.artifactInfo.getRepoIdentify()}"
+                    "and package[${mavenGAVC.artifactId}] in repo ${context.artifactInfo.getRepoIdentify()}"
             )
         }
     }

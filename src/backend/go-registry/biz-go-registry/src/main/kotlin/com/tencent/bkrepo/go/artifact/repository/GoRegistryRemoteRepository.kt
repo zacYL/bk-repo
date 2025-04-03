@@ -100,7 +100,12 @@ class GoRegistryRemoteRepository(
         } ?: return doRequest(context) as ArtifactResource?
     }
 
-    override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
+    override fun onDownloadResponse(
+        context: ArtifactDownloadContext,
+        response: Response,
+        useDisposition: Boolean,
+        syncCache: Boolean
+    ): ArtifactResource {
         with(context.artifactInfo as GoModuleInfo) {
             val artifactFile = createTempFile(response.body!!)
             val size = artifactFile.getSize()

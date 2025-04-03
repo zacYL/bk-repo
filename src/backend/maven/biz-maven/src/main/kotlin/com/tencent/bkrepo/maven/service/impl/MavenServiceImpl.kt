@@ -29,6 +29,7 @@ package com.tencent.bkrepo.maven.service.impl
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
@@ -36,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RegistryDomainInfo
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -189,6 +191,10 @@ class MavenServiceImpl(
     override fun deleteVersion(userId: String, artifactInfo: ArtifactInfo) {
         val context = ArtifactRemoveContext()
         ArtifactContextHolder.getRepository().remove(context)
+    }
+
+    override fun getRegistryDomain(repositoryType: String): RegistryDomainInfo {
+        return RegistryDomainInfo(StringPool.EMPTY)
     }
 
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)

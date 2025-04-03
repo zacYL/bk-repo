@@ -76,6 +76,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 /**
  * 远程仓库抽象逻辑
@@ -342,7 +343,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         return ArtifactResource(
             inputStream = artifactStream,
             artifactName = context.artifactInfo.getResponseName(),
-            srcRepo = srcRepo
+            srcRepo = srcRepo,
             node = null,
             channel = ArtifactChannel.PROXY,
             useDisposition = useDisposition,

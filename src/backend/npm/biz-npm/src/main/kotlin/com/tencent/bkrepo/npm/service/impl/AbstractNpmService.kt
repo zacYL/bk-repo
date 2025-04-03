@@ -137,8 +137,9 @@ open class AbstractNpmService : ArtifactService() {
         val context = ArtifactQueryContext()
         context.putAttribute(NPM_FILE_FULL_PATH, NpmUtils.getPackageMetadataPath(artifactInfo.packageName))
         context.putAttribute(REQUEST_URI, artifactInfo.packageName)
+        val ohpm = context.repositoryDetail.type == RepositoryType.OHPM
         val artifactStream = (repository.query(context) as ArtifactInputStream?)?.let {
-            if (!showDefaultTarball()) {
+            if (!showDefaultTarball(ohpm)) {
                 it.readText().replace(tarballRegex) { matchRes ->
                     val originTarball = matchRes.groupValues[1]
                     val newTarball = NpmUtils.buildPackageTgzTarball(

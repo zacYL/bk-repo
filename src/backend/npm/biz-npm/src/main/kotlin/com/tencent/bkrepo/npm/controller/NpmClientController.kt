@@ -58,7 +58,7 @@ import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
 import com.tencent.bkrepo.npm.pojo.metadata.disttags.DistTags
 import com.tencent.bkrepo.npm.pojo.user.OhpmUnpublishRequest
 import com.tencent.bkrepo.npm.service.NpmClientService
-import com.tencent.bkrepo.npm.service.impl.NpmWebService
+import com.tencent.bkrepo.npm.service.NpmWebService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping

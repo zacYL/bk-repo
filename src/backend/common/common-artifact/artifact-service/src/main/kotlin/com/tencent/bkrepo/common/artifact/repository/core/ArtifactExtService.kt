@@ -15,6 +15,7 @@ import com.tencent.bkrepo.common.artifact.exception.VersionConflictException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.PackageVersionInfo
+import com.tencent.bkrepo.common.artifact.pojo.RegistryDomainInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
@@ -68,6 +69,13 @@ abstract class ArtifactExtService : ArtifactService() {
      * 删除包版本
      */
     abstract fun deleteVersion(userId: String, artifactInfo: ArtifactInfo)
+
+    /**
+     * 获取对于域名信息
+     */
+    abstract fun getRegistryDomain(repositoryType: String): RegistryDomainInfo
+
+
 
     /**
      * 移动/复制版本

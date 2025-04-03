@@ -196,7 +196,12 @@ class PypiRemoteRepository(
         return methodResponse.params.paramList[0].value.array?.data?.valueList ?: mutableListOf()
     }
 
-    override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
+    override fun onDownloadResponse(
+        context: ArtifactDownloadContext,
+        response: Response,
+        useDisposition: Boolean,
+        syncCache: Boolean
+    ): ArtifactResource {
         val artifactFile = createTempFile(response.body!!)
         val fileName = context.artifactInfo.getResponseName()
         val pypiMetadata = try {

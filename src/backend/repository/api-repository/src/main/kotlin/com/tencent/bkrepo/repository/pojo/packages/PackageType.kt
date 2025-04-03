@@ -52,7 +52,7 @@ enum class PackageType(val schema: String, val versionSortProperty: String = Pac
     GRADLE("gav"),
     IVY("ivy"),
     OHPM("ohpm"),
-    HUGGINGFACE(huggingface);
+    HUGGINGFACE("huggingface");
 
     companion object {
         fun fromSchema(schema: String) = values().find { it.schema == schema }

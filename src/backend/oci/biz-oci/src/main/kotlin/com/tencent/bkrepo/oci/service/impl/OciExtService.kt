@@ -3,10 +3,12 @@ package com.tencent.bkrepo.oci.service.impl
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.RegistryDomainInfo
 import com.tencent.bkrepo.common.artifact.pojo.request.PackageVersionMoveCopyRequest
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactExtService
 import com.tencent.bkrepo.common.metadata.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.oci.config.OciProperties
 import com.tencent.bkrepo.oci.constant.MANIFEST
 import com.tencent.bkrepo.oci.constant.OCI_MANIFEST_LIST
 import com.tencent.bkrepo.oci.constant.PACKAGE_KEY
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service
 @Service
 class OciExtService(
     private val operationService: OciOperationService,
+    private val ociProperties: OciProperties,
 ) : ArtifactExtService() {
     override fun getVersionDetail(userId: String, artifactInfo: ArtifactInfo): OciPackageVersionInfo {
         with(artifactInfo as OciArtifactInfo) {
@@ -36,6 +39,10 @@ class OciExtService(
 
     override fun deleteVersion(userId: String, artifactInfo: ArtifactInfo) {
         operationService.deleteVersion(userId, artifactInfo as OciArtifactInfo)
+    }
+
+    override fun getRegistryDomain(repositoryType: String): RegistryDomainInfo {
+        return RegistryDomainInfo(ociProperties.domain)
     }
 
     override fun buildVersionDeleteArtifactInfo(

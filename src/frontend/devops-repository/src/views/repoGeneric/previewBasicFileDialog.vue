@@ -1,127 +1,73 @@
 <template>
-    <bk-dialog
-        class="previewBasic-file-dialog"
+    <canway-dialog
         v-model="previewDialog.show"
+        :title="previewDialog.title"
         :width="dialogWidth"
-        :show-footer="false"
-        @cancel="cancel"
-        :title="($t('preview') + ' - ' + previewDialog.title)">
-        <div v-if="previewDialog.isLoading" style="windt: 100%;" v-bkloading="{ isLoading: previewDialog.isLoading }"></div>
-        <div v-else>
-            <img v-if="imgShow" :src="imgUrl" style="max-width: 100%; max-height: 100%;" />
-            <div class="preview-file-tips" v-if="!imgShow">{{ $t('previewFileTips') }}</div>
-            <textarea v-if="!imgShow" v-model="basicFileText" class="textarea" readonly></textarea>
+        height-num="705"
+        @cancel="previewDialog.show = false">
+        <div v-bkloading="{ isLoading }">
+            <div class="mb5 preview-file-tips">{{ $t('previewFileTips') }}</div>
+            <textarea class="textarea" v-model="basicFileText" readonly></textarea>
         </div>
-    </bk-dialog>
+        <template #footer>
+            <bk-button theme="primary" @click="previewDialog.show = false">{{ $t('confirm') }}</bk-button>
+        </template>
+    </canway-dialog>
 </template>
 
 <script>
-    import {
-        customizePreviewLocalOfficeFile, customizePreviewRemoteOfficeFile,
-        getPreviewLocalOfficeFileInfo,
-        getPreviewRemoteOfficeFileInfo
-    } from '@repository/utils/previewOfficeFile'
-
+    import { mapActions } from 'vuex'
     export default {
-        name: 'PreviewBasicFileDialog',
+        name: 'previewBasicFileDialog',
         data () {
             return {
-                basicFileText: '',
+                isLoading: false,
                 previewDialog: {
-                    title: '',
                     show: false,
-                    isLoading: true,
-                    repoType: '',
-                    extraParam: '',
+                    title: '',
+                    projectId: '',
                     repoName: '',
-                    filePath: '',
-                    imgShow: false,
-                    imgUrl: ''
+                    fullPath: ''
                 },
+                basicFileText: '',
                 dialogWidth: window.innerWidth - 600
             }
         },
-        computed: {
-            projectId () {
-                return this.$route.params.projectId
-            }
-        },
         methods: {
+            ...mapActions(['previewBasicFile', 'previewCompressedBasicFile']),
             setData (data) {
-                this.basicFileText = data
-                this.previewDialog.isLoading = false
-                if (RELEASE_MODE !== 'community') return
-                if (this.previewDialog.repoType === 'local') {
-                    getPreviewLocalOfficeFileInfo(this.projectId, this.previewDialog.repoName, '/' + this.previewDialog.filePath).then(res => {
-                        if (res.data.data.watermark && res.data.data.watermark.watermarkTxt && res.data.data.watermark.watermarkTxt != null) {
-                            this.initWaterMark(res.data.data.watermark)
-                        }
-                    })
-                } else {
-                    getPreviewRemoteOfficeFileInfo(this.previewDialog.extraParam).then(res => {
-                        if (res.data.data.watermark && res.data.data.watermark.watermarkTxt && res.data.data.watermark.watermarkTxt != null) {
-                            this.initWaterMark(res.data.data.watermark)
-                        }
-                    })
-                }
-            },
-            setPic () {
-                this.imgShow = true
-                if (this.previewDialog.repoType === 'local') {
-                    getPreviewLocalOfficeFileInfo(this.projectId, this.previewDialog.repoName, '/' + this.previewDialog.filePath).then(res => {
-                        if (res.data.data.watermark && res.data.data.watermark.watermarkTxt && res.data.data.watermark.watermarkTxt != null) {
-                            this.initWaterMark(res.data.data.watermark)
-                        }
-                    })
-                    customizePreviewLocalOfficeFile(this.projectId, this.previewDialog.repoName, '/' + this.previewDialog.filePath).then(res => {
-                        this.dealDate(res)
-                    }).catch(() => {
-                        this.loading = false
-                        this.hasError = true
-                    })
-                } else {
-                    getPreviewRemoteOfficeFileInfo(this.previewDialog.extraParam).then(res => {
-                        if (res.data.data.watermark && res.data.data.watermark.watermarkTxt && res.data.data.watermark.watermarkTxt != null) {
-                            this.initWaterMark(res.data.data.watermark)
-                        }
-                    })
-                    customizePreviewRemoteOfficeFile(this.previewDialog.extraParam).then(res => {
-                        this.dealDate(res)
-                    }).catch(() => {
-                        this.loading = false
-                        this.hasError = true
-                    })
-                }
-            },
-            setDialogData (data) {
+                const { show, projectId, repoName, fullPath, filePath } = data
                 this.previewDialog = {
+                    ...this.previewDialog,
                     ...data
                 }
-            },
-            initWaterMark (param) {
-                window.initWaterMark(param)
-            },
-            cancel () {
-                window.resetWaterMark()
-            },
-            dealDate (res) {
-                this.previewDialog.isLoading = false
-                this.imgUrl = URL.createObjectURL(res.data)
+                if (!show) return
+                this.isLoading = true
+                const fn = filePath ? this.previewCompressedBasicFile : this.previewBasicFile
+                fn({
+                    projectId,
+                    repoName,
+                    fullPath,
+                    filePath
+                }).then(res => {
+                    this.basicFileText = typeof res === 'string' ? res : JSON.stringify(res)
+                }).finally(() => {
+                    this.isLoading = false
+                })
             }
         }
     }
 </script>
 
 <style lang="scss" scoped>
-    .preview-file-tips {
-        margin-bottom: 10px;
-        color: #707070;
-    }
-    .textarea {
-        resize: none;
-        width: 100%;
-        height: 500px;
-        border: 1px solid #ccc;
-        padding: 0 5px;
-    }
+.preview-file-tips {
+    color: var(--fontSubsidiaryColor)
+}
+.textarea {
+    resize: none;
+    width: 100%;
+    height: 500px;
+    padding: 10px;
+    border: 1px solid var(--borderColor);
+}
 </style>

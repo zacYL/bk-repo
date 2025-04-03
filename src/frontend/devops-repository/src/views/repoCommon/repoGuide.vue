@@ -9,7 +9,8 @@
                 {{ $t('clickInfo') + $t('space') }}
                 <bk-button text theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
                 {{ $t('tokenDependSubTitle') }}
-                <router-link :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
+                <bk-button v-if="ciMode" text theme="primary" @click="jumpCCommonUserToken">{{ $t('token') }}</bk-button>
+                <router-link v-else :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
             </div>
             <div v-if="repoType !== 'npm' && repoType !== 'ohpm'">
                 <div>{{$t('accessTokenPlaceholder')}}</div>
@@ -21,15 +22,23 @@
                     @change="onChangeAccessToken">
                 </bk-input>
             </div>
-            <create-token-dialog ref="createToken"></create-token-dialog>
+            <ci-create-token-dialog v-if="ciMode" ref="ciCreateToken"></ci-create-token-dialog>
+            <create-token-dialog v-else ref="createToken"></create-token-dialog>
         </template>
         <template v-if="currentArticleList.length > 0">
             <div v-for="(currentArticle,cIndex) in currentArticleList" :key="cIndex">
+                <bk-alert
+                    v-if="currentArticle.showErrTips"
+                    class="mb20"
+                    style="height: unset;width: 100%;"
+                    type="warning"
+                    :title="currentArticle.errTips">
+                </bk-alert>
                 <div v-if="currentArticle.title" class="section-header pt10">
                     {{ currentArticle.title }}
                 </div>
                 <!-- 当构建类型constructType和当前对象的constructType一致，且当前对象的notShowArtifactInput为true时不需要显示制品名称等的输入框，暂时只有 Apache Maven不显示 -->
-                <template v-if="(currentArticle.inputBoxList || []).length > 0 && !((currentArticle.main || []).find(item => item.constructType === constructType && item.notShowArtifactInput))">
+                <template v-if="(currentArticle.inputBoxList || []).length > 0 && !currentArticle.main.find(item => item.constructType === constructType && item.notShowArtifactInput)">
                     <div class="mt10"> {{$t('guideInputInfo', { option: currentArticle.title })}}</div>
                     <div v-for="(box,index) in currentArticle.inputBoxList" :key="box.key || box">
                         <div class="flex-align-center mt20 mb10">
@@ -52,9 +61,49 @@
                     -->
                     <template v-if="(constructType === block.constructType) || !block.constructType || (block.constructType === 'common') ">
                         <span v-if="block.title" class="section-header pt10">{{ block.title }}</span>
-                        <span v-if="block.subTitle" class="sub-title pt10" :style="block.subTitleStyle">{{ block.subTitle }}</span>
-                        <code-area class="mt15" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                        <span v-if="block.subTitle" class="sub-title pt10 fw500" :style="block.subTitleStyle">{{ block.subTitle }}</span>
+                        <div v-if="block.btn" class="pt10">
+                            <bk-button
+                                theme="primary"
+                                outline
+                                @click="block.btn.cb()">
+                                {{ block.btn.label }}
+                            </bk-button>
+                        </div>
+                        <div v-if="block?.contentList?.length">
+                            <p v-for="(content, index) in block.contentList" :key="index" :class="(typeof content === 'string' ? '' : content.class)" style="color: #8797aa;">
+                                {{ typeof content === 'string' ? content : content.val }}
+                            </p>
+                        </div>
+                        <code-area :class="[block.codeNoMargin ? '' : 'mt15', block.codeClass]" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                     </template>
+                    <div v-if="block?.components?.length" :style="{
+                        display: block.componentInline ? 'flex' : ''
+                    }">
+                        <div v-for="(component, index) in block.components" :key="index">
+                            <bk-select
+                                v-if="component.type === 'select'"
+                                @change="component.cb"
+                                style="width: 200px;"
+                                class="mt5 mb5 mr5"
+                            >
+                                <bk-option v-for="option in component.values"
+                                    :key="option.downloadUrl"
+                                    :id="option.downloadUrl"
+                                    :name="option.platform">
+                                </bk-option>
+                            </bk-select>
+                            <bk-button
+                                class="mt5 mb5 mr5"
+                                v-if="component.type === 'button'"
+                                :disabled="component.disabled"
+                                @click="component.cb"
+                                style="width: fit-content;"
+                            >
+                                {{ $t('download') }}
+                            </bk-button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>
@@ -63,10 +112,11 @@
 <script>
     import CodeArea from '@repository/components/CodeArea'
     import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
+    import ciCreateTokenDialog from '@repository/views/repoToken/ciCreateTokenDialog'
     import { mapState, mapMutations } from 'vuex'
     export default {
         name: 'repoGuide',
-        components: { CodeArea, createTokenDialog },
+        components: { CodeArea, createTokenDialog, ciCreateTokenDialog },
         props: {
             article: {
                 type: Array,
@@ -85,13 +135,13 @@
         },
         data () {
             return {
-                activeName: ['token', ...[0, 1, 2, 3, 4].map(v => `section${v}`)],
+                ciMode: MODE_CONFIG === 'ci',
                 tokenInput: '',
                 boxValues: [] // 使用指引中输入框v-model绑定的值所在的数组，取值的时候通过下标获取
             }
         },
         computed: {
-            ...mapState(['userInfo']),
+            ...mapState(['dependInputValue1', 'dependInputValue2']),
             currentArticleList () {
                 return this.article.map(item => {
                     return (item.optionType === this.optionType) ? item : ''
@@ -113,10 +163,14 @@
             }
         },
         methods: {
+            // ...mapMutations(['SET_DEPEND_ACCESS_TOKEN_VALUE', ...this.currentArticle.inputBoxList.map(item => item.methodFunctionName)]),
             ...mapMutations(['SET_DEPEND_ACCESS_TOKEN_VALUE', 'SET_DEPEND_INPUT_VALUE1', 'SET_DEPEND_INPUT_VALUE2', 'SET_DEPEND_INPUT_VALUE3']),
             createToken () {
-                this.$refs.createToken.userName = this.userInfo.username
-                this.$refs.createToken.showDialogHandler()
+                this.ciMode ? this.$refs.ciCreateToken.showDialogHandler() : this.$refs.createToken.showDialogHandler()
+            },
+            // 集成CI模式下需要跳转到用户个人中心的访问令牌页面
+            jumpCCommonUserToken () {
+                window.open(window.DEVOPS_SITE_URL + '/console/userCenter/userToken', '_blank')
             },
             onChangeAccessToken () {
                 this.SET_DEPEND_ACCESS_TOKEN_VALUE(this.tokenInput)
@@ -134,8 +188,11 @@
     }
 </script>
 <style lang="scss" scoped>
+.fw500 {
+    font-weight: 500;
+}
 .repo-guide-container {
-    position: relative;
+   position: relative;
     .section-header {
         padding-left: 10px;
         color: var(--fontPrimaryColor);

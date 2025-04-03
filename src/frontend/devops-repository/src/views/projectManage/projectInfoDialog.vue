@@ -63,6 +63,11 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('space') + this.$t('projectName'),
                             trigger: 'blur'
+                        },
+                        {
+                            validator: name => this.asynCheck({ name }),
+                            message: this.$t('projectName') + this.$t('space') + this.$t('exist'),
+                            trigger: 'blur'
                         }
                     ]
                 }
@@ -76,8 +81,7 @@
                 'getProjectList',
                 'createProject',
                 'editProject',
-                'checkProject',
-                'checkProjectId'
+                'checkProject'
             ]),
             setData (data) {
                 this.$refs.projectInfoForm.clearError()
@@ -86,8 +90,12 @@
                     ...data
                 }
             },
-            asynCheck ({ id }) {
-                return this.checkProjectId({ id }).then(res => !res)
+            asynCheck ({ id, name }) {
+                if (!this.editProjectDialog.add) {
+                    const project = this.projectList.find(v => v.id === this.editProjectDialog.id)
+                    if (!name || project.name === name) return true
+                }
+                return this.checkProject({ id, name }).then(res => !res)
             },
             async submitProject () {
                 await this.$refs.projectInfoForm.validate()

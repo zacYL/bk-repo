@@ -1,36 +1,7 @@
 <template>
     <div class="repo-list-container" v-bkloading="{ isLoading }">
         <div class="ml20 mr20 mt10 flex-between-center">
-            <bk-dropdown-menu
-                ref="dropdownHover"
-                align="left"
-                trigger="click"
-                @show="isDropdownShow = true"
-                @hide="isDropdownShow = false">
-                <div slot="dropdown-trigger">
-                    <bk-button
-                        icon="plus"
-                        theme="primary"
-                        :icon-right="isDropdownShow ? 'angle-up' : 'angle-down'"
-                    >{{ $t('create') }}</bk-button>
-                </div>
-                <!-- 使用bk-link替代之前的 a 标签可以设置某个操作的禁用 -->
-                <ul class="bk-dropdown-list" slot="dropdown-content">
-                    <li v-for="item in storeTypeEnum" :key="item.name">
-                        <bk-link theme="default" href="javascript:;" @click="handlerCreateStore(item.id)">
-                            <dl>
-                                <dt class="flex-align-center">
-                                    <Icon class="pr5" :name="item.icon" size="16" />
-                                    <span> {{$t(item.name)}} </span>
-                                </dt>
-                                <dd>
-                                    <span class="dropdown-list-info">{{$t(item.info)}}</span>
-                                </dd>
-                            </dl>
-                        </bk-link>
-                    </li>
-                </ul>
-            </bk-dropdown-menu>
+            <bk-button icon="plus" theme="primary" @click="createRepo">{{ $t('createRepository') }}</bk-button>
             <div class="flex-align-center">
                 <bk-input
                     v-model.trim="query.name"
@@ -42,23 +13,11 @@
                     right-icon="bk-icon icon-search">
                 </bk-input>
                 <bk-select
-                    v-model="query.category"
-                    class="ml10 w250"
-                    @change="handlerPaginationChange"
-                    :placeholder="$t('allStoreTypes')">
-                    <bk-option v-for="category in storeTypeEnum" :key="category.id" :id="category.id" :name="$t(category.name)">
-                        <div class="flex-align-center">
-                            <Icon size="20" :name="category.icon" />
-                            <span class="ml10 flex-1 text-overflow">{{$t(category.name)}}</span>
-                        </div>
-                    </bk-option>
-                </bk-select>
-                <bk-select
                     v-model="query.type"
                     class="ml10 w250"
                     @change="handlerPaginationChange"
                     :placeholder="$t('allTypes')">
-                    <bk-option v-for="type in repoEnum.filter(type => type.value !== 'sbt')" :key="type.value" :id="type.value" :name="type.label">
+                    <bk-option v-for="type in repoEnum" :key="type.value" :id="type.value" :name="type.label" :disabled="disCheck(type.value)">
                         <div class="flex-align-center">
                             <Icon size="20" :name="type.value" />
                             <span class="ml10 flex-1 text-overflow">{{type.label}}</span>
@@ -73,6 +32,7 @@
             height="calc(100% - 100px)"
             :outer-border="false"
             :row-border="false"
+            @sort-change="orderByMetrics"
             size="small">
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(query.name || query.type)"></empty-data>
@@ -82,21 +42,33 @@
                     <Icon class="mr5 table-svg" size="16" :name="row.repoType" />
                     <span class="hover-btn" @click="toPackageList(row)">{{replaceRepoName(row.name)}}</span>
                     <span v-if="MODE_CONFIG === 'ci' && ['custom', 'pipeline'].includes(row.name)"
-                        class="mr5 repo-tag SUCCESS" :data-name="$t('builtIn')">
-                    </span>
+                        class="mr5 repo-tag SUCCESS" :data-name="$t('built-in')"></span>
                     <span v-if="row.configuration.settings.system" class="mr5 repo-tag" :data-name="$t('system')"></span>
                     <span v-if="row.public" class="mr5 repo-tag WARNING" :data-name="$t('public')"></span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('storeTypes')" width="160">
+            <bk-table-column :label="$t('repoUsage')" width="150" prop="fileSize" sortable="custom">
+                <template #default="{ row }">{{ row.fileSize ? convertFileSize(row.fileSize) : '0B' }}</template>
+            </bk-table-column>
+            <bk-table-column :label="$t('fileNum')" width="150" prop="fileNum" sortable="custom">
+                <template #default="{ row }">{{ row.fileNum ? row.fileNum : 0 }}</template>
+            </bk-table-column>
+            <bk-table-column :label="$t('repoQuota')" width="250">
                 <template #default="{ row }">
-                    <span>{{ $t((row.category.toLowerCase() || 'local') + 'Store')}}</span>
+                    <bk-popover class="repo-quota" placement="top" :disabled="!row.quota">
+                        <bk-progress v-if="row.quota" size="large" :percent="((row.used || 0) / row.quota)" :show-text="false"></bk-progress>
+                        <span class="ml5" v-else>--</span>
+                        <div slot="content">
+                            <div>{{ $t('totalQuota') }}: {{ convertFileSize(row.quota) }}</div>
+                            <div>{{ $t('usedQuotaCapacity') }}: {{ convertFileSize(row.used) }}</div>
+                        </div>
+                    </bk-popover>
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('createdDate')" width="150">
                 <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdBy')" width="100" show-overflow-tooltip>
+            <bk-table-column :label="$t('createdBy')" width="90">
                 <template #default="{ row }">
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>
@@ -110,8 +82,10 @@
                                 (row.repoType === 'generic'
                                     && row.name !== 'custom'
                                     && row.name !== 'report'
+                                    && row.name !== 'log'
                                     && row.name !== 'pipeline'
-                                )) && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
+                                )) && { label: $t('delete'), clickEvent: () => deleteRepo(row) },
+                            (userInfo.admin || userInfo.manage) && (row.repoType === 'generic') && { label: $t('cleanRepo'), clickEvent: () => cleanRepo(row) }
                         ]">
                     </operation-list>
                 </template>
@@ -123,22 +97,27 @@
             align="right"
             show-total-count
             :current.sync="pagination.current"
-            :limit.sync="pagination.limit"
+            :limit="pagination.limit"
             :count="pagination.count"
             :limit-list="pagination.limitList"
             @change="current => handlerPaginationChange({ current })"
             @limit-change="limit => handlerPaginationChange({ limit })">
         </bk-pagination>
-        <create-repo-dialog ref="createRepo" :store-type="currentStoreType" @refresh="handlerPaginationChange" @close="onCloseDialog"></create-repo-dialog>
+        <create-repo-dialog ref="createRepo" @refresh="handlerPaginationChange"></create-repo-dialog>
+        <iam-deny-dialog :visible.sync="showIamDenyDialog" :show-data="showData"></iam-deny-dialog>
+        <generic-clean-dialog ref="genericCleanDialog" @refresh="handlerPaginationChange"></generic-clean-dialog>
     </div>
 </template>
 <script>
     import OperationList from '@repository/components/OperationList'
     import createRepoDialog from '@repository/views/repoList/createRepoDialog'
+    import iamDenyDialog from '@repository/components/IamDenyDialog/IamDenyDialog'
     import { mapState, mapActions } from 'vuex'
-    import { repoEnum, storeTypeEnum } from '@repository/store/publicEnum'
-    import { formatDate, debounce } from '@repository/utils'
+    import {ciDisableRepoEnum, repoEnum} from '@repository/store/publicEnum'
+    import { formatDate, convertFileSize, debounce } from '@repository/utils'
     import { cloneDeep } from 'lodash'
+    import genericCleanDialog from '@repository/views/repoGeneric/genericCleanDialog'
+    import { before, beforeYears } from '@/utils/date'
     const paginationParams = {
         count: 0,
         current: 1,
@@ -147,29 +126,31 @@
     }
     export default {
         name: 'repoList',
-        components: { OperationList, createRepoDialog },
+        components: { OperationList, createRepoDialog, iamDenyDialog, genericCleanDialog },
         data () {
             return {
                 MODE_CONFIG,
                 repoEnum,
-                storeTypeEnum, // 仓库类型（本地/远程/虚拟）
                 isLoading: false,
                 repoList: [],
                 query: {
                     name: this.$route.query.name,
                     type: this.$route.query.type,
-                    category: this.$route.query.category,
                     c: this.$route.query.c || 1,
                     l: this.$route.query.l || 20
                 },
+                value: 20,
                 pagination: cloneDeep(paginationParams),
-                isDropdownShow: false,
-                currentStoreType: 'local', // 当前选择的仓库类型
-                debounceGetListData: null
+                debounceGetListData: null,
+                projectMetrics: [],
+                fullRepoList: [],
+                sortType: [],
+                showIamDenyDialog: false,
+                showData: {}
             }
         },
         computed: {
-            ...mapState(['userList']),
+            ...mapState(['userList', 'userInfo']),
             projectId () {
                 return this.$route.params.projectId
             }
@@ -196,13 +177,20 @@
         },
         methods: {
             formatDate,
+            convertFileSize,
             ...mapActions([
                 'getRepoList',
-                'deleteRepoList'
+                'deleteRepoList',
+                'getRepoListWithoutPage',
+                'getPermissionUrl',
+                'getProjectMetrics'
             ]),
-            // 关闭弹窗后需要将当前选中的仓库类型置为初始值，否则会导致再次打开同一种类型的弹窗时逻辑错误，(远程仓库和虚拟仓库也会默认选中generic仓库)
-            onCloseDialog () {
-                this.currentStoreType = ''
+            disCheck (repoName) {
+                if (MODE_CONFIG !== 'ci') {
+                    return false
+                } else {
+                    return ciDisableRepoEnum.includes(repoName)
+                }
             },
             initData () {
                 // 切换项目或者点击菜单时需要将筛选条件清空，并将页码相关参数重置，否则会导致点击菜单的时候筛选条件还在，不符合产品要求(点击菜单清空筛选条件，重新请求最新数据)
@@ -216,16 +204,38 @@
             },
             getListData () {
                 this.isLoading = true
-                this.getRepoList({
+                this.getRepoListWithoutPage({
                     projectId: this.projectId,
-                    ...this.pagination,
                     ...this.query
                 }).then(({ records, totalRecords }) => {
-                    this.repoList = records.map(v => ({ ...v, repoType: v.type.toLowerCase() }))
-                    this.pagination.count = totalRecords
+                    this.pagination.count = records.length
+                    let allRepo
+                    if (this.MODE_CONFIG === 'ci') {
+                        const resRecords = records.map(v => ({ ...v, repoType: v.type.toLowerCase() }))
+                        allRepo = this.shiftListByName('pipeline', this.shiftListByName('custom', resRecords))
+                    } else {
+                        allRepo = records.map(v => ({ ...v, repoType: v.type.toLowerCase() }))
+                    }
+                    this.fullRepoList = allRepo
+                    this.repoList = allRepo.slice((this.pagination.current - 1) * this.pagination.limit, this.pagination.current * this.pagination.limit >= records.length ? records.length : this.pagination.current * this.pagination.limit)
+                    this.getMetrics()
                 }).finally(() => {
                     this.isLoading = false
                 })
+            },
+            shiftListByName (name, records) {
+                let target = null
+                for (let i = 0; i < records.length; i++) {
+                    if (records[i].name === name) {
+                        target = records[i]
+                        records.splice(i, 1)
+                        break
+                    }
+                }
+                if (target !== null) {
+                    records.unshift(target)
+                }
+                return records
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -236,25 +246,19 @@
                 // 此时需要加上防抖，否则在点击菜单的时候会直接触发bk-select的change事件，导致出现多个请求
                 this.debounceGetListData ? this.debounceGetListData() : this.getListData()
             },
-            // 点击下拉菜单，隐藏下拉框，打开创建仓库弹窗
-            handlerCreateStore (type) {
-                this.$refs.dropdownHover.hide()
-                this.isDropdownShow = false
-                this.createRepo(type)
-            },
-            createRepo (type) {
-                this.currentStoreType = type
+            createRepo () {
                 this.$refs.createRepo.showDialogHandler()
             },
             toPackageList ({ projectId, repoType, name, category }) {
                 this.$router.push({
-                    name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
+                    name: (repoType === 'generic' || repoType === 'ddc') ? 'repoGeneric' : 'commonList',
                     params: {
                         projectId,
                         repoType
                     },
                     query: {
                         repoName: name,
+                        path: '/default',
                         storeType: category?.toLowerCase() || '',
                         ...this.$route.query,
                         c: this.pagination.current,
@@ -289,9 +293,162 @@
                                 theme: 'success',
                                 message: this.$t('delete') + this.$t('space') + this.$t('success')
                             })
+                        }).catch(err => {
+                            if (err.status === 403) {
+                                this.getPermissionUrl({
+                                    body: {
+                                        projectId: this.projectId,
+                                        action: 'DELETE',
+                                        resourceType: 'REPO',
+                                        uid: this.userInfo.name,
+                                        repoName: name
+                                    }
+                                }).then(res => {
+                                    if (res !== '') {
+                                        this.showIamDenyDialog = true
+                                        this.showData = {
+                                            projectId: this.projectId,
+                                            repoName: name,
+                                            action: 'DELETE',
+                                            url: res
+                                        }
+                                    }
+                                })
+                            } else {
+                                this.$bkMessage({
+                                    theme: 'error',
+                                    message: err.message
+                                })
+                            }
                         })
                     }
                 })
+            },
+            getMetrics () {
+                this.getProjectMetrics({ projectId: this.projectId }).then(res => {
+                    if (res.repoMetrics !== null && res.repoMetrics.length > 0) {
+                        this.projectMetrics = res.repoMetrics
+                        if (this.sortType.length > 0) {
+                            this.orderByMetricsDetail()
+                        } else {
+                            for (let i = 0; i < this.repoList.length; i++) {
+                                const metrics = res.repoMetrics.find((item) => {
+                                    return item.repoName === this.repoList[i].name
+                                })
+                                if (metrics) {
+                                    this.$set(this.repoList[i], 'fileSize', metrics.size)
+                                    this.$set(this.repoList[i], 'fileNum', metrics.num)
+                                } else {
+                                    this.$set(this.repoList[i], 'fileSize', 0)
+                                    this.$set(this.repoList[i], 'fileNum', 0)
+                                }
+                            }
+                        }
+                    } else {
+                        for (let i = 0; i < this.repoList.length; i++) {
+                            this.$set(this.repoList[i], 'fileSize', 0)
+                            this.$set(this.repoList[i], 'fileNum', 0)
+                        }
+                    }
+                }).catch(err => {
+                    if (err.status === 403) {
+                        this.getPermissionUrl({
+                            body: {
+                                projectId: this.projectId,
+                                action: 'READ',
+                                resourceType: 'PROJECT',
+                                uid: this.userInfo.name
+                            }
+                        }).then(res => {
+                            if (res !== '') {
+                                this.showIamDenyDialog = true
+                                this.showData = {
+                                    projectId: this.projectId,
+                                    action: 'READ',
+                                    repoName: '',
+                                    url: res
+                                }
+                            }
+                        })
+                    }
+                })
+            },
+            orderByMetrics (sort) {
+                this.sortType = []
+                if (sort.prop && this.projectMetrics.length > 0) {
+                    const sortParam = {
+                        properties: sort.prop,
+                        direction: sort.order === 'ascending' ? 'ASC' : 'DESC'
+                    }
+                    this.sortType.push(sortParam)
+                    this.orderByMetricsDetail()
+                } else {
+                    this.repoList = this.fullRepoList.slice((this.pagination.current - 1) * this.pagination.limit, this.pagination.current * this.pagination.limit >= this.fullRepoList.length ? this.fullRepoList.length : this.pagination.current * this.pagination.limit)
+                }
+            },
+            orderByMetricsDetail () {
+                const name = this.sortType[0].properties
+                const direction = this.sortType[0].direction
+                this.projectMetrics.sort(function (a, b) {
+                    if (name === 'fileSize' && direction === 'ASC') {
+                        return a.size - b.size
+                    } else if (name === 'fileSize' && direction === 'DESC') {
+                        return b.size - a.size
+                    } else if (name === 'fileNum' && direction === 'ASC') {
+                        return a.num - b.num
+                    } else {
+                        return b.num - a.num
+                    }
+                })
+                const existMetricsRepo = []
+                const notExistMetricsRepo = []
+                this.fullRepoList.forEach(repo => {
+                    if (this.projectMetrics.some(repoMetrics => {
+                        return repoMetrics.repoName === repo.name
+                    })) {
+                        existMetricsRepo.push(repo)
+                    } else {
+                        notExistMetricsRepo.push(repo)
+                    }
+                })
+                const existMetricsRepoOrder = []
+                this.projectMetrics.forEach(repoMetric => {
+                    const repo = existMetricsRepo.find(temp => {
+                        return temp.name === repoMetric.repoName
+                    })
+                    if (repo) {
+                        repo.fileSize = repoMetric.size
+                        repo.fileNum = repoMetric.num
+                        existMetricsRepoOrder.push(repo)
+                    }
+                })
+                let resRepo = []
+                if (this.sortType[0].direction === 'ASC') {
+                    resRepo = [...notExistMetricsRepo, ...existMetricsRepoOrder]
+                } else {
+                    resRepo = [...existMetricsRepoOrder, ...notExistMetricsRepo]
+                }
+                this.repoList = resRepo.slice((this.pagination.current - 1) * this.pagination.limit, this.pagination.current * this.pagination.limit >= this.fullRepoList.length ? this.fullRepoList.length : this.pagination.current * this.pagination.limit)
+            },
+            cleanRepo (row) {
+                const fullPaths = []
+                fullPaths.push({
+                    path: '/',
+                    isComplete: false
+                })
+                this.$refs.genericCleanDialog.show = true
+                this.$refs.genericCleanDialog.repoName = row.name
+                this.$refs.genericCleanDialog.projectId = row.projectId
+                this.$refs.genericCleanDialog.paths = fullPaths
+                this.$refs.genericCleanDialog.loading = false
+                this.$refs.genericCleanDialog.isComplete = false
+                if (row.name === 'pipeline') {
+                    this.$refs.genericCleanDialog.date = before(60)
+                } else if (row.name === 'custom') {
+                    this.$refs.genericCleanDialog.date = before(30)
+                } else {
+                    this.$refs.genericCleanDialog.date = beforeYears(1)
+                }
             }
         }
     }
@@ -304,24 +461,12 @@
     ::v-deep .bk-table th {
         height: 44px;
     }
-
-    // 解决创建按钮右边icon图标没有垂直居中的问题
-    ::v-deep .bk-dropdown-menu .bk-dropdown-trigger .right-icon {
-        top: 0;
-    }
-     .dropdown-list-info{
-        color: #8797aa;
-        margin-left: -24px;
-    }
-    ::v-deep .bk-dropdown-menu .bk-dropdown-content .bk-dropdown-list li{
-        height: 100%;
-    }
-    ::v-deep .bk-dropdown-menu .bk-dropdown-list>li>a{
-        height: 60px;
-        line-height: 26px;
-    }
-    ::v-deep .bk-dropdown-menu .bk-dropdown-list {
-        max-height: 220px;
+    .repo-quota {
+        display: block;
+        margin-right: 20%;
+        ::v-deep .bk-tooltip-ref {
+            display: block;
+        }
     }
 }
 </style>

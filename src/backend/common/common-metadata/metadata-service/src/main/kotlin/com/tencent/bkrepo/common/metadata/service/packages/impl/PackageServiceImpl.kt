@@ -35,9 +35,6 @@ import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
-import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
-import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
-import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.metadata.condition.SyncCondition
 import com.tencent.bkrepo.common.metadata.dao.packages.PackageDao
@@ -64,6 +61,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
+import com.tencent.bkrepo.repository.pojo.packages.request.PackageCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
@@ -73,13 +71,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Conditional
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 @Conditional(SyncCondition::class)
@@ -281,6 +279,15 @@ class PackageServiceImpl(
         }
     }
 
+    override fun createPackage(request: PackageCreateRequest, realIpAddress: String?) {
+        with(request) {
+            Preconditions.checkNotBlank(packageKey, this::packageKey.name)
+            Preconditions.checkNotBlank(packageName, this::packageName.name)
+            // 先查询包是否存在，不存在先创建包
+            findOrCreatePackage(buildPackage(request))
+        }
+    }
+
     override fun deletePackage(projectId: String, repoName: String, packageKey: String, realIpAddress: String?) {
         val tPackage = packageDao.findByKeyExcludeHistoryVersion(projectId, repoName, packageKey) ?: return
         val tPackageVersionList = packageVersionDao.listByPackageId(tPackage.id!!)
@@ -377,6 +384,7 @@ class PackageServiceImpl(
         val tPackage = checkPackage(projectId, repoName, packageKey).apply {
             checkCluster(this)
             name = request.name ?: name
+            key = request.key ?: packageKey
             description = request.description ?: description
             versionTag = request.versionTag ?: versionTag
             extension = request.extension ?: extension
@@ -600,7 +608,7 @@ class PackageServiceImpl(
         private fun convert(tPackage: TPackage?): PackageSummary? {
             return tPackage?.let {
                 PackageSummary(
-                    id = it.id,
+                    id = it.id!!,
                     createdBy = it.createdBy,
                     createdDate = it.createdDate,
                     lastModifiedBy = it.lastModifiedBy,

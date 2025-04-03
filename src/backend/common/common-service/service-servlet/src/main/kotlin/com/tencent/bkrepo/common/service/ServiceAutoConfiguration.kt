@@ -51,6 +51,7 @@ import com.tencent.bkrepo.common.service.servlet.TongWebAutoConfiguration
 import com.tencent.bkrepo.common.service.shutdown.ServiceShutdownConfiguration
 import com.tencent.bkrepo.common.service.thread.ThreadPoolTaskExecutorConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -87,10 +88,11 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 class ServiceAutoConfiguration {
 
     @Bean
-    @Primary
+    @ConditionalOnMissingBean
     fun objectMapper() = JsonUtils.objectMapper
 
     @Bean
+    @ConditionalOnMissingBean
     fun mappingJackson2HttpMessageConverter(): MappingJackson2HttpMessageConverter {
         return MappingJackson2HttpMessageConverter(JsonUtils.objectMapper)
     }

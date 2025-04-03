@@ -477,7 +477,12 @@ class OciRegistryRemoteRepository(
     /**
      * 远程下载响应回调
      */
-    override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
+    override fun onDownloadResponse(
+        context: ArtifactDownloadContext,
+        response: Response,
+        useDisposition: Boolean,
+        syncCache: Boolean
+    ): ArtifactResource {
         logger.info("Remote download response will be processed")
         response.header(CONTENT_TYPE)?.let { context.putAttribute(CONTENT_TYPE, it) }
         val artifactFile = createTempFile(response.body!!)

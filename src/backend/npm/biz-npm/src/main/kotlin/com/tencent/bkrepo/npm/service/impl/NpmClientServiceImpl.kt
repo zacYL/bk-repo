@@ -352,6 +352,11 @@ class NpmClientServiceImpl(
         packageMetaData: NpmPackageMetaData,
         version: String?
     ) {
+        // ohpm未开启依赖检查时直接返回
+        if (!npmProperties.ohpmCheckDependents) {
+            return
+        }
+
         val projectId = artifactInfo.projectId
         val repoName = artifactInfo.repoName
         val name = packageMetaData.name!!

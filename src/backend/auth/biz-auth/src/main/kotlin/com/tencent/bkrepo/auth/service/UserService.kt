@@ -85,6 +85,8 @@ interface UserService {
 
     fun getUserInfoById(userId: String): UserInfo?
 
+    fun getUserInfoByToken(token: String): UserInfo?
+
     fun getUserPwdById(userId: String): String?
 
     fun updatePassword(userId: String, oldPwd: String, newPwd: String): Boolean

@@ -34,13 +34,6 @@ package com.tencent.bkrepo.npm.service.impl
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
-import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
-import com.tencent.bkrepo.common.artifact.pojo.BasicInfo
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryId
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactExtService
@@ -49,6 +42,7 @@ import com.tencent.bkrepo.common.metadata.service.packages.PackageDependentsServ
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
+import com.tencent.bkrepo.npm.constants.TGZ_FULL_PATH_WITH_DASH_SEPARATOR
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
@@ -170,6 +164,12 @@ class NpmWebService(
 
     fun getRegistryDomain(): NpmDomainInfo {
         return NpmDomainInfo(UrlFormatter.formatHost(npmProperties.domain))
+    override fun getRegistryDomain(repositoryType: String): NpmDomainInfo {
+        return if (repositoryType == RepositoryType.NPM.name) {
+            NpmDomainInfo(UrlFormatter.formatHost(npmProperties.domain))
+        } else {
+            NpmDomainInfo(UrlFormatter.formatHost(npmProperties.ohpmDomain))
+        }
     }
 
     fun updatePackageWithDeleteVersion(

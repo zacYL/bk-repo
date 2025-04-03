@@ -1,41 +1,30 @@
 // 仓库类型
 export const repoEnum = [
     { label: 'Generic', value: 'generic' },
+    { label: 'DDC', value: 'ddc' },
     { label: 'Docker', value: 'docker' },
     { label: 'Maven', value: 'maven' },
     { label: 'Pypi', value: 'pypi' },
     { label: 'Npm', value: 'npm' },
     { label: 'Helm', value: 'helm' },
+    // { label: 'Rds', value: 'rds' },
     { label: 'Composer', value: 'composer' },
     { label: 'Rpm', value: 'rpm' },
-    // { label: 'Git', value: 'git' },
+    { label: 'Git', value: 'git' },
     { label: 'Nuget', value: 'nuget' },
+    { label: 'S3', value: 's3' },
     { label: 'Conan', value: 'conan' },
-    { label: 'Go', value: 'go' },
-    { label: 'Cocoapods', value: 'cocoapods' },
-    { label: 'Gradle', value: 'gradle' },
-    { label: 'Ivy', value: 'ivy' },
-    { label: 'Sbt', value: 'sbt' },
     { label: 'Ohpm', value: 'ohpm' }
-]
-// 虚拟仓库支持创建的仓库
-export const repoSupportEnum = [
-    { label: 'Maven', value: 'maven' },
-    { label: 'Npm', value: 'npm' },
-    { label: 'Pypi', value: 'pypi' },
-    { label: 'Nuget', value: 'nuget' },
-    { label: 'Docker', value: 'docker' },
-    { label: 'Conan', value: 'conan' },
-    { label: 'Go', value: 'go' },
-    { label: 'Gradle', value: 'gradle' }
 ]
 
-// 远程仓库支持创建的仓库
-export const remoteRepoSupportEnum = [
-    { label: 'Generic', value: 'generic' },
-    ...repoSupportEnum,
-    { label: 'Cocoapods', value: 'cocoapods' },
-    { label: 'Ohpm', value: 'ohpm' }
+export const ciDisableRepoEnum = [
+    'maven',
+    'pypi',
+    'npm',
+    'composer',
+    'rpm',
+    'git',
+    'nuget'
 ]
 
 // 文件类型
@@ -96,20 +85,13 @@ export const asyncPlanStatusEnum = {
     FAILED: '同步异常'
 }
 
-// 制品分发日志详情执行状态
-export const planLogDetailStatusEnum = {
-    SUCCESS: '同步成功',
-    FAILED: '同步失败',
-    RUNNING: '运行中'
-}
-
 // 扫描方案类型
 export const scanTypeEnum = {
     GENERIC: 'Generic制品分析',
     DOCKER: 'Docker制品分析',
     MAVEN: 'Maven制品分析',
-    NPM: 'Npm制品分析',
-    PYPI: 'Pypi制品分析'
+    NPM: 'Npm制品分析'
+    // PYPI: 'Pypi制品分析'
 }
 
 export const SCAN_TYPE_SECURITY = 'SECURITY'
@@ -131,12 +113,6 @@ export const scanTypes = {
     }
 }
 
-export const genericScanFileTypes = [
-    'zip', 'tar', 'tgz', 'jar', 'war', 'exe',
-    'apk', 'ear', 'sar', 'nupkg', 'gz', 'bz2',
-    'tbz2', 'rpm'
-]
-
 // 扫描方案执行状态
 export const scanStatusEnum = {
     INIT: '等待扫描',
@@ -155,115 +131,29 @@ export const leakLevelEnum = {
     HIGH: '高危',
     MEDIUM: '中危',
     LOW: '低危'
-    // WHITE: '白名单'
-}
-// 制品仓库类型(本地/远程/虚拟)
-export const storeTypeEnum = [
-    {
-        id: 'local',
-        name: 'localStore',
-        icon: 'local-store',
-        info: 'localStoreInfo'
-    },
-    {
-        id: 'remote',
-        name: 'remoteStore',
-        icon: 'remote-store',
-        info: 'remoteStoreInfo'
-    },
-    {
-        id: 'virtual',
-        name: 'virtualStore',
-        icon: 'virtual-store',
-        info: 'virtualStoreInfo'
-    }
-]
-
-export const planLogEnum = {
-    total: '同步总数量',
-    success: '成功数量',
-    fail: '失败数量',
-    conflict: '冲突数量'
 }
 
-export const conflictStrategyEnum = {
-    SKIP: '跳过冲突',
-    OVERWRITE: '替换制品',
-    FAST_FAIL: '终止同步'
-}
+// 匹配规则时忽略
+export const FILTER_RULE_IGNORE = 0
 
-/**
- * 制品搜索方式的下拉框
- */
-export const repoSearchConditionMap = [
-    {
-        id: 'version',
-        name: 'searchConditionVersion'
-    },
-    {
-        id: 'checkSum',
-        name: 'searchConditionCheckSum'
-    },
-    {
-        id: 'metadata',
-        name: 'searchConditionMetadata'
-    }
+// 未匹配规则时忽略
+export const FILTER_RULE_INCLUDE = 1
+
+// 通过漏洞ID过滤
+export const FILTER_METHOD_VUL_ID = 0
+
+// 通过漏洞等级过滤
+export const FILTER_METHOD_SEVERITY = 1
+
+// 通过风险组件名过滤
+export const FILTER_METHOD_RISKY_COMPONENT = 2
+// 通过风险组件版本过滤
+export const FILTER_METHOD_RISKY_COMPONENT_VERSION = 3
+
+// 特殊的4个repo仓名称
+export const specialRepoEnum = [
+    'log',
+    'pipeline',
+    'report',
+    'custom'
 ]
-
-// 扫描器相关的名称及描述文案
-export const scannerTypes = [
-    {
-        name: 'dependency-check',
-        label: 'dependencyVulScanner',
-        description: 'dependencyVulScannerDescription'
-    },
-    {
-        name: 'trivy-scanner',
-        label: 'trivyScanner',
-        description: 'trivyScannerDescription'
-    },
-    {
-        name: 'scancode-toolkit',
-        label: 'scanCodeScanner',
-        description: 'scanCodeScannerDescription'
-    }
-]
-
-// 依赖目录中支持的预览文件类型
-export const fileTypeList = {
-    // .md、.json、.txt、.LICENSE、.xml、POM、dependency
-    // 匹配所有的文件名后缀为 .sha*的文件,不再是匹配单独的 sha,sha1
-    md: 'md',
-    json: 'json',
-    txt: 'js',
-    license: 'js',
-    xml: 'xml',
-    pom: 'xml'
-    // sha: 'md',
-    // sha1: 'md',
-    // sha256: 'md'
-    // '.pom',
-    // '.dependency'
-}
-
-export const VersionComparisonOperator = [
-    '==',
-    '<',
-    '<=',
-    '>',
-    '>='
-]
-
-export const DockerVersionComparisonOperator = [
-    '==',
-    '!='
-]
-
-export const OperatorMap = {
-    EQ: '==',
-    NE: '!=',
-    LT: '<',
-    LTE: '<=',
-    GT: '>',
-    GTE: '>='
-}

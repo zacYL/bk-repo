@@ -88,6 +88,12 @@ interface ServiceUserClient {
     ): Response<Boolean>
 
     @ApiOperation("用户info ")
+    @GetMapping("/info/token/{token}")
+    fun userInfoByToken(
+        @PathVariable token: String
+    ): Response<UserInfo?>
+
+    @ApiOperation("用户info ")
     @GetMapping("/userinfo/{uid}")
     fun userInfoById(
         @PathVariable uid: String

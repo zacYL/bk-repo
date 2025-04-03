@@ -205,7 +205,7 @@ class SeparationDataServiceImpl(
         private fun convert(tPackage: TSeparationPackage?): PackageSummary? {
             return tPackage?.let {
                 PackageSummary(
-                    id = it.id,
+                    id = it.id.orEmpty(),
                     createdBy = it.createdBy,
                     createdDate = it.createdDate,
                     lastModifiedBy = it.lastModifiedBy,

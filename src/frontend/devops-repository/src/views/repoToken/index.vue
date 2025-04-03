@@ -1,6 +1,6 @@
 <template>
     <div class="repo-token-container" v-bkloading="{ isLoading }">
-        <bk-button class="ml20 mt10" icon="plus" theme="primary" @click="createToken">{{ $t('create') }}</bk-button>
+        <bk-button class="ml20 mt10" icon="plus" theme="primary" @click="createToken">{{ $t('newToken') }}</bk-button>
         <bk-table
             class="mt10"
             :data="tokenList"
@@ -42,15 +42,17 @@
             }
         },
         computed: {
-            ...mapState(['userInfo'])
+            ...mapState(['userInfo', 'creating'])
         },
         watch: {
-            'userInfo.username' () {
-                this.getToken()
+            creating (val) {
+                if (!val) {
+                    this.getToken()
+                }
             }
         },
         created () {
-            this.userInfo.username && this.getToken()
+            (this.userInfo.username && !this.creating) && this.getToken()
         },
         methods: {
             formatDate,
@@ -66,7 +68,9 @@
             },
             getToken () {
                 this.isLoading = true
-                this.getTokenList().then(list => {
+                this.getTokenList({
+                    username: this.userInfo.username
+                }).then(list => {
                     this.tokenList = list
                 }).finally(() => {
                     this.isLoading = false
@@ -78,18 +82,20 @@
                     message: this.$t('deleteTokenTitle', { name }),
                     confirmFn: () => {
                         return this.deleteToken({
+                            username: this.userInfo.username,
                             name
                         }).then(() => {
                             this.getToken()
                             this.$bkMessage({
                                 theme: 'success',
-                                message: this.$t('delete') + this.$t('space') + this.$t('success')
+                                message: this.$t('delete') + this.$t('success')
                             })
                         })
                     }
                 })
             },
             createToken () {
+                this.$refs.createToken.userName = this.userInfo.username
                 this.$refs.createToken.showDialogHandler()
             }
         }

@@ -29,25 +29,33 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.constant
+package com.tencent.bkrepo.npm.service
 
-/**
- * 覆盖策略
- * 优先级：仓库覆盖策略 > 客户端覆盖策略
- */
-enum class CoverStrategy {
-    /**
-     * 覆盖
-     */
-    COVER,
+import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
+import com.tencent.bkrepo.npm.pojo.NpmDomainInfo
+import com.tencent.bkrepo.npm.pojo.user.request.PackageDeleteRequest
+import com.tencent.bkrepo.npm.pojo.user.request.PackageVersionDeleteRequest
+import com.tencent.bkrepo.npm.pojo.user.PackageVersionInfo
+
+interface NpmWebService {
 
     /**
-     * 不覆盖
+     * 查询版本信息
      */
-    UNCOVER,
+    fun detailVersion(artifactInfo: NpmArtifactInfo, packageKey: String, version: String): PackageVersionInfo
 
     /**
-     * 不启用覆盖策略，以客户端参数为准
+     * 删除包
      */
-    DISABLE
+    fun deletePackage(artifactInfo: NpmArtifactInfo, deleteRequest: PackageDeleteRequest)
+
+    /**
+     * 删除包版本
+     */
+    fun deleteVersion(artifactInfo: NpmArtifactInfo, deleteRequest: PackageVersionDeleteRequest)
+
+    /**
+     * 获取npm域名信息
+     */
+    fun getRegistryDomain(repositoryType: String): NpmDomainInfo
 }

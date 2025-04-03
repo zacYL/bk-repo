@@ -154,6 +154,7 @@ class FileReferenceCleanupJobTest : JobBaseTest() {
                 coverStrategy = null,
             )
         )
+        RepositoryCommonUtils.updateService(repositoryService, storageCredentialService)
         fileReferenceCleanupJobProperties.expectedNodes = 50_000
     }
 

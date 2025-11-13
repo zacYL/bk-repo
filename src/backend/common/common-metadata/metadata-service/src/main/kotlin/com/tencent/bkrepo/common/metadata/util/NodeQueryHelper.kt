@@ -156,7 +156,10 @@ object NodeQueryHelper {
             if (option.includeFolder) {
                 query.with(Sort.by(Sort.Direction.DESC, TNode::folder.name))
             }
-            query.with(Sort.by(Sort.Direction.ASC, TNode::fullPath.name))
+            // 使用有索引的字段进行排序
+            // 避免Sort operation used more than the maximum xxx bytes of RAM.
+            // Add an index, or specify a smaller limit.
+            query.with(Sort.by(Sort.Direction.ASC, TNode::id.name))
         }
         if (!option.includeMetadata) {
             query.fields().exclude(TNode::metadata.name)

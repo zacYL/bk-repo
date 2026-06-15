@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.util.HumanReadable
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.properties.RouterControllerProperties
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
+import com.tencent.bkrepo.common.metadata.config.RepositoryProperties.Companion.DELETE_MODE_UPDATE_WITH_HINT
 import com.tencent.bkrepo.common.metadata.dao.node.NodeDao
 import com.tencent.bkrepo.common.metadata.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeDeleteResult
@@ -258,9 +259,11 @@ open class NodeDeleteSupport(
         }
         try {
             val collectionName = nodeDao.determineCollectionName(query)
+            val deleteMode = nodeBaseService.repositoryProperties.getDeleteMode(projectId)
+            val useHintForStats = useFullPathIndex && deleteMode == DELETE_MODE_UPDATE_WITH_HINT
             deletedNum = NodeDeleteHelper.deleteNodes(
                 query = query,
-                deleteMode = nodeBaseService.repositoryProperties.getDeleteMode(projectId),
+                deleteMode = deleteMode,
                 batchSize = nodeBaseService.repositoryProperties.deleteBatchSize,
                 concurrency = nodeBaseService.repositoryProperties.deleteNodesConcurrency,
                 maxDeleteNodeCount = nodeBaseService.repositoryProperties.maxDeleteNodeCount,
@@ -282,9 +285,9 @@ open class NodeDeleteSupport(
                 fullPaths?.let {
                     // 节点删除接口返回的数据排除目录
                     deletedCriteria = deletedCriteria.and(TNode::folder).isEqualTo(false)
-                    deletedNum = nodeDao.count(Query(deletedCriteria))
+                deletedNum = countWithHint(deletedCriteria, useHintForStats)
                 }
-                deletedSize = nodeBaseService.aggregateComputeSize(deletedCriteria)
+                deletedSize = nodeBaseService.aggregateComputeSize(deletedCriteria, useHintForStats)
                 quotaService.decreaseUsedVolume(projectId, repoName, deletedSize)
             }
             fullPaths?.forEach { fullPath ->
@@ -313,6 +316,12 @@ open class NodeDeleteSupport(
         } else {
             buildCriteria(projectId, repoName, fullPath)
         }
+    }
+
+    private fun countWithHint(criteria: Criteria, useHint: Boolean): Long {
+        val query = Query(criteria)
+        if (useHint) query.withHint(TNode.FULL_PATH_IDX)
+        return nodeDao.count(query)
     }
 
     companion object {

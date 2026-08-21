@@ -48,6 +48,7 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.LocalDateTime
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * LOCAL PyPI `/simple/` 与 `/simple/{package}/` HTML 文件缓存（仓库内节点，写入存储热缓存）。
@@ -60,13 +61,15 @@ class PypiSimpleIndexCacheService(
     private val lockOperation: LockOperation,
     private val pypiProperties: PypiProperties,
 ) {
+    private val localLocks = ConcurrentHashMap<String, Any>()
+    // ponytail: 404 负缓存只挡单名打满；海量随机包名仍会回源。上限 1 万，满则整表丢。
+    private val notFoundUntil = ConcurrentHashMap<String, Long>()
+
     /**
      * 读取或生成索引 HTML。
-     * 索引文件缺失只表示从未生成或制品已删光，必须 [compute] 回源，缓存层不映射为 404。
-     * 文件未过期时直接读存储。过期用 Redis tryLock 单飞覆盖，抢不到立刻返回旧文件。
-     * 节点存在但读不到内容：回源重建并返回 HTML，不编 503。
-     * 节点不存在时 tryLock：抢到则生成；抢不到再读一次，有文件就返回，没有则 503 让客户端重试。
-     * 禁止在请求线程上自旋等锁。[compute] 返回 null 时原样返回 null，不写文件。
+     * 有文件就返回文件。TTL 到期 tryLock 单飞覆盖，抢不到立刻吐旧文件。
+     * 文件不在或读不到：自旋等锁，持锁方回源写入，其余等完再读，保证能拉到且只扫一次库。
+     * 包不存在不写文件，短负缓存避免反复 listNode。自旋超时且仍无文件才 503。
      */
     fun getOrCompute(
         projectId: String,
@@ -94,19 +97,24 @@ class PypiSimpleIndexCacheService(
                     compute = compute,
                 )
             }
-            return restoreUnreadable(
+            return loadOrComputeExclusive(
                 projectId = projectId,
                 repoName = repoName,
                 fullPath = fullPath,
+                packageName = packageName,
                 userId = userId,
                 storageCredentials = storageCredentials,
                 compute = compute,
             )
         }
-        return computeOnMiss(
+        if (isCachedNotFound(notFoundKey(projectId, repoName, fullPath))) {
+            throw PypiSimpleNotFoundException(packageName ?: "/")
+        }
+        return loadOrComputeExclusive(
             projectId = projectId,
             repoName = repoName,
             fullPath = fullPath,
+            packageName = packageName,
             userId = userId,
             storageCredentials = storageCredentials,
             compute = compute,
@@ -126,10 +134,12 @@ class PypiSimpleIndexCacheService(
         storageCredentials: StorageCredentials?,
         computePackage: () -> String?,
     ) {
+        val packagePath = PypiSimpleIndexUtils.packageCacheFullPath(packageName)
+        forgetNotFound(notFoundKey(projectId, repoName, packagePath))
         refreshUnderLock(
             projectId = projectId,
             repoName = repoName,
-            fullPath = PypiSimpleIndexUtils.packageCacheFullPath(packageName),
+            fullPath = packagePath,
             userId = userId,
             storageCredentials = storageCredentials,
             compute = computePackage,
@@ -187,91 +197,28 @@ class PypiSimpleIndexCacheService(
         }
     }
 
-    private fun restoreUnreadable(
+    private fun loadOrComputeExclusive(
         projectId: String,
         repoName: String,
         fullPath: String,
+        packageName: String?,
         userId: String,
         storageCredentials: StorageCredentials?,
         compute: () -> String?,
     ): String? {
         val redisKey = lockKey(projectId, repoName, fullPath)
-        val lock = try {
-            lockOperation.getLock(redisKey)
-        } catch (e: Exception) {
-            logger.error("Failed to get lock for pypi simple index cache[$projectId/$repoName$fullPath]", e)
-            return readOrRestore(projectId, repoName, fullPath, userId, storageCredentials, compute)
-        }
-        val locked = try {
-            lockOperation.acquireLock(redisKey, lock)
-        } catch (e: Exception) {
-            logger.error("Failed to acquire lock for pypi simple index cache[$projectId/$repoName$fullPath]", e)
-            return readOrRestore(projectId, repoName, fullPath, userId, storageCredentials, compute)
-        }
-        if (!locked) {
-            return readOrRestore(projectId, repoName, fullPath, userId, storageCredentials, compute)
-        }
-        try {
-            return readOrRestore(projectId, repoName, fullPath, userId, storageCredentials, compute)
-        } finally {
-            closeQuietly(redisKey, lock)
-        }
-    }
-
-    private fun computeOnMiss(
-        projectId: String,
-        repoName: String,
-        fullPath: String,
-        userId: String,
-        storageCredentials: StorageCredentials?,
-        compute: () -> String?,
-    ): String? {
-        val redisKey = lockKey(projectId, repoName, fullPath)
-        val lock = try {
-            lockOperation.getLock(redisKey)
-        } catch (e: Exception) {
-            logger.error("Failed to get lock for pypi simple index cache[$projectId/$repoName$fullPath]", e)
-            return loadOrRetryLater(
-                projectId, repoName, fullPath, userId, storageCredentials, compute,
-            )
-        }
-        val locked = try {
-            lockOperation.acquireLock(redisKey, lock)
-        } catch (e: Exception) {
-            logger.error("Failed to acquire lock for pypi simple index cache[$projectId/$repoName$fullPath]", e)
-            return loadOrRetryLater(
-                projectId, repoName, fullPath, userId, storageCredentials, compute,
-            )
-        }
-        if (!locked) {
-            return loadOrRetryLater(
-                projectId, repoName, fullPath, userId, storageCredentials, compute,
-            )
-        }
-        try {
-            val raced = loadEntry(projectId, repoName, fullPath, storageCredentials)
-            if (raced != null) {
-                return raced.html
+        val nfKey = notFoundKey(projectId, repoName, fullPath)
+        return withSpinLock(redisKey) { locked ->
+            val cached = readFresh(projectId, repoName, fullPath, storageCredentials)
+            when {
+                cached != null -> cached
+                isCachedNotFound(nfKey) -> throw PypiSimpleNotFoundException(packageName ?: "/")
+                locked -> storeComputed(
+                    projectId, repoName, fullPath, userId, storageCredentials, compute,
+                )
+                else -> readFresh(projectId, repoName, fullPath, storageCredentials) ?: throw unavailable()
             }
-            return storeComputed(projectId, repoName, fullPath, userId, storageCredentials, compute)
-        } finally {
-            closeQuietly(redisKey, lock)
         }
-    }
-
-    private fun readOrRestore(
-        projectId: String,
-        repoName: String,
-        fullPath: String,
-        userId: String,
-        storageCredentials: StorageCredentials?,
-        compute: () -> String?,
-    ): String? {
-        val node = loadNode(projectId, repoName, fullPath)
-        if (node != null) {
-            readHtml(node, storageCredentials)?.let { return it }
-        }
-        return storeComputed(projectId, repoName, fullPath, userId, storageCredentials, compute)
     }
 
     private fun storeComputed(
@@ -282,7 +229,12 @@ class PypiSimpleIndexCacheService(
         storageCredentials: StorageCredentials?,
         compute: () -> String?,
     ): String? {
-        val html = compute() ?: return null
+        val html = try {
+            compute() ?: return null
+        } catch (e: PypiSimpleNotFoundException) {
+            rememberNotFound(notFoundKey(projectId, repoName, fullPath))
+            throw e
+        }
         try {
             storeHtml(projectId, repoName, fullPath, html, userId, storageCredentials)
         } catch (e: Exception) {
@@ -305,17 +257,21 @@ class PypiSimpleIndexCacheService(
         try {
             lock = lockOperation.getLock(redisKey)
             locked = lockOperation.getSpinLock(redisKey, lock)
-            overwriteOrRemove(
-                projectId, repoName, fullPath, userId, storageCredentials, compute,
-            )
+            if (locked) {
+                overwriteOrRemove(
+                    projectId, repoName, fullPath, userId, storageCredentials, compute,
+                )
+            }
         } catch (e: Exception) {
             logger.error(
                 "Failed to lock while refreshing pypi simple index[$projectId/$repoName$fullPath]",
                 e
             )
-            overwriteOrRemove(
-                projectId, repoName, fullPath, userId, storageCredentials, compute,
-            )
+            synchronized(localLock(redisKey)) {
+                overwriteOrRemove(
+                    projectId, repoName, fullPath, userId, storageCredentials, compute,
+                )
+            }
         } finally {
             if (locked && lock != null) {
                 closeQuietly(redisKey, lock)
@@ -343,20 +299,65 @@ class PypiSimpleIndexCacheService(
         }
     }
 
-    private fun loadOrRetryLater(
+    private fun withSpinLock(redisKey: String, action: (Boolean) -> String?): String? {
+        var lock: Any? = null
+        var locked = false
+        try {
+            try {
+                lock = lockOperation.getLock(redisKey)
+                locked = lockOperation.getSpinLock(redisKey, lock)
+            } catch (e: Exception) {
+                logger.error("Failed to lock pypi simple index cache[$redisKey]", e)
+                synchronized(localLock(redisKey)) {
+                    return action(true)
+                }
+            }
+            return action(locked)
+        } finally {
+            if (locked && lock != null) {
+                closeQuietly(redisKey, lock)
+            }
+        }
+    }
+
+    private fun readFresh(
         projectId: String,
         repoName: String,
         fullPath: String,
-        userId: String,
         storageCredentials: StorageCredentials?,
-        compute: () -> String?,
     ): String? {
-        val node = loadNode(projectId, repoName, fullPath)
-        if (node != null) {
-            readHtml(node, storageCredentials)?.let { return it }
-            return storeComputed(projectId, repoName, fullPath, userId, storageCredentials, compute)
+        val node = loadNode(projectId, repoName, fullPath) ?: return null
+        return readHtml(node, storageCredentials)
+    }
+
+    private fun localLock(key: String): Any = localLocks.computeIfAbsent(key) { Any() }
+
+    private fun notFoundKey(projectId: String, repoName: String, fullPath: String): String {
+        return "$projectId/$repoName$fullPath"
+    }
+
+    private fun rememberNotFound(key: String) {
+        val now = System.currentTimeMillis()
+        if (notFoundUntil.size >= MAX_NOT_FOUND) {
+            notFoundUntil.entries.removeIf { it.value <= now }
+            if (notFoundUntil.size >= MAX_NOT_FOUND) {
+                notFoundUntil.clear()
+            }
         }
-        throw unavailable()
+        notFoundUntil[key] = now + NOT_FOUND_TTL_MS
+    }
+
+    private fun isCachedNotFound(key: String): Boolean {
+        val until = notFoundUntil[key] ?: return false
+        if (until <= System.currentTimeMillis()) {
+            notFoundUntil.remove(key, until)
+            return false
+        }
+        return true
+    }
+
+    private fun forgetNotFound(key: String) {
+        notFoundUntil.remove(key)
     }
 
     private fun loadEntry(
@@ -474,5 +475,7 @@ class PypiSimpleIndexCacheService(
     companion object {
         private val logger = LoggerFactory.getLogger(PypiSimpleIndexCacheService::class.java)
         private const val LOCK_KEY_PREFIX = "pypi:simple:lock:"
+        private const val NOT_FOUND_TTL_MS = 30_000L
+        private const val MAX_NOT_FOUND = 10_000
     }
 }

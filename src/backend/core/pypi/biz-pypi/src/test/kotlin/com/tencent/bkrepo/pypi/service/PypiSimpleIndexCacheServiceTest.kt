@@ -179,20 +179,19 @@ class PypiSimpleIndexCacheServiceTest {
                 null
             )
         }
-        verify { lockOperation.acquireLock(any(), any()) }
-        verify(exactly = 0) { lockOperation.getSpinLock(any(), any()) }
-        verify(exactly = 0) { lockOperation.getSpinLock(any(), any(), any(), any()) }
+        verify { lockOperation.getSpinLock(any(), any()) }
+        verify(exactly = 0) { lockOperation.acquireLock(any(), any()) }
     }
 
     @Test
-    @DisplayName("miss 未抢到锁时若文件已写出则直接返回，不扫库")
+    @DisplayName("miss 等锁后文件已写出则直接返回，不扫库")
     fun missWithoutLockReturnsFileIfPresent() {
         val html = "<html>new</html>"
         val fullPath = PypiSimpleIndexUtils.packageCacheFullPath("demo")
         val node = nodeDetail(fullPath)
         every { nodeService.getNodeDetail(any(), any()) } returnsMany listOf(null, node)
         every { storageManager.loadFullArtifactInputStream(any(), null) } answers { htmlStream(html) }
-        stubLocks(tryLock = false)
+        stubLocks(spin = false)
 
         var computes = 0
         val result = getHtml("demo") {
@@ -206,10 +205,10 @@ class PypiSimpleIndexCacheServiceTest {
     }
 
     @Test
-    @DisplayName("miss 未抢到锁且无文件时 503，不编 429、不扫库")
-    fun missWithoutLockAndNoFileFailsFast() {
+    @DisplayName("miss 自旋超时且仍无文件才 503，不扫库")
+    fun missSpinTimeoutWithoutFileFailsFast() {
         every { nodeService.getNodeDetail(any(), any()) } returns null
-        stubLocks(tryLock = false)
+        stubLocks(spin = false)
         var computes = 0
 
         val error = assertThrows<ErrorCodeException> {
@@ -223,8 +222,7 @@ class PypiSimpleIndexCacheServiceTest {
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, error.status)
         assertEquals(CommonMessageCode.SYSTEM_ERROR, error.messageCode)
         verify(exactly = 0) { storageManager.storeArtifactFile(any(), any(), any()) }
-        verify(exactly = 0) { lockOperation.getSpinLock(any(), any()) }
-        verify(exactly = 0) { lockOperation.getSpinLock(any(), any(), any(), any()) }
+        verify { lockOperation.getSpinLock(any(), any()) }
     }
 
     @Test
@@ -233,7 +231,7 @@ class PypiSimpleIndexCacheServiceTest {
         val fullPath = PypiSimpleIndexUtils.packageCacheFullPath("demo")
         every { nodeService.getNodeDetail(any(), any()) } returns nodeDetail(fullPath)
         every { storageManager.loadFullArtifactInputStream(any(), null) } returns null
-        stubLocks(tryLock = true)
+        stubLocks(spin = true)
         var computes = 0
 
         val result = getHtml("demo") {
@@ -301,8 +299,28 @@ class PypiSimpleIndexCacheServiceTest {
         assertThrows<PypiSimpleNotFoundException> { getHtml("demo", compute) }
         assertThrows<PypiSimpleNotFoundException> { getHtml("demo", compute) }
 
-        assertEquals(2, computes)
+        assertEquals(1, computes)
         verify(exactly = 0) { storageManager.storeArtifactFile(any(), any(), any()) }
+    }
+
+    @Test
+    @DisplayName("blob 不可读且自旋超时不回源")
+    fun unreadableSpinTimeoutDoesNotCompute() {
+        val fullPath = PypiSimpleIndexUtils.packageCacheFullPath("demo")
+        every { nodeService.getNodeDetail(any(), any()) } returns nodeDetail(fullPath)
+        every { storageManager.loadFullArtifactInputStream(any(), null) } returns null
+        stubLocks(spin = false)
+        var computes = 0
+
+        val error = assertThrows<ErrorCodeException> {
+            getHtml("demo") {
+                computes++
+                "<html>restored</html>"
+            }
+        }
+
+        assertEquals(0, computes)
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, error.status)
     }
 
     @Test

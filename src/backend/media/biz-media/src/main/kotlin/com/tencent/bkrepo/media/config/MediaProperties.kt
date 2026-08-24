@@ -13,11 +13,16 @@ class MediaProperties {
     var transcodeConfig: Map<String, TranscodeConfig> = mutableMapOf()
     var repoHost: String = ""
     var storageCredentialsKey: String? = null
+    var cosStorageCredentials: MutableMap<String, String> = mutableMapOf()
     var enabledLiveProjects: List<String> = mutableListOf()
     var reconnectByRepoProjects: MutableSet<String> = mutableSetOf()
     var rtcSecret: String = "rtc-stream-pull-secret-2m98cx37yr21"
     var remoteDevHost: String = ""
     var plugin: PluginProperties = PluginProperties()
+
+    fun getStorageCredentialsKey(projectId: String): String? {
+        return cosStorageCredentials[projectId]?.takeIf { it.isNotBlank() } ?: storageCredentialsKey
+    }
 }
 
 class PluginProperties {

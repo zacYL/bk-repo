@@ -187,3 +187,25 @@ Generate Kafka SASL JAAS configuration string
 {{- $password := include "bkrepo.jaasEscape" .Values.kafka.password -}}
 {{- printf "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";" $username $password -}}
 {{- end -}}
+
+{{- define "bkrepo.jwtSecretKey" -}}
+{{- if .Values.common.jwtSecretKey -}}
+{{- .Values.common.jwtSecretKey -}}
+{{- else -}}
+{{- $cmName := printf "%s-common" (include "common.names.fullname" .) -}}
+{{- $existing := lookup "v1" "ConfigMap" .Release.Namespace $cmName -}}
+{{- $key := "" -}}
+{{- if and $existing $existing.data -}}
+{{- $yml := index $existing.data "application.yml" | default "" -}}
+{{- $found := regexFind "security\\.auth\\.jwt\\.secretKey: \"[^\"]+\"" $yml -}}
+{{- if $found -}}
+{{- $key = $found | trimPrefix "security.auth.jwt.secretKey: " | trimAll "\"" -}}
+{{- end -}}
+{{- end -}}
+{{- if $key -}}
+{{- $key -}}
+{{- else -}}
+{{- randAlphaNum 64 -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}

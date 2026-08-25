@@ -56,7 +56,7 @@ security:
   auth:
     enabled: true
     jwt:
-      secretKey: bkrepo@secret
+      secretKey: ${BK_REPO_JWT_SECRET_KEY:}
 
 auth:
   security:

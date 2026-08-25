@@ -113,6 +113,7 @@ allprojects {
 
     tasks.test {
         jvmArgs = listOf("--add-opens=java.base/java.nio=ALL-UNNAMED")
+        systemProperty("security.auth.jwt.secret-key", "0".repeat(64))
         testLogging {
             events("passed", "skipped", "failed")
             showStackTraces = true

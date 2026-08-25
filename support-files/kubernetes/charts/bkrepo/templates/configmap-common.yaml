@@ -92,6 +92,7 @@ data:
         {{- end }}
         username: {{ .Values.common.username }}
         password: {{ .Values.common.password }}
+    security.auth.jwt.secretKey: {{ include "bkrepo.jwtSecretKey" . | quote }}
     {{- toYaml .Values.common.config | nindent 4 }}
     {{- if .Values.tls.mongodb.enabled }}
     tls:

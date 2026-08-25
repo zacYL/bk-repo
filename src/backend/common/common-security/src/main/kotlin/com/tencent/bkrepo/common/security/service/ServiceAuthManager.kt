@@ -39,6 +39,7 @@ import io.jsonwebtoken.JwtException
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Component
+import java.security.Key
 import java.time.Duration
 import kotlin.concurrent.thread
 
@@ -48,11 +49,22 @@ class ServiceAuthManager(
     properties: ServiceAuthProperties,
 ) {
 
-    private val signingKey = JwtUtils.createSigningKey(properties.secretKey)
-
-    private var token: String = generateSecurityToken()
+    private val signingKey: Key
+    private val previousSigningKey: Key?
+    private var token: String
 
     init {
+        if (properties.enabled) {
+            require(properties.secretKey.isNotBlank()) {
+                "security.service.secretKey must be configured when security.service.enabled is true"
+            }
+        }
+        warnIfWellKnown(properties.secretKey, "secretKey")
+        warnIfWellKnown(properties.previousSecretKey, "previousSecretKey")
+        signingKey = JwtUtils.createSigningKey(properties.secretKey)
+        previousSigningKey = properties.previousSecretKey.takeIf { it.isNotBlank() }
+            ?.let { JwtUtils.createSigningKey(it) }
+        token = generateSecurityToken()
         // 使用单独的一个线程刷新token，防止被其他业务影响。
         thread(isDaemon = true, name = REFRESH_THREAD_NAME) {
             while (true) {
@@ -76,12 +88,35 @@ class ServiceAuthManager(
         try {
             JwtUtils.validateToken(signingKey, token)
         } catch (exception: ExpiredJwtException) {
-            throw SystemErrorException(CommonMessageCode.SERVICE_UNAUTHENTICATED, "Expired token")
+            throw unauthenticated("Expired token")
         } catch (exception: JwtException) {
-            throw SystemErrorException(CommonMessageCode.SERVICE_UNAUTHENTICATED, "Invalid token")
+            verifyWithPrevious(token)
         } catch (exception: IllegalArgumentException) {
-            throw SystemErrorException(CommonMessageCode.SERVICE_UNAUTHENTICATED, "Empty token")
+            throw unauthenticated("Empty token")
         }
+    }
+
+    private fun verifyWithPrevious(token: String) {
+        val previous = previousSigningKey ?: throw unauthenticated("Invalid token")
+        try {
+            JwtUtils.validateToken(previous, token)
+        } catch (exception: ExpiredJwtException) {
+            throw unauthenticated("Expired token")
+        } catch (exception: JwtException) {
+            throw unauthenticated("Invalid token")
+        } catch (exception: IllegalArgumentException) {
+            throw unauthenticated("Empty token")
+        }
+    }
+
+    private fun warnIfWellKnown(key: String, name: String) {
+        if (key == WELL_KNOWN_SECRET) {
+            logger.warn("security.service.{} uses a well-known value and should be rotated", name)
+        }
+    }
+
+    private fun unauthenticated(reason: String): SystemErrorException {
+        return SystemErrorException(CommonMessageCode.SERVICE_UNAUTHENTICATED, reason)
     }
 
     fun refreshSecurityToken() {
@@ -99,5 +134,6 @@ class ServiceAuthManager(
         private const val REFRESH_DELAY = TOKEN_EXPIRATION - 60 * 1000L
         private const val REFRESH_THREAD_NAME = "ms-token-refresh"
         private const val RETRY_INTERVAL = 1000L
+        private const val WELL_KNOWN_SECRET = "secret@key"
     }
 }

@@ -36,5 +36,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties("security.service")
 data class ServiceAuthProperties(
     var enabled: Boolean = true,
-    var secretKey: String = "secret@key"
+    /**
+     * 服务间 JWT 签发密钥。enabled 时必须由部署注入，空值拒绝启动。
+     */
+    var secretKey: String = "",
+    /**
+     * 上一把密钥，仅校验。滚动升级或轮换时由部署显式填入，空白则不启用。
+     */
+    var previousSecretKey: String = "",
 )

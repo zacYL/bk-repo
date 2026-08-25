@@ -44,6 +44,10 @@ jobs:
       run: |
         ./gradlew clean
         ./gradlew boot-assembly:build -x test
-        java -jar -Dlogging.path=boot-assembly/build/libs/bkrepo/logs -Dstorage.filesystem.path=boot-assembly/build/libs/bkrepo/bkrepo boot-assembly/build/libs/boot-assembly-1.0.0-RELEASE.jar &
+        export BK_REPO_JWT_SECRET_KEY="$(openssl rand -hex 32)"
+        java -jar \
+          -Dlogging.path=boot-assembly/build/libs/bkrepo/logs \
+          -Dstorage.filesystem.path=boot-assembly/build/libs/bkrepo/bkrepo \
+          boot-assembly/build/libs/boot-assembly-1.0.0-RELEASE.jar &
         sleep 60
         curl http://localhost:8080/helm/blueking/helm-local/index.yaml

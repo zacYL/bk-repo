@@ -187,3 +187,8 @@ Generate Kafka SASL JAAS configuration string
 {{- $password := include "bkrepo.jaasEscape" .Values.kafka.password -}}
 {{- printf "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";" $username $password -}}
 {{- end -}}
+
+{{- define "bkrepo.serviceSecretKey" -}}
+{{- $msg := "common.serviceSecretKey is required. Set values.common.serviceSecretKey" -}}
+{{- required $msg .Values.common.serviceSecretKey -}}
+{{- end -}}

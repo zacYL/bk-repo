@@ -244,6 +244,10 @@ common:
   username: admin
   ## 初始用户密码
   password: password
+  ## 服务间认证密钥，必须显式配置
+  serviceSecretKey: ""
+  ## 备用校验密钥，轮换时可选
+  servicePreviousSecretKey: ""
   ## pod volume 挂载路径
   mountPath: /data/storage
   config:

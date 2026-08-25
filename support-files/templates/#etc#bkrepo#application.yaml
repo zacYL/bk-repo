@@ -37,3 +37,5 @@ storage:
 security:
   auth:
     enabled: true
+  service:
+    secretKey: __BK_REPO_SERVICE_SECRET_KEY__

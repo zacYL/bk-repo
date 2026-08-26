@@ -49,5 +49,8 @@ jobs:
           -Dlogging.path=boot-assembly/build/libs/bkrepo/logs \
           -Dstorage.filesystem.path=boot-assembly/build/libs/bkrepo/bkrepo \
           boot-assembly/build/libs/boot-assembly-1.0.0-RELEASE.jar &
-        sleep 60
+        for i in $(seq 1 60); do
+          curl -s --connect-timeout 2 -o /dev/null http://localhost:8080/ && break
+          sleep 3
+        done
         curl http://localhost:8080/helm/blueking/helm-local/index.yaml

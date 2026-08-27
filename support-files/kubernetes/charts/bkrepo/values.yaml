@@ -244,6 +244,7 @@ common:
   username: admin
   ## 初始用户密码
   password: password
+  ## JWT 签名密钥，至少 64 字节，必须显式配置；写入 Secret 后注入 BK_REPO_JWT_SECRET_KEY
   jwtSecretKey: ""
   ## pod volume 挂载路径
   mountPath: /data/storage

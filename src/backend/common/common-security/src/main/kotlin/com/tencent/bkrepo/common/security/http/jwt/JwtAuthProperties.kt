@@ -50,7 +50,7 @@ data class JwtAuthProperties(
     /**
      * 过期时间，[Duration.ZERO]代表永不过期
      */
-    var expiration: Duration = Duration.ofHours(24)
+    var expiration: Duration = Duration.ZERO
 ) : InitializingBean {
     override fun afterPropertiesSet() {
         val min = JwtUtils.SECRET_KEY_MIN_LENGTH

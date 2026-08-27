@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.auth.config
 
 import com.tencent.bkrepo.auth.interceptor.AuthInterceptor
+import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
@@ -40,7 +41,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
 @EnableConfigurationProperties(OauthProperties::class, TofProperties::class)
-class AuthConfig : WebMvcConfigurer {
+class AuthConfig(
+    private val httpAuthProperties: HttpAuthProperties
+) : WebMvcConfigurer {
 
     var prefixEnabled = true
 
@@ -57,6 +60,7 @@ class AuthConfig : WebMvcConfigurer {
             .excludePattern("/api/user/rsa")
             .excludePattern("/api/oauth/*/token")
             .excludePattern("/api/oauth/*/.well-known/**")
+            .applyConfig(httpAuthProperties)
         if (prefixEnabled) {
             httpAuthSecurity.enablePrefix()
         }

@@ -76,18 +76,30 @@ import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.HandlerMapping
 import java.util.Base64
 
+/**
+ * Auth 服务专用 HTTP 鉴权拦截器。
+ * 与公共链读取同一套 [HttpAuthSecurity] 开关，但不处理 Temporary Token。
+ */
 class AuthInterceptor(
-    private val httpAuthSecurity: HttpAuthSecurity
+    private val httpAuthSecurity: HttpAuthSecurity,
+    injectedAccountService: AccountService? = null,
+    injectedUserService: UserService? = null,
+    injectedOauthAuthorizationService: OauthAuthorizationService? = null,
+    injectedJwtProperties: JwtAuthProperties? = null
 ) : HandlerInterceptor {
 
-    private val accountService: AccountService by lazy { SpringContextUtils.getBean() }
-
-    private val userService: UserService by lazy { SpringContextUtils.getBean() }
-
-    private val oauthAuthorizationService: OauthAuthorizationService by lazy { SpringContextUtils.getBean() }
-
-    private val jwtProperties: JwtAuthProperties by lazy { SpringContextUtils.getBean() }
-
+    private val accountService: AccountService by lazy {
+        injectedAccountService ?: SpringContextUtils.getBean()
+    }
+    private val userService: UserService by lazy {
+        injectedUserService ?: SpringContextUtils.getBean()
+    }
+    private val oauthAuthorizationService: OauthAuthorizationService by lazy {
+        injectedOauthAuthorizationService ?: SpringContextUtils.getBean()
+    }
+    private val jwtProperties: JwtAuthProperties by lazy {
+        injectedJwtProperties ?: SpringContextUtils.getBean()
+    }
     private val signingKey by lazy { JwtUtils.createSigningKey(jwtProperties.secretKey) }
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
@@ -95,27 +107,26 @@ class AuthInterceptor(
         var authFailStr = String.format(AUTH_FAILED_RESPONSE, "empty auth header")
         try {
             // basic认证
-            if (authHeader.startsWith(BASIC_AUTH_HEADER_PREFIX)) {
+            if (authHeader.startsWith(BASIC_AUTH_HEADER_PREFIX) && httpAuthSecurity.basicAuthEnabled) {
                 return checkUserFromBasic(request, authHeader)
             }
 
             // platform认证
-            if (authHeader.startsWith(PLATFORM_AUTH_HEADER_PREFIX)) {
+            if (authHeader.startsWith(PLATFORM_AUTH_HEADER_PREFIX) && httpAuthSecurity.platformAuthEnabled) {
                 authFailStr = String.format(AUTH_FAILED_RESPONSE, "illegal platform token")
                 return checkUserFromPlatform(request, authHeader)
             }
 
-            // oauth认证
-            if (authHeader.startsWith(BEARER_AUTH_PREFIX)) {
+            // oauth/jwt认证
+            if (authHeader.startsWith(BEARER_AUTH_PREFIX) &&
+                (httpAuthSecurity.jwtAuthEnabled || httpAuthSecurity.oauthEnabled)
+            ) {
                 authFailStr = String.format(AUTH_FAILED_RESPONSE, "illegal bearer token")
                 return checkBearerToken(request, authHeader)
             }
 
             // sign认证
-            val sig = request.getParameter(HttpSigner.SIGN)
-            val appId = request.getParameter(HttpSigner.APP_ID)
-            val accessKey = request.getParameter(HttpSigner.ACCESS_KEY)
-            if (sig != null && appId != null && accessKey != null) {
+            if (hasSignCredentials(request) && httpAuthSecurity.signAuthEnabled) {
                 authFailStr = String.format(AUTH_FAILED_RESPONSE, "illegal sign")
                 return checkUserFromSign(request)
             }
@@ -131,11 +142,16 @@ class AuthInterceptor(
 
     private fun checkBearerToken(request: HttpServletRequest, authHeader: String): Boolean {
         val token = authHeader.removePrefix(BEARER_AUTH_PREFIX)
-        val userId = parseInternalJwtUserId(token)
-        if (userId != null) {
-            return checkUserFromJwt(request, userId)
+        if (httpAuthSecurity.jwtAuthEnabled) {
+            val userId = parseInternalJwtUserId(token)
+            if (userId != null) {
+                return checkUserFromJwt(request, userId)
+            }
         }
-        return checkOauthToken(request, authHeader)
+        if (httpAuthSecurity.oauthEnabled) {
+            return checkOauthToken(request, authHeader)
+        }
+        throw IllegalArgumentException("invalid auth type")
     }
 
     private fun parseInternalJwtUserId(token: String): String? {
@@ -250,6 +266,12 @@ class AuthInterceptor(
         request.setAttribute(USER_KEY, userId)
         request.setAttribute(PLATFORM_KEY, appId)
         request.setAttribute(ADMIN_USER, isAdmin)
+    }
+
+    private fun hasSignCredentials(request: HttpServletRequest): Boolean {
+        return request.getParameter(HttpSigner.SIGN) != null &&
+            request.getParameter(HttpSigner.APP_ID) != null &&
+            request.getParameter(HttpSigner.ACCESS_KEY) != null
     }
 
     private fun getUrlPath(request: HttpServletRequest): String {

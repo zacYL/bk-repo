@@ -188,24 +188,23 @@ Generate Kafka SASL JAAS configuration string
 {{- printf "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";" $username $password -}}
 {{- end -}}
 
+{{- define "bkrepo.jwtSecretName" -}}
+{{- printf "%s-jwt" (include "common.names.fullname" .) -}}
+{{- end -}}
+
 {{- define "bkrepo.jwtSecretKey" -}}
-{{- if .Values.common.jwtSecretKey -}}
-{{- .Values.common.jwtSecretKey -}}
-{{- else -}}
-{{- $cmName := printf "%s-common" (include "common.names.fullname" .) -}}
-{{- $existing := lookup "v1" "ConfigMap" .Release.Namespace $cmName -}}
-{{- $key := "" -}}
-{{- if and $existing $existing.data -}}
-{{- $yml := index $existing.data "application.yml" | default "" -}}
-{{- $found := regexFind "security\\.auth\\.jwt\\.secretKey: \"[^\"]+\"" $yml -}}
-{{- if $found -}}
-{{- $key = $found | trimPrefix "security.auth.jwt.secretKey: " | trimAll "\"" -}}
+{{- $msg := "common.jwtSecretKey is required (>=64 bytes). Set values.common.jwtSecretKey" -}}
+{{- $key := required $msg .Values.common.jwtSecretKey -}}
+{{- if lt (len $key) 64 -}}
+{{- fail "common.jwtSecretKey must be at least 64 bytes (HS512)" -}}
 {{- end -}}
-{{- end -}}
-{{- if $key -}}
 {{- $key -}}
-{{- else -}}
-{{- randAlphaNum 64 -}}
 {{- end -}}
-{{- end -}}
+
+{{- define "bkrepo.jwtSecretEnv" -}}
+- name: BK_REPO_JWT_SECRET_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "bkrepo.jwtSecretName" . }}
+      key: jwt-secret-key
 {{- end -}}

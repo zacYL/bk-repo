@@ -51,6 +51,7 @@ class AuthConfig : WebMvcConfigurer {
             .includePattern("/cluster/**")
             .excludePattern("/external/**")
             .excludePattern("/api/user/login")
+            // /info 由网关 /web/ 的 auth_request 鉴权；Controller 仅在 X-BKREPO-API-TYPE=web 时写用户
             .excludePattern("/api/user/info")
             .excludePattern("/api/user/verify")
             .excludePattern("/api/user/rsa")

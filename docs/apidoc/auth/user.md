@@ -389,8 +389,8 @@
 - API:DELETE  /auth/api/user/role/{uid}/{rid}
 - API 名称: delete_user_role
 - 功能说明：
-	- 中文：删除用户所属角色
-	- English：delete user role
+	- 中文：删除用户所属角色。调用者须为系统管理员，或目标角色所属项目的项目管理员；且只能操作本人（系统管理员可操作任意用户）。
+	- English：delete user role. Caller must be a system admin, or a project admin of the role's project. Non-admin callers can only operate on themselves.
 
 - input body:
 
@@ -443,8 +443,8 @@
 - API:POST  /auth/api/user/role/{uid}/{rid}
 - API 名称: add_user_role
 - 功能说明：
-	- 中文：新增用户所属角色
-	- English：add user role
+	- 中文：新增用户所属角色。调用者须为系统管理员，或目标角色所属项目的项目管理员；且只能操作本人（系统管理员可操作任意用户）。普通用户不可为自己分配角色。
+	- English：add user role. Caller must be a system admin, or a project admin of the role's project. Non-admin callers can only operate on themselves. Regular users cannot assign roles to themselves.
 
 - input body:
 

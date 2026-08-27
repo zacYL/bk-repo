@@ -148,7 +148,7 @@ class AuthInterceptor(
     }
 
     private fun checkUserFromJwt(request: HttpServletRequest, userId: String): Boolean {
-        val userAccess = userAccessApiSet.any { request.requestURI.contains(it) }
+        val userAccess = isUserAccessApi(request)
         val user = userService.getUserInfoById(userId) ?: run {
             logger.warn("internal jwt user [$userId] not found")
             throw IllegalArgumentException("internal jwt user not found")
@@ -164,7 +164,7 @@ class AuthInterceptor(
     }
 
     private fun checkUserFromBasic(request: HttpServletRequest, authHeader: String): Boolean {
-        val userAccess = userAccessApiSet.any { request.requestURI.contains(it) }
+        val userAccess = isUserAccessApi(request)
         val encodedCredentials = authHeader.removePrefix(BASIC_AUTH_HEADER_PREFIX)
         val decodedHeader = String(Base64.getDecoder().decode(encodedCredentials))
         val parts = decodedHeader.split(COLON)
@@ -231,8 +231,8 @@ class AuthInterceptor(
     }
 
     private fun setAuthAttribute(userId: String, appId: String, request: HttpServletRequest) {
-        val userAccess = userAccessApiSet.any { request.requestURI.contains(it) }
-        val anonymousAccess = anonymousAccessApiSet.any { request.requestURI.contains(it) }
+        val userAccess = isUserAccessApi(request)
+        val anonymousAccess = isAnonymousAccessApi(request)
         val userInfo = userService.getUserInfoById(userId)
         val isAdmin: Boolean = userInfo?.admin ?: false
         if (userId.isNotEmpty() && userInfo == null && userId != ANONYMOUS_USER) {
@@ -261,9 +261,39 @@ class AuthInterceptor(
         return path
     }
 
+    /**
+     * 非管理员可访问的用户侧 API。必须用 Spring 映射路径做前缀匹配，
+     * 禁止对 [HttpServletRequest.getRequestURI] 做 contains：Tomcat 会保留矩阵参数（`;`），
+     * 而 Spring MVC 路由会剥离分号，导致 `/api/proxy/create;/api/user` 绕过管理员检查。
+     */
+    private fun isUserAccessApi(request: HttpServletRequest): Boolean {
+        return matchesPathPrefix(resolveLookupPath(request), userAccessApiSet)
+    }
+
+    private fun isAnonymousAccessApi(request: HttpServletRequest): Boolean {
+        return matchesPathPrefix(resolveLookupPath(request), anonymousAccessApiSet)
+    }
+
+    private fun resolveLookupPath(request: HttpServletRequest): String {
+        val mappedPath = request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE) as? String
+        var path = (mappedPath ?: request.requestURI).substringBefore(';')
+        val contextPath = request.contextPath
+        if (contextPath.isNotEmpty() && path.startsWith(contextPath)) {
+            path = path.removePrefix(contextPath)
+        }
+        if (httpAuthSecurity.prefixEnabled) {
+            path = path.removePrefix(httpAuthSecurity.prefix)
+        }
+        return path
+    }
+
+    private fun matchesPathPrefix(path: String, prefixes: Set<String>): Boolean {
+        return prefixes.any { prefix -> path == prefix || path.startsWith("$prefix/") }
+    }
+
     private fun checkOauthToken(request: HttpServletRequest, authHeader: String): Boolean {
         return try {
-            val userAccess = userAccessApiSet.any { request.requestURI.contains(it) }
+            val userAccess = isUserAccessApi(request)
             val userId = oauthAuthorizationService.validateToken(authHeader.removePrefix(BEARER_AUTH_PREFIX))
                 ?: throw AuthenticationException()
             val user = userService.getUserInfoById(userId)

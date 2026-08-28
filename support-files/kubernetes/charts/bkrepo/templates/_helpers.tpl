@@ -188,10 +188,6 @@ Generate Kafka SASL JAAS configuration string
 {{- printf "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";" $username $password -}}
 {{- end -}}
 
-{{- define "bkrepo.jwtSecretName" -}}
-{{- printf "%s-jwt" (include "common.names.fullname" .) -}}
-{{- end -}}
-
 {{- define "bkrepo.jwtSecretKey" -}}
 {{- $msg := "common.jwtSecretKey is required (>=64 bytes). Set values.common.jwtSecretKey" -}}
 {{- $key := required $msg .Values.common.jwtSecretKey -}}
@@ -199,12 +195,4 @@ Generate Kafka SASL JAAS configuration string
 {{- fail "common.jwtSecretKey must be at least 64 bytes (HS512)" -}}
 {{- end -}}
 {{- $key -}}
-{{- end -}}
-
-{{- define "bkrepo.jwtSecretEnv" -}}
-- name: BK_REPO_JWT_SECRET_KEY
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "bkrepo.jwtSecretName" . }}
-      key: jwt-secret-key
 {{- end -}}

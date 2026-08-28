@@ -187,3 +187,12 @@ Generate Kafka SASL JAAS configuration string
 {{- $password := include "bkrepo.jaasEscape" .Values.kafka.password -}}
 {{- printf "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";" $username $password -}}
 {{- end -}}
+
+{{- define "bkrepo.fdtpSecretKey" -}}
+{{- $msg := "replicationUDP.secretKey is required (>=64 bytes). Set values.replicationUDP.secretKey" -}}
+{{- $key := required $msg .Values.replicationUDP.secretKey -}}
+{{- if lt (len $key) 64 -}}
+{{- fail "replicationUDP.secretKey must be at least 64 bytes (HS512)" -}}
+{{- end -}}
+{{- $key -}}
+{{- end -}}

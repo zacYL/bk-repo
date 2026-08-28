@@ -92,6 +92,9 @@ data:
         {{- end }}
         username: {{ .Values.common.username }}
         password: {{ .Values.common.password }}
+    {{- if .Values.replicationUDP.secretKey }}
+    fdtp.server.secretKey: {{ include "bkrepo.fdtpSecretKey" . | quote }}
+    {{- end }}
     {{- toYaml .Values.common.config | nindent 4 }}
     {{- if .Values.tls.mongodb.enabled }}
     tls:

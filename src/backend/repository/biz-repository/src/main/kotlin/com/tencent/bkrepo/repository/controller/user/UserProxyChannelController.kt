@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.service.repo.ProxyChannelService
+import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.maskPassword
 import com.tencent.bkrepo.common.security.util.RsaUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelInfo
@@ -91,7 +92,7 @@ class UserProxyChannelController(
                 repoName = repoName,
                 repoType = repoType,
                 name = name
-            )
+            )?.maskPassword()
         )
     }
 
@@ -158,24 +159,7 @@ class UserProxyChannelController(
                 projectId,
                 repoName,
                 repoType
-            ).map { proxyChannelInfo ->
-                ProxyChannelInfo(
-                    projectId = proxyChannelInfo.projectId,
-                    repoName = proxyChannelInfo.repoName,
-                    id = proxyChannelInfo.id,
-                    public = proxyChannelInfo.public,
-                    name = proxyChannelInfo.name,
-                    url = proxyChannelInfo.url,
-                    repoType = proxyChannelInfo.repoType,
-                    credentialKey= proxyChannelInfo.credentialKey,
-                    username = proxyChannelInfo.username,
-                    password = proxyChannelInfo.password?.let{
-                         RsaUtils.encrypt(proxyChannelInfo.password!!)
-                    }.orEmpty(),
-                    lastSyncStatus = proxyChannelInfo.lastSyncStatus,
-                    lastSyncDate = proxyChannelInfo.lastSyncDate
-                )
-            }
+            ).map { it.maskPassword() }
         )
     }
 }

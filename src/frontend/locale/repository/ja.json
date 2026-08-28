@@ -368,6 +368,7 @@
   "credentialInformation": "認証情報",
   "proxyNameRule": "プロキシ名を入力してください",
   "proxyUrlRule": "プロキシアドレスを入力してください",
+  "passwordKeepPlaceholder": "変更しない場合は空のままにしてください",
   "view": "表示",
   "readActionTip": "リポジトリ内のすべてのアーティファクトの表示およびダウンロード権限",
   "writeActionTip1": "Genericリポジトリ：新規フォルダ作成、ファイルアップロード、コピー、移動",

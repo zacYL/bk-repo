@@ -36,6 +36,7 @@ import com.tencent.bkrepo.common.metadata.service.repo.RProxyChannelService
 import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.convert
 import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.convertToTProxyChannel
 import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.encryptPassword
+import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.isMaskedPassword
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelCreateRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelDeleteRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelInfo
@@ -65,7 +66,6 @@ class RProxyChannelServiceImpl(
     override suspend fun updateProxy(userId: String, request: ProxyChannelUpdateRequest) {
         with(request) {
             val validatedUrl = SecUrlValidator.validateOrThrow(url, repositoryProperties.proxyChannelUrl, "url")
-            val pw = encryptPassword(password)
             val tProxyChannel = proxyChannelDao.findByUniqueParams(
                 projectId = projectId,
                 repoName = repoName,
@@ -78,7 +78,9 @@ class RProxyChannelServiceImpl(
                 tProxyChannel.lastModifiedBy = userId
                 tProxyChannel.url = validatedUrl
                 tProxyChannel.username = username
-                tProxyChannel.password = pw
+                if (!isMaskedPassword(password)) {
+                    tProxyChannel.password = encryptPassword(password)
+                }
                 proxyChannelDao.save(tProxyChannel)
             }
         }

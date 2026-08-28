@@ -139,7 +139,7 @@
                         ...(data.username
                             ? {
                                 username: data.username,
-                                password: data.password
+                                password: data.password || '******'
                             }
                             : {})
                     })

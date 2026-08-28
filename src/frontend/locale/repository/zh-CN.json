@@ -369,6 +369,7 @@
     "credentialInformation": "凭证信息",
     "proxyNameRule": "请输入代理名称",
     "proxyUrlRule": "请输入代理地址",
+    "passwordKeepPlaceholder": "不修改请留空",
     "view": "查看",
     "readActionTip": "仓库内所有制品的查看和下载权限",
     "writeActionTip1": "Generic仓库：新建文件夹、上传文件、复制、移动",

@@ -362,6 +362,7 @@
     "credentialInformation":"Credential information",
     "proxyNameRule":"Please enter proxy name",
     "proxyUrlRule": "Please enter proxy url",
+    "passwordKeepPlaceholder": "Leave empty to keep current password",
     "view": "View",
     "readActionTip": "View and download permissions for all artifacts in the repository",
     "writeActionTip1": "generic repository: create a new folder, upload files, copy, move",

@@ -27,11 +27,20 @@
 
 package com.tencent.bkrepo.webhook.service
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.security.exception.PermissionException
+import com.tencent.bkrepo.webhook.UT_LONG_HEADER_VALUE
+import com.tencent.bkrepo.webhook.UT_MASKED_LONG_HEADER_VALUE
+import com.tencent.bkrepo.webhook.UT_MASKED_SHORT_HEADER_VALUE
 import com.tencent.bkrepo.webhook.UT_PROJECT_ID
+import com.tencent.bkrepo.webhook.UT_SHORT_HEADER_VALUE
 import com.tencent.bkrepo.webhook.UT_USER
 import com.tencent.bkrepo.webhook.constant.AssociationType
+import com.tencent.bkrepo.webhook.constant.WebHookRequestStatus
 import com.tencent.bkrepo.webhook.dao.WebHookDao
+import com.tencent.bkrepo.webhook.dao.WebHookLogDao
+import com.tencent.bkrepo.webhook.model.TWebHookLog
 import com.tencent.bkrepo.webhook.pojo.CreateWebHookRequest
 import com.tencent.bkrepo.webhook.pojo.UpdateWebHookRequest
 import org.junit.jupiter.api.Assertions
@@ -40,15 +49,23 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.reset
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest
 import org.springframework.data.mongodb.core.query.Query
+import java.time.LocalDateTime
 
 @DataMongoTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WebHookServiceTest @Autowired constructor(
     private val webHookService: WebHookService,
-    private val webHookDao: WebHookDao
+    private val webHookDao: WebHookDao,
+    private val webHookLogDao: WebHookLogDao
 ) : ServiceBaseTest() {
 
     @BeforeAll
@@ -59,6 +76,7 @@ class WebHookServiceTest @Autowired constructor(
     @BeforeEach
     fun beforeEach() {
         webHookDao.remove(Query())
+        reset(permissionManager)
     }
 
     @Test
@@ -73,6 +91,59 @@ class WebHookServiceTest @Autowired constructor(
         )
         val webhook = webHookService.createWebHook(UT_USER, request)
         Assertions.assertEquals(webhook.associationId, UT_PROJECT_ID)
+        verify(permissionManager).checkProjectPermission(eq(PermissionAction.MANAGE), eq(UT_PROJECT_ID), any())
+    }
+
+    @Test
+    @DisplayName("查询WebHook时对 headers 值做掩码")
+    fun `getWebHook masks header values`() {
+        val request = CreateWebHookRequest(
+            url = "https://localhost",
+            headers = mapOf(
+                "authorization" to UT_SHORT_HEADER_VALUE,
+                "x-token" to UT_LONG_HEADER_VALUE
+            ),
+            triggers = listOf(EventType.NODE_CREATED),
+            associationType = AssociationType.PROJECT,
+            associationId = UT_PROJECT_ID
+        )
+        val created = webHookService.createWebHook(UT_USER, request)
+        val webhook = webHookService.getWebHook(UT_USER, created.id)
+
+        Assertions.assertEquals(UT_MASKED_SHORT_HEADER_VALUE, webhook.headers?.get("authorization"))
+        Assertions.assertEquals(UT_MASKED_LONG_HEADER_VALUE, webhook.headers?.get("x-token"))
+        val stored = webHookDao.findById(created.id)
+        Assertions.assertEquals(UT_SHORT_HEADER_VALUE, stored?.headers?.get("authorization"))
+        Assertions.assertEquals(UT_LONG_HEADER_VALUE, stored?.headers?.get("x-token"))
+    }
+
+    @Test
+    @DisplayName("更新时回传掩码请求头应保留原始值")
+    fun `updateWebHook keeps original headers when masked values are submitted`() {
+        val request = CreateWebHookRequest(
+            url = "https://localhost",
+            headers = mapOf(
+                "authorization" to UT_SHORT_HEADER_VALUE,
+                "x-token" to UT_LONG_HEADER_VALUE
+            ),
+            triggers = listOf(EventType.NODE_CREATED),
+            associationType = AssociationType.PROJECT,
+            associationId = UT_PROJECT_ID
+        )
+        val created = webHookService.createWebHook(UT_USER, request)
+        webHookService.updateWebHook(
+            UT_USER,
+            UpdateWebHookRequest(
+                id = created.id,
+                url = "https://127.0.0.1",
+                headers = created.headers
+            )
+        )
+
+        val stored = webHookDao.findById(created.id)
+        Assertions.assertEquals("https://127.0.0.1", stored?.url)
+        Assertions.assertEquals(UT_SHORT_HEADER_VALUE, stored?.headers?.get("authorization"))
+        Assertions.assertEquals(UT_LONG_HEADER_VALUE, stored?.headers?.get("x-token"))
     }
 
     @Test
@@ -110,5 +181,37 @@ class WebHookServiceTest @Autowired constructor(
         val updateWebHookRequest = UpdateWebHookRequest(webhook.id, "https://127.0.0.1")
         webhook = webHookService.updateWebHook(UT_USER, updateWebHookRequest)
         Assertions.assertEquals(webhook.url, "https://127.0.0.1")
+    }
+
+    @Test
+    @DisplayName("无权限时拒绝重试WebHook请求")
+    fun `retryWebHookRequest denies user without permission`() {
+        val webhook = webHookService.createWebHook(
+            UT_USER,
+            CreateWebHookRequest(
+                url = "https://localhost",
+                headers = mapOf("key" to "value"),
+                triggers = listOf(EventType.NODE_CREATED),
+                associationType = AssociationType.PROJECT,
+                associationId = UT_PROJECT_ID
+            )
+        )
+        val log = webHookLogDao.insert(
+            TWebHookLog(
+                webHookId = webhook.id,
+                webHookUrl = webhook.url,
+                triggeredEvent = EventType.NODE_CREATED,
+                requestHeaders = emptyMap(),
+                requestPayload = "{}",
+                status = WebHookRequestStatus.FAIL,
+                requestDuration = 0L,
+                requestTime = LocalDateTime.now()
+            )
+        )
+        whenever(permissionManager.checkProjectPermission(any(), any(), any())).thenThrow(PermissionException())
+
+        assertThrows<PermissionException> {
+            webHookService.retryWebHookRequest(log.id.orEmpty())
+        }
     }
 }

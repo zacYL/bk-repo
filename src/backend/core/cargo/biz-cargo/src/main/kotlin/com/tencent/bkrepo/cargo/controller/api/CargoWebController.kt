@@ -115,6 +115,7 @@ class CargoWebController(
 
 
     @DeleteMapping(YANK)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     fun yank(@ArtifactPathVariable artifactInfo: CargoArtifactInfo): ResponseEntity<Any> {
         cargoService.yank(artifactInfo)
         TraceHeaderUtils.setResponseHeader()
@@ -122,6 +123,7 @@ class CargoWebController(
     }
 
     @PutMapping(UNYANK)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     fun unYank(@ArtifactPathVariable artifactInfo: CargoArtifactInfo): ResponseEntity<Any> {
         cargoService.unYank(artifactInfo)
         TraceHeaderUtils.setResponseHeader()
@@ -134,7 +136,7 @@ class CargoWebController(
         @ArtifactPathVariable artifactInfo: CargoArtifactInfo,
         @PathVariable("crateName") crateName: String,
     ): ResponseEntity<Any> {
-        // TODO 添加的owner才有权限去上传或者yank 对应制品
+        // TODO owner 相关能力后续完善
         TraceHeaderUtils.setResponseHeader()
         return ResponseEntity.ok("")
 

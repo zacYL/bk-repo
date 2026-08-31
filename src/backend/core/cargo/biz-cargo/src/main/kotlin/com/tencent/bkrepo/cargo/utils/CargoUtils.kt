@@ -85,6 +85,7 @@ object CargoUtils {
     }
 
     private fun getCrateFileName(name: String, version: String, suffix: String): String {
+        isValidPackageVersion(version)
         return "%s-%s%s".format(name, version, suffix)
     }
 
@@ -100,7 +101,7 @@ object CargoUtils {
     }
 
     fun isValidPackageVersion(version: String) {
-        if (SemVersion.validate(version)) {
+        if (!SemVersion.validate(version)) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, version)
         }
     }

@@ -53,11 +53,8 @@ class NugetPublishInfoResolver : ArtifactInfoResolver {
     }
 
     companion object {
-        private const val MAX_PACKAGE_ID_LENGTH = 100
-        private val PACKAGE_ID_REGEX = Regex("""^\w+([_.-]\w+)*$""")
-
         private fun isValidPackageId(id: String): Boolean {
-            return id.length <= MAX_PACKAGE_ID_LENGTH && PACKAGE_ID_REGEX.matches(id)
+            return id.isNotBlank() && !id.contains('/') && !id.contains('\\') && !id.contains("..")
         }
     }
 }

@@ -92,6 +92,7 @@ data:
         {{- end }}
         username: {{ .Values.common.username }}
         password: {{ .Values.common.password }}
+    backup.encryptKey: {{ include "bkrepo.backupEncryptKey" . | quote }}
     {{- toYaml .Values.common.config | nindent 4 }}
     {{- if .Values.tls.mongodb.enabled }}
     tls:

@@ -58,6 +58,9 @@ security:
     jwt:
       secretKey: bkrepo@secret
 
+backup:
+  encryptKey: ${BK_REPO_BACKUP_ENCRYPT_KEY:}
+
 auth:
   security:
     enablePrefix: true

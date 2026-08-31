@@ -113,6 +113,7 @@ allprojects {
 
     tasks.test {
         jvmArgs = listOf("--add-opens=java.base/java.nio=ALL-UNNAMED")
+        systemProperty("backup.encrypt-key", "0".repeat(32))
         testLogging {
             events("passed", "skipped", "failed")
             showStackTraces = true

@@ -37,3 +37,6 @@ storage:
 security:
   auth:
     enabled: true
+
+backup:
+  encryptKey: __BK_REPO_BACKUP_ENCRYPT_KEY__

@@ -44,4 +44,8 @@ data class BackupCredentialSet(
     val status: BackupCredentialStatus,
     @get:Schema(title = "认证授权方式")
     val authorizationGrantType: AuthorizationGrantType? = AuthorizationGrantType.PLATFORM
-)
+) {
+    override fun toString(): String {
+        return "BackupCredentialSet(accessKey=$accessKey, status=$status)"
+    }
+}

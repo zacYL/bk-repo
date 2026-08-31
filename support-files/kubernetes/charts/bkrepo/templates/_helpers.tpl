@@ -187,3 +187,14 @@ Generate Kafka SASL JAAS configuration string
 {{- $password := include "bkrepo.jaasEscape" .Values.kafka.password -}}
 {{- printf "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";" $username $password -}}
 {{- end -}}
+
+{{- define "bkrepo.backupEncryptKey" -}}
+{{- $key := default "" .Values.common.backupEncryptKey -}}
+{{- if $key -}}
+{{- $len := len $key -}}
+{{- if and (ne $len 16) (ne $len 24) (ne $len 32) -}}
+{{- fail "common.backupEncryptKey must be 16, 24 or 32 bytes (AES)" -}}
+{{- end -}}
+{{- $key -}}
+{{- end -}}
+{{- end -}}

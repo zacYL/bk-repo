@@ -90,6 +90,7 @@ import com.tencent.devops.plugin.api.applyExtension
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import java.net.URLDecoder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -282,13 +283,20 @@ class TemporaryAccessService(
     /**
      * 合并
      * */
-    fun patch(artifactInfo: GenericArtifactInfo, oldFilePath: String, deltaFile: ArtifactFile): SseEmitter {
+    fun patch(
+        artifactInfo: GenericArtifactInfo,
+        oldFilePath: String,
+        deltaFile: ArtifactFile,
+        tokenInfo: TemporaryTokenInfo,
+    ): SseEmitter {
+        val normalizedOldPath = normalizeOldFilePath(oldFilePath)
+        checkAccessPath(tokenInfo, normalizedOldPath)
         with(artifactInfo) {
             val repo = repositoryService.getRepoDetail(projectId, repoName)
                 ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
             val request = HttpContextHolder.getRequest()
             request.setAttribute(REPO_KEY, repo)
-            return deltaSyncService.patch(oldFilePath, deltaFile)
+            return deltaSyncService.patch(normalizedOldPath, deltaFile)
         }
     }
 
@@ -426,10 +434,7 @@ class TemporaryAccessService(
                 "${artifactInfo.projectId}/${artifactInfo.repoName}"
             )
         }
-        // 校验路径
-        if (!PathUtils.isSubPath(artifactInfo.getArtifactFullPath(), tokenInfo.fullPath)) {
-            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID, artifactInfo.getArtifactFullPath())
-        }
+        checkAccessPath(tokenInfo, artifactInfo.getArtifactFullPath())
         // 校验创建人权限
         permissionManager.checkNodePermission(
             if (tokenInfo.type == TokenType.DOWNLOAD) PermissionAction.READ else PermissionAction.WRITE,
@@ -438,6 +443,22 @@ class TemporaryAccessService(
             artifactInfo.getArtifactFullPath(),
             userId = tokenInfo.createdBy,
         )
+    }
+
+    /** decode 后 normalize。 */
+    private fun normalizeOldFilePath(oldFilePath: String): String {
+        val decoded = try {
+            URLDecoder.decode(oldFilePath, Charsets.UTF_8)
+        } catch (_: IllegalArgumentException) {
+            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID, oldFilePath)
+        }
+        return PathUtils.normalizeFullPath(decoded)
+    }
+
+    private fun checkAccessPath(tokenInfo: TemporaryTokenInfo, fullPath: String) {
+        if (!PathUtils.isSubPath(fullPath, tokenInfo.fullPath)) {
+            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID, fullPath)
+        }
     }
 
     /**

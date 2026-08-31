@@ -159,21 +159,21 @@ class RepositoryServiceHelper(
         ): RepositoryConfiguration {
             if (repoConfiguration is CompositeConfiguration) {
                 repoConfiguration.proxy.channelList.forEach {
-                    it.password?.let { pw ->
-                        if (decrypt || !isMaskedPassword(pw)) {
-                            it.password = crypto(pw, decrypt)
-                        }
-                    }
+                    it.password = cryptoIfNeeded(it.password, decrypt)
                 }
             }
             if (repoConfiguration is RemoteConfiguration) {
-                repoConfiguration.credentials.password?.let {
-                    if (decrypt || !isMaskedPassword(it)) {
-                        repoConfiguration.credentials.password = crypto(it, decrypt)
-                    }
-                }
+                val credentials = repoConfiguration.credentials
+                credentials.password = cryptoIfNeeded(credentials.password, decrypt)
             }
             return repoConfiguration
+        }
+
+        private fun cryptoIfNeeded(password: String?, decrypt: Boolean): String? {
+            if (password == null || (!decrypt && isMaskedPassword(password))) {
+                return password
+            }
+            return crypto(password, decrypt)
         }
 
         fun maskConfigurationPwd(repoConfiguration: RepositoryConfiguration): RepositoryConfiguration {

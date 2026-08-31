@@ -378,6 +378,9 @@ class OciRegistryLocalRepository(
         val artifactInfo = context.artifactInfo as OciManifestArtifactInfo
         val artifactFile = context.getArtifactFile()
         val digest = OciDigest.fromSha256(artifactFile.getFileSha256())
+        if (artifactInfo.isValidDigest && digest.toString() != OciDigest(artifactInfo.reference).toString()) {
+            throw OciBadRequestException(OciMessageCode.OCI_DIGEST_INVALID, artifactInfo.reference)
+        }
         val node = ociOperationService.storeArtifact(
             ociArtifactInfo = artifactInfo,
             artifactFile = artifactFile,

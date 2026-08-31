@@ -76,6 +76,7 @@ import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion
 import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.convertToInfo
 import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.cryptoConfigurationPwd
 import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.determineStorageKey
+import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.restoreMaskedPasswords
 import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -299,7 +300,9 @@ class RRepositoryServiceImpl(
             repository.lastModifiedBy = operator
             repository.lastModifiedDate = LocalDateTime.now()
             configuration?.let {
-                updateRepoConfiguration(it, cryptoConfigurationPwd(oldConfiguration), repository, operator)
+                val decryptedOld = cryptoConfigurationPwd(oldConfiguration)
+                restoreMaskedPasswords(it, decryptedOld)
+                updateRepoConfiguration(it, decryptedOld, repository, operator)
                 repository.configuration = cryptoConfigurationPwd(it, false).toJsonString()
             }
             repository.display = display

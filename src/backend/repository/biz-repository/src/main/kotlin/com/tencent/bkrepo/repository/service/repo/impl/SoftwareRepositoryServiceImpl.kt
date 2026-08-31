@@ -9,6 +9,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.metadata.dao.repo.RepositoryDao
 import com.tencent.bkrepo.common.metadata.model.TRepository
+import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.maskConfigurationPwd
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.service.repo.SoftwareRepositoryService
 import org.springframework.data.domain.Sort
@@ -90,7 +91,7 @@ class SoftwareRepositoryServiceImpl(
                     category = it.category,
                     public = it.public,
                     description = it.description,
-                    configuration = it.configuration.readJsonString(),
+                    configuration = maskConfigurationPwd(it.configuration.readJsonString()),
                     storageCredentialsKey = it.credentialsKey,
                     projectId = it.projectId,
                     createdBy = it.createdBy,

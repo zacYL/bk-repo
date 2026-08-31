@@ -410,6 +410,8 @@ gateway:
 ## replication fdtp服务配置
 replicationUDP:
   enabled: true
+  ## FDTP 连接认证密钥，至少 64 字节，启用 fdtp.server.enabled 时必须显式配置
+  secretKey: ""
   ## bkrepo replication-udp service配置
   service:
     type: LoadBalancer

@@ -37,3 +37,7 @@ storage:
 security:
   auth:
     enabled: true
+
+fdtp:
+  server:
+    secretKey: __BK_REPO_FDTP_SECRET_KEY__

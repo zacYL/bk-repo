@@ -58,6 +58,10 @@ security:
     jwt:
       secretKey: bkrepo@secret
 
+fdtp:
+  server:
+    secretKey: ${BK_REPO_FDTP_SECRET_KEY:}
+
 auth:
   security:
     enablePrefix: true

@@ -43,28 +43,19 @@ class DistributedLeakyRateLimiterTest : DistributedTest() {
     fun testTryAcquire() {
         val key = KEY + "testTryAcquire"
         val ratelimiter = DistributedLeakyRateLimiter(key, 5.0, 5, redisTemplate)
-        val passed1 = ratelimiter.tryAcquire(1)
-        Assertions.assertTrue(passed1)
-        println(System.currentTimeMillis())
-        Thread.sleep(1000)
-        val passed2 = ratelimiter.tryAcquire(1)
-        Assertions.assertTrue(passed2)
-        val passed3 = ratelimiter.tryAcquire(1)
-        Assertions.assertTrue(passed3)
-        val passed4 = ratelimiter.tryAcquire(1)
-        Assertions.assertTrue(passed4)
-        val passed5 = ratelimiter.tryAcquire(1)
-        Assertions.assertTrue(passed5)
-        println(System.currentTimeMillis())
-        val passed6 = ratelimiter.tryAcquire(1)
-        Assertions.assertTrue(passed6)
-        println(System.currentTimeMillis())
-        val passed7 = ratelimiter.tryAcquire(1)
-        Assertions.assertFalse(passed7)
-        Thread.sleep(1000)
-        val passed8 = ratelimiter.tryAcquire(1)
-        Assertions.assertTrue(passed8)
+        Assertions.assertTrue(ratelimiter.tryAcquire(1))
+        // 漏桶按 Redis 整秒漏水，对齐到下一秒再连发，避免跨秒把整桶漏空
+        waitUntilNextRedisSecond()
+        repeat(5) { Assertions.assertTrue(ratelimiter.tryAcquire(1)) }
+        Assertions.assertFalse(ratelimiter.tryAcquire(1))
+        waitUntilNextRedisSecond()
+        Assertions.assertTrue(ratelimiter.tryAcquire(1))
         clean(key)
+    }
+
+    private fun waitUntilNextRedisSecond() {
+        val now = redisTemplate.execute { it.time() } ?: System.currentTimeMillis()
+        Thread.sleep(1000 - now % 1000 + 50)
     }
 
     @Test

@@ -10,6 +10,7 @@ import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.common.metadata.util.version.SemVersion
+import com.tencent.bkrepo.nuget.constant.ID
 import com.tencent.bkrepo.nuget.constant.PACKAGE
 import com.tencent.bkrepo.nuget.constant.VERSION
 import com.tencent.bkrepo.nuget.exception.NugetArtifactReceiveException
@@ -39,7 +40,7 @@ class NugetPublishInfoResolver : ArtifactInfoResolver {
         val nupkgPackage = artifactFile.getInputStream().use { it.resolverNuspec() }
         val packageName = nupkgPackage.metadata.id
         val version = nupkgPackage.metadata.version
-        // 校验
+        Preconditions.checkArgument(isValidPackageId(packageName), ID)
         Preconditions.checkArgument(SemVersion.validate(version), VERSION)
         val size = artifactFile.getSize()
         val publishInfo = NugetPublishArtifactInfo(projectId, repoName, packageName, version, nupkgPackage, size)
@@ -49,5 +50,14 @@ class NugetPublishInfoResolver : ArtifactInfoResolver {
 
     private fun resolveMultipartFile(multipartFile: MultipartFile): ArtifactFile {
         return ArtifactFileFactory.build(multipartFile)
+    }
+
+    companion object {
+        private const val MAX_PACKAGE_ID_LENGTH = 100
+        private val PACKAGE_ID_REGEX = Regex("""^\w+([_.-]\w+)*$""")
+
+        private fun isValidPackageId(id: String): Boolean {
+            return id.length <= MAX_PACKAGE_ID_LENGTH && PACKAGE_ID_REGEX.matches(id)
+        }
     }
 }

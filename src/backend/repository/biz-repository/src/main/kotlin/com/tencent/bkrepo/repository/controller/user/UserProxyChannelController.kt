@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.repository.controller.user
 
 import com.tencent.bkrepo.auth.constant.BASIC_AUTH_HEADER_PREFIX
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.util.checkurl.SecUrlValidator
 import com.tencent.bkrepo.common.api.pojo.Response
@@ -39,6 +41,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
 import com.tencent.bkrepo.common.metadata.service.repo.ProxyChannelService
 import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.maskPassword
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.util.RsaUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelInfo
@@ -70,6 +73,7 @@ class UserProxyChannelController(
     private val restTemplate = RestTemplate()
 
     @Operation(summary = "查询代理源信息")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     @GetMapping("/{projectId}/{repoName}")
     fun getByUniqueId(
         @Parameter(name = "所属项目", required = true)
@@ -140,6 +144,7 @@ class UserProxyChannelController(
     }
 
     @Operation(summary = "查询仓库的代理源信息")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     @GetMapping("/{type}/{projectId}/{repoName}")
     fun listByRepo(
         @Parameter(name = "所属项目", required = true)

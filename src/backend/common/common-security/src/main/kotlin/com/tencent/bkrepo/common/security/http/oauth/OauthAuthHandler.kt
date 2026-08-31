@@ -30,6 +30,7 @@ package com.tencent.bkrepo.common.security.http.oauth
 import com.tencent.bkrepo.common.api.constant.AUTHORITIES_KEY
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.OAUTH_AUTH_PREFIX
+import com.tencent.bkrepo.common.api.util.MaskPartStringUtil
 import com.tencent.bkrepo.common.security.crypto.CryptoProperties
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.http.core.HttpAuthHandler
@@ -67,11 +68,13 @@ open class OauthAuthHandler(
             val scopeList = claims.body["scope"] as? List<*>
             val scope = scopeList?.joinToString(",")
                 ?: authenticationManager.findOauthToken(authCredentials.token)?.scope
-                ?: throw AuthenticationException("Invalid access token: $authCredentials.token")
+                ?: throw AuthenticationException("Invalid access token")
             request.setAttribute(AUTHORITIES_KEY, scope)
             claims.body.subject
         } catch (e: Exception) {
-            logger.info("invalid oauth token[${authCredentials.token}]: ${e.message}")
+            logger.info(
+                "invalid oauth token[${MaskPartStringUtil.maskPartString(authCredentials.token)}]: ${e.message}"
+            )
             throw AuthenticationException("Invalid token")
         }
     }

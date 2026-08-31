@@ -723,7 +723,9 @@
         "NPM": "Npm制品分析"
     },
     "createPlan": "创建计划",
-    "resetUserMsg": "确认重置账户 {0} 的密码为默认密码password？",
+    "resetUserMsg": "确认重置账户 {0} 的密码？重置后将生成随机新密码，请立即告知用户并妥善保管。",
+    "newPasswordIs": "新密码为：",
+    "resetPasswordCopyTip": "请立即复制并告知用户。关闭后将无法再次查看明文密码。",
     "editPlan": "编辑计划",
     "planDetail":"计划详情",
     "scanReport":"扫描详情",

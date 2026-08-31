@@ -363,9 +363,9 @@ class UserController @Autowired constructor(
         return ResponseBuilder.success(userService.updatePassword(uid, decryptOldPwd, decryptNewPwd))
     }
 
-    @Operation(summary = "用户info ")
+    @Operation(summary = "重置用户密码，返回一次性明文新密码")
     @PostMapping("/reset/{uid}")
-    fun resetPassword(@PathVariable uid: String): Response<Boolean> {
+    fun resetPassword(@PathVariable uid: String): Response<String> {
         preCheckContextUser(uid)
         return ResponseBuilder.success(userService.resetPassword(uid))
     }

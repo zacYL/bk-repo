@@ -91,7 +91,7 @@ data:
         url: http://{{ .Values.gateway.host }}
         {{- end }}
         username: {{ .Values.common.username }}
-        password: {{ .Values.common.password }}
+        password: {{ include "bkrepo.admin.password" . | quote }}
     {{- if .Values.replicationUDP.secretKey }}
     fdtp.server.secretKey: {{ include "bkrepo.fdtpSecretKey" . | quote }}
     {{- end }}

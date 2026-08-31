@@ -8,11 +8,14 @@ import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.util.BasicAuthUtils
 import com.tencent.bkrepo.common.security.http.credentials.AnonymousCredentials
 import com.tencent.bkrepo.common.security.http.credentials.HttpAuthCredentials
+import com.tencent.bkrepo.common.security.exception.AuthenticationException
+import com.tencent.bkrepo.common.security.http.mirrors.MirrorsAuthConfiguration
 import com.tencent.bkrepo.common.security.http.mirrors.MirrorsAuthHandler
 import com.tencent.bkrepo.common.security.http.mirrors.MirrorsAuthProperties
 import com.tencent.bkrepo.common.security.manager.AuthenticationManager
 import jakarta.servlet.http.HttpServletRequest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -71,6 +74,37 @@ class HttpAuthInterceptorTest {
 
         assertTrue(allowed)
         assertEquals("user", request.getAttribute(USER_KEY))
+    }
+
+    @Test
+    @DisplayName("mirrors 配置口令为空时拒绝认证")
+    fun `mirrors auth rejects empty configured password`() {
+        val mirrorsAuthHandler = MirrorsAuthHandler(
+            MirrorsAuthProperties(enabled = true, password = ""),
+            AuthenticationManager()
+        )
+        val security = HttpAuthSecurity()
+            .disableBasicAuth()
+            .disableAnonymous()
+            .addHttpAuthHandler(mirrorsAuthHandler)
+        val interceptor = HttpAuthInterceptor(security)
+        val request = MockHttpServletRequest()
+        request.addHeader(HttpHeaders.AUTHORIZATION, BasicAuthUtils.encode("admin", ""))
+        val response = MockHttpServletResponse()
+
+        assertThrows(AuthenticationException::class.java) {
+            interceptor.preHandle(request, response, Any())
+        }
+    }
+
+    @Test
+    @DisplayName("开启 mirrors 但未配置口令时拒绝创建认证组件")
+    fun `mirrors auth customizer requires password`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            MirrorsAuthConfiguration().mirrorsAuthSecurityCustomizer(
+                MirrorsAuthProperties(enabled = true, password = "  ")
+            )
+        }
     }
 
     @Test

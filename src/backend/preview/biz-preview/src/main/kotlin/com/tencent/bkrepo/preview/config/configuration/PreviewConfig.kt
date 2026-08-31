@@ -227,8 +227,8 @@ class PreviewConfig {
     /**
      * ftp密码
      */
-    @Value("\${preview.ftp.password:123456}")
-    val ftpPassword = "123456"
+    @Value("\${preview.ftp.password:}")
+    val ftpPassword = ""
 
     /**
      * fFTP连接默认ControlEncoding(根据FTP服务器操作系统选择，Linux一般为UTF-8，Windows一般为GBK)，

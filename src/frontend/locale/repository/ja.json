@@ -722,7 +722,9 @@
     "NPM": "Npmアーティファクト分析"
   },
   "createPlan": "プラン作成",
-  "resetUserMsg": "アカウント {0} のパスワードをデフォルトパスワード「password」にリセットすることを確認します？",
+  "resetUserMsg": "アカウント {0} のパスワードをリセットしますか？ランダムな新しいパスワードが生成されます。",
+  "newPasswordIs": "新しいパスワード：",
+  "resetPasswordCopyTip": "直ちにコピーしてユーザーに伝えてください。閉じると平文パスワードは再表示できません。",
   "editPlan": "プラン編集",
   "planDetail":"プラン詳細",
   "scanReport":"スキャン詳細",

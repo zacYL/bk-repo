@@ -332,6 +332,40 @@
 |data | bool | result data |the data for response|
 |traceId|string|请求跟踪id|the trace id|
 
+### 重置用户密码
+
+- API: POST /auth/api/user/reset/{uid}
+- API 名称: reset_password
+- 功能说明：
+	- 中文：重置指定用户密码。不再重置为固定口令 `password`，而是生成随机密码并以明文返回一次；调用者须将新密码告知用户并妥善保管。只能操作本人（系统管理员可操作任意用户）。
+	- English：Reset the specified user's password. The password is no longer reset to the constant `password`; a random password is generated and returned once in plaintext. Callers must share it with the user. Non-admin callers can only operate on themselves.
+
+- input 字段说明
+
+|字段|类型|是否必须|默认值|说明|Description|
+|---|---|---|---|---|---|
+|uid|string|是|无|用户id|the user id|
+
+- output:
+
+```
+{
+    "code":0,
+    "message":null,
+    "data":"aB3k9Xm2Qp7nR4sT",
+    "traceId":""
+}
+```
+
+- output 字段说明
+
+| 字段|类型|说明|Description|
+|---|---|---|---|
+|code|bool|错误编码。 0表示success，>0表示失败错误 |0:success, other: failure|
+|message|result message|错误消息 |the failure message |
+|data | string | 一次性明文新密码 |the new password, shown once|
+|traceId|string|请求跟踪id|the trace id|
+
 ### 更新用户信息
 
 - API:PUT  /auth/api/user/update/info/{uid}

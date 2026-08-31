@@ -277,7 +277,7 @@ class RRepositoryServiceImpl(
                 convertToDetail(repository)!!
             } catch (exception: DuplicateKeyException) {
                 logger.warn("Insert repository[$projectId/$name] error: [${exception.message}]")
-                getRepoDetail(projectId, name, type.name)!!
+                convertToDetail(repositoryDao.findByNameAndType(projectId, name, type.name))!!
             }
         }
     }

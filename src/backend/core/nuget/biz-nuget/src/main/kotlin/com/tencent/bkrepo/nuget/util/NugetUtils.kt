@@ -35,6 +35,16 @@ object NugetUtils {
         return PathUtils.normalizeFullPath("/$id").trimStart('/')
     }
 
+    fun isSafePathSegment(value: String): Boolean {
+        if (value.isBlank() || value.contains("..")) {
+            return false
+        }
+        if (value.contains('/') || value.contains('\\')) {
+            return false
+        }
+        return normalizePackageId(value).isNotBlank()
+    }
+
     fun getNupkgFullPath(id: String, version: String): String {
         val packageId = normalizePackageId(id)
         return String.format(NUGET_FULL_PATH, packageId, packageId, version).toLowerCase()

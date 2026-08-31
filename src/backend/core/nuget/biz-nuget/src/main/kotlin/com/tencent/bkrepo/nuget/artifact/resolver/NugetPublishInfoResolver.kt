@@ -16,6 +16,7 @@ import com.tencent.bkrepo.nuget.constant.VERSION
 import com.tencent.bkrepo.nuget.exception.NugetArtifactReceiveException
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetPublishArtifactInfo
 import com.tencent.bkrepo.nuget.util.DecompressUtil.resolverNuspec
+import com.tencent.bkrepo.nuget.util.NugetUtils
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
@@ -40,8 +41,8 @@ class NugetPublishInfoResolver : ArtifactInfoResolver {
         val nupkgPackage = artifactFile.getInputStream().use { it.resolverNuspec() }
         val packageName = nupkgPackage.metadata.id
         val version = nupkgPackage.metadata.version
-        Preconditions.checkArgument(isValidPackageId(packageName), ID)
-        Preconditions.checkArgument(SemVersion.validate(version), VERSION)
+        Preconditions.checkArgument(NugetUtils.isSafePathSegment(packageName), ID)
+        Preconditions.checkArgument(isValidPackageVersion(version), VERSION)
         val size = artifactFile.getSize()
         val publishInfo = NugetPublishArtifactInfo(projectId, repoName, packageName, version, nupkgPackage, size)
         publishInfo.artifactFile = artifactFile
@@ -53,8 +54,8 @@ class NugetPublishInfoResolver : ArtifactInfoResolver {
     }
 
     companion object {
-        private fun isValidPackageId(id: String): Boolean {
-            return id.isNotBlank() && !id.contains('/') && !id.contains('\\') && !id.contains("..")
+        private fun isValidPackageVersion(version: String): Boolean {
+            return NugetUtils.isSafePathSegment(version) && SemVersion.validate(version)
         }
     }
 }

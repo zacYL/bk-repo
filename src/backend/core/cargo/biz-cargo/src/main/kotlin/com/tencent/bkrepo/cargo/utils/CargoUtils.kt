@@ -41,7 +41,6 @@ import com.tencent.bkrepo.cargo.constants.CARGO_NODE_SUFFIX
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
-import com.tencent.bkrepo.common.metadata.util.version.SemVersion
 
 object CargoUtils {
 
@@ -101,7 +100,7 @@ object CargoUtils {
     }
 
     fun isValidPackageVersion(version: String) {
-        if (!SemVersion.validate(version)) {
+        if (version.isBlank() || version.contains('/') || version.contains('\\')) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, version)
         }
     }

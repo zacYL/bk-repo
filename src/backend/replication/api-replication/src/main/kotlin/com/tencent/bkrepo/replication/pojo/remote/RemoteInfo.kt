@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.pojo.remote
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.tencent.bkrepo.replication.pojo.request.ReplicaType
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
 import com.tencent.bkrepo.replication.pojo.task.objects.PathConstraint
@@ -40,8 +41,10 @@ data class RemoteInfo(
     var repoName: String,
     var name: String,
     var registry: String,
+    @JsonIgnore
     var certificate: String? = null,
     var username: String? = null,
+    @JsonIgnore
     var password: String? = null,
     val packageConstraints: List<PackageConstraint>? = null,
     val pathConstraints: List<PathConstraint>? = null,

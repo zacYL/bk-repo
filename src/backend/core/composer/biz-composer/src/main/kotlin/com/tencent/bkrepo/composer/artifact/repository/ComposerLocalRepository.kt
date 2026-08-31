@@ -584,7 +584,10 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
     }
 
     private fun validatePackageName(name: String) {
-        if (name.isBlank() || name.contains("..") || name.contains('\\') || name.startsWith("/")) {
+        if (name.isBlank() || name.contains("..")) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, name)
+        }
+        if (name.contains('\\') || name.startsWith("/")) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, name)
         }
         val path = PathUtils.normalizeFullPath("/p/$name.json")

@@ -532,14 +532,22 @@ abstract class AbstractRateLimiterService(
                     " with ${resLimitInfo.resourceLimit}, e: ${e.message}"
             )
             exception = e
+            rejectIfFailClosed(e)
         } catch (e: InvalidResourceException) {
             logger.warn("${resLimitInfo.resourceLimit} is invalid ${resLimitInfo.resource} , e: ${e.message}")
             exception = e
         } catch (e: Exception) {
             logger.error("internal error: $e")
             exception = e
+            rejectIfFailClosed(e)
         } finally {
             afterRateLimitCheck(resLimitInfo, pass, exception)
+        }
+    }
+
+    private fun rejectIfFailClosed(cause: Exception) {
+        if (rateLimiterProperties.failClosed && !rateLimiterProperties.dryRun) {
+            throw OverloadException("Rate limiter unavailable: ${cause.message}")
         }
     }
 

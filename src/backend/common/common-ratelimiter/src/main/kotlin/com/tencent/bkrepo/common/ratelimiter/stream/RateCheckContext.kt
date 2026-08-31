@@ -37,5 +37,6 @@ data class RateCheckContext(
     var limitKey: String,
     var rangeLength: Long? = null,
     var dryRun: Boolean = false,
+    var failClosed: Boolean = false,
     var bandwidthProperties: BandwidthProperties = BandwidthProperties()
 )

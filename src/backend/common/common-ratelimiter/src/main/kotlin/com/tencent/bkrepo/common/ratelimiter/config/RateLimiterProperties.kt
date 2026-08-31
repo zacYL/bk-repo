@@ -37,6 +37,8 @@ import java.time.Duration
 class RateLimiterProperties(
     var enabled: Boolean = false,
     var dryRun: Boolean = false,
+    // Redis/锁异常时是否拒绝请求。默认 false 保持 fail-open，不影响现有可用性。
+    var failClosed: Boolean = false,
     // 配置规则刷新频率 单位为秒
     var refreshDuration: Long = 10L,
     // 本地缓存限流算法实现的最大个数

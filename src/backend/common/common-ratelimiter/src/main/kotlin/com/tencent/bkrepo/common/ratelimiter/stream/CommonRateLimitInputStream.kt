@@ -107,6 +107,7 @@ class CommonRateLimitInputStream(
             try {
                 initRateLimiter()
             } catch (e: Exception) {
+                rejectIfFailClosed(e)
                 return
             }
             if (rangeLength == null || rangeLength!! <= 0) {
@@ -163,7 +164,8 @@ class CommonRateLimitInputStream(
             }
             try {
                 flag = rateLimiter!!.tryAcquire(acquirePermits)
-            } catch (ignore: AcquireLockFailedException) {
+            } catch (e: AcquireLockFailedException) {
+                rejectIfFailClosed(e)
                 return permits
             }
             if (!flag) {
@@ -220,6 +222,12 @@ class CommonRateLimitInputStream(
             throwOrLogOverloadException()
         }
         return permits.coerceAtMost(bytes)
+    }
+
+    private fun rejectIfFailClosed(cause: Exception) {
+        if (rateCheckContext.failClosed && !rateCheckContext.dryRun) {
+            throw OverloadException("Rate limiter unavailable: ${cause.message}")
+        }
     }
 
     /**
@@ -353,6 +361,7 @@ class CommonRateLimitInputStream(
         }
         limitPerSecond = rateLimiter!!.getLimitPerSecond()
         rateCheckContext.dryRun = AbstractBandwidthRateLimiterService.getDryRunStatus()
+        rateCheckContext.failClosed = AbstractBandwidthRateLimiterService.getFailClosedStatus()
         rateCheckContext.bandwidthProperties = AbstractBandwidthRateLimiterService.getBandwidthProperties()
         keepConnection = rateLimiter!!.keepConnection()
     }

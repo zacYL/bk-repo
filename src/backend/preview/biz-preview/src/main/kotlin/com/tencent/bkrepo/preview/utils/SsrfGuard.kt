@@ -46,13 +46,14 @@ import java.net.UnknownHostException
 /**
  * 远程预览 SSRF 防护工具
  *
- * 在对外部 URL 发起 HTTP 请求前，对 URL 进行安全校验：
- * - 协议白名单（默认 https）
- * - 端口白名单（默认 80/443）
+ * 在对外部 URL 发起 HTTP/FTP 请求前，对 URL 进行安全校验：
+ * - 协议白名单（默认 https、ftp）
+ * - 端口白名单（默认 80/443/21）
  * - 域名/IP 白名单（可选，空表示不限制）
  * - 内网 / 环回 / 链路本地 / 多播 / 云元数据 / 保留网段黑名单
  *
  * 同时返回已解析的 IP 列表，调用方在实际发起请求时应传入这些 IP 以抵御 DNS Rebinding。
+ * FTP PASV 数据连接请使用 [validateResolvedHost]：只校验地址黑名单，不套用控制连接端口白名单。
  */
 @Component
 class SsrfGuard(private val config: PreviewConfig) {
@@ -145,6 +146,20 @@ class SsrfGuard(private val config: PreviewConfig) {
         }
 
         // 4. 内网 / 保留地址黑名单（基于 DNS 解析后的所有 IP）
+        validateResolvedHost(host)
+        return url
+    }
+
+    /**
+     * 校验主机名或字面 IP 解析后的地址是否落在禁止网段。
+     * 供 FTP PASV/EPSV 数据连接复用：只做地址黑名单，不做协议与端口白名单。
+     * PASV 数据端口为服务端分配的临时端口，不能套用控制连接的端口白名单。
+     */
+    fun validateResolvedHost(host: String) {
+        if (host.isBlank()) {
+            logger.warn("Remote preview host is blank")
+            throw PreviewInvalidException(PreviewMessageCode.PREVIEW_PARAMETER_INVALID, "url")
+        }
         val addresses = try {
             InetAddress.getAllByName(host)
         } catch (e: UnknownHostException) {
@@ -157,8 +172,6 @@ class SsrfGuard(private val config: PreviewConfig) {
                 throw PreviewInvalidException(PreviewMessageCode.PREVIEW_PARAMETER_INVALID, "url")
             }
         }
-
-        return url
     }
 
     /**

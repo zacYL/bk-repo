@@ -133,7 +133,12 @@
   - 中文: 与打开分享使用相同的分享权限校验，通过后返回内嵌预览 HTML。网关把 `/a/{shareId}` 反代到本接口，不 302，地址栏保持短链。`shareId` 为记录主键（32 位 UUID，并兼容历史 ObjectId）
   - English: same share-permission check as open, then 200 HTML that embeds the preview without changing the short URL. Path parameter is the share primary id
 - 鉴权: 与打开分享相同；不校验仓库 READ。浏览器访问 `/a/{shareId}` 未登录时，网关回落前端页并由 `getLoginUrl` 跳转企业登录，`c_url` 为该短链；登录后继续打开。独立部署弹出前端登录框
-- 响应: HTTP 200，`text/html`；iframe 加载 UTF-8 百分号编码后的预览地址
+- 响应:
+  - 有权限: HTTP 200，`text/html`；iframe 加载 UTF-8 百分号编码后的预览地址
+  - 当前用户不在分享可见范围: HTTP 403，`text/html` 无权限页（含分享创建者，按钮刷新当前短链）
+  - 分享不存在、已撤销，或底层文件不存在: HTTP 404，`text/html`
+  - 其它错误（如 token 签发失败）仍返回 JSON，与打开分享一致
+  - 以上 HTML 响应均带 `Cache-Control: no-store`
 - 兼容: 旧链接 `/a/{shareId}` 永久保留，与新链同时 200，不跳转。此路径不识别 8 位短码
 
 ## 短码打开
@@ -144,7 +149,7 @@
   - 中文: 与打开分享使用相同的分享权限校验，通过后返回内嵌预览 HTML。网关把 `/share/{shortShareId}` 反代到本接口，不 302，地址栏保持短链。`shortShareId` 必须恰好 8 位 Base62（`0-9A-Za-z`，大小写敏感）
   - English: same share-permission check as open, then 200 HTML for `/share/{shortShareId}`
 - 鉴权: 与短链打开相同。浏览器访问 `/share/{shortShareId}` 未登录时，网关回落前端页并由 `getLoginUrl` 跳转企业登录，`c_url` 为该短链
-- 响应: HTTP 200，`text/html`；格式非法或短码不存在时与打开分享「未找到」相同
+- 响应: 与短链打开相同（200 预览 HTML / 403 HTML / 404 HTML）；格式非法或短码不存在时为 404 HTML
 - `sharePath` 返回 `/share/{shortShareId}`。`shareId` 仍为 32 位 UUID；管理接口（open/rename/revoke）只接受 `shareId`
 - 新建分享立即写入短码；已有记录在列表、打开、返回 `sharePath` 时惰性补齐，生成后不再更换
 - 网关：与现有 `/a/{shareId}` 同机增加 `/share/{shortShareId}` → `/preview/api/artifact/share/share/{shortShareId}`。若短链会打到仓库 UI nginx，`/share/` 规则必须比 `^/s/` 更精确，避免被旧仓库分享跳转误匹配

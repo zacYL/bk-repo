@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryId
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
@@ -583,16 +584,16 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
     }
 
     private fun validatePackageName(name: String) {
-        if (!PACKAGE_NAME_REGEX.matches(name)) {
+        if (name.isBlank() || name.contains("..") || name.contains('\\') || name.startsWith("/")) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, name)
+        }
+        val path = PathUtils.normalizeFullPath("/p/$name.json")
+        if (!path.startsWith("/p/")) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, name)
         }
     }
 
     companion object {
         private val logger = LoggerFactory.getLogger(ComposerLocalRepository::class.java)
-        private val PACKAGE_NAME_REGEX = Regex(
-            "^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9]([_.-]?[a-z0-9]+)*$",
-            RegexOption.IGNORE_CASE
-        )
     }
 }

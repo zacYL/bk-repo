@@ -23,11 +23,7 @@
                 <bk-input v-model.trim="editProxyData.username"></bk-input>
             </bk-form-item>
             <bk-form-item v-if="editProxyData.proxyType === 'privateProxy'" :label="$t('password')" property="password">
-                <bk-input
-                    type="password"
-                    v-model.trim="editProxyData.password"
-                    :placeholder="editProxyData.type === 'edit' ? $t('passwordKeepPlaceholder') : ''">
-                </bk-input>
+                <bk-input type="password" v-model.trim="editProxyData.password"></bk-input>
             </bk-form-item>
             <bk-form-item v-if="repoType === 'helm'" property="connection">
                 <div class="flex-center">
@@ -72,7 +68,6 @@
                     username: '',
                     password: ''
                 },
-                originalUrl: '',
                 condition: false,
                 loading: false,
                 connected: false,
@@ -123,7 +118,6 @@
         watch: {
             proxyData (data) {
                 if (data.type === 'add') {
-                    this.originalUrl = ''
                     this.editProxyData = {
                         proxyType: 'publicProxy',
                         type: 'add',
@@ -133,11 +127,9 @@
                         password: ''
                     }
                 } else {
-                    this.originalUrl = data.url || ''
                     this.editProxyData = {
                         ...this.editProxyData,
-                        ...data,
-                        password: ''
+                        ...data
                     }
                     this.editProxyData.proxyType = data.public ? 'publicProxy' : 'privateProxy'
                     this.checkValid()
@@ -176,16 +168,10 @@
                     && this.editProxyData.name.trim().length > 0
                     && this.editProxyData.url.trim().length > 0
                     && this.editProxyData.username.trim().length > 0
-                    && (this.editProxyData.password.trim().length > 0 || this.editProxyData.type === 'edit')
+                    && this.editProxyData.password.trim().length > 0
                 ) {
                     this.condition = true
-                    if (this.editProxyData.password.trim().length > 0) {
-                        this.debouncedTestConnection()
-                    } else if (this.editProxyData.url === this.originalUrl) {
-                        this.connected = true
-                    } else {
-                        this.connected = false
-                    }
+                    this.debouncedTestConnection()
                     return true
                 } else {
                     this.condition = false
@@ -208,7 +194,10 @@
                     url: this.editProxyData.url,
                     userName: this.editProxyData.proxyType !== 'privateProxy' ? null : this.editProxyData.username,
                     password: this.editProxyData.proxyType !== 'privateProxy' ? null : encrypt.encrypt(this.editProxyData.password),
-                    type: this.repoType
+                    type: this.repoType,
+                    projectId: this.$route.params.projectId,
+                    repoName: this.$route.query.repoName,
+                    name: this.editProxyData.type === 'edit' ? this.proxyData.name : undefined
                 }
                 this.checkProxy({ body: body }).then(res => {
                     if (res === true) {

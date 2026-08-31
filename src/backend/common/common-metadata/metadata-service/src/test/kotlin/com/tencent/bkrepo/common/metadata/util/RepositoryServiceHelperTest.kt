@@ -50,7 +50,7 @@ class RepositoryServiceHelperTest {
             public = false,
             name = "private",
             url = "http://example.com",
-            password = "",
+            password = PASSWORD_MASK,
         )
         restoreMaskedPasswords(
             CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(newChannel))),
@@ -72,6 +72,24 @@ class RepositoryServiceHelperTest {
             CompositeConfiguration(),
         )
         assertTrue(newChannel.password.isNullOrBlank())
+
+        val oldChannel = ProxyChannelSetting(
+            public = false,
+            name = "private",
+            url = "http://example.com",
+            password = "old-secret",
+        )
+        val blankChannel = ProxyChannelSetting(
+            public = false,
+            name = "private",
+            url = "http://example.com",
+            password = "",
+        )
+        restoreMaskedPasswords(
+            CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(blankChannel))),
+            CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(oldChannel))),
+        )
+        assertTrue(blankChannel.password.isNullOrBlank())
     }
 
     @Test
@@ -107,7 +125,7 @@ class RepositoryServiceHelperTest {
             public = false,
             name = "new-name",
             url = "http://new.example.com",
-            password = "",
+            password = PASSWORD_MASK,
         )
         restoreMaskedPasswords(
             CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(newChannel))),

@@ -160,13 +160,17 @@ class RepositoryServiceHelper(
             if (repoConfiguration is CompositeConfiguration) {
                 repoConfiguration.proxy.channelList.forEach {
                     it.password?.let { pw ->
-                        it.password = crypto(pw, decrypt)
+                        if (decrypt || !isMaskedPassword(pw)) {
+                            it.password = crypto(pw, decrypt)
+                        }
                     }
                 }
             }
             if (repoConfiguration is RemoteConfiguration) {
                 repoConfiguration.credentials.password?.let {
-                    repoConfiguration.credentials.password = crypto(it, decrypt)
+                    if (decrypt || !isMaskedPassword(it)) {
+                        repoConfiguration.credentials.password = crypto(it, decrypt)
+                    }
                 }
             }
             return repoConfiguration
@@ -195,6 +199,9 @@ class RepositoryServiceHelper(
             if (newConfiguration is RemoteConfiguration && oldConfiguration is RemoteConfiguration) {
                 if (isMaskedPassword(newConfiguration.credentials.password)) {
                     newConfiguration.credentials.password = oldConfiguration.credentials.password
+                }
+                if (isMaskedPassword(newConfiguration.credentials.password)) {
+                    newConfiguration.credentials.password = null
                 }
             }
             if (newConfiguration is CompositeConfiguration && oldConfiguration is CompositeConfiguration) {
@@ -235,10 +242,15 @@ class RepositoryServiceHelper(
             if (stillMasked.size == 1 && unassignedOld.size == 1) {
                 stillMasked[0].password = unassignedOld[0].password
             }
+            newConfiguration.proxy.channelList.forEach { channel ->
+                if (isMaskedPassword(channel.password)) {
+                    channel.password = null
+                }
+            }
         }
 
         fun isMaskedPassword(password: String?): Boolean {
-            return password.isNullOrBlank() || password == PASSWORD_MASK
+            return password == PASSWORD_MASK
         }
 
         fun crypto(pw: String, decrypt: Boolean): String {

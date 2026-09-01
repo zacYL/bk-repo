@@ -225,8 +225,8 @@
 - API:GET /auth/api/user/info
 - API 名称: get_user_info
 - 功能说明：
-	- 中文：获取当前登录用户信息（含显示名、租户 ID、时区）。displayName / tenantId / timeZone 由网关（`bkrepo.web.conf`）在 `auth_request` 阶段解析登录态后通过响应头 `x-bkrepo-display-name` / `x-bkrepo-tenant-id` / `x-bkrepo-time-zone` 注入，后端从请求头读取并透传。
-	- English：Get current login user info (with display name, tenant id and default time zone). The `displayName` / `tenantId` / `timeZone` fields are injected by the gateway via response headers during the `auth_request` phase, and passed through by the backend.
+	- 中文：获取当前登录用户信息（含显示名、租户 ID、时区）。displayName / tenantId / timeZone 由网关（`bkrepo.web.conf`）在 `auth_request` 阶段解析登录态后通过请求头注入，后端透传。仅当请求经 `/web/` 入口（`X-BKREPO-API-TYPE=web`）时才会按请求头创建或更新本地用户；未认证的 `/auth/api/` 入口不会写库。
+	- English：Get current login user info (with display name, tenant id and default time zone). Headers are injected by the gateway after `auth_request`. User create/update only happens for the authenticated `/web/` entry (`X-BKREPO-API-TYPE=web`); the unauthenticated `/auth/api/` entry is read-only.
 
 - input 字段说明
 

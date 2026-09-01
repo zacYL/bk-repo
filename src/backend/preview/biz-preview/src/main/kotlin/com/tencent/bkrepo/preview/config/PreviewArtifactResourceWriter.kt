@@ -113,6 +113,7 @@ class PreviewArtifactResourceWriter(
         response.setHeader(HttpHeaders.ACCEPT_RANGES, StringPool.BYTES)
         response.setHeader(HttpHeaders.CACHE_CONTROL, cacheControl)
         response.setHeader(HttpHeaders.CONTENT_RANGE, "${StringPool.BYTES} $range")
+        PreviewActiveContentHeaders.applyIfActiveContent(name, mediaType)
         if (resource.useDisposition) {
             response.setHeader(HttpHeaders.CONTENT_DISPOSITION, HttpHeaderUtils.encodeDisposition(name))
         } else if (request.getAttribute(PREVIEW_RESPONSE_CONTENT_TYPE) != null) {

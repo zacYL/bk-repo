@@ -664,6 +664,11 @@ class UserNodeController(
         @RequestBody request: UserNodeArchiveRestoreRequest,
     ): Response<List<String>> {
         with(request) {
+            if (path.isNullOrEmpty()) {
+                permissionManager.checkRepoPermission(PermissionAction.WRITE, projectId, repoName)
+            } else {
+                permissionManager.checkNodePermission(PermissionAction.WRITE, projectId, repoName, path!!)
+            }
             val restoreRequest = NodeArchiveRestoreRequest(
                 projectId = projectId,
                 repoName = repoName,

@@ -227,8 +227,8 @@ class PreviewConfig {
     /**
      * ftp密码
      */
-    @Value("\${preview.ftp.password:123456}")
-    val ftpPassword = "123456"
+    @Value("\${preview.ftp.password:}")
+    val ftpPassword = ""
 
     /**
      * fFTP连接默认ControlEncoding(根据FTP服务器操作系统选择，Linux一般为UTF-8，Windows一般为GBK)，
@@ -302,10 +302,10 @@ class PreviewConfig {
     val isRemotePreviewEnabled: Boolean = false
 
     /**
-     * 远程预览允许的协议，逗号分隔，默认仅允许 https
+     * 远程预览允许的协议，逗号分隔，默认允许 https、ftp
      */
-    @Value("\${preview.remote.allowedSchemes:https}")
-    val remoteAllowedSchemes: String = "https"
+    @Value("\${preview.remote.allowedSchemes:https,ftp}")
+    val remoteAllowedSchemes: String = "https,ftp"
 
     /**
      * 远程预览允许的域名/IP 白名单（精确匹配或后缀匹配，以 . 开头表示域后缀），逗号分隔。
@@ -315,10 +315,10 @@ class PreviewConfig {
     val remoteAllowedHosts: String = ""
 
     /**
-     * 远程预览允许的端口，逗号分隔，默认仅允许 80、443
+     * 远程预览允许的端口，逗号分隔，默认允许 80、443、21
      */
-    @Value("\${preview.remote.allowedPorts:80,443}")
-    val remoteAllowedPorts: String = "80,443"
+    @Value("\${preview.remote.allowedPorts:80,443,21}")
+    val remoteAllowedPorts: String = "80,443,21"
 
     /**
      * 是否禁止访问内网/环回/链路本地/云元数据等保留地址，默认启用

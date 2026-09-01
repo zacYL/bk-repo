@@ -717,7 +717,9 @@
         "NPM": "Npm Artifact Analysis"
     },
     "createPlan": "Create plan",
-    "resetUserMsg": "Are you sure to reset the password for account {0} to default(password)?",
+    "resetUserMsg": "Are you sure to reset the password for account {0}? A random password will be generated and shown once.",
+    "newPasswordIs": "New password: ",
+    "resetPasswordCopyTip": "Copy it now and share it with the user. It cannot be viewed again after this dialog is closed.",
     "editPlan": "Edit plan",
     "planDetail":"Plan detail",
     "scanReport":"Scan detail",

@@ -517,6 +517,7 @@ class ArtifactShareServiceQueryTest {
             service.open("bob", "id-1")
         }
         assertEquals(PreviewMessageCode.PREVIEW_ARTIFACT_SHARE_ACCESS_DENIED, exception.messageCode)
+        assertEquals("alice", exception.params[0])
     }
 
     @Test

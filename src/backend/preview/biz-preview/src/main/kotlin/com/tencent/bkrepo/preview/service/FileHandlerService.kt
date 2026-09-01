@@ -44,7 +44,6 @@ import com.tencent.bkrepo.preview.utils.UrlEncoderUtils
 import com.tencent.bkrepo.preview.utils.WebUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.io.File
 import java.io.UnsupportedEncodingException
 import java.net.URLDecoder
 import java.util.UUID
@@ -243,8 +242,9 @@ class FileHandlerService(
             url = url?.let { WebUtils.encodeUrlFileName(it) } // 对未转义的url进行转义
         }
 
-        // 文件名处理
+        // 文件名处理：HTML 转义后必须再校验，禁止路径分隔符和上级目录
         originFileName = FileUtils.htmlEscape(originFileName)
+        FileUtils.requireSafeFileName(originFileName)
 
         // 转换后的文件名前缀
         var convertFilePrefixName: String? = null
@@ -277,10 +277,15 @@ class FileHandlerService(
         }
     }
 
-    // 生成输出文件路径
+    // 生成输出文件路径，规范化后限制在预览根目录内
     private fun generateOutputFilePath(convertFileName: String?): String {
-        return "${config.fileDir}${File.separator}convert${File.separator}" +
-                "${UUID.randomUUID()}${File.separator}$convertFileName"
+        val outputName = convertFileName ?: UUID.randomUUID().toString()
+        return FileUtils.resolveUnderDirectory(
+            config.fileDir,
+            "convert",
+            UUID.randomUUID().toString(),
+            outputName
+        )
     }
 
     // 解析 storageType

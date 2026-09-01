@@ -58,6 +58,7 @@ import com.tencent.bkrepo.cargo.utils.CargoUtils.getCargoFileFullPath
 import com.tencent.bkrepo.cargo.utils.CargoUtils.getCargoMetadataFullPath
 import com.tencent.bkrepo.cargo.utils.CargoUtils.getCargoJsonFullPath
 import com.tencent.bkrepo.cargo.utils.CargoUtils.isValidPackageName
+import com.tencent.bkrepo.cargo.utils.CargoUtils.isValidPackageVersion
 import com.tencent.bkrepo.cargo.utils.ObjectBuilderUtil
 import com.tencent.bkrepo.cargo.utils.ObjectBuilderUtil.buildCrateIndexData
 import com.tencent.bkrepo.cargo.utils.ObjectBuilderUtil.buildCrateJsonData
@@ -341,6 +342,7 @@ class CargoLocalRepository(
 
     private fun validatePackageVersion(context: ArtifactUploadContext, metadata: CargoMetadata) {
         isValidPackageName(metadata.name)
+        isValidPackageVersion(metadata.vers)
         val packageKey = PackageKeys.ofCargo(metadata.name)
         if (!cargoCommonService.packageVersionExist(context.projectId, context.repoName, packageKey, metadata.vers)) {
             return

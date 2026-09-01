@@ -194,7 +194,10 @@
                     url: this.editProxyData.url,
                     userName: this.editProxyData.proxyType !== 'privateProxy' ? null : this.editProxyData.username,
                     password: this.editProxyData.proxyType !== 'privateProxy' ? null : encrypt.encrypt(this.editProxyData.password),
-                    type: this.repoType
+                    type: this.repoType,
+                    projectId: this.$route.params.projectId,
+                    repoName: this.$route.query.repoName,
+                    name: this.editProxyData.type === 'edit' ? this.proxyData.name : undefined
                 }
                 this.checkProxy({ body: body }).then(res => {
                     if (res === true) {

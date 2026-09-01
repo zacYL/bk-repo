@@ -27,10 +27,13 @@
 
 package com.tencent.bkrepo.composer.artifact.repository
 
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryId
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
@@ -160,6 +163,7 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
         repeat: ArtifactRepeat,
         context: ArtifactContext
     ) {
+        validatePackageName(composerArtifact.name)
         // 查询对应的 "/p/%package%.json" 是否存在
         val pArtifactUri = "/p/${composerArtifact.name}.json"
         val jsonNode = nodeService.getNodeDetail(ArtifactInfo(context.projectId, context.repoName, pArtifactUri))
@@ -256,6 +260,7 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
         val composerArtifact = context.getArtifactFile().getInputStream().use {
             it.wrapperJson(context.artifactInfo.getArtifactFullPath())
         }
+        validatePackageName(composerArtifact.name)
         // 保存节点
         val metadata = mutableMapOf<String, String>()
         metadata[METADATA_KEY_PACKAGE_KEY] = PackageKeys.ofComposer(composerArtifact.name)
@@ -351,6 +356,7 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
      * 删除包json中对应的版本
      */
     private fun deleteJsonVersion(context: ArtifactRemoveContext, name: String, version: String) {
+        validatePackageName(name)
         val jsonPath = "/p/$name.json"
         val packageJson = getPackageJson(context, name) ?: return
 
@@ -574,6 +580,19 @@ class ComposerLocalRepository(private val stageService: StageService) : LocalRep
             val packageKey = metadata[METADATA_KEY_PACKAGE_KEY]?.toString() ?: return null
             val packageVersion = metadata[METADATA_KEY_VERSION]?.toString() ?: return null
             return packageService.findVersionByName(projectId, repoName, packageKey, packageVersion)
+        }
+    }
+
+    private fun validatePackageName(name: String) {
+        if (name.isBlank() || name.contains("..")) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, name)
+        }
+        if (name.contains('\\') || name.startsWith("/")) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, name)
+        }
+        val path = PathUtils.normalizeFullPath("/p/$name.json")
+        if (!path.startsWith("/p/")) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, name)
         }
     }
 

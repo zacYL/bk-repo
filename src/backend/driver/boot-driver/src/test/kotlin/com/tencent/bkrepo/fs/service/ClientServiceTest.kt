@@ -164,7 +164,7 @@ class ClientServiceTest {
 
     companion object {
         private const val MOUNT_POINT = "/mnt/repo"
-        private const val CLIENT_IP = "10.0.0.1"
+        private const val CLIENT_IP = "127.0.0.1"
         private const val EXISTING_CLIENT_ID = "existing-id"
         private const val NEW_CLIENT_ID = "new-id"
     }

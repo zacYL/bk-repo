@@ -1,11 +1,13 @@
 package com.tencent.bkrepo.preview.controller
 
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.preview.constant.PreviewMessageCode
 import com.tencent.bkrepo.preview.pojo.share.ArtifactShareBatchStatusRequest
 import com.tencent.bkrepo.preview.pojo.share.ArtifactShareInfo
 import com.tencent.bkrepo.preview.pojo.share.ArtifactShareOpenInfo
@@ -14,6 +16,7 @@ import com.tencent.bkrepo.preview.pojo.share.ArtifactShareStatusItem
 import com.tencent.bkrepo.preview.pojo.share.ArtifactShareSummary
 import com.tencent.bkrepo.preview.pojo.share.ArtifactShareRenameRequest
 import com.tencent.bkrepo.preview.pojo.share.ArtifactShareUpsertRequest
+import com.tencent.bkrepo.preview.service.share.ArtifactShareErrorPage
 import com.tencent.bkrepo.preview.service.share.ArtifactSharePreviewPage
 import com.tencent.bkrepo.preview.service.share.ArtifactShareService
 import io.swagger.v3.oas.annotations.Operation
@@ -132,7 +135,7 @@ class ArtifactShareController(
         @PathVariable shareId: String,
         response: HttpServletResponse,
     ) {
-        writePreviewPage(artifactShareService.open(SecurityUtils.getUserId(), shareId), response)
+        writeOpenPage({ artifactShareService.open(SecurityUtils.getUserId(), shareId) }, response)
     }
 
     @Operation(summary = "短码打开：校验权限后返回内嵌预览页，地址栏保持 /share/{shortShareId}")
@@ -141,13 +144,46 @@ class ArtifactShareController(
         @PathVariable shortShareId: String,
         response: HttpServletResponse,
     ) {
-        writePreviewPage(artifactShareService.openByShortShareId(SecurityUtils.getUserId(), shortShareId), response)
+        writeOpenPage(
+            { artifactShareService.openByShortShareId(SecurityUtils.getUserId(), shortShareId) },
+            response,
+        )
+    }
+
+    private fun writeOpenPage(loadOpenInfo: () -> ArtifactShareOpenInfo, response: HttpServletResponse) {
+        try {
+            writePreviewPage(loadOpenInfo(), response)
+        } catch (exception: ErrorCodeException) {
+            writeShareErrorPage(exception, response)
+        }
+    }
+
+    /**
+     * 短链面向浏览器：无权限/未找到写成 HTML 403/404。JSON 接口仍走全局 handler。
+     */
+    private fun writeShareErrorPage(exception: ErrorCodeException, response: HttpServletResponse) {
+        when (exception.messageCode) {
+            PreviewMessageCode.PREVIEW_ARTIFACT_SHARE_ACCESS_DENIED -> {
+                val createdBy = exception.params.firstOrNull()?.toString().orEmpty()
+                writeHtml(response, HttpServletResponse.SC_FORBIDDEN, ArtifactShareErrorPage.forbidden(createdBy))
+            }
+            PreviewMessageCode.PREVIEW_ARTIFACT_SHARE_NOT_FOUND,
+            PreviewMessageCode.PREVIEW_NODE_NOT_FOUND -> {
+                writeHtml(response, HttpServletResponse.SC_NOT_FOUND, ArtifactShareErrorPage.notFound())
+            }
+            else -> throw exception
+        }
     }
 
     private fun writePreviewPage(openInfo: ArtifactShareOpenInfo, response: HttpServletResponse) {
+        val title = openInfo.share.artifactName?.trim().orEmpty()
+        writeHtml(response, HttpServletResponse.SC_OK, ArtifactSharePreviewPage.render(openInfo.previewUrl, title))
+    }
+
+    private fun writeHtml(response: HttpServletResponse, status: Int, html: String) {
+        response.status = status
         response.contentType = "${MediaType.TEXT_HTML_VALUE};charset=UTF-8"
         response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-        val title = openInfo.share.artifactName?.trim().orEmpty()
-        response.writer.write(ArtifactSharePreviewPage.render(openInfo.previewUrl, title))
+        response.writer.write(html)
     }
 }

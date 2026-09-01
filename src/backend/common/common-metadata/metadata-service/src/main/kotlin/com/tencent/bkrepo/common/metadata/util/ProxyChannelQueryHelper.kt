@@ -31,6 +31,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.metadata.model.TProxyChannel
+import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.PASSWORD_MASK
 import com.tencent.bkrepo.common.security.util.RsaUtils
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelCreateRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelInfo
@@ -68,12 +69,19 @@ object ProxyChannelQueryHelper {
     }
 
     fun encryptPassword(password: String?): String? {
-        val pw = if (password.isNullOrEmpty()) {
+        return if (password.isNullOrEmpty()) {
             password
         } else {
             RsaUtils.encrypt(password)
         }
-        return pw
+    }
+
+    fun ProxyChannelInfo.maskPassword(): ProxyChannelInfo {
+        return if (password.isNullOrBlank()) {
+            this
+        } else {
+            copy(password = PASSWORD_MASK)
+        }
     }
 
     fun ProxyChannelCreateRequest.convertToTProxyChannel(

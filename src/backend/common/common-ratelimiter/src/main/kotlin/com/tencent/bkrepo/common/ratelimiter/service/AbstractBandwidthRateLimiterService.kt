@@ -27,7 +27,6 @@
 
 package com.tencent.bkrepo.common.ratelimiter.service
 
-import com.tencent.bkrepo.common.api.exception.OverloadException
 import com.tencent.bkrepo.common.ratelimiter.algorithm.RateLimiter
 import com.tencent.bkrepo.common.ratelimiter.config.BandwidthProperties
 import com.tencent.bkrepo.common.ratelimiter.config.RateLimiterProperties
@@ -141,7 +140,6 @@ abstract class AbstractBandwidthRateLimiterService(
                 resourceLimit = resLimitInfo.resourceLimit,
                 limitKey = generateKey(resLimitInfo.resource, resLimitInfo.resourceLimit),
                 dryRun = rateLimiterProperties.dryRun,
-                failClosed = rateLimiterProperties.failClosed,
                 bandwidthProperties = rateLimiterProperties.bandwidthProperties,
                 rangeLength = rangeLength
             )
@@ -154,9 +152,6 @@ abstract class AbstractBandwidthRateLimiterService(
                 "acquire lock failed for ${resLimitInfo.resource} " +
                     "with ${resLimitInfo.resourceLimit}, e: ${e.message}"
             )
-            if (rateLimiterProperties.failClosed && !rateLimiterProperties.dryRun) {
-                throw OverloadException("Rate limiter unavailable: ${e.message}")
-            }
             null
         } catch (e: InvalidResourceException) {
             logger.warn("${resLimitInfo.resourceLimit} is invalid for ${resLimitInfo.resource} , e: ${e.message}")
@@ -206,10 +201,7 @@ abstract class AbstractBandwidthRateLimiterService(
             }
             try {
                 flag = rateLimiter.tryAcquire(acquirePermits)
-            } catch (e: AcquireLockFailedException) {
-                if (rateLimiterProperties.failClosed && !rateLimiterProperties.dryRun) {
-                    throw OverloadException("Rate limiter unavailable: ${e.message}")
-                }
+            } catch (ignore: AcquireLockFailedException) {
                 return true
             }
             if (!flag) {
@@ -250,10 +242,6 @@ abstract class AbstractBandwidthRateLimiterService(
 
         fun getDryRunStatus(): Boolean {
             return rateLimiterProperties.dryRun
-        }
-
-        fun getFailClosedStatus(): Boolean {
-            return rateLimiterProperties.failClosed
         }
 
         fun getBandwidthProperties(): BandwidthProperties {

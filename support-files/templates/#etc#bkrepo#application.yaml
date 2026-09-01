@@ -37,6 +37,8 @@ storage:
 security:
   auth:
     enabled: true
+    jwt:
+      secretKey: __BK_REPO_JWT_SECRET_KEY__
   service:
     secretKey: __BK_REPO_SERVICE_SECRET_KEY__
 

@@ -31,6 +31,8 @@
 
 package com.tencent.bkrepo.common.security.http.jwt
 
+import com.tencent.bkrepo.common.security.util.JwtUtils
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Duration
 
@@ -43,10 +45,18 @@ data class JwtAuthProperties(
     /**
      * 加密密钥
      */
-    var secretKey: String = "secret@key",
+    var secretKey: String = "",
 
     /**
      * 过期时间，[Duration.ZERO]代表永不过期
      */
-    var expiration: Duration = Duration.ZERO
-)
+    var expiration: Duration = Duration.ofHours(24)
+) : InitializingBean {
+    override fun afterPropertiesSet() {
+        val min = JwtUtils.SECRET_KEY_MIN_LENGTH
+        require(secretKey.toByteArray().size >= min) {
+            "security.auth.jwt.secretKey must be at least $min bytes; " +
+                "set BK_REPO_JWT_SECRET_KEY or security.auth.jwt.secretKey"
+        }
+    }
+}

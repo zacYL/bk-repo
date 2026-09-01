@@ -252,7 +252,14 @@ class DeltaSyncService(
             taskId = metrics.taskId,
             fileType = metrics.fileType,
             buildId = metrics.buildId,
-        ) ?: return 0.0
+        )
+        if (sql == null) {
+            logger.warn(
+                "Skip history upload speed query due to disallowed characters: " +
+                    "taskId[${metrics.taskId}], fileType[${metrics.fileType}], buildId[${metrics.buildId}]"
+            )
+            return 0.0
+        }
         val url = UrlFormatter.format(bkBaseProperties.domain, "/prod/v3/dataquery/query/")
         val query = QueryRequest(token = bkBaseProperties.token, sql = sql)
         val authHeader = toJson(

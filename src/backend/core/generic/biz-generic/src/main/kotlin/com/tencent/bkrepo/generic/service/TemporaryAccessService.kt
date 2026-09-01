@@ -296,7 +296,8 @@ class TemporaryAccessService(
                 ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
             val request = HttpContextHolder.getRequest()
             request.setAttribute(REPO_KEY, repo)
-            return deltaSyncService.patch(normalizedOldPath, deltaFile)
+            // 原始 header 交给 DeltaSyncService，避免二次 URLDecoder.decode
+            return deltaSyncService.patch(oldFilePath, deltaFile)
         }
     }
 
@@ -445,14 +446,29 @@ class TemporaryAccessService(
         )
     }
 
-    /** decode 后 normalize。 */
+    /** percent-decode 至稳定后再 normalize，与取节点前的最终路径对齐。 */
     private fun normalizeOldFilePath(oldFilePath: String): String {
         val decoded = try {
-            URLDecoder.decode(oldFilePath, Charsets.UTF_8)
+            fullyPercentDecode(oldFilePath)
         } catch (_: IllegalArgumentException) {
             throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID, oldFilePath)
         }
         return PathUtils.normalizeFullPath(decoded)
+    }
+
+    /**
+     * 只解 %xx，保留路径里的字面 `+`。循环直到稳定，堵住双重编码 `..`。
+     */
+    private fun fullyPercentDecode(value: String): String {
+        var current = value
+        repeat(MAX_PATH_DECODE_TIMES) {
+            val decoded = URLDecoder.decode(current.replace("+", "%2B"), Charsets.UTF_8)
+            if (decoded == current) {
+                return current
+            }
+            current = decoded
+        }
+        return current
     }
 
     private fun checkAccessPath(tokenInfo: TemporaryTokenInfo, fullPath: String) {
@@ -498,5 +514,6 @@ class TemporaryAccessService(
         private const val TEMPORARY_UPLOAD_ENDPOINT = "/temporary/upload"
         private const val BK_CI_APP_STAGE_KEY = "BK-CI-APP-STAGE"
         private const val ALPHA = "Alpha"
+        private const val MAX_PATH_DECODE_TIMES = 3
     }
 }

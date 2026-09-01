@@ -115,6 +115,18 @@ class TemporaryAccessServiceTest {
     }
 
     @Test
+    fun `patch should reject double-encoded parent path`() {
+        val token = tokenInfo(fullPath = "/allowed")
+        val dest = GenericArtifactInfo(UT_PROJECT_ID, UT_REPO_NAME, "/allowed/app.apk")
+        val doubleEncoded = "%2Fallowed%2F%252e%252e%2Fsecret"
+
+        assertThrows<ErrorCodeException> {
+            service.patch(dest, doubleEncoded, artifactFile, token)
+        }
+        verify(deltaSyncService, never()).patch(any(), any())
+    }
+
+    @Test
     fun `patch should allow path under grant`() {
         val token = tokenInfo(fullPath = "/allowed")
         val dest = GenericArtifactInfo(UT_PROJECT_ID, UT_REPO_NAME, "/allowed/app.apk")

@@ -259,7 +259,7 @@ class ArtifactShareService(
                 "visibility=[${record.visibility}], projectId=[${record.projectId}], " +
                 "repoName=[${record.repoName}]",
         )
-            throw ErrorCodeException(PreviewMessageCode.PREVIEW_ARTIFACT_SHARE_ACCESS_DENIED, requestedId)
+            throw ErrorCodeException(PreviewMessageCode.PREVIEW_ARTIFACT_SHARE_ACCESS_DENIED, record.createdBy)
         }
         logger.info(
             "artifact share access: user=[$userId], shareId=[${record.id}], requestedId=[$requestedId], " +

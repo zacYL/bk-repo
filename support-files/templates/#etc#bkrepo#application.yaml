@@ -39,3 +39,9 @@ security:
     enabled: true
     jwt:
       secretKey: __BK_REPO_JWT_SECRET_KEY__
+  service:
+    secretKey: __BK_REPO_SERVICE_SECRET_KEY__
+
+fdtp:
+  server:
+    secretKey: __BK_REPO_FDTP_SECRET_KEY__

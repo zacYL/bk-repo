@@ -84,8 +84,6 @@ allprojects {
             dependency("io.lettuce:lettuce-core:6.3.2.RELEASE")
             // spring-boot-starter-test:3.4.0依赖版本2.5.1有cve漏洞，升级框架后可以移除
             dependency("net.minidev:json-smart:2.5.2")
-            // spring-cloud-starter-config:4.2.0依赖版本5.4.1有cve漏洞，升级框架后可以移除
-            dependency("org.apache.httpcomponents.client5:httpclient5:5.4.4")
         }
     }
 
@@ -114,6 +112,7 @@ allprojects {
     tasks.test {
         jvmArgs = listOf("--add-opens=java.base/java.nio=ALL-UNNAMED")
         systemProperty("security.auth.jwt.secret-key", "0".repeat(64))
+        systemProperty("security.service.secret-key", "0".repeat(64))
         testLogging {
             events("passed", "skipped", "failed")
             showStackTraces = true

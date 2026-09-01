@@ -31,6 +31,7 @@ import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.constant.AUTH_HEADER_UID
 import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
 import com.tencent.bkrepo.common.api.constant.USER_KEY
+import com.tencent.bkrepo.common.api.util.MaskPartStringUtil
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.fs.server.service.PermissionService
 import com.tencent.bkrepo.fs.server.utils.ReactiveSecurityUtils.basicCredentials
@@ -100,13 +101,13 @@ class AuthHandlerFilterFunction(
             val jws = securityManager.validateToken(token)
             request.exchange().attributes[USER_KEY] = jws.body.subject ?: user
         } catch (exception: ExpiredJwtException) {
-            logger.info("validate token[$token] failed:", exception)
+            logger.info("validate token[${MaskPartStringUtil.maskPartString(token)}] failed:", exception)
             throw AuthenticationException("Expired token")
         } catch (exception: JwtException) {
-            logger.info("validate token[$token] failed:", exception)
+            logger.info("validate token[${MaskPartStringUtil.maskPartString(token)}] failed:", exception)
             throw AuthenticationException("Invalid token")
         } catch (exception: IllegalArgumentException) {
-            logger.info("validate token[$token] failed:", exception)
+            logger.info("validate token[${MaskPartStringUtil.maskPartString(token)}] failed:", exception)
             throw AuthenticationException("Empty token")
         }
         return next(request)

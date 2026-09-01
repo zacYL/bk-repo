@@ -1,5 +1,7 @@
 package com.tencent.bkrepo.media.job.controller
 
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.media.job.service.TranscodeJobService
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestAttribute
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController
  * */
 @RestController
 @RequestMapping("/api/media/job")
+@Principal(type = PrincipalType.ADMIN)
 class JobController(
     private val transcodeJobService: TranscodeJobService
 ) {

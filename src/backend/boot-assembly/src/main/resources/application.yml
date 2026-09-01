@@ -57,6 +57,12 @@ security:
     enabled: true
     jwt:
       secretKey: ${BK_REPO_JWT_SECRET_KEY:}
+  service:
+    secretKey: ${BK_REPO_SERVICE_SECRET_KEY:}
+
+fdtp:
+  server:
+    secretKey: ${BK_REPO_FDTP_SECRET_KEY:}
 
 auth:
   security:

@@ -106,7 +106,7 @@ class StreamService(
                 category = RepositoryCategory.LOCAL,
                 public = false,
                 display = display,
-                storageCredentialsKey = mediaProperties.storageCredentialsKey
+                storageCredentialsKey = mediaProperties.getStorageCredentialsKey(projectId)
             )
             repositoryService.createRepo(createRepoRequest)
             val nodeCreateRequest = NodeCreateRequest(

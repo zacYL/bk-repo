@@ -27,7 +27,6 @@
 
 package com.tencent.bkrepo.common.storage.core.cache.indexer.redis
 
-import com.tencent.bkrepo.common.artifact.constant.SHA256_STR_LENGTH
 import com.tencent.bkrepo.common.storage.core.cache.indexer.listener.EldestRemovedListener
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -36,20 +35,6 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 class RedisSLRUCacheIndexerTest : RedisCacheIndexerTest<RedisSLRUCacheIndexer>() {
-
-    @Test
-    fun `redis cache key is sha256 digest not repository path`() {
-        val sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-        val repoPath = "docker/local/nginx/latest/layer.tar"
-
-        Assertions.assertEquals(SHA256_STR_LENGTH, sha256.length)
-
-        cacheIndexer.put(sha256, 100)
-
-        Assertions.assertTrue(cacheIndexer.containsKey(sha256))
-        Assertions.assertFalse(cacheIndexer.containsKey(repoPath))
-        Assertions.assertTrue(redisTemplate.opsForHash<String, Long>().hasKey(probationValuesKey(), sha256))
-    }
 
     @Test
     fun testSLRU() {

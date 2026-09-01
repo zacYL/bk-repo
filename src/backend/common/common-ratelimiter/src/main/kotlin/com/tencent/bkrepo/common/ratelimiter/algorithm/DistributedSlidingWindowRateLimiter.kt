@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.script.DefaultRedisScript
 import java.time.Duration
+import java.util.UUID
 import kotlin.system.measureTimeMillis
 
 /**
@@ -56,7 +57,7 @@ class DistributedSlidingWindowRateLimiter(
                     connection.time()
                 } ?: System.currentTimeMillis()
                 val currentMs = currentTime
-                val uniqueId = System.nanoTime().toString()
+                val uniqueId = UUID.randomUUID().toString()
                 // 窗口长度传毫秒，脚本内用 PEXPIRE 与 zset score 做滑动窗口。
                 val results = redisTemplate.execute(
                     redisScript, getKeys(key), limit.toString(), (duration.toMillis()).toString(),

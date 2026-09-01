@@ -48,8 +48,8 @@ usage () {
             [ -l, --latest          [可选] 是否更新并推送latest tag ]
             [ -r, --registry        [可选] docker仓库地址, 默认docker.io ]
             [ -n, --namespace        [可选] docker仓库地址, 默认docker.io ]
-            [ --username            [可选] docker仓库用户名 ]
-            [ --password            [可选] docker仓库密码 ]
+            [ --username            [可选] docker仓库用户名, 也可设 DOCKER_USERNAME ]
+            [ --password            [可选] docker仓库密码, 也可设 DOCKER_PASSWORD ]
             [ -h, --help            [可选] 查看脚本帮助 ]
 EOF
 }
@@ -140,8 +140,14 @@ while (( $# > 0 )); do
     shift
 done
 
+USERNAME="${USERNAME:-${DOCKER_USERNAME:-}}"
+PASSWORD="${PASSWORD:-${DOCKER_PASSWORD:-}}"
+
 if [[ $PUSH -eq 1 && -n "$USERNAME" ]] ; then
-    docker login --username $USERNAME --password $PASSWORD $REGISTRY
+    if [[ -z "$PASSWORD" ]]; then
+        error "docker password required via DOCKER_PASSWORD or --password"
+    fi
+    printf '%s\n' "$PASSWORD" | docker login --username "$USERNAME" --password-stdin "$REGISTRY"
     log "docker login成功"
 fi
 

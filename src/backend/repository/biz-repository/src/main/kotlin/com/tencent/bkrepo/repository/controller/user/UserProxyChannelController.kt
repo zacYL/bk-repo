@@ -43,6 +43,7 @@ import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.service.repo.ProxyChannelService
 import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.maskPassword
 import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.isMaskedPassword
+import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.sameProxyUrl
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.permission.Permission
@@ -63,7 +64,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
 import java.util.Base64
 
@@ -148,15 +148,15 @@ class UserProxyChannelController(
         }
         val stored = resolveStoredChannel(param)
         val storedPassword = stored?.password
-        if (storedPassword.isNullOrBlank()) {
-            return checkHelmReachable(param.url)
+        if (stored == null || storedPassword.isNullOrBlank() || !sameProxyUrl(stored.url, param.url)) {
+            return false
         }
         val userName = param.userName ?: stored.username
         val headers = HttpHeaders()
         if (!userName.isNullOrBlank()) {
             headers.set(HttpHeaders.AUTHORIZATION, basicAuth(userName, storedPassword))
         }
-        return checkHelmValid(param.url, headers)
+        return checkHelmValid(stored.url, headers)
     }
 
     private fun resolveStoredChannel(param: CheckParam): ProxyChannelInfo? {
@@ -186,22 +186,6 @@ class UserProxyChannelController(
     private fun basicAuth(userName: String, password: String): String {
         val useInfo = userName + StringPool.COLON + password
         return BASIC_AUTH_HEADER_PREFIX + Base64.getEncoder().encodeToString(useInfo.toByteArray())
-    }
-
-    private fun checkHelmReachable(url: String): Boolean {
-        return try {
-            val response = restTemplate.exchange(
-                url + "/index.yaml",
-                HttpMethod.HEAD,
-                HttpEntity<Any>(HttpHeaders()),
-                String::class.java,
-            )
-            response.statusCode == HttpStatus.OK
-        } catch (e: HttpStatusCodeException) {
-            e.statusCode == HttpStatus.UNAUTHORIZED || e.statusCode == HttpStatus.FORBIDDEN
-        } catch (e: Exception) {
-            false
-        }
     }
 
     private fun checkHelmValid(url: String , headers: HttpHeaders): Boolean {

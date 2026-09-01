@@ -31,10 +31,28 @@
 
 package com.tencent.bkrepo.common.security.service
 
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties("security.service")
 data class ServiceAuthProperties(
     var enabled: Boolean = true,
-    var secretKey: String = "secret@key"
-)
+    /**
+     * 服务间 JWT 签发密钥。enabled 时必须由部署注入。
+     */
+    var secretKey: String = "",
+    /**
+     * 备用校验密钥，仅验签。未配置则不启用。
+     */
+    var previousSecretKey: String = "",
+) : InitializingBean {
+    override fun afterPropertiesSet() {
+        if (!enabled) {
+            return
+        }
+        require(secretKey.isNotBlank()) {
+            "security.service.secretKey must be configured when enabled; " +
+                "set BK_REPO_SERVICE_SECRET_KEY or security.service.secretKey"
+        }
+    }
+}

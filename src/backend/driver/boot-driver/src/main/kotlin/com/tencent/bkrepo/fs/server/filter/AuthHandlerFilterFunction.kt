@@ -29,10 +29,14 @@ package com.tencent.bkrepo.fs.server.filter
 
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.constant.AUTH_HEADER_UID
+import com.tencent.bkrepo.common.api.constant.MS_AUTH_HEADER_UID
 import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.util.MaskPartStringUtil
+import com.tencent.bkrepo.common.security.constant.MS_AUTH_HEADER_SECURITY_TOKEN
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
+import com.tencent.bkrepo.common.security.service.ServiceAuthManager
+import com.tencent.bkrepo.common.security.service.ServiceAuthProperties
 import com.tencent.bkrepo.fs.server.service.PermissionService
 import com.tencent.bkrepo.fs.server.utils.ReactiveSecurityUtils.basicCredentials
 import com.tencent.bkrepo.fs.server.utils.ReactiveSecurityUtils.bearerToken
@@ -51,7 +55,9 @@ import org.springframework.web.reactive.function.server.ServerResponse
 @Component
 class AuthHandlerFilterFunction(
     private val securityManager: SecurityManager,
-    private val permissionService: PermissionService
+    private val permissionService: PermissionService,
+    private val serviceAuthManager: ServiceAuthManager,
+    private val serviceAuthProperties: ServiceAuthProperties
 ) : CoHandlerFilterFunction {
 
     override suspend fun filter(
@@ -61,7 +67,9 @@ class AuthHandlerFilterFunction(
         if (uncheckedUrlPrefixList.any { request.path().startsWith(it) }) {
             return next(request)
         }
-        var user = ANONYMOUS_USER
+        if (request.path().startsWith(SERVICE_URL_PREFIX)) {
+            return authenticateServiceRequest(request, next)
+        }
 
         val basicCredentials = request.basicCredentials()
         if (basicCredentials != null) {
@@ -82,14 +90,7 @@ class AuthHandlerFilterFunction(
             return next(request)
         }
 
-        val token = if (request.path().startsWith("/service")) {
-            request.headers().header("X-BKREPO-MS-UID").firstOrNull()?.let {
-                user = it
-            }
-            request.headers().header("X-BKREPO-SECURITY-TOKEN").firstOrNull()
-        } else {
-            request.bearerToken()
-        }
+        val token = request.bearerToken()
         if (token == null) {
             if (optionalAuthUrlPrefixList.any { request.path().startsWith(it) }) {
                 return next(request)
@@ -99,7 +100,7 @@ class AuthHandlerFilterFunction(
 
         try {
             val jws = securityManager.validateToken(token)
-            request.exchange().attributes[USER_KEY] = jws.body.subject ?: user
+            request.exchange().attributes[USER_KEY] = jws.body.subject ?: ANONYMOUS_USER
         } catch (exception: ExpiredJwtException) {
             logger.info("validate token[${MaskPartStringUtil.maskPartString(token)}] failed:", exception)
             throw AuthenticationException("Expired token")
@@ -110,6 +111,19 @@ class AuthHandlerFilterFunction(
             logger.info("validate token[${MaskPartStringUtil.maskPartString(token)}] failed:", exception)
             throw AuthenticationException("Empty token")
         }
+        return next(request)
+    }
+
+    private suspend fun authenticateServiceRequest(
+        request: ServerRequest,
+        next: suspend (ServerRequest) -> ServerResponse
+    ): ServerResponse {
+        val securityToken = request.headers().header(MS_AUTH_HEADER_SECURITY_TOKEN).firstOrNull()
+        if (serviceAuthProperties.enabled) {
+            serviceAuthManager.verifySecurityToken(securityToken.orEmpty())
+        }
+        request.exchange().attributes[USER_KEY] =
+            request.headers().header(MS_AUTH_HEADER_UID).firstOrNull() ?: ANONYMOUS_USER
         return next(request)
     }
 
@@ -127,6 +141,7 @@ class AuthHandlerFilterFunction(
             "/drive/temporary/upload/",
             "/drive/temporary/download/",
         )
+        private const val SERVICE_URL_PREFIX = "/service"
         private val logger = LoggerFactory.getLogger(AuthHandlerFilterFunction::class.java)
     }
 }

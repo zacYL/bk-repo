@@ -61,11 +61,11 @@ class DistributedLeakyRateLimiterTest : DistributedTest() {
     @Test
     fun testTryAcquireOnMultiThreads() {
         val key = KEY + "testTryAcquireOnMultiThreads"
-        val ratelimiter = DistributedLeakyRateLimiter(key, 5.0, 5, redisTemplate)
+        val ratelimiter = DistributedLeakyRateLimiter(key, 0.001, 5, redisTemplate)
         val successNum = java.util.concurrent.atomic.AtomicInteger(0)
         val failedNum = java.util.concurrent.atomic.AtomicInteger(0)
         val errorNum = java.util.concurrent.atomic.AtomicInteger(0)
-        val readers = Runtime.getRuntime().availableProcessors()
+        val readers = 8
         val countDownLatch = CountDownLatch(readers)
         val elapsedTime = measureTimeMillis {
             repeat(readers) {

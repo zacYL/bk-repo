@@ -251,6 +251,8 @@ common:
   serviceSecretKey: ""
   ## 备用校验密钥，轮换时可选
   servicePreviousSecretKey: ""
+  ## 备份敏感字段 AES 密钥，16/24/32 字节，按需配置，不配不影响其它功能
+  backupEncryptKey: ""
   ## pod volume 挂载路径
   mountPath: /data/storage
   config:

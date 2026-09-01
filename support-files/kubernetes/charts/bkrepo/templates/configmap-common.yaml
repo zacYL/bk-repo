@@ -100,6 +100,7 @@ data:
     {{- if .Values.replicationUDP.secretKey }}
     fdtp.server.secretKey: {{ include "bkrepo.fdtpSecretKey" . | quote }}
     {{- end }}
+    backup.encryptKey: {{ include "bkrepo.backupEncryptKey" . | quote }}
     {{- toYaml .Values.common.config | nindent 4 }}
     {{- if .Values.tls.mongodb.enabled }}
     tls:

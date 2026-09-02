@@ -33,6 +33,7 @@ package com.tencent.bkrepo.helm.utils
 
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.api.util.DecompressUtils
 import com.tencent.bkrepo.helm.constants.CHART_YAML
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveInputStream
@@ -42,7 +43,6 @@ import java.io.InputStream
 import java.util.zip.GZIPInputStream
 
 object DecompressUtil {
-    private const val BUFFER_SIZE = 2048
     private const val FILE_NAME = CHART_YAML
 
     @Throws(Exception::class)
@@ -87,20 +87,10 @@ object DecompressUtil {
             while (it.nextEntry.also { zipEntry = it } != null) {
                 val entryList = zipEntry.name.split("/")
                 if ((!zipEntry.isDirectory) && entryList.last() == FILE_NAME && entryList.size == 2) {
-                    return parseStream(it)
+                    return DecompressUtils.streamToString(it)
                 }
             }
         }
         throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not find $FILE_NAME")
-    }
-
-    private fun parseStream(archiveInputStream: ArchiveInputStream): String {
-        val stringBuilder = StringBuffer()
-        var length: Int
-        val bytes = ByteArray(BUFFER_SIZE)
-        while ((archiveInputStream.read(bytes).also { length = it }) != -1) {
-            stringBuilder.append(String(bytes, 0, length))
-        }
-        return stringBuilder.toString()
     }
 }

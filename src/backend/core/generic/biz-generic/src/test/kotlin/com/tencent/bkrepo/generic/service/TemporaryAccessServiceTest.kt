@@ -115,15 +115,58 @@ class TemporaryAccessServiceTest {
     }
 
     @Test
-    fun `patch should reject double-encoded parent path`() {
+    fun `patch should reject encoded parent path`() {
+        val token = tokenInfo(fullPath = "/allowed")
+        val dest = GenericArtifactInfo(UT_PROJECT_ID, UT_REPO_NAME, "/allowed/app.apk")
+
+        assertThrows<ErrorCodeException> {
+            service.patch(dest, "%2Fallowed%2F%2e%2e%2Fsecret", artifactFile, token)
+        }
+        verify(deltaSyncService, never()).patch(any(), any())
+    }
+
+    @Test
+    fun `patch should pass through double-encoded dots as filename`() {
         val token = tokenInfo(fullPath = "/allowed")
         val dest = GenericArtifactInfo(UT_PROJECT_ID, UT_REPO_NAME, "/allowed/app.apk")
         val doubleEncoded = "%2Fallowed%2F%252e%252e%2Fsecret"
 
+        service.patch(dest, doubleEncoded, artifactFile, token)
+
+        verify(deltaSyncService).patch(eq(doubleEncoded), eq(artifactFile))
+    }
+
+    @Test
+    fun `patch should decode plus as space like client URLEncoder`() {
+        val token = tokenInfo(fullPath = "/allowed/foo bar.apk")
+        val dest = GenericArtifactInfo(UT_PROJECT_ID, UT_REPO_NAME, "/allowed/foo bar.apk")
+        val header = "/allowed/foo+bar.apk"
+
+        service.patch(dest, header, artifactFile, token)
+
+        verify(deltaSyncService).patch(eq(header), eq(artifactFile))
+    }
+
+    @Test
+    fun `patch should reject plus header when grant is literal plus`() {
+        val token = tokenInfo(fullPath = "/allowed/foo+bar.apk")
+        val dest = GenericArtifactInfo(UT_PROJECT_ID, UT_REPO_NAME, "/allowed/foo+bar.apk")
+
         assertThrows<ErrorCodeException> {
-            service.patch(dest, doubleEncoded, artifactFile, token)
+            service.patch(dest, "/allowed/foo+bar.apk", artifactFile, token)
         }
         verify(deltaSyncService, never()).patch(any(), any())
+    }
+
+    @Test
+    fun `patch should allow encoded plus filename`() {
+        val token = tokenInfo(fullPath = "/allowed/foo+bar.apk")
+        val dest = GenericArtifactInfo(UT_PROJECT_ID, UT_REPO_NAME, "/allowed/foo+bar.apk")
+        val header = "/allowed/foo%2Bbar.apk"
+
+        service.patch(dest, header, artifactFile, token)
+
+        verify(deltaSyncService).patch(eq(header), eq(artifactFile))
     }
 
     @Test

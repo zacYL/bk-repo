@@ -90,7 +90,6 @@ import com.tencent.devops.plugin.api.applyExtension
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
-import java.net.URLDecoder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -446,29 +445,17 @@ class TemporaryAccessService(
         )
     }
 
-    /** percent-decode 至稳定后再 normalize，与取节点前的最终路径对齐。 */
+    /**
+     * 与 [DeltaSyncService.patch] 共用 [DeltaSyncService.decodeOldFilePath]，再 normalize。
+     * 解码结果只用于授权；原始 header 原样下传，避免二次解码。
+     */
     private fun normalizeOldFilePath(oldFilePath: String): String {
         val decoded = try {
-            fullyPercentDecode(oldFilePath)
+            DeltaSyncService.decodeOldFilePath(oldFilePath)
         } catch (_: IllegalArgumentException) {
             throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID, oldFilePath)
         }
         return PathUtils.normalizeFullPath(decoded)
-    }
-
-    /**
-     * 只解 %xx，保留路径里的字面 `+`。循环直到稳定，堵住双重编码 `..`。
-     */
-    private fun fullyPercentDecode(value: String): String {
-        var current = value
-        repeat(MAX_PATH_DECODE_TIMES) {
-            val decoded = URLDecoder.decode(current.replace("+", "%2B"), Charsets.UTF_8)
-            if (decoded == current) {
-                return current
-            }
-            current = decoded
-        }
-        return current
     }
 
     private fun checkAccessPath(tokenInfo: TemporaryTokenInfo, fullPath: String) {
@@ -514,6 +501,5 @@ class TemporaryAccessService(
         private const val TEMPORARY_UPLOAD_ENDPOINT = "/temporary/upload"
         private const val BK_CI_APP_STAGE_KEY = "BK-CI-APP-STAGE"
         private const val ALPHA = "Alpha"
-        private const val MAX_PATH_DECODE_TIMES = 3
     }
 }

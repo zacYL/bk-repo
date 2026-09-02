@@ -945,6 +945,7 @@
     "latestSyncData": "Last sync {0}",
     "totalProxyCount": "Total {0} agents",
     "connectionTest": "Connecting",
+    "proxyPasswordRequiredOnUrlChange": "The proxy URL has changed. Re-enter the password to test connectivity.",
     "Yes": "Yes",
     "No": "No",
     "itsmTip": "This operation requires approval and the apply has been submitted. Please refresh the page after approved",

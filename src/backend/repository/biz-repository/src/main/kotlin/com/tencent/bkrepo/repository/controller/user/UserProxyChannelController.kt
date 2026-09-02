@@ -39,13 +39,9 @@ import com.tencent.bkrepo.common.api.util.checkurl.SecUrlValidator
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.metadata.config.RepositoryProperties
-import com.tencent.bkrepo.common.metadata.permission.PermissionManager
 import com.tencent.bkrepo.common.metadata.service.repo.ProxyChannelService
 import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.maskPassword
 import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.isMaskedPassword
-import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.sameProxyUrl
-import com.tencent.bkrepo.common.security.exception.AuthenticationException
-import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.util.RsaUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -74,7 +70,6 @@ import java.util.Base64
 class UserProxyChannelController(
     private val proxyChannelService: ProxyChannelService,
     private val repositoryProperties: RepositoryProperties,
-    private val permissionManager: PermissionManager,
 ) {
     private val restTemplate = RestTemplate()
 
@@ -123,7 +118,7 @@ class UserProxyChannelController(
                 }
             }
             if (isMaskedPassword(password) || isMaskedPassword(plainPassword)) {
-                return ResponseBuilder.success(checkMaskedHelm(this))
+                return ResponseBuilder.success(false)
             }
             val headers = HttpHeaders()
             if (userName != null && !plainPassword.isNullOrBlank()) {
@@ -139,47 +134,6 @@ class UserProxyChannelController(
                 }
             }
 
-        }
-    }
-
-    private fun checkMaskedHelm(param: CheckParam): Boolean {
-        if (param.type.uppercase() != RepositoryType.HELM.name) {
-            return false
-        }
-        val stored = resolveStoredChannel(param)
-        val storedPassword = stored?.password
-        if (stored == null || storedPassword.isNullOrBlank() || !sameProxyUrl(stored.url, param.url)) {
-            return false
-        }
-        val userName = param.userName ?: stored.username
-        val headers = HttpHeaders()
-        if (!userName.isNullOrBlank()) {
-            headers.set(HttpHeaders.AUTHORIZATION, basicAuth(userName, storedPassword))
-        }
-        return checkHelmValid(stored.url, headers)
-    }
-
-    private fun resolveStoredChannel(param: CheckParam): ProxyChannelInfo? {
-        val projectId = param.projectId ?: return null
-        val repoName = param.repoName ?: return null
-        val name = param.name ?: return null
-        val repoType = try {
-            RepositoryType.ofValueOrDefault(param.type)
-        } catch (ignored: IllegalArgumentException) {
-            return null
-        }
-        return try {
-            permissionManager.checkRepoPermission(
-                action = PermissionAction.READ,
-                projectId = projectId,
-                repoName = repoName,
-                public = false,
-            )
-            proxyChannelService.queryProxyChannel(projectId, repoName, repoType, name)
-        } catch (ignored: PermissionException) {
-            null
-        } catch (ignored: AuthenticationException) {
-            null
         }
     }
 
@@ -234,7 +188,4 @@ data class CheckParam(
     val type: String,
     val userName: String?,
     val password: String?,
-    val projectId: String? = null,
-    val repoName: String? = null,
-    val name: String? = null,
 )

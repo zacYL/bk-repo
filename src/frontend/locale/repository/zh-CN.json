@@ -949,6 +949,7 @@
     "latestSyncData": "最后同步 {0}",
     "totalProxyCount": "共计{0}个代理",
     "connectionTest": "连通性测试",
+    "proxyPasswordRequiredOnUrlChange": "代理地址已变更，请重新输入密码后再测试连通性",
     "Yes": "是",
     "No": "否",
     "itsmTip": "该操作需要审批，申请单已提交，请审批通过后刷新页面",

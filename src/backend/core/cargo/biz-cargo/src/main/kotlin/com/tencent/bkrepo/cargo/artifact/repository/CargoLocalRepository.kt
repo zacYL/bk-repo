@@ -334,6 +334,7 @@ class CargoLocalRepository(
 
     private fun readCargoMetadata(dataInputStream: DataInputStream): CargoMetadata {
         val jsonLength = Integer.toUnsignedLong(readLittleEndianInt(dataInputStream))
+        checkCargoSectionLength(jsonLength, MAX_CARGO_METADATA_SIZE)
         val jsonData = ByteArray(jsonLength.toInt())
         dataInputStream.readFully(jsonData)
         val jsonDataStr = jsonData.toString(StandardCharsets.UTF_8)
@@ -357,9 +358,16 @@ class CargoLocalRepository(
 
     private fun readCargoArtifactFile(dataInputStream: DataInputStream): ArtifactFile {
         val crateLength = Integer.toUnsignedLong(readLittleEndianInt(dataInputStream))
+        checkCargoSectionLength(crateLength, MAX_CARGO_CRATE_SIZE)
         val crateData = ByteArray(crateLength.toInt())
         dataInputStream.readFully(crateData)
         return ArtifactFileFactory.build(crateData.inputStream())
+    }
+
+    private fun checkCargoSectionLength(length: Long, maxSize: Long) {
+        if (length <= 0L || length > maxSize) {
+            throw CargoBadRequestException(CargoMessageCode.CARGO_UPLOAD_DATA_BROKEN)
+        }
     }
 
     private fun fillUploadContext(
@@ -385,5 +393,7 @@ class CargoLocalRepository(
 
     companion object {
         private val logger = LoggerFactory.getLogger(CargoLocalRepository::class.java)
+        private const val MAX_CARGO_METADATA_SIZE = 1 * 1024 * 1024L
+        private const val MAX_CARGO_CRATE_SIZE = 100 * 1024 * 1024L
     }
 }

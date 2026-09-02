@@ -40,6 +40,7 @@ object CheckUrl {
         if (urlParsed.protocol !in config.schemes) {
             throw MalformedURLException("Scheme is not valid.")
         }
+        if (config.rules.isEmpty()) return
         val validator = modeMatchMethodMap[config.mode]
             ?: throw IllegalArgumentException("Mode is not valid.")
         if (!validator.validateUrl(config.rules, urlParsed.host)) {
@@ -48,8 +49,9 @@ object CheckUrl {
     }
 
     private fun isConfigIllegal(config: UrlCheckConfig): Boolean {
-        return config.schemes.isEmpty() || config.rules.isEmpty() ||
-            config.mode.isBlank() || config.mode !in modeValues
+        if (config.schemes.isEmpty()) return true
+        if (config.rules.isEmpty()) return false
+        return config.mode.isBlank() || config.mode !in modeValues
     }
 
     private fun isHostnameValid(hostname: String): Boolean = domainPattern.containsMatchIn(hostname)

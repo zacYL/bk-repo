@@ -28,4 +28,30 @@ class CheckUrlTest {
             CheckUrl.checkUrl("http://repo.example.com", config)
         }
     }
+
+    @Test
+    fun `empty rules accept dotted host without fabricating regex`() {
+        assertDoesNotThrow { SecUrlValidator.validate("http://1.2.3.4", UrlCheckProperties()) }
+    }
+
+    @Test
+    fun `empty rules reject hostname without dot`() {
+        assertThrows(MalformedURLException::class.java) {
+            SecUrlValidator.validate("http://localhost", UrlCheckProperties())
+        }
+    }
+
+    @Test
+    fun `configured subhost rules still accept matching host`() {
+        val props = UrlCheckProperties(rules = listOf("example.com"), mode = "subhost")
+        assertDoesNotThrow { SecUrlValidator.validate("https://repo.example.com", props) }
+    }
+
+    @Test
+    fun `configured subhost rules reject non matching host`() {
+        val props = UrlCheckProperties(rules = listOf("example.com"), mode = "subhost")
+        assertThrows(MalformedURLException::class.java) {
+            SecUrlValidator.validate("https://evil.example.net", props)
+        }
+    }
 }

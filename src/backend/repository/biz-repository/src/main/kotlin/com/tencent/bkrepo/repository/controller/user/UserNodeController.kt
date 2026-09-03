@@ -327,7 +327,7 @@ class UserNodeController(
                 targetRepoName = targetRepoName,
                 targetFullPath = targetFullPath,
                 overwrite = overwrite,
-                nodeMetadata = nodeMetadata,
+                nodeMetadata = nodeMetadata?.map { it.copy(system = false) },
                 operator = userId,
             )
             // 校验源仓库与目标节点权限

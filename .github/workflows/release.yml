@@ -64,7 +64,7 @@ jobs:
           distribution: "temurin"
           java-version: "17"
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa # v2
         with:
           cache-read-only: false
       - name: Gradle Build Backend Service
@@ -97,7 +97,7 @@ jobs:
         with:
           java-version: "17"
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa # v2
         with:
           cache-read-only: false
       - name: Setup Docker -- CLOUD NATIVE
@@ -107,13 +107,13 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USER }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASS }}
+          DOCKER_NAMESPACE: ${{ secrets.DOCKER_NAMESPACE }}
+          DOCKER_HOST: ${{ secrets.DOCKER_HOST }}
         run: |
           version="${GITHUB_REF_NAME#v}"
-          ./build-images.sh -v $version \
-            -n ${{ secrets.DOCKER_NAMESPACE }} \
-            -r ${{ secrets.DOCKER_HOST }} -p
+          ./build-images.sh -v $version -p
       - name: Install Helm -- CLOUD NATIVE
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@18bc76811624f360dbd7f18c2d4ecb32c7b87bab # v1
         with:
           version: v3.8.1
       - name: Package Helm Chart -- CLOUD NATIVE
@@ -146,11 +146,11 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USER }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASS }}
+          DOCKER_NAMESPACE: ${{ secrets.DOCKER_NAMESPACE }}
+          DOCKER_HOST: ${{ secrets.DOCKER_HOST }}
         run: |
           version="${GITHUB_REF_NAME#v}"
           ./build-images.sh --all-in-one -v $version \
-            -n ${{ secrets.DOCKER_NAMESPACE }} \
-            -r ${{ secrets.DOCKER_HOST }} \
             --slim-package-path ../bkrepo-slim.tar.gz -p -l
   
 

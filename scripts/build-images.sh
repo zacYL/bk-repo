@@ -16,8 +16,8 @@ INIT_RBAC=0
 VERSION=latest
 PUSH=0
 ALL_IN_ONE=0
-REGISTRY=docker.io
-NAMESPACE=bkrepo
+REGISTRY=
+NAMESPACE=
 USERNAME=
 PASSWORD=
 SLIM_PACKAGE_PATH=
@@ -142,8 +142,13 @@ done
 
 USERNAME="${USERNAME:-${DOCKER_USERNAME:-}}"
 PASSWORD="${PASSWORD:-${DOCKER_PASSWORD:-}}"
+NAMESPACE="${NAMESPACE:-${DOCKER_NAMESPACE:-bkrepo}}"
+REGISTRY="${REGISTRY:-${DOCKER_HOST:-docker.io}}"
 
-if [[ $PUSH -eq 1 && -n "$USERNAME" ]] ; then
+if [[ $PUSH -eq 1 ]]; then
+    if [[ -z "$USERNAME" ]]; then
+        error "docker username required via DOCKER_USERNAME or --username"
+    fi
     if [[ -z "$PASSWORD" ]]; then
         error "docker password required via DOCKER_PASSWORD or --password"
     fi

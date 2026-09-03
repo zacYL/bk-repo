@@ -219,13 +219,12 @@ Generate Kafka SASL JAAS configuration string
 {{- end -}}
 
 {{- define "bkrepo.backupEncryptKey" -}}
-{{- $key := default "" .Values.common.backupEncryptKey -}}
+{{- $key := default "" .Values.common.config.backup.encryptKey -}}
 {{- if $key -}}
 {{- $len := len $key -}}
 {{- if and (ne $len 16) (ne $len 24) (ne $len 32) -}}
-{{- fail "common.backupEncryptKey must be 16, 24 or 32 bytes (AES)" -}}
+{{- fail "common.config.backup.encryptKey must be 16, 24 or 32 bytes (AES)" -}}
 {{- end -}}
-{{- $key -}}
 {{- end -}}
 {{- end -}}
 

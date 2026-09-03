@@ -9,6 +9,26 @@ import org.junit.jupiter.api.Test
 class DeltaSyncServiceTest {
 
     @Test
+    fun `decodeOldFilePath should match URLDecoder one layer`() {
+        assertEquals(
+            "/allowed/foo bar.apk",
+            DeltaSyncService.decodeOldFilePath("/allowed/foo+bar.apk"),
+        )
+        assertEquals(
+            "/allowed/foo+bar.apk",
+            DeltaSyncService.decodeOldFilePath("/allowed/foo%2Bbar.apk"),
+        )
+        assertEquals(
+            "/allowed/%2e%2e/secret",
+            DeltaSyncService.decodeOldFilePath("%2Fallowed%2F%252e%252e%2Fsecret"),
+        )
+        assertEquals(
+            "/allowed/../secret",
+            DeltaSyncService.decodeOldFilePath("%2Fallowed%2F%2e%2e%2Fsecret"),
+        )
+    }
+
+    @Test
     fun `sqlLiteral should accept ci identifiers`() {
         assertEquals("e-123abc", DeltaSyncService.sqlLiteral("e-123abc"))
         assertEquals("b-456def", DeltaSyncService.sqlLiteral("b-456def"))

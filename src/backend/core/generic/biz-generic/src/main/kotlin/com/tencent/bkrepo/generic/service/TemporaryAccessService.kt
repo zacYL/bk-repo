@@ -90,7 +90,6 @@ import com.tencent.devops.plugin.api.applyExtension
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
-import java.net.URLDecoder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -296,7 +295,8 @@ class TemporaryAccessService(
                 ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
             val request = HttpContextHolder.getRequest()
             request.setAttribute(REPO_KEY, repo)
-            return deltaSyncService.patch(normalizedOldPath, deltaFile)
+            // 原始 header 交给 DeltaSyncService，避免二次 URLDecoder.decode
+            return deltaSyncService.patch(oldFilePath, deltaFile)
         }
     }
 
@@ -445,10 +445,13 @@ class TemporaryAccessService(
         )
     }
 
-    /** decode 后 normalize。 */
+    /**
+     * 与 [DeltaSyncService.patch] 共用 [DeltaSyncService.decodeOldFilePath]，再 normalize。
+     * 解码结果只用于授权；原始 header 原样下传，避免二次解码。
+     */
     private fun normalizeOldFilePath(oldFilePath: String): String {
         val decoded = try {
-            URLDecoder.decode(oldFilePath, Charsets.UTF_8)
+            DeltaSyncService.decodeOldFilePath(oldFilePath)
         } catch (_: IllegalArgumentException) {
             throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID, oldFilePath)
         }

@@ -245,15 +245,18 @@ common:
   username: admin
   ## 初始用户密码（必须通过 --set / 自定义 values 显式指定，禁止使用 password、blueking 等公开默认口令）
   password: ""
-  ## JWT 签名密钥，至少 64 字节，必须显式配置
-  jwtSecretKey: ""
-  ## 服务间认证密钥，必须显式配置
-  serviceSecretKey: ""
-  ## 备用校验密钥，轮换时可选
-  servicePreviousSecretKey: ""
   ## pod volume 挂载路径
   mountPath: /data/storage
   config:
+    ## 与 Java 配置项相同。空则 lookup 已有配置，没有则随机生成。
+    security:
+      auth:
+        jwt:
+          secretKey: ""
+      service:
+        secretKey: ""
+        ## 仅校验、不签发。换钥时填写；空升级不自动填。
+        previousSecretKey: ""
     ## bkrepo存储配置
     storage:
       ## bkrepo receive默认配置

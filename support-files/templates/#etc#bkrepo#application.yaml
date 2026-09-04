@@ -40,6 +40,7 @@ security:
     jwt:
       secretKey: __BK_REPO_JWT_SECRET_KEY__
   service:
+    # required when enabled; no strength check
     secretKey: __BK_REPO_SERVICE_SECRET_KEY__
 
 fdtp:

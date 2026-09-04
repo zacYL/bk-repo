@@ -218,9 +218,108 @@ Generate Kafka SASL JAAS configuration string
 {{- printf "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";" $username $password -}}
 {{- end -}}
 
+{{/*
+Read a persisted secret: data key, nested application.yml, else dotted key.
+*/}}
+{{- define "bkrepo.secretKey.fromConfigMap" -}}
+{{- $existing := "" -}}
+{{- if and .cm .cm.data -}}
+{{- if .dataKey -}}
+{{- $existing = index .cm.data .dataKey | default "" | toString | trim -}}
+{{- end -}}
+{{- if not $existing -}}
+{{- $yml := index .cm.data "application.yml" | default "" | fromYaml -}}
+{{- $cur := $yml -}}
+{{- range .nested -}}
+{{- if kindIs "map" $cur -}}
+{{- $cur = index $cur . -}}
+{{- else -}}
+{{- $cur = "" -}}
+{{- end -}}
+{{- end -}}
+{{- if kindIs "string" $cur -}}
+{{- $existing = $cur | trim -}}
+{{- end -}}
+{{- if and (not $existing) .dotted $yml -}}
+{{- $existing = index $yml .dotted | default "" | toString | trim -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $existing -}}
+{{- end -}}
+
+{{/*
+Resolve: explicit values > lookup ConfigMap > generate.
+Lookup reuses as-is so a later upgrade does not rotate the signing key.
+Writes the result back to setDict so toYaml common.config emits it.
+Caches on .Values.common so one render yields one value.
+*/}}
+{{- define "bkrepo.secretKey.resolve" -}}
+{{- $root := .root -}}
+{{- $value := .value | toString | trim -}}
+{{- $out := "" -}}
+{{- if $value -}}
+{{- $out = $value -}}
+{{- else if index $root.Values.common .cacheKey -}}
+{{- $out = index $root.Values.common .cacheKey -}}
+{{- else -}}
+{{- $cmName := printf "%s-common" (include "common.names.fullname" $root) -}}
+{{- $cm := lookup "v1" "ConfigMap" $root.Release.Namespace $cmName -}}
+{{- $existing := include "bkrepo.secretKey.fromConfigMap" (dict
+    "cm" $cm
+    "dataKey" .dataKey
+    "nested" .nested
+    "dotted" .dotted) | trim -}}
+{{- if $existing -}}
+{{- $out = $existing -}}
+{{- else -}}
+{{- $out = randAlphaNum 32 -}}
+{{- end -}}
+{{- $_ := set $root.Values.common .cacheKey $out -}}
+{{- end -}}
+{{- if .setDict -}}
+{{- $_ := set .setDict .setKey $out -}}
+{{- end -}}
+{{- $out -}}
+{{- end -}}
+
+{{/*
+Service inter-auth key. Empty -> lookup ConfigMap, else generate.
+Explicit as-is. Does not rotate keys; ops drives 3-phase via values.
+*/}}
 {{- define "bkrepo.serviceSecretKey" -}}
-{{- $msg := "common.serviceSecretKey is required. Set values.common.serviceSecretKey" -}}
-{{- required $msg .Values.common.serviceSecretKey -}}
+{{- include "bkrepo.secretKey.resolve" (dict
+    "root" .
+    "value" .Values.common.config.security.service.secretKey
+    "cacheKey" "_generatedServiceSecretKey"
+    "dataKey" "serviceSecretKey"
+    "nested" (list "security" "service" "secretKey")
+    "dotted" "security.service.secretKey"
+    "setDict" .Values.common.config.security.service
+    "setKey" "secretKey") -}}
+{{- end -}}
+
+{{/*
+Verify-only. Explicit current key: previous comes from values (empty clears).
+Empty current: reuse previous from ConfigMap if any.
+*/}}
+{{- define "bkrepo.servicePreviousSecretKey" -}}
+{{- $explicitCurr := .Values.common.config.security.service.secretKey | toString | trim -}}
+{{- $explicitPrev := .Values.common.config.security.service.previousSecretKey | toString | trim -}}
+{{- $prev := "" -}}
+{{- if $explicitCurr -}}
+{{- $prev = $explicitPrev -}}
+{{- else -}}
+{{- $cmName := printf "%s-common" (include "common.names.fullname" .) -}}
+{{- $cm := lookup "v1" "ConfigMap" .Release.Namespace $cmName -}}
+{{- $prev = include "bkrepo.secretKey.fromConfigMap" (dict
+    "cm" $cm
+    "dataKey" "servicePreviousSecretKey"
+    "nested" (list "security" "service" "previousSecretKey")
+    "dotted" "security.service.previousSecretKey") | trim -}}
+{{- end -}}
+{{- $_ := set .Values.common.config.security.service "previousSecretKey" $prev -}}
+{{- $prev -}}
 {{- end -}}
 
 {{/*
@@ -262,13 +361,19 @@ Required when mongodb.enabled=false; reject the hardcoded default credentials.
 {{- end -}}
 {{- end -}}
 
+{{/*
+JWT signing key. Empty -> lookup ConfigMap, else generate.
+*/}}
 {{- define "bkrepo.jwtSecretKey" -}}
-{{- $msg := "common.jwtSecretKey is required (>=64 bytes). Set values.common.jwtSecretKey" -}}
-{{- $key := required $msg .Values.common.jwtSecretKey -}}
-{{- if lt (len $key) 64 -}}
-{{- fail "common.jwtSecretKey must be at least 64 bytes (HS512)" -}}
-{{- end -}}
-{{- $key -}}
+{{- include "bkrepo.secretKey.resolve" (dict
+    "root" .
+    "value" .Values.common.config.security.auth.jwt.secretKey
+    "cacheKey" "_generatedJwtSecretKey"
+    "dataKey" "jwtSecretKey"
+    "nested" (list "security" "auth" "jwt" "secretKey")
+    "dotted" "security.auth.jwt.secretKey"
+    "setDict" .Values.common.config.security.auth.jwt
+    "setKey" "secretKey") -}}
 {{- end -}}
 
 {{- define "bkrepo.fdtpSecretKey" -}}

@@ -58,6 +58,7 @@ security:
     jwt:
       secretKey: ${BK_REPO_JWT_SECRET_KEY:}
   service:
+    # required when enabled; no strength check
     secretKey: ${BK_REPO_SERVICE_SECRET_KEY:}
 
 fdtp:

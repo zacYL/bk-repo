@@ -38,11 +38,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class ServiceAuthProperties(
     var enabled: Boolean = true,
     /**
-     * 服务间 JWT 签发密钥。enabled 时必须由部署注入。
+     * 当前签发+校验密钥。enabled 时必须由部署注入，不做强度校验。
      */
     var secretKey: String = "",
     /**
-     * 备用校验密钥，仅验签。未配置则不启用。
+     * 上一把密钥，仅验签。当前钥验签失败时才用，不签发。
      */
     var previousSecretKey: String = "",
 ) : InitializingBean {

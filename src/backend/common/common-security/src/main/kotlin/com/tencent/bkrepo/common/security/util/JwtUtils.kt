@@ -51,7 +51,7 @@ object JwtUtils {
 
     private const val BIT_LENGTH = 8
     private val SIGNATURE_ALGORITHM = SignatureAlgorithm.HS512
-    internal val SECRET_KEY_MIN_LENGTH = SIGNATURE_ALGORITHM.minKeyLength / BIT_LENGTH
+    private val SECRET_KEY_MIN_LENGTH = SIGNATURE_ALGORITHM.minKeyLength / BIT_LENGTH
 
     fun generateToken(
         signingKey: Key,

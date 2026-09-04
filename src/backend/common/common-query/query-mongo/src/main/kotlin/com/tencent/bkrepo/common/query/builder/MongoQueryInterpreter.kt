@@ -59,6 +59,8 @@ import com.tencent.bkrepo.common.query.interceptor.QueryModelInterceptor
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.query.util.MongoQueryFieldNames
+import com.tencent.bkrepo.common.query.util.MongoQueryValues
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
@@ -112,11 +114,13 @@ open class MongoQueryInterpreter {
             mongoQuery.with(pageRequest)
         }
         newModel.sort?.let {
+            it.properties.forEach { property -> MongoQueryFieldNames.validate(property, "sort") }
             val direction = Sort.Direction.fromString(it.direction.name)
             val sort = Sort.by(it.properties.map { property -> Sort.Order(direction, property) })
             mongoQuery.with(sort)
         }
         newModel.select?.forEach {
+            MongoQueryFieldNames.validate(it, "select")
             mongoQuery.fields().include(it)
         }
         mongoQuery.addCriteria(resolveRule(queryModel.rule, queryContext))
@@ -136,6 +140,9 @@ open class MongoQueryInterpreter {
     }
 
     fun resolveRule(rule: Rule, context: QueryContext): Criteria {
+        if (rule is Rule.QueryRule) {
+            validateQueryRule(rule)
+        }
         // interceptor
         if (rule !is Rule.FixedRule) {
             for (interceptor in queryRuleInterceptorList) {
@@ -157,8 +164,13 @@ open class MongoQueryInterpreter {
     }
 
     private fun resolveQueryRule(rule: Rule.QueryRule): Criteria {
-        // 默认handler
+        validateQueryRule(rule)
         return findDefaultHandler(rule.operation).handle(rule)
+    }
+
+    private fun validateQueryRule(rule: Rule.QueryRule) {
+        MongoQueryFieldNames.validate(rule.field, "field")
+        MongoQueryValues.validate(rule.value)
     }
 
     private fun findDefaultHandler(operation: OperationType): MongoQueryRuleHandler {

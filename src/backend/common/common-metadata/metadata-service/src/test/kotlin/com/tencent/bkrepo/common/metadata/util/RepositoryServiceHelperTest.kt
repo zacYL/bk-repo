@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.common.metadata.util
 
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyConfiguration
@@ -8,6 +9,7 @@ import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion
 import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.maskConfigurationPwd
 import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.restoreMaskedPasswords
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -114,7 +116,7 @@ class RepositoryServiceHelperTest {
     }
 
     @Test
-    fun restorePasswordWhenSingleChannelRenamedAndUrlChanged() {
+    fun rejectWhenNameAndUrlDiffer() {
         val oldChannel = ProxyChannelSetting(
             public = false,
             name = "old-name",
@@ -127,10 +129,65 @@ class RepositoryServiceHelperTest {
             url = "http://new.example.com",
             password = PASSWORD_MASK,
         )
+        assertThrows(ErrorCodeException::class.java) {
+            restoreMaskedPasswords(
+                CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(newChannel))),
+                CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(oldChannel))),
+            )
+        }
+    }
+
+    @Test
+    fun rejectWhenSameNameUrlChanged() {
+        val oldChannel = ProxyChannelSetting(
+            public = false,
+            name = "private",
+            url = "http://old.example.com",
+            password = "old-secret",
+        )
+        val newChannel = ProxyChannelSetting(
+            public = false,
+            name = "private",
+            url = "http://new.example.com",
+            password = PASSWORD_MASK,
+        )
+        assertThrows(ErrorCodeException::class.java) {
+            restoreMaskedPasswords(
+                CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(newChannel))),
+                CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(oldChannel))),
+            )
+        }
+    }
+
+    @Test
+    fun restorePasswordWhenUrlDiffersOnlyByFormat() {
+        val oldChannel = ProxyChannelSetting(
+            public = false,
+            name = "private",
+            url = "http://example.com/",
+            password = "old-secret",
+        )
+        val newChannel = ProxyChannelSetting(
+            public = false,
+            name = "private",
+            url = "example.com",
+            password = PASSWORD_MASK,
+        )
         restoreMaskedPasswords(
             CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(newChannel))),
             CompositeConfiguration(proxy = ProxyConfiguration(channelList = listOf(oldChannel))),
         )
         assertEquals("old-secret", newChannel.password)
+    }
+
+    @Test
+    fun rejectRemotePasswordWhenUrlChanged() {
+        val oldRemote = RemoteConfiguration(url = "http://old.example.com")
+        oldRemote.credentials.password = "old-secret"
+        val newRemote = RemoteConfiguration(url = "http://new.example.com")
+        newRemote.credentials.password = PASSWORD_MASK
+        assertThrows(ErrorCodeException::class.java) {
+            restoreMaskedPasswords(newRemote, oldRemote)
+        }
     }
 }

@@ -948,6 +948,7 @@
   "latestSyncData": "最終同期 {0}",
   "totalProxyCount": "合計{0}プロキシ",
   "connectionTest": "接続テスト",
+  "proxyPasswordRequiredOnUrlChange": "プロキシアドレスが変更されました。パスワードを再入力してから接続テストを行ってください",
   "Yes": "是",
   "No": "否",
   "itsmTip": "この操作には承認が必要です。申請書が提出されました。承認後、ページを更新してください",

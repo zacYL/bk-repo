@@ -35,8 +35,7 @@ import com.tencent.bkrepo.common.metadata.dao.repo.RProxyChannelDao
 import com.tencent.bkrepo.common.metadata.service.repo.RProxyChannelService
 import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.convert
 import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.convertToTProxyChannel
-import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.encryptPassword
-import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.isMaskedPassword
+import com.tencent.bkrepo.common.metadata.util.ProxyChannelQueryHelper.passwordForUpdate
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelCreateRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelDeleteRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelInfo
@@ -73,14 +72,15 @@ class RProxyChannelServiceImpl(
                 name = name
             )
             tProxyChannel?.let {
+                val oldUrl = tProxyChannel.url
                 tProxyChannel.public = public
                 tProxyChannel.lastModifiedDate = LocalDateTime.now()
                 tProxyChannel.lastModifiedBy = userId
                 tProxyChannel.url = validatedUrl
                 tProxyChannel.username = username
-                if (!isMaskedPassword(password)) {
-                    tProxyChannel.password = encryptPassword(password)
-                }
+                tProxyChannel.password = passwordForUpdate(
+                    password, tProxyChannel.password, validatedUrl, oldUrl
+                )
                 proxyChannelDao.save(tProxyChannel)
             }
         }

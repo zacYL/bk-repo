@@ -3,6 +3,7 @@ package com.tencent.bkrepo.common.metadata.util
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.Preconditions
+import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
@@ -197,11 +198,13 @@ class RepositoryServiceHelper(
             oldConfiguration: RepositoryConfiguration,
         ) {
             if (newConfiguration is RemoteConfiguration && oldConfiguration is RemoteConfiguration) {
-                if (isMaskedPassword(newConfiguration.credentials.password)) {
+                if (isMaskedPassword(newConfiguration.credentials.password) &&
+                    sameProxyUrl(newConfiguration.url, oldConfiguration.url)
+                ) {
                     newConfiguration.credentials.password = oldConfiguration.credentials.password
                 }
                 if (isMaskedPassword(newConfiguration.credentials.password)) {
-                    newConfiguration.credentials.password = null
+                    throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "password")
                 }
             }
             if (newConfiguration is CompositeConfiguration && oldConfiguration is CompositeConfiguration) {
@@ -220,7 +223,7 @@ class RepositoryServiceHelper(
                 if (!isMaskedPassword(channel.password)) {
                     return@forEach
                 }
-                oldByName[channel.name]?.let {
+                oldByName[channel.name]?.takeIf { sameProxyUrl(it.url, channel.url) }?.let {
                     channel.password = it.password
                     assignedOldNames.add(it.name)
                 }
@@ -232,25 +235,38 @@ class RepositoryServiceHelper(
                 if (!isMaskedPassword(channel.password)) {
                     return@forEach
                 }
-                leftoverOld.singleOrNull { it.url == channel.url }?.let {
+                leftoverOld.singleOrNull { sameProxyUrl(it.url, channel.url) }?.let {
                     channel.password = it.password
                     assignedOldNames.add(it.name)
                 }
             }
-            val stillMasked = newConfiguration.proxy.channelList.filter { isMaskedPassword(it.password) }
-            val unassignedOld = leftoverOld.filter { it.name !in assignedOldNames }
-            if (stillMasked.size == 1 && unassignedOld.size == 1) {
-                stillMasked[0].password = unassignedOld[0].password
-            }
             newConfiguration.proxy.channelList.forEach { channel ->
                 if (isMaskedPassword(channel.password)) {
-                    channel.password = null
+                    throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "password")
                 }
             }
         }
 
         fun isMaskedPassword(password: String?): Boolean {
             return password == PASSWORD_MASK
+        }
+
+        fun sameProxyUrl(left: String?, right: String?): Boolean {
+            val a = left?.trim().orEmpty()
+            val b = right?.trim().orEmpty()
+            if (a.isEmpty() && b.isEmpty()) {
+                return true
+            }
+            if (a.isEmpty() || b.isEmpty()) {
+                return false
+            }
+            return try {
+                val leftUrl = UrlFormatter.formatUrl(a).trimEnd('/')
+                val rightUrl = UrlFormatter.formatUrl(b).trimEnd('/')
+                leftUrl == rightUrl
+            } catch (_: Exception) {
+                a == b
+            }
         }
 
         fun crypto(pw: String, decrypt: Boolean): String {

@@ -32,6 +32,8 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.UrlFormatter
 import com.tencent.bkrepo.common.metadata.model.TProxyChannel
 import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.PASSWORD_MASK
+import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.isMaskedPassword
+import com.tencent.bkrepo.common.metadata.util.RepositoryServiceHelper.Companion.sameProxyUrl
 import com.tencent.bkrepo.common.security.util.RsaUtils
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelCreateRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelInfo
@@ -74,6 +76,21 @@ object ProxyChannelQueryHelper {
         } else {
             RsaUtils.encrypt(password)
         }
+    }
+
+    fun passwordForUpdate(
+        incoming: String?,
+        stored: String?,
+        newUrl: String,
+        oldUrl: String,
+    ): String? {
+        if (!isMaskedPassword(incoming)) {
+            return encryptPassword(incoming)
+        }
+        if (sameProxyUrl(newUrl, oldUrl)) {
+            return stored
+        }
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "password")
     }
 
     fun ProxyChannelInfo.maskPassword(): ProxyChannelInfo {

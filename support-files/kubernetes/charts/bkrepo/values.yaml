@@ -248,6 +248,9 @@ common:
   ## pod volume 挂载路径
   mountPath: /data/storage
   config:
+    ## 备份敏感字段 AES 密钥，16/24/32 字节，按需配置，不配不影响其它功能
+    backup:
+      encryptKey: ""
     ## 与 Java 配置项相同。空则 lookup 已有配置，没有则随机生成。
     security:
       auth:

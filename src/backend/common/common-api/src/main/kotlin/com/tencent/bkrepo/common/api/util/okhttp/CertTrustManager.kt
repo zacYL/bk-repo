@@ -58,12 +58,12 @@ object CertTrustManager {
 
     /**
      * 生成 SSLSocketFactory。
-     * 当使用传递的证书去生成TrustManager时存在问题：证书过期、无效或者服务端已经替换的场景下会导致连接不可用，需要手动更新配置的证书。
+     * 非空证书默认用于信任锚；证书过期或服务端轮换后需更新配置。
      * @param useCertString 是否使用传递进的证书。
      *        true: 使用传递的证书；
      *        false: 不使用传递的证书。
      */
-    fun createSSLSocketFactory(certString: String, useCertString: Boolean = false): SSLSocketFactory {
+    fun createSSLSocketFactory(certString: String, useCertString: Boolean = true): SSLSocketFactory {
         val trustManager = createTrustManager(certString, useCertString)
         return createSSLSocketFactory(trustManager)
     }
@@ -75,13 +75,13 @@ object CertTrustManager {
 
     /**
      * 生成 X509TrustManager。
-     * 当使用传递的证书去生成TrustManager时存在问题：证书过期、无效或者服务端已经替换的场景下会导致连接不可用，需要手动更新配置的证书。
+     * 非空证书默认用于信任锚；证书过期或服务端轮换后需更新配置。
      * @param useCertString 是否使用传递进的证书。
      *        true: 使用传递的证书；
      *        false: 不使用传递的证书。
      */
-    fun createTrustManager(certString: String, useCertString: Boolean = false): X509TrustManager {
-        return if (useCertString) {
+    fun createTrustManager(certString: String, useCertString: Boolean = true): X509TrustManager {
+        return if (useCertString && certString.isNotBlank()) {
             val certInputStream = certString.byteInputStream(Charsets.UTF_8)
             val certificateFactory = CertificateFactory.getInstance(X509)
             val certificateList = certificateFactory.generateCertificates(certInputStream)

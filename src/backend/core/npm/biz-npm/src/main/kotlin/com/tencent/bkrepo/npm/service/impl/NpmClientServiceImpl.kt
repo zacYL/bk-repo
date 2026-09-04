@@ -429,6 +429,7 @@ class NpmClientServiceImpl(
             logger.warn(message)
             throw NpmBadRequestException(message)
         }
+        NpmUtils.checkPackageMetaData(npmPackageMetaData)
         try {
             var size = 0L
             if (artifactFile != null) {
@@ -521,6 +522,7 @@ class NpmClientServiceImpl(
         artifactInfo: NpmArtifactInfo,
         npmPackageMetaData: NpmPackageMetaData
     ) {
+        NpmUtils.checkPackageMetaData(npmPackageMetaData)
         with(artifactInfo) {
             val fullPath = NpmUtils.getPackageMetadataPath(npmPackageMetaData.name!!)
             val inputStream = objectMapper.writeValueAsString(npmPackageMetaData).byteInputStream()

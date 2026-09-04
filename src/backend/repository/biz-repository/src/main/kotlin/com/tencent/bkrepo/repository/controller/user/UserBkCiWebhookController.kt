@@ -60,8 +60,9 @@ class UserBkCiWebhookController(
         @RequestHeader("X-DEVOPS-SIGNATURE-256") signature: String,
         @RequestBody payload: String
     ) {
-        logger.info("receive webhook, event[$event], signature[$signature], payload[$payload]")
+        logger.info("receive webhook, event[$event], payload length[${payload.length}]")
         verifySignature(signature, payload)
+        logger.info("webhook verified, event[$event], payload[$payload]")
 
         val devXEnabledPayload = payload.readJsonString<BkCiDevXEnabledPayload>()
         executor.execute {
@@ -78,6 +79,7 @@ class UserBkCiWebhookController(
 
         val expectedSignature = HmacUtils(HmacAlgorithms.HMAC_SHA_256, key).hmacHex(payload)
         if (!signature.equals(expectedSignature, true)) {
+            logger.warn("verify signature failed, signature[$signature]")
             throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, "X-DEVOPS-SIGNATURE-256")
         }
     }

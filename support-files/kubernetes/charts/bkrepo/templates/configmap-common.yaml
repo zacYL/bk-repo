@@ -92,11 +92,9 @@ data:
         {{- end }}
         username: {{ .Values.common.username }}
         password: {{ include "bkrepo.admin.password" . | quote }}
-    security.auth.jwt.secretKey: {{ include "bkrepo.jwtSecretKey" . | quote }}
-    security.service.secretKey: {{ include "bkrepo.serviceSecretKey" . | quote }}
-    {{- if .Values.common.servicePreviousSecretKey }}
-    security.service.previousSecretKey: {{ .Values.common.servicePreviousSecretKey | quote }}
-    {{- end }}
+    {{- $_ := include "bkrepo.jwtSecretKey" . -}}
+    {{- $_ := include "bkrepo.servicePreviousSecretKey" . -}}
+    {{- $_ := include "bkrepo.serviceSecretKey" . -}}
     {{- if .Values.replicationUDP.secretKey }}
     fdtp.server.secretKey: {{ include "bkrepo.fdtpSecretKey" . | quote }}
     {{- end }}

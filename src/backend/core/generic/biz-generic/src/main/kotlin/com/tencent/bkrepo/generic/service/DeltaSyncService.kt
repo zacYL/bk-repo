@@ -134,7 +134,7 @@ class DeltaSyncService(
                 ArtifactInfo(
                     projectId,
                     repoName,
-                    URLDecoder.decode(oldFilePath, Charsets.UTF_8)
+                    decodeOldFilePath(oldFilePath)
                 ),
             )
             if (node == null || node.folder) {
@@ -252,7 +252,14 @@ class DeltaSyncService(
             taskId = metrics.taskId,
             fileType = metrics.fileType,
             buildId = metrics.buildId,
-        ) ?: return 0.0
+        )
+        if (sql == null) {
+            logger.warn(
+                "Skip history upload speed query due to disallowed characters: " +
+                    "taskId[${metrics.taskId}], fileType[${metrics.fileType}], buildId[${metrics.buildId}]"
+            )
+            return 0.0
+        }
         val url = UrlFormatter.format(bkBaseProperties.domain, "/prod/v3/dataquery/query/")
         val query = QueryRequest(token = bkBaseProperties.token, sql = sql)
         val authHeader = toJson(
@@ -645,6 +652,10 @@ class DeltaSyncService(
         )
 
         private val BKBASE_SQL_LITERAL = Regex("^[A-Za-z0-9._:-]+$")
+
+        /** 与客户端 URLEncoder 对齐：只解一层，`+` 为空格。授权校验必须走同一函数。 */
+        internal fun decodeOldFilePath(oldFilePath: String): String =
+            URLDecoder.decode(oldFilePath, Charsets.UTF_8)
 
         internal fun sqlLiteral(value: String): String? = value.takeIf { BKBASE_SQL_LITERAL.matches(it) }
 

@@ -71,6 +71,7 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import io.jsonwebtoken.SignatureAlgorithm
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
+import java.security.MessageDigest
 import java.time.Clock
 import java.time.Instant
 import java.util.Base64
@@ -190,7 +191,8 @@ class OauthAuthorizationServiceImpl(
         Preconditions.checkNotBlank(clientSecret, "client_secret")
         val client = accountDao.findById(clientId) ?: throw ErrorCodeException(AuthMessageCode.AUTH_CLIENT_NOT_EXIST)
         client.credentials.find {
-            it.authorizationGrantType == AuthorizationGrantType.CLIENT_CREDENTIALS && it.secretKey == clientSecret
+            it.authorizationGrantType == AuthorizationGrantType.CLIENT_CREDENTIALS &&
+                MessageDigest.isEqual(it.secretKey.toByteArray(), clientSecret?.toByteArray())
         } ?: throw ErrorCodeException(AuthMessageCode.AUTH_CLIENT_NOT_EXIST)
         return buildOauthToken(client.owner!!, null, client, false)
     }
@@ -343,8 +345,8 @@ class OauthAuthorizationServiceImpl(
             client.credentials.find { it.authorizationGrantType == AuthorizationGrantType.AUTHORIZATION_CODE }
         } else {
             client.credentials.find {
-                it.secretKey == clientSecret &&
-                        it.authorizationGrantType == AuthorizationGrantType.AUTHORIZATION_CODE
+                it.authorizationGrantType == AuthorizationGrantType.AUTHORIZATION_CODE &&
+                    MessageDigest.isEqual(it.secretKey.toByteArray(), clientSecret.toByteArray())
             }
         }
         if (credential == null) {
@@ -362,10 +364,12 @@ class OauthAuthorizationServiceImpl(
         val value = redisOperation.get(challengeKey) ?: return
         val (method, challenge) = value.split(StringPool.COLON)
         val pass = when (method) {
-            "plain" -> challenge == codeVerifier
-            "S256" -> Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(HashAlgorithm.SHA256().digest(codeVerifier.orEmpty().byteInputStream())) == challenge
-
+            "plain" -> MessageDigest.isEqual(challenge.toByteArray(), codeVerifier?.toByteArray())
+            "S256" -> {
+                val computed = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(HashAlgorithm.SHA256().digest(codeVerifier.orEmpty().byteInputStream()))
+                MessageDigest.isEqual(computed.toByteArray(), challenge.toByteArray())
+            }
             else -> false
         }
         if (!pass) {

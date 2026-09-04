@@ -74,6 +74,7 @@ import org.apache.commons.codec.digest.HmacAlgorithms
 import org.slf4j.LoggerFactory
 import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.HandlerMapping
+import java.security.MessageDigest
 import java.util.Base64
 
 /**
@@ -230,10 +231,10 @@ class AuthInterceptor(
         val uri = getUrlPath(request)
         val bodyHash = request.getAttribute(HttpSigner.SIGN_BODY).toString()
         val computeSig = HttpSigner.sign(request, uri, bodyHash, secretKey, HmacAlgorithms.HMAC_SHA_1.getName())
-        if (computeSig != sig) {
-            // 签名未通过
+        if (sig == null || !MessageDigest.isEqual(computeSig.toByteArray(), sig.toByteArray())) {
             val signatureStr = HttpSigner.getSignatureStr(request, uri, bodyHash)
-            throw AuthenticationException("Invalid signature, server signature string: $signatureStr")
+            logger.warn("Invalid signature, server signature string: [$signatureStr]")
+            throw AuthenticationException("Invalid signature")
         }
         val signTime = request.getParameter(HttpSigner.SIGN_TIME)
         val expiredTime = signTime.split(HttpSigner.TIME_SPLIT).last().toLong()

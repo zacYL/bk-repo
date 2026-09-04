@@ -66,7 +66,7 @@ object AWS4AuthUtil {
         val signatureKey = calculateSignatureKey(secretAccessKey, authInfo)
         // 重新生成签名
         val strHexSignature = calculateHexSignature(stringToSign, signatureKey)
-        return authInfo.signature == strHexSignature
+        return MessageDigest.isEqual(authInfo.signature.toByteArray(), strHexSignature.toByteArray())
     }
 
     data class AuthorizationInfo(

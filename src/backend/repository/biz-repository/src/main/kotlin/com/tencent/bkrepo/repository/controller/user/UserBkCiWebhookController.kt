@@ -45,6 +45,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.security.MessageDigest
 
 @Tag(name = "用于监听蓝盾事件")
 @RestController
@@ -78,7 +79,11 @@ class UserBkCiWebhookController(
         }
 
         val expectedSignature = HmacUtils(HmacAlgorithms.HMAC_SHA_256, key).hmacHex(payload)
-        if (!signature.equals(expectedSignature, true)) {
+        if (!MessageDigest.isEqual(
+                signature.lowercase().toByteArray(),
+                expectedSignature.lowercase().toByteArray()
+            )
+        ) {
             logger.warn("verify signature failed, signature[$signature]")
             throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, "X-DEVOPS-SIGNATURE-256")
         }

@@ -204,7 +204,7 @@ class RepositoryServiceHelper(
                     newConfiguration.credentials.password = oldConfiguration.credentials.password
                 }
                 if (isMaskedPassword(newConfiguration.credentials.password)) {
-                    newConfiguration.credentials.password = null
+                    throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "password")
                 }
             }
             if (newConfiguration is CompositeConfiguration && oldConfiguration is CompositeConfiguration) {
@@ -242,7 +242,7 @@ class RepositoryServiceHelper(
             }
             newConfiguration.proxy.channelList.forEach { channel ->
                 if (isMaskedPassword(channel.password)) {
-                    channel.password = null
+                    throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "password")
                 }
             }
         }

@@ -40,7 +40,8 @@
         </bk-form>
         <template #footer>
             <bk-button @click="cancel">{{ $t('cancel') }}</bk-button>
-            <bk-button :disabled="!connected || !condition" class="ml10" theme="primary" @click="confirmProxyData">{{ $t('confirm') }}</bk-button>
+            <bk-button :disabled="!connected || !condition || needReenterPassword"
+                class="ml10" theme="primary" @click="confirmProxyData">{{ $t('confirm') }}</bk-button>
         </template>
     </canway-dialog>
 </template>
@@ -101,8 +102,7 @@
         },
         computed: {
             needReenterPassword () {
-                return this.repoType === 'helm'
-                    && this.editProxyData.proxyType === 'privateProxy'
+                return this.editProxyData.proxyType === 'privateProxy'
                     && this.isMaskedPassword(this.editProxyData.password)
                     && this.editProxyData.url.trim().length > 0
                     && !(this.editProxyData.type === 'edit'
@@ -172,11 +172,6 @@
                     && this.sameProxyUrl(this.editProxyData.url, this.proxyData.url)
                 if (this.editProxyData.proxyType === 'publicProxy' && hasNameAndUrl) {
                     this.condition = true
-                    if (urlUnchanged) {
-                        this.cancelPendingCheck()
-                        this.connected = true
-                        return true
-                    }
                     if (this.debouncedTestConnection) {
                         this.debouncedTestConnection()
                     }

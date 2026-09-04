@@ -87,7 +87,10 @@ object ProxyChannelQueryHelper {
         if (!isMaskedPassword(incoming)) {
             return encryptPassword(incoming)
         }
-        return if (sameProxyUrl(newUrl, oldUrl)) stored else null
+        if (sameProxyUrl(newUrl, oldUrl)) {
+            return stored
+        }
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "password")
     }
 
     fun ProxyChannelInfo.maskPassword(): ProxyChannelInfo {

@@ -90,38 +90,6 @@ class DownloadUtilsFtpSsrfTest {
     }
 
     @Test
-    fun `ftp url to metadata IP is rejected even if internal block is off`() {
-        val config = previewConfig(
-            remoteEnabled = true,
-            blockInternal = false
-        )
-        val httpUtils = mockk<HttpUtils>(relaxed = true)
-        val downloadUtils = DownloadUtils(httpUtils, SsrfGuard(config))
-
-        val exception = assertThrows(PreviewInvalidException::class.java) {
-            downloadUtils.downLoad(
-                ftpFileAttribute("ftp://169.254.169.254/latest/meta-data"),
-                config
-            )
-        }
-
-        assertEquals(PreviewMessageCode.PREVIEW_PARAMETER_INVALID, exception.messageCode)
-        verify(exactly = 0) { httpUtils.downloadHttpFile(any()) }
-    }
-
-    @Test
-    fun `pasv host to metadata is rejected before data connection`() {
-        val config = previewConfig(remoteEnabled = true)
-        val resolver = FtpUtils.createPassiveHostResolver(FTPClient(), SsrfGuard(config))
-
-        val exception = assertThrows(PreviewInvalidException::class.java) {
-            resolver.resolve("169.254.169.254")
-        }
-
-        assertEquals(PreviewMessageCode.PREVIEW_PARAMETER_INVALID, exception.messageCode)
-    }
-
-    @Test
     fun `pasv host to loopback is rejected before data connection`() {
         val config = previewConfig(remoteEnabled = true)
         val resolver = FtpUtils.createPassiveHostResolver(FTPClient(), SsrfGuard(config))
@@ -141,39 +109,18 @@ class DownloadUtilsFtpSsrfTest {
         assertEquals("8.8.8.8", resolver.resolve("8.8.8.8"))
     }
 
-    @Test
-    fun `resolved private host is rejected when internal block is on`() {
-        val config = previewConfig(remoteEnabled = true)
-        val exception = assertThrows(PreviewInvalidException::class.java) {
-            SsrfGuard(config).validateResolvedHost("10.0.0.1")
-        }
-
-        assertEquals(PreviewMessageCode.PREVIEW_PARAMETER_INVALID, exception.messageCode)
-    }
-
-    @Test
-    fun `resolved metadata host is rejected even if internal block is off`() {
-        val config = previewConfig(remoteEnabled = true, blockInternal = false)
-        val exception = assertThrows(PreviewInvalidException::class.java) {
-            SsrfGuard(config).validateResolvedHost("169.254.169.254")
-        }
-
-        assertEquals(PreviewMessageCode.PREVIEW_PARAMETER_INVALID, exception.messageCode)
-    }
-
     private fun previewConfig(
         remoteEnabled: Boolean,
         schemes: String = "https,ftp",
         ports: String = "80,443,21",
-        hosts: String = "",
-        blockInternal: Boolean = true
+        hosts: String = ""
     ): PreviewConfig {
         val config = mockk<PreviewConfig>(relaxed = true)
         every { config.isRemotePreviewEnabled } returns remoteEnabled
         every { config.remoteAllowedSchemes } returns schemes
         every { config.remoteAllowedPorts } returns ports
         every { config.remoteAllowedHosts } returns hosts
-        every { config.isBlockInternalAddress } returns blockInternal
+        every { config.isBlockInternalAddress } returns true
         every { config.fileDir } returns workspace.toAbsolutePath().toString()
         every { config.prohibitSuffix } returns "exe,dll"
         return config

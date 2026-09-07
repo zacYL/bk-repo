@@ -29,10 +29,30 @@
  * SOFTWARE.
  */
 
+import java.security.KeyPairGenerator
+import java.util.Base64
+
 plugins {
     id("com.tencent.devops.boot") version Versions.DevopsBoot
     id("com.tencent.devops.publish") version Versions.DevopsBoot apply false
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
+}
+
+// 测试用密钥，只出私钥，公钥由 CryptoPropertiesInitializer 推导。1024 位够用且构建更快
+fun rsaTestPrivateKey(): String {
+    val generator = KeyPairGenerator.getInstance("RSA")
+    generator.initialize(1024)
+    return Base64.getEncoder().encodeToString(generator.generateKeyPair().private.encoded)
+}
+
+val testCryptoProperties: Map<String, String> by lazy {
+    mapOf(
+        "security.crypto.privateKeyStr" to rsaTestPrivateKey(),
+        "security.crypto.privateKeyStr2048PKCS8" to rsaTestPrivateKey(),
+        "security.crypto.privateKeyStr2048PKCS1" to rsaTestPrivateKey(),
+        "security.crypto.aesKey" to "0".repeat(32),
+        "security.crypto.aesIv" to "0".repeat(16)
+    )
 }
 
 allprojects {
@@ -113,6 +133,7 @@ allprojects {
         jvmArgs = listOf("--add-opens=java.base/java.nio=ALL-UNNAMED")
         systemProperty("security.auth.jwt.secret-key", "UtJwtKey-" + "0".repeat(24))
         systemProperty("security.service.secret-key", "0".repeat(64))
+        testCryptoProperties.forEach { (key, value) -> systemProperty(key, value) }
         testLogging {
             events("passed", "skipped", "failed")
             showStackTraces = true

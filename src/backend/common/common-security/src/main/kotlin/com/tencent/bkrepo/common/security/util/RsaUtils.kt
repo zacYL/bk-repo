@@ -27,13 +27,19 @@
 
 package com.tencent.bkrepo.common.security.util
 
+import cn.hutool.crypto.CryptoException
 import cn.hutool.crypto.asymmetric.KeyType
 import cn.hutool.crypto.asymmetric.RSA
 import com.tencent.bkrepo.common.security.crypto.CryptoProperties
+import com.tencent.bkrepo.common.security.crypto.LegacyCryptoKeys
+import org.slf4j.LoggerFactory
 import java.security.KeyFactory
+import java.security.interfaces.RSAPrivateCrtKey
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
+import java.security.spec.InvalidKeySpecException
 import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.RSAPublicKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
@@ -52,12 +58,17 @@ class RsaUtils(
             cryptoProperties.privateKeyStr,
             cryptoProperties.publicKeyStr
         )
+        // 只给私钥，公钥留空，从构造上就无法用旧密钥加密
+        legacyRsa = RSA(cryptoProperties.rsaAlgorithm, legacyPrivateKey(), null)
     }
 
     companion object {
         lateinit var rsa: RSA
         lateinit var publicKey: String
         lateinit var privateKey: String
+        private lateinit var legacyRsa: RSA
+        private val logger = LoggerFactory.getLogger(RsaUtils::class.java)
+
         /**
          * 公钥加密
          * @param password 需要解密的密码
@@ -71,21 +82,106 @@ class RsaUtils(
          * @param password 前端加密后的密码
          */
         fun decrypt(password: String): String {
-            return rsa.decryptStr(password, KeyType.PrivateKey)
+            return decryptWithSource(password).first
+        }
+
+        /**
+         * 额外返回解开密文的密钥来源，供存量重加密判断该不该回写。
+         * 不能直接 encrypt(decrypt(x))：解不开时旧实现会把密文当明文返回，
+         * 再加密一遍就变成双层密文，不可逆
+         */
+        fun decryptWithSource(password: String): Pair<String, KeySource> {
+            return try {
+                rsa.decryptStr(password, KeyType.PrivateKey) to KeySource.CURRENT
+            } catch (ignored: CryptoException) {
+                logger.warn("decrypted with legacy key, this ciphertext still needs re-encryption")
+                legacyRsa.decryptStr(password, KeyType.PrivateKey) to KeySource.LEGACY
+            }
+        }
+
+        /**
+         * 唯一允许引用旧默认密钥的地方，且只取私钥用于解密
+         */
+        @Suppress("DEPRECATION")
+        private fun legacyPrivateKey(): String {
+            return normalizePrivateKey(LegacyCryptoKeys.RSA_1024_PRIVATE_KEY)
         }
 
         fun stringToPrivateKey(privateStr: String): RSAPrivateKey {
-            val data: ByteArray = Base64.getDecoder().decode(privateStr)
-            val spec = PKCS8EncodedKeySpec(data)
-            val fact = KeyFactory.getInstance("RSA")
-            return fact.generatePrivate(spec) as RSAPrivateKey
+            require(privateStr.isNotBlank()) { "rsa private key is blank" }
+            val der = Base64.getDecoder().decode(pemBody(privateStr))
+            val factory = KeyFactory.getInstance("RSA")
+            return try {
+                factory.generatePrivate(PKCS8EncodedKeySpec(der)) as RSAPrivateKey
+            } catch (ignored: InvalidKeySpecException) {
+                // helm genPrivateKey 产出的是 PKCS#1，包一层 PKCS#8 头再解
+                factory.generatePrivate(PKCS8EncodedKeySpec(pkcs1ToPkcs8(der))) as RSAPrivateKey
+            }
         }
 
         fun stringToPublicKey(publStr: String?): RSAPublicKey {
-            val data: ByteArray = Base64.getDecoder().decode(publStr)
+            require(!publStr.isNullOrBlank()) { "rsa public key is blank" }
+            val data = Base64.getDecoder().decode(pemBody(publStr))
             val spec = X509EncodedKeySpec(data)
             val fact = KeyFactory.getInstance("RSA")
             return fact.generatePublic(spec) as RSAPublicKey
         }
+
+        /**
+         * 私钥归一化成单行 PKCS#8 Base64，屏蔽 PEM 与 PKCS#1 差异
+         */
+        fun normalizePrivateKey(privateStr: String): String {
+            return Base64.getEncoder().encodeToString(stringToPrivateKey(privateStr).encoded)
+        }
+
+        /**
+         * 公钥是私钥的冗余信息，未配置时直接推导，返回单行 X.509 Base64
+         */
+        fun derivePublicKey(privateStr: String): String {
+            val privateKey = stringToPrivateKey(privateStr)
+            require(privateKey is RSAPrivateCrtKey) { "rsa private key without CRT params" }
+            val spec = RSAPublicKeySpec(privateKey.modulus, privateKey.publicExponent)
+            val publicKey = KeyFactory.getInstance("RSA").generatePublic(spec)
+            return Base64.getEncoder().encodeToString(publicKey.encoded)
+        }
+
+        /**
+         * PKCS#1 DER 包成 PKCS#8 PrivateKeyInfo。
+         * ponytail: 长度统一按 DER 的 0x82 两字节形式编码，仅对 RSA >= 1024 位成立
+         * （PKCS#1 体恒大于 255 字节）。需要支持更短密钥时改成通用 DER 长度编码。
+         */
+        private fun pkcs1ToPkcs8(pkcs1: ByteArray): ByteArray {
+            val version = byteArrayOf(0x02, 0x01, 0x00)
+            val rsaEncryption = byteArrayOf(
+                0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86.toByte(), 0x48, 0x86.toByte(),
+                0xF7.toByte(), 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00
+            )
+            val octetString = byteArrayOf(
+                0x04, 0x82.toByte(), (pkcs1.size ushr 8).toByte(), pkcs1.size.toByte()
+            ) + pkcs1
+            val body = version + rsaEncryption + octetString
+            return byteArrayOf(
+                0x30, 0x82.toByte(), (body.size ushr 8).toByte(), body.size.toByte()
+            ) + body
+        }
+
+        private fun pemBody(value: String): String {
+            return value
+                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                .replace("-----END RSA PRIVATE KEY-----", "")
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replace("\\s".toRegex(), "")
+        }
     }
+}
+
+/**
+ * 密文由哪把密钥解开。LEGACY 表示这条密文仍是升级前的默认密钥加密的，需要重加密
+ */
+enum class KeySource {
+    CURRENT,
+    LEGACY
 }

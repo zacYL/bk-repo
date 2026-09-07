@@ -45,7 +45,6 @@ class AESUtils(
             cryptoProperties.aesKey.toByteArray(),
             cryptoProperties.aesIv.toByteArray()
         )
-
     }
 
     companion object {

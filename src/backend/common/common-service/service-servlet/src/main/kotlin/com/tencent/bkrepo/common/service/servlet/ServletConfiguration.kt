@@ -40,6 +40,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.web.servlet.filter.OrderedFormContentFilter
 import org.springframework.context.annotation.Bean
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.filter.FormContentFilter
 import org.springframework.web.filter.UrlHandlerFilter
 
@@ -47,8 +48,9 @@ import org.springframework.web.filter.UrlHandlerFilter
 class ServletConfiguration {
 
     /**
-     * 替换默认 FormContentFilter：非法 % 转义在 Filter 层就会抛 IAE，Advice 接不住。
-     * 只拦解析阶段，后续链路的 IAE 原样抛出。
+     * 替换默认 FormContentFilter：非法 % 转义在 Filter 层抛 IAE，
+     * 6.2.5+ 会再包成 HttpMessageNotReadableException，Advice 接不住。
+     * 只拦解析阶段，后续链路的异常原样抛出。
      * 条件与被替换的自动配置 bean 保持一致。
      */
     @Bean
@@ -71,8 +73,10 @@ class ServletConfiguration {
                         enteredChain = true
                         filterChain.doFilter(req, res)
                     }
-                } catch (exception: IllegalArgumentException) {
-                    if (enteredChain) throw exception
+                } catch (exception: RuntimeException) {
+                    val invalidForm = exception is IllegalArgumentException ||
+                        exception is HttpMessageNotReadableException
+                    if (enteredChain || !invalidForm) throw exception
                     writeInvalidFormContent(request, response)
                 }
             }

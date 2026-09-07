@@ -18,9 +18,14 @@ import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguratio
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner
 import org.springframework.boot.web.servlet.filter.OrderedFormContentFilter
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
+import org.springframework.http.HttpInputMessage
 import org.springframework.http.MediaType
+import org.springframework.http.converter.FormHttpMessageConverter
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.mock.http.MockHttpInputMessage
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
+import org.springframework.util.MultiValueMap
 import org.springframework.web.filter.FormContentFilter
 import java.util.Locale
 
@@ -46,6 +51,30 @@ class FormContentFilterTest {
         assertEquals("请求内容无效", body["message"].asText())
         assertTrue(body["data"].isNull)
         assertTrue(body["traceId"].isNull)
+    }
+
+    @Test
+    fun `parse-time HttpMessageNotReadableException returns unified 400 without entering chain`() {
+        val filter = ServletConfiguration().formContentFilter()
+        filter.setFormConverter(object : FormHttpMessageConverter() {
+            override fun read(
+                clazz: Class<out MultiValueMap<String, *>>?,
+                inputMessage: HttpInputMessage
+            ): MultiValueMap<String, String> {
+                throw HttpMessageNotReadableException("Could not decode HTTP form payload", inputMessage)
+            }
+        })
+        val response = MockHttpServletResponse()
+        var chainInvoked = false
+
+        filter.doFilter(formRequest("a=1"), response) { _, _ -> chainInvoked = true }
+
+        assertEquals(400, response.status)
+        assertFalse(chainInvoked)
+        assertEquals(
+            CommonMessageCode.REQUEST_CONTENT_INVALID.getCode(),
+            body(response)["code"].asInt()
+        )
     }
 
     @Test
@@ -104,6 +133,18 @@ class FormContentFilterTest {
         val expected = IllegalArgumentException("downstream")
 
         val actual = assertThrows<IllegalArgumentException> {
+            filter.doFilter(formRequest("a=1"), response) { _, _ -> throw expected }
+        }
+
+        assertSame(expected, actual)
+    }
+
+    @Test
+    fun `downstream HttpMessageNotReadableException is rethrown unchanged`() {
+        val response = MockHttpServletResponse()
+        val expected = HttpMessageNotReadableException("downstream", MockHttpInputMessage(ByteArray(0)))
+
+        val actual = assertThrows<HttpMessageNotReadableException> {
             filter.doFilter(formRequest("a=1"), response) { _, _ -> throw expected }
         }
 

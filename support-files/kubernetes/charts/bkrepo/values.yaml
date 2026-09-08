@@ -267,6 +267,10 @@ common:
       ##   privateKeyStr 换钥后存量密文由代码兜底解密，并由 LegacyCryptoRewriteJob 重加密，不会丢；
       ##   其余四把（2048PKCS8/2048PKCS1/aesKey/aesIv）没有兜底，换钥后对应密文一律解不开。
       ## 旧值可从升级前的 ConfigMap 取：kubectl get cm <release>-common -o yaml
+      ## 从没配过这几项的老集群升级，旧值就是升级前代码里的硬编码默认值，可从上一个 release 的
+      ## CryptoProperties.kt 抄进来先保证平滑，之后再择期换钥（换钥影响见上）。
+      ## privateKeyStr 用 genCA 借壳生成 2048 位私钥后丢掉证书，因为 helm 的 genPrivateKey
+      ## 固定 4096 位且两者都不接收位数参数，看到 chart 生成 CA 不必困惑。
       crypto:
         privateKeyStr: ""
         publicKeyStr: ""

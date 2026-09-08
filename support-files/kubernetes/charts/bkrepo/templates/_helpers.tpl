@@ -293,7 +293,7 @@ aligned with scripts/gen-crypto-keys.sh.
 {{- if $existing -}}
 {{- $out = $existing -}}
 {{- else if eq (.generator | default "alphaNum") "rsa" -}}
-{{- $out = (genCA "bkrepo-crypto" 1).Key -}}
+{{- $out = (genCA "bkrepo-crypto" 1).Key | trim -}}
 {{- else -}}
 {{- $out = randAlphaNum (.length | default 32) -}}
 {{- end -}}

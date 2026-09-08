@@ -51,26 +51,46 @@ class RsaUtils(
     cryptoProperties: CryptoProperties
 ) {
     init {
-        publicKey = cryptoProperties.publicKeyStr
-        privateKey = cryptoProperties.privateKeyStr
+        properties = cryptoProperties
         // 未配置时不建实例，等真正用到再报错，避免用不上登录密钥的服务（如 proxy）启动即失败
         rsa = cryptoProperties.privateKeyStr.takeIf { it.isNotEmpty() }?.let {
             RSA(cryptoProperties.rsaAlgorithm, it, cryptoProperties.publicKeyStr)
         }
-        // 只给私钥，公钥留空，从构造上就无法用旧密钥加密
-        legacyRsa = RSA(cryptoProperties.rsaAlgorithm, legacyPrivateKey(), null)
+        // 配置变了就丢掉缓存，下次用到按新算法重建
+        legacyRsa = null
     }
 
     companion object {
-        lateinit var publicKey: String
-        lateinit var privateKey: String
+        private lateinit var properties: CryptoProperties
         private var rsa: RSA? = null
-        private lateinit var legacyRsa: RSA
+        private var legacyRsa: RSA? = null
         private val logger = LoggerFactory.getLogger(RsaUtils::class.java)
 
-        private fun rsa(): RSA = checkNotNull(rsa) {
-            "security.crypto.privateKeyStr is required, generate it with scripts/gen-crypto-keys.sh"
+        /**
+         * 未配置时不能返回空串：UserController 的 GET /rsa 直接把它给前端，
+         * 前端拿空公钥加密登录密码，故障现场会跑到浏览器里
+         */
+        val publicKey: String get() = required(properties.publicKeyStr, "publicKeyStr")
+
+        val privateKey: String get() = required(properties.privateKeyStr, "privateKeyStr")
+
+        private fun required(value: String, field: String): String {
+            check(value.isNotEmpty()) { missing(field) }
+            return value
         }
+
+        private fun missing(field: String) =
+            "security.crypto.$field is required, generate it with scripts/gen-crypto-keys.sh"
+
+        private fun rsa(): RSA = checkNotNull(rsa) { missing("privateKeyStr") }
+
+        /**
+         * 只有 [decryptWithSource] 的兜底分支会走到，按需构造，用不上登录密钥的服务
+         * （如 proxy）不必为它常驻一把已公开的私钥。公钥留空，从构造上就无法用旧密钥加密。
+         * 并发首次进入可能构造两次，幂等，无害
+         */
+        private fun legacyRsa(): RSA = legacyRsa
+            ?: RSA(properties.rsaAlgorithm, legacyPrivateKey(), null).also { legacyRsa = it }
 
         /**
          * 公钥加密
@@ -98,7 +118,7 @@ class RsaUtils(
                 rsa().decryptStr(password, KeyType.PrivateKey) to KeySource.CURRENT
             } catch (ignored: CryptoException) {
                 logger.warn("decrypted with legacy key, this ciphertext still needs re-encryption")
-                legacyRsa.decryptStr(password, KeyType.PrivateKey) to KeySource.LEGACY
+                legacyRsa().decryptStr(password, KeyType.PrivateKey) to KeySource.LEGACY
             }
         }
 

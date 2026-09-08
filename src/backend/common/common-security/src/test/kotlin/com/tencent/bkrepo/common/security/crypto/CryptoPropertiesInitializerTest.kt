@@ -27,6 +27,12 @@ internal class CryptoPropertiesInitializerTest {
             RsaUtils.encrypt("p1")
         }
         Assertions.assertTrue(error.message!!.contains("privateKeyStr is required"))
+
+        // GET /rsa 直接把这个字段给前端，返回空串会把故障现场推到浏览器里
+        val keyError = Assertions.assertThrows(IllegalStateException::class.java) {
+            RsaUtils.publicKey
+        }
+        Assertions.assertTrue(keyError.message!!.contains("publicKeyStr is required"))
     }
 
     /**

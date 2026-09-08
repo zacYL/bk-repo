@@ -131,6 +131,7 @@ allprojects {
 
     tasks.test {
         jvmArgs = listOf("--add-opens=java.base/java.nio=ALL-UNNAMED")
+        systemProperty("backup.encrypt-key", "0".repeat(32))
         systemProperty("security.auth.jwt.secret-key", "UtJwtKey-" + "0".repeat(24))
         systemProperty("security.service.secret-key", "0".repeat(64))
         testCryptoProperties.forEach { (key, value) -> systemProperty(key, value) }

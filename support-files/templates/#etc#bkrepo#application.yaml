@@ -56,3 +56,6 @@ security:
 fdtp:
   server:
     secretKey: __BK_REPO_FDTP_SECRET_KEY__
+
+backup:
+  encryptKey: __BK_REPO_BACKUP_ENCRYPT_KEY__

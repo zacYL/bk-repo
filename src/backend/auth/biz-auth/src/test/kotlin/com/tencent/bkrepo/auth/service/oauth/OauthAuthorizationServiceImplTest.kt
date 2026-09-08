@@ -17,6 +17,7 @@ import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.redis.RedisOperation
 import com.tencent.bkrepo.common.security.crypto.CryptoProperties
+import com.tencent.bkrepo.common.security.util.RsaUtils
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyOrder
@@ -33,7 +34,9 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
+import java.security.KeyPairGenerator
 import java.time.LocalDateTime
+import java.util.Base64
 
 @DisplayName("Oauth 授权码兑换与 refresh 安全行为")
 class OauthAuthorizationServiceImplTest {
@@ -93,7 +96,10 @@ class OauthAuthorizationServiceImplTest {
             oauthTokenRepository = oauthTokenRepository,
             userService = userService,
             redisOperation = redisOperation,
-            cryptoProperties = CryptoProperties(),
+            cryptoProperties = CryptoProperties(
+                privateKeyStr2048PKCS8 = PRIVATE_KEY_2048,
+                publicKeyStr2048PKCS8 = RsaUtils.derivePublicKey(PRIVATE_KEY_2048)
+            ),
             oauthProperties = OauthProperties()
         )
         bindRequest()
@@ -552,5 +558,13 @@ class OauthAuthorizationServiceImplTest {
         private const val CLIENT_SECRET = "secret-1"
         private const val USER_ID = "user-1"
         private const val CODE_VERIFIER = "pkce-verifier"
+
+        /**
+         * Oauth 的 JWT 走 RS256，jjwt 按 RFC 7518 要求密钥不低于 2048 位
+         */
+        private val PRIVATE_KEY_2048 = KeyPairGenerator.getInstance("RSA").run {
+            initialize(2048)
+            Base64.getEncoder().encodeToString(generateKeyPair().private.encoded)
+        }
     }
 }

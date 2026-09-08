@@ -92,6 +92,16 @@ internal class LegacyCryptoRewriteJobTest {
         Assertions.assertNull(LegacyCryptoRewriteJob.reEncryptOrNull("not-a-cipher"))
     }
 
+    /**
+     * padding 偶发碰撞会让错的密钥解出一串随机字节，这种「明文」回写会永久盖掉原密文
+     */
+    @Test
+    @DisplayName("解出的明文不像密码时原样跳过")
+    fun testSkipImplausiblePlaintext() {
+        val cipher = legacyCipher("\u0000\u0001binary")
+        Assertions.assertNull(LegacyCryptoRewriteJob.reEncryptOrNull(cipher))
+    }
+
     @Test
     @DisplayName("composite 多个代理源逐个处理，只换旧的")
     fun testCompositeChannels() {

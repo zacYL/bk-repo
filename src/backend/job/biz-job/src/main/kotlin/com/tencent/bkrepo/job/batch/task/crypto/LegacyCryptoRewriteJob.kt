@@ -143,7 +143,23 @@ class LegacyCryptoRewriteJob(
                 logger.warn("Skip ciphertext that no rsa key can decrypt.")
                 return null
             }
-            return if (source == KeySource.LEGACY) RsaUtils.encrypt(plain) else null
+            if (source != KeySource.LEGACY) {
+                return null
+            }
+            if (!looksLikePassword(plain)) {
+                logger.warn("Skip ciphertext decrypted into implausible plaintext.")
+                return null
+            }
+            return RsaUtils.encrypt(plain)
+        }
+
+        /**
+         * PKCS#1 v1.5 的 padding 校验有约 1/65536 的概率让错的密钥解出一串随机字节而不抛异常，
+         * 这种「明文」一旦重加密回写，原密文就永久盖掉了。随机字节几乎必然带控制字符，
+         * 或者不是合法 UTF-8 而被替换成 U+FFFD，用这个兜底拦一道
+         */
+        private fun looksLikePassword(plain: String): Boolean {
+            return plain.isNotEmpty() && plain.none { it.isISOControl() || it == '\uFFFD' }
         }
 
         private val logger = LoggerHolder.jobLogger

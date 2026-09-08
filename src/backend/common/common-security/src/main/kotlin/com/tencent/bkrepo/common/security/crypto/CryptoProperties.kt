@@ -34,7 +34,7 @@ package com.tencent.bkrepo.common.security.crypto
 import org.springframework.boot.context.properties.ConfigurationProperties
 
 /**
- * 加解密密钥。代码里不保留默认值，未配置直接启动失败，见 [CryptoPropertiesInitializer]。
+ * 加解密密钥。代码里不保留默认值，未配置的密钥在被用到时才报错，见 [CryptoPropertiesInitializer]。
  * helm 部署由 chart 渲染时随机生成，二进制部署用 scripts/gen-crypto-keys.sh 生成后填入。
  * 公钥可留空，启动时从私钥推导。
  */
@@ -42,19 +42,21 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class CryptoProperties(
     var rsaAlgorithm: String = "RSA/ECB/PKCS1Padding",
     /**
-     * RSA 1024 私钥，单行 Base64。登录密码加解密，多实例须同一套。
+     * RSA 私钥，单行 Base64。登录密码加解密，多实例须同一套。
+     * 不限位数，存量集群多是 1024，chart 与 gen-crypto-keys.sh 现在统一生成 2048。
      */
     var privateKeyStr: String = "",
     /**
-     * RSA 1024 公钥，单行 Base64。
+     * RSA 公钥，单行 Base64。
      */
     var publicKeyStr: String = "",
     /**
-     * RSA 2048 PKCS#8 私钥，单行 Base64。OAuth/OIDC JWT。
+     * RSA PKCS#8 私钥，单行 Base64。OAuth/OIDC JWT 签名走 RS256，
+     * jjwt 按 RFC 7518 要求密钥不低于 2048 位，否则签名时抛 WeakKeyException。
      */
     var privateKeyStr2048PKCS8: String = "",
     /**
-     * RSA 2048 PKCS#8 公钥，单行 Base64。
+     * RSA PKCS#8 公钥，单行 Base64。
      */
     var publicKeyStr2048PKCS8: String = "",
     /**

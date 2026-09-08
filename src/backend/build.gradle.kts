@@ -38,18 +38,20 @@ plugins {
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
 
-// 测试用密钥，只出私钥，公钥由 CryptoPropertiesInitializer 推导。1024 位够用且构建更快
-fun rsaTestPrivateKey(): String {
+// 测试用密钥，只出私钥，公钥由 CryptoPropertiesInitializer 推导
+fun rsaTestPrivateKey(bits: Int): String {
     val generator = KeyPairGenerator.getInstance("RSA")
-    generator.initialize(1024)
+    generator.initialize(bits)
     return Base64.getEncoder().encodeToString(generator.generateKeyPair().private.encoded)
 }
 
 val testCryptoProperties: Map<String, String> by lazy {
     mapOf(
-        "security.crypto.privateKeyStr" to rsaTestPrivateKey(),
-        "security.crypto.privateKeyStr2048PKCS8" to rsaTestPrivateKey(),
-        "security.crypto.privateKeyStr2048PKCS1" to rsaTestPrivateKey(),
+        // 登录密码加解密不限位数，1024 位构建更快
+        "security.crypto.privateKeyStr" to rsaTestPrivateKey(1024),
+        // OAuth/OIDC 的 JWT 走 RS256，jjwt 按 RFC 7518 强制要求 >= 2048 位，否则抛 WeakKeyException
+        "security.crypto.privateKeyStr2048PKCS8" to rsaTestPrivateKey(2048),
+        "security.crypto.privateKeyStr2048PKCS1" to rsaTestPrivateKey(2048),
         "security.crypto.aesKey" to "0".repeat(32),
         "security.crypto.aesIv" to "0".repeat(16)
     )

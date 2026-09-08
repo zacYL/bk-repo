@@ -53,28 +53,31 @@ class RsaUtils(
     init {
         publicKey = cryptoProperties.publicKeyStr
         privateKey = cryptoProperties.privateKeyStr
-        rsa = RSA(
-            cryptoProperties.rsaAlgorithm,
-            cryptoProperties.privateKeyStr,
-            cryptoProperties.publicKeyStr
-        )
+        // 未配置时不建实例，等真正用到再报错，避免用不上登录密钥的服务（如 proxy）启动即失败
+        rsa = cryptoProperties.privateKeyStr.takeIf { it.isNotEmpty() }?.let {
+            RSA(cryptoProperties.rsaAlgorithm, it, cryptoProperties.publicKeyStr)
+        }
         // 只给私钥，公钥留空，从构造上就无法用旧密钥加密
         legacyRsa = RSA(cryptoProperties.rsaAlgorithm, legacyPrivateKey(), null)
     }
 
     companion object {
-        lateinit var rsa: RSA
         lateinit var publicKey: String
         lateinit var privateKey: String
+        private var rsa: RSA? = null
         private lateinit var legacyRsa: RSA
         private val logger = LoggerFactory.getLogger(RsaUtils::class.java)
+
+        private fun rsa(): RSA = checkNotNull(rsa) {
+            "security.crypto.privateKeyStr is required, generate it with scripts/gen-crypto-keys.sh"
+        }
 
         /**
          * 公钥加密
          * @param password 需要解密的密码
          */
         fun encrypt(password: String): String {
-            return rsa.encryptBcd(password, KeyType.PublicKey)
+            return rsa().encryptBcd(password, KeyType.PublicKey)
         }
 
         /**
@@ -92,7 +95,7 @@ class RsaUtils(
          */
         fun decryptWithSource(password: String): Pair<String, KeySource> {
             return try {
-                rsa.decryptStr(password, KeyType.PrivateKey) to KeySource.CURRENT
+                rsa().decryptStr(password, KeyType.PrivateKey) to KeySource.CURRENT
             } catch (ignored: CryptoException) {
                 logger.warn("decrypted with legacy key, this ciphertext still needs re-encryption")
                 legacyRsa.decryptStr(password, KeyType.PrivateKey) to KeySource.LEGACY
@@ -147,7 +150,7 @@ class RsaUtils(
 
         /**
          * PKCS#1 DER 包成 PKCS#8 PrivateKeyInfo。
-         * ponytail: 长度统一按 DER 的 0x82 两字节形式编码，仅对 RSA >= 1024 位成立
+         * 长度统一按 DER 的 0x82 两字节形式编码，仅对 RSA >= 1024 位成立
          * （PKCS#1 体恒大于 255 字节）。需要支持更短密钥时改成通用 DER 长度编码。
          */
         private fun pkcs1ToPkcs8(pkcs1: ByteArray): ByteArray {

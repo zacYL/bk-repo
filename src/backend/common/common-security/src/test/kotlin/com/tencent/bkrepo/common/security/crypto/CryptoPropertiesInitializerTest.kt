@@ -11,27 +11,36 @@ import java.util.Base64
 @DisplayName("密钥归一化与校验测试")
 internal class CryptoPropertiesInitializerTest {
 
+    /**
+     * 缺密钥不能拖垮启动：proxy 这类服务一把都用不上，报错要留到真正使用时
+     */
     @Test
-    @DisplayName("私钥未配置时启动失败")
-    fun testPrivateKeyRequired() {
+    @DisplayName("私钥未配置时启动不失败，用到才失败")
+    fun testPrivateKeyRequiredOnUse() {
+        val properties = properties(privateKeyStr = "")
+        init(properties)
+        Assertions.assertEquals("", properties.privateKeyStr)
+        Assertions.assertEquals("", properties.publicKeyStr)
+
+        RsaUtils(properties)
         val error = Assertions.assertThrows(IllegalStateException::class.java) {
-            init(properties(privateKeyStr = ""))
+            RsaUtils.encrypt("p1")
         }
         Assertions.assertTrue(error.message!!.contains("privateKeyStr is required"))
     }
 
     /**
-     * 模板占位符没被替换时必须报"未配置"，否则错误会停在 Base64 解码上，运维看不出是漏配
+     * 模板占位符没被替换时必须按"未配置"处理，否则会带着占位符往下走，
+     * 错误停在 Base64 解码上，运维看不出是漏配
      */
     @Test
     @DisplayName("未替换的部署占位符按未配置处理")
     fun testUnresolvedPlaceholder() {
         listOf("__BK_REPO_CRYPTO_PRIVATE_KEY_STR__", "\${BK_REPO_CRYPTO_PRIVATE_KEY_STR}")
             .forEach { placeholder ->
-                val error = Assertions.assertThrows(IllegalStateException::class.java) {
-                    init(properties(privateKeyStr = placeholder))
-                }
-                Assertions.assertTrue(error.message!!.contains("is required"), placeholder)
+                val properties = properties(privateKeyStr = placeholder)
+                init(properties)
+                Assertions.assertEquals("", properties.privateKeyStr, placeholder)
             }
     }
 

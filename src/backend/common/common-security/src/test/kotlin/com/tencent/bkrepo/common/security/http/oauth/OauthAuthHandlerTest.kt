@@ -13,12 +13,17 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.mock.web.MockHttpServletRequest
+import java.security.KeyPairGenerator
 import java.time.Duration
+import java.util.Base64
 
 @DisplayName("Oauth 前缀认证吊销检查")
 class OauthAuthHandlerTest {
 
-    private val cryptoProperties = CryptoProperties()
+    private val cryptoProperties = CryptoProperties(
+        privateKeyStr2048PKCS8 = PRIVATE_KEY_2048,
+        publicKeyStr2048PKCS8 = RsaUtils.derivePublicKey(PRIVATE_KEY_2048)
+    )
     private val authenticationManager = mockk<AuthenticationManager>()
     private val handler = OauthAuthHandler(authenticationManager, cryptoProperties)
 
@@ -60,5 +65,13 @@ class OauthAuthHandlerTest {
         private const val USER_ID = "user-1"
         private const val SCOPE = "PROJECT"
         private val TOKEN_TTL = Duration.ofHours(1)
+
+        /**
+         * Oauth 的 JWT 走 RS256，jjwt 按 RFC 7518 要求密钥不低于 2048 位
+         */
+        private val PRIVATE_KEY_2048 = KeyPairGenerator.getInstance("RSA").run {
+            initialize(2048)
+            Base64.getEncoder().encodeToString(generateKeyPair().private.encoded)
+        }
     }
 }

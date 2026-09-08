@@ -11,8 +11,12 @@ package com.tencent.bkrepo.common.security.crypto
 @Deprecated("仅用于解密升级前写入的存量数据，禁止用于加密")
 object LegacyCryptoKeys {
     /**
-     * 旧的 security.crypto.privateKeyStr，1024 位 PKCS#8。
-     * 公钥不必保留，解密用不上；AES 与 2048 位密钥不做兼容。
+     * 旧的 security.crypto.privateKeyStr，1024 位 PKCS#8。公钥不必保留，解密用不上。
+     *
+     * 其余四把旧默认密钥（2048PKCS8/2048PKCS1/aesKey/aesIv）不留兜底：它们保护的是可重新签发的
+     * 运行态数据（OAuth token、制品传输 crypt key、proxy secretKey），换钥后重新签发即可恢复；
+     * 而 privateKeyStr 加密的是用户填进仓库的第三方密码，换钥后取不回来，只能兜底。
+     * 升级时想避免这轮重新签发，就在 chart 里把旧值显式填回去，见 values.yaml security.crypto。
      */
     const val RSA_1024_PRIVATE_KEY = """
         MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAMaoDhrj+Da2tGpa

@@ -13,10 +13,11 @@ object LegacyCryptoKeys {
     /**
      * 旧的 security.crypto.privateKeyStr，1024 位 PKCS#8。公钥不必保留，解密用不上。
      *
-     * 其余四把旧默认密钥（2048PKCS8/2048PKCS1/aesKey/aesIv）不留兜底：它们保护的是可重新签发的
-     * 运行态数据（OAuth token、制品传输 crypt key、proxy secretKey），换钥后重新签发即可恢复；
+     * 其余四把旧默认密钥（2048PKCS8/2048PKCS1/aesKey/aesIv）不留兜底，它们保护的都不是取不回来的
+     * 用户数据：OAuth token 重新授权即可，制品传输 crypt key 下次请求现取公钥就自愈，
+     * proxy secretKey 只有 ProxyServiceImpl.create 会生成、没有重置接口，需要删除代理节点后重建。
      * 而 privateKeyStr 加密的是用户填进仓库的第三方密码，换钥后取不回来，只能兜底。
-     * 升级时想避免这轮重新签发，就在 chart 里把旧值显式填回去，见 values.yaml security.crypto。
+     * 升级时想避免这些动作，就在 chart 里把旧值显式填回去，见 values.yaml security.crypto。
      */
     const val RSA_1024_PRIVATE_KEY = """
         MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAMaoDhrj+Da2tGpa

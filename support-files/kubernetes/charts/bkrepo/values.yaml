@@ -265,7 +265,9 @@ common:
       ## 升级前若 ConfigMap 已被删除或改名（换 release 名、跨集群重建等），lookup 读不回旧值，
       ## 这里留空就会生成新钥，此时务必把旧值显式填进来：
       ##   privateKeyStr 换钥后存量密文由代码兜底解密，并由 LegacyCryptoRewriteJob 重加密，不会丢；
-      ##   其余四把（2048PKCS8/2048PKCS1/aesKey/aesIv）没有兜底，换钥后对应密文一律解不开。
+      ##   其余四把（2048PKCS8/2048PKCS1/aesKey/aesIv）没有兜底，换钥后对应密文一律解不开：
+      ##     OAuth token 重新授权即可，制品传输 crypt key 下次请求自愈，
+      ##     但 aesKey 换掉后存量 proxy 的 secretKey 解不开且没有重置接口，只能删除代理节点重建。
       ## 旧值可从升级前的 ConfigMap 取：kubectl get cm <release>-common -o yaml
       ## 从没配过这几项的老集群升级，旧值就是升级前代码里的硬编码默认值，可从上一个 release 的
       ## CryptoProperties.kt 抄进来先保证平滑，之后再择期换钥（换钥影响见上）。

@@ -4,6 +4,7 @@ import com.tencent.bkrepo.auth.config.OauthProperties
 import com.tencent.bkrepo.auth.dao.AccountDao
 import com.tencent.bkrepo.auth.dao.repository.OauthTokenRepository
 import com.tencent.bkrepo.auth.exception.OauthException
+import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TAccount
 import com.tencent.bkrepo.auth.model.TOauthToken
 import com.tencent.bkrepo.auth.pojo.enums.CredentialStatus
@@ -14,6 +15,7 @@ import com.tencent.bkrepo.auth.pojo.oauth.GenerateTokenRequest
 import com.tencent.bkrepo.auth.pojo.oauth.OauthToken
 import com.tencent.bkrepo.auth.pojo.token.CredentialSet
 import com.tencent.bkrepo.auth.service.UserService
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.redis.RedisOperation
 import com.tencent.bkrepo.common.security.crypto.CryptoProperties
@@ -473,6 +475,80 @@ class OauthAuthorizationServiceImplTest {
         assertEquals(USER_ID, service.validateToken(readToken().accessToken))
     }
 
+    @Test
+    @DisplayName("DISABLE 的授权码凭证不能兑换 token")
+    fun `disabled authorization code credential cannot exchange token`() {
+        every { accountDao.findById(CLIENT_ID) } returns buildAccount(status = CredentialStatus.DISABLE)
+        putAuthorizationCode("code-disabled")
+
+        val exception = assertThrows<OauthException> {
+            service.createToken(authorizationCodeRequest("code-disabled"))
+        }
+        assertEquals(OauthErrorType.UNAUTHORIZED_CLIENT, exception.error)
+    }
+
+    @Test
+    @DisplayName("DISABLE 的授权码凭证不能 refresh")
+    fun `disabled authorization code credential cannot refresh`() {
+        val issued = exchangeAuthorizationCode("code-disabled-refresh")
+        every { accountDao.findById(CLIENT_ID) } returns buildAccount(status = CredentialStatus.DISABLE)
+
+        val exception = assertThrows<OauthException> {
+            service.refreshToken(
+                GenerateTokenRequest(
+                    code = null,
+                    grantType = "refresh_token",
+                    clientId = CLIENT_ID,
+                    clientSecret = CLIENT_SECRET,
+                    refreshToken = issued.refreshToken,
+                    scope = null,
+                    codeVerifier = null
+                )
+            )
+        }
+        assertEquals(OauthErrorType.UNAUTHORIZED_CLIENT, exception.error)
+        assertEquals(USER_ID, service.validateToken(issued.accessToken))
+    }
+
+    @Test
+    @DisplayName("DISABLE 的公开客户端不能跳过 client_secret")
+    fun `disabled public client cannot skip secret`() {
+        every { accountDao.findById(CLIENT_ID) } returns buildAccount(status = CredentialStatus.DISABLE)
+        bindRequest(clientSecret = null)
+        putAuthorizationCode("code-disabled-public", challenge = "plain:$CODE_VERIFIER")
+
+        val exception = assertThrows<OauthException> {
+            service.createToken(pkceTokenRequest("code-disabled-public"))
+        }
+        assertEquals(OauthErrorType.UNAUTHORIZED_CLIENT, exception.error)
+    }
+
+    @Test
+    @DisplayName("ENABLE 的 client_credentials 可以换 token")
+    fun `enabled client credentials can create token`() {
+        every { accountDao.findById(CLIENT_ID) } returns buildAccount(
+            grantType = AuthorizationGrantType.CLIENT_CREDENTIALS
+        )
+
+        service.createToken(clientCredentialsRequest())
+
+        assertEquals("owner", service.validateToken(readToken().accessToken))
+    }
+
+    @Test
+    @DisplayName("DISABLE 的 client_credentials 不能换 token")
+    fun `disabled client credentials cannot create token`() {
+        every { accountDao.findById(CLIENT_ID) } returns buildAccount(
+            status = CredentialStatus.DISABLE,
+            grantType = AuthorizationGrantType.CLIENT_CREDENTIALS
+        )
+
+        val exception = assertThrows<ErrorCodeException> {
+            service.createToken(clientCredentialsRequest())
+        }
+        assertEquals(AuthMessageCode.AUTH_CLIENT_NOT_EXIST, exception.messageCode)
+    }
+
     private fun exchangeAuthorizationCode(code: String): OauthToken {
         putAuthorizationCode(code)
         service.createToken(authorizationCodeRequest(code))
@@ -492,6 +568,16 @@ class OauthAuthorizationServiceImplTest {
     private fun authorizationCodeRequest(code: String) = GenerateTokenRequest(
         code = code,
         grantType = "authorization_code",
+        clientId = CLIENT_ID,
+        clientSecret = CLIENT_SECRET,
+        refreshToken = null,
+        scope = null,
+        codeVerifier = null
+    )
+
+    private fun clientCredentialsRequest() = GenerateTokenRequest(
+        code = null,
+        grantType = "client_credentials",
         clientId = CLIENT_ID,
         clientSecret = CLIENT_SECRET,
         refreshToken = null,
@@ -520,7 +606,11 @@ class OauthAuthorizationServiceImplTest {
         RequestContextHolder.setRequestAttributes(ServletRequestAttributes(request, response))
     }
 
-    private fun buildAccount(publicClient: Boolean = true) = TAccount(
+    private fun buildAccount(
+        publicClient: Boolean = true,
+        status: CredentialStatus = CredentialStatus.ENABLE,
+        grantType: AuthorizationGrantType = AuthorizationGrantType.AUTHORIZATION_CODE
+    ) = TAccount(
         id = CLIENT_ID,
         appId = "app-1",
         locked = false,
@@ -529,13 +619,13 @@ class OauthAuthorizationServiceImplTest {
                 accessKey = "ak",
                 secretKey = CLIENT_SECRET,
                 createdAt = LocalDateTime.now(),
-                status = CredentialStatus.ENABLE,
-                authorizationGrantType = AuthorizationGrantType.AUTHORIZATION_CODE,
+                status = status,
+                authorizationGrantType = grantType,
                 publicClient = publicClient
             )
         ),
         owner = "owner",
-        authorizationGrantTypes = setOf(AuthorizationGrantType.AUTHORIZATION_CODE),
+        authorizationGrantTypes = setOf(grantType),
         homepageUrl = "http://localhost",
         redirectUri = "http://localhost/redirect",
         avatarUrl = null,

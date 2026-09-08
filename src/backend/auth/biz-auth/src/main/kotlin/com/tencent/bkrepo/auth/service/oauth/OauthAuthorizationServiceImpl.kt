@@ -36,6 +36,7 @@ import com.tencent.bkrepo.auth.exception.OauthException
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TAccount
 import com.tencent.bkrepo.auth.model.TOauthToken
+import com.tencent.bkrepo.auth.pojo.enums.CredentialStatus
 import com.tencent.bkrepo.auth.pojo.enums.OauthErrorType
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.oauth.AuthorizationGrantType
@@ -209,7 +210,7 @@ class OauthAuthorizationServiceImpl(
     ): TOauthToken {
         Preconditions.checkNotBlank(clientSecret, "client_secret")
         val client = accountDao.findById(clientId) ?: throw ErrorCodeException(AuthMessageCode.AUTH_CLIENT_NOT_EXIST)
-        client.credentials.find {
+        enabledCredentials(client).find {
             it.authorizationGrantType == AuthorizationGrantType.CLIENT_CREDENTIALS &&
                 MessageDigest.isEqual(it.secretKey.toByteArray(), clientSecret?.toByteArray())
         } ?: throw ErrorCodeException(AuthMessageCode.AUTH_CLIENT_NOT_EXIST)
@@ -375,7 +376,7 @@ class OauthAuthorizationServiceImpl(
         codeVerifier: String?,
         challenge: String?
     ): CredentialSet {
-        val codeCredentials = client.credentials.filter {
+        val codeCredentials = enabledCredentials(client).filter {
             it.authorizationGrantType == AuthorizationGrantType.AUTHORIZATION_CODE
         }
         val credential = if (!clientSecret.isNullOrBlank()) {
@@ -392,6 +393,9 @@ class OauthAuthorizationServiceImpl(
         }
         return credential ?: throw OauthException(OauthErrorType.UNAUTHORIZED_CLIENT, "auth secret check failed")
     }
+
+    private fun enabledCredentials(client: TAccount) =
+        client.credentials.filter { it.status == CredentialStatus.ENABLE }
 
     private fun checkCodeVerifier(challengeValue: String?, codeVerifier: String?) {
         if (challengeValue.isNullOrBlank()) {

@@ -30,6 +30,7 @@ package com.tencent.bkrepo.common.service.servlet
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.service.log.LoggerHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import jakarta.servlet.FilterChain
@@ -77,6 +78,7 @@ class ServletConfiguration {
                     val invalidForm = exception is IllegalArgumentException ||
                         exception is HttpMessageNotReadableException
                     if (enteredChain || !invalidForm) throw exception
+                    LoggerHolder.logException(exception, exception.message, false)
                     writeInvalidFormContent(request, response)
                 }
             }

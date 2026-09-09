@@ -214,7 +214,7 @@
                             this.loading = false
                             if (isExcel(res.data.data.suffix)) {
                                 this.previewExcel = true
-                                this.excelOptions.xls = res.data.data.suffix.endsWith('xls')
+                                this.excelOptions.xls = isExcel(res.data.data.suffix) === 'xls'
                                 this.dataSource = fileDate.data
                             } else if (isHtmlType(res.data.data.suffix)) {
                                 const url = URL.createObjectURL(fileDate.data)

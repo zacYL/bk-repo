@@ -231,14 +231,14 @@
                     customizePreviewLocalOfficeFile(this.projectId, this.repoName, '/' + this.filePath).then(res => {
                         this.loading = false
                         this.previewExcel = true
-                        this.excelOptions.xls = this.filePath.endsWith('.xls')
+                        this.excelOptions.xls = isExcel(this.filePath) === 'xls'
                         this.dataSource = res.data
                     }).catch(() => this.showError())
                 } else {
                     customizePreviewRemoteOfficeFile(Base64.encode(Base64.decode(this.extraParam))).then(res => {
                         this.loading = false
                         this.previewExcel = true
-                        this.excelOptions.xls = this.filePath.endsWith('.xls')
+                        this.excelOptions.xls = isExcel(this.filePath) === 'xls'
                         this.dataSource = res.data
                     }).catch(() => this.showError())
                 }

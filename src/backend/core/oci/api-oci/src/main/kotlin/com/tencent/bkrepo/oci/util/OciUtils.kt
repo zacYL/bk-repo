@@ -32,7 +32,9 @@ import com.tencent.bkrepo.common.api.util.StreamUtils.readText
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.oci.constant.DOCKER_IMAGE_CONFIG_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.DOCKER_IMAGE_MANIFEST_MEDIA_TYPE_V1
+import com.tencent.bkrepo.oci.constant.IMAGE_CONFIG_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.exception.OciBadRequestException
 import com.tencent.bkrepo.oci.model.Descriptor
@@ -79,6 +81,15 @@ object OciUtils {
         } catch (e: Exception) {
             throw OciBadRequestException(OciMessageCode.OCI_MANIFEST_INVALID, Strings.EMPTY)
         }
+    }
+
+    /**
+     * 是否按容器镜像处理（解析 os/arch、给镜像扫描器组 layer）。
+     * OCI 仓库允许任意 config.mediaType，false 只表示不是镜像，不是非法制品。
+     */
+    fun isImageConfigMediaType(mediaType: String?): Boolean {
+        if (mediaType.isNullOrBlank()) return true
+        return mediaType == IMAGE_CONFIG_MEDIA_TYPE || mediaType == DOCKER_IMAGE_CONFIG_MEDIA_TYPE
     }
 
     fun stringToManifestV2(content: String): ManifestSchema2 {

@@ -150,6 +150,7 @@ const val IMAGE_INDEX_MEDIA_TYPE = "application/vnd.oci.image.index.v1+json"
 
 // Image config
 const val IMAGE_CONFIG_MEDIA_TYPE = "application/vnd.oci.image.config.v1+json"
+const val DOCKER_IMAGE_CONFIG_MEDIA_TYPE = "application/vnd.docker.container.image.v1+json"
 
 // "Layer", as a tar archive
 const val LAYER_TAR_MEDIA_TYPE = "application/vnd.oci.image.layer.v1.tar"

@@ -342,13 +342,13 @@ class OciOperationServiceImpl(
             }
         } else {
             val manifest = loadManifest(nodeDetail, repoDetail.storageCredentials)
-            // config
-            manifest?.config?.digest?.let { configDigest ->
+            val configDesc = manifest?.config
+            if (configDesc != null && OciUtils.isImageConfigMediaType(configDesc.mediaType)) {
                 val configNode = getImageNodeDetail(
                     nodeDetail.projectId,
                     nodeDetail.repoName,
                     packageName,
-                    configDigest
+                    configDesc.digest
                 )
                 val inputStream = storageManager.loadArtifactInputStream(configNode, repoDetail.storageCredentials)
                 val config = JsonUtils.objectMapper.readValue(inputStream, ConfigSchema2::class.java)

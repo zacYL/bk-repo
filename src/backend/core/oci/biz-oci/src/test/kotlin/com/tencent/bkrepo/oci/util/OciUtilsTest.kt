@@ -28,6 +28,10 @@
 package com.tencent.bkrepo.oci.util
 
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.oci.constant.DOCKER_IMAGE_CONFIG_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.IMAGE_CONFIG_MEDIA_TYPE
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -37,6 +41,17 @@ internal class OciUtilsTest {
     fun streamToManifestV2Test() {
         val jsonString = OciUtils.streamToManifestV2(manifestStr.byteInputStream()).toJsonString()
         println(jsonString)
+    }
+
+    @Test
+    @DisplayName("image config media type discriminator")
+    fun isImageConfigMediaTypeTest() {
+        assertTrue(OciUtils.isImageConfigMediaType(IMAGE_CONFIG_MEDIA_TYPE))
+        assertTrue(OciUtils.isImageConfigMediaType(DOCKER_IMAGE_CONFIG_MEDIA_TYPE))
+        assertTrue(OciUtils.isImageConfigMediaType(null))
+        assertTrue(OciUtils.isImageConfigMediaType(""))
+        assertFalse(OciUtils.isImageConfigMediaType("application/vnd.docker.ai.model.config.v0.1+json"))
+        assertFalse(OciUtils.isImageConfigMediaType("application/vnd.cncf.helm.config.v1+json"))
     }
 
     companion object {

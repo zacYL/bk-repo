@@ -19,7 +19,8 @@
                         <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
                 </div>
-                <div v-if="detail.basic.platform" class="package-platform grid-item">
+                <div v-if="detail.basic.platform && detail.basic.platform.length"
+                    class="package-platform grid-item">
                     <label>OS/ARCH</label>
                     <span class="flex-1 text-overflow" :title="detail.basic.platform.join()">{{ detail.basic.platform.join() }}</span>
                 </div>
@@ -119,7 +120,7 @@
                 </div>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.history" name="history" label="IMAGE HISTORY">
+        <bk-tab-panel v-if="detail.history && detail.history.length" name="history" label="IMAGE HISTORY">
             <div class="version-history">
                 <div class="version-history-left">
                     <div

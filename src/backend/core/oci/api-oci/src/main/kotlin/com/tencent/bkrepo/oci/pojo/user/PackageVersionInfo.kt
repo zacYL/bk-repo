@@ -41,6 +41,10 @@ data class PackageVersionInfo(
     @get:Schema(title = "元数据信息")
     val metadata: List<MetadataModel>,
     @get:Schema(title = "history")
-    val history: List<Any> = emptyList()
+    val history: List<Any> = emptyList(),
+    @get:Schema(title = "模型文件列表")
+    val files: List<OciArtifactFile> = emptyList(),
+    @get:Schema(title = "模型 config 字段")
+    val modelConfig: Map<String, String> = emptyMap()
 )
 

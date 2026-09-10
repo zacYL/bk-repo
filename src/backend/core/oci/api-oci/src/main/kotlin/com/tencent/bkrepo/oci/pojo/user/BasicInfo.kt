@@ -62,4 +62,6 @@ data class BasicInfo(
     val platform: List<String> = emptyList(),
     @get:Schema(title = "联邦仓库同步来源")
     val federatedSource: String?,
+    @get:Schema(title = "README")
+    val readme: String? = null
 )

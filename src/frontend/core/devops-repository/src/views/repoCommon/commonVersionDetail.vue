@@ -51,9 +51,16 @@
                     <label>{{ $t('description') }}</label>
                     <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '' }}</span>
                 </div>
+                <div
+                    class="grid-item"
+                    v-for="(value, key) in (detail.modelConfig || {})"
+                    :key="key">
+                    <label :title="key">{{ key }}</label>
+                    <span class="flex-1 text-overflow" :title="value">{{ value }}</span>
+                </div>
             </div>
             <div class="version-base-info base-info-guide display-block" :data-title="$t('useTips')">
-                <div class="sub-section" v-for="block in articleInstall[0].main" :key="block.subTitle">
+                <div class="sub-section" v-for="block in installBlocks" :key="block.subTitle">
                     <div class="mb10">{{ block.subTitle }}</div>
                     <code-area class="mb20" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                 </div>
@@ -71,6 +78,29 @@
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.basic.readme" name="readme" :label="$t('readMe')">
             <div class="version-detail-readme" v-html="DOMPurify.sanitize(readmeContent)"></div>
+        </bk-tab-panel>
+        <bk-tab-panel v-if="detail.files && detail.files.length" name="files" label="Files">
+            <div class="version-metadata display-block" data-title="Files">
+                <bk-table
+                    :data="detail.files"
+                    :outer-border="false"
+                    :row-border="false"
+                    size="small">
+                    <template #empty>
+                        <empty-data ex-style="margin-top:130px;"></empty-data>
+                    </template>
+                    <bk-table-column label="Path" prop="path" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column :label="$t('size')" show-overflow-tooltip>
+                        <template #default="{ row }">{{ convertFileSize(row.size) }}</template>
+                    </bk-table-column>
+                    <bk-table-column label="Digest" prop="digest" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column :label="$t('download')" width="100">
+                        <template #default="{ row }">
+                            <bk-button text @click="downloadBlob(row)">{{ $t('download') }}</bk-button>
+                        </template>
+                    </bk-table-column>
+                </bk-table>
+            </div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
             <div class="version-metadata display-block" :data-title="$t('metaData')">
@@ -267,6 +297,24 @@
             },
             originProjectId () {
                 return this.$route.params.projectId || ''
+            },
+            isModelVersion () {
+                return Boolean((this.detail.files || []).length ||
+                    Object.keys(this.detail.modelConfig || {}).length)
+            },
+            installBlocks () {
+                const guide = this.isModelVersion ? this.modelInstall : this.articleInstall
+                return (guide && guide[0] && guide[0].main) || []
+            },
+            modelInstall () {
+                const ref = `${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}` +
+                    `${this.dockerSeparator}${this.versionLabel}`
+                return [{
+                    main: [
+                        { subTitle: 'oras', codeList: [`oras pull ${ref}`] },
+                        { subTitle: 'modctl', codeList: [`modctl pull ${ref}`] }
+                    ]
+                }]
             }
         },
         watch: {
@@ -290,6 +338,11 @@
             ...mapActions([
                 'getVersionDetail'
             ]),
+            downloadBlob (file) {
+                const url = `${location.origin}${window.BK_SUBPATH}${this.repoType}/v2/` +
+                    `${this.projectId}/${this.repoName}/${this.packageName}/blobs/${file.digest}`
+                window.open(url)
+            },
             getDetail () {
                 this.isLoading = true
                 this.getVersionDetail({

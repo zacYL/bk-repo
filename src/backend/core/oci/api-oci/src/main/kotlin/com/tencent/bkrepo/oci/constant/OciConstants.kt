@@ -157,6 +157,16 @@ const val IMAGE_INDEX_MEDIA_TYPE = "application/vnd.oci.image.index.v1+json"
 const val IMAGE_CONFIG_MEDIA_TYPE = "application/vnd.oci.image.config.v1+json"
 const val DOCKER_IMAGE_CONFIG_MEDIA_TYPE = "application/vnd.docker.container.image.v1+json"
 
+const val CNCF_MODEL_MANIFEST_MEDIA_TYPE = "application/vnd.cncf.model.manifest.v1+json"
+const val CNCF_AI_MODEL_MANIFEST_MEDIA_TYPE = "application/vnd.cncf.ai.model.manifest.v1+json"
+const val CNCF_MODEL_CONFIG_MEDIA_TYPE = "application/vnd.cncf.model.config.v1+json"
+const val CNAI_MODEL_CONFIG_MEDIA_TYPE = "application/vnd.cnai.model.config.v1+json"
+const val DOCKER_AI_MODEL_CONFIG_MEDIA_TYPE = "application/vnd.docker.ai.model.config.v0.1+json"
+
+const val CNAI_FILEPATH_ANNOTATION = "org.cnai.model.filepath"
+const val CNCF_FILEPATH_ANNOTATION = "org.cncf.model.filepath"
+const val OCI_TITLE_ANNOTATION = "org.opencontainers.image.title"
+
 // "Layer", as a tar archive
 const val LAYER_TAR_MEDIA_TYPE = "application/vnd.oci.image.layer.v1.tar"
 

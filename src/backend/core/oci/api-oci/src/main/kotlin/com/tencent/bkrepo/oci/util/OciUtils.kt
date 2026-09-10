@@ -32,12 +32,21 @@ import com.tencent.bkrepo.common.api.util.StreamUtils.readText
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.oci.constant.CNAI_FILEPATH_ANNOTATION
+import com.tencent.bkrepo.oci.constant.CNAI_MODEL_CONFIG_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.CNCF_AI_MODEL_MANIFEST_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.CNCF_FILEPATH_ANNOTATION
+import com.tencent.bkrepo.oci.constant.CNCF_MODEL_CONFIG_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.CNCF_MODEL_MANIFEST_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.DOCKER_AI_MODEL_CONFIG_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.DOCKER_IMAGE_CONFIG_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.DOCKER_IMAGE_MANIFEST_MEDIA_TYPE_V1
 import com.tencent.bkrepo.oci.constant.IMAGE_CONFIG_MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.OCI_TITLE_ANNOTATION
 import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.exception.OciBadRequestException
 import com.tencent.bkrepo.oci.model.Descriptor
+import com.tencent.bkrepo.oci.model.LayerDescriptor
 import com.tencent.bkrepo.oci.model.ManifestList
 import com.tencent.bkrepo.oci.model.ManifestSchema1
 import com.tencent.bkrepo.oci.model.ManifestSchema2
@@ -95,6 +104,34 @@ object OciUtils {
     fun resolveArtifactType(artifactType: String?, configMediaType: String?): String? {
         if (!artifactType.isNullOrBlank()) return artifactType
         return configMediaType?.takeIf { it.isNotBlank() }
+    }
+
+    fun isModelArtifact(artifactType: String?, configMediaType: String?, layers: List<LayerDescriptor>): Boolean {
+        if (isModelMediaType(artifactType) || isModelMediaType(configMediaType)) return true
+        return layers.any { hasModelFilepath(it.annotations) }
+    }
+
+    fun layerFilePath(annotations: Map<String, String>?): String? {
+        val map = annotations ?: return null
+        return map[CNAI_FILEPATH_ANNOTATION]?.takeIf { it.isNotBlank() }
+            ?: map[CNCF_FILEPATH_ANNOTATION]?.takeIf { it.isNotBlank() }
+            ?: map[OCI_TITLE_ANNOTATION]?.takeIf { it.isNotBlank() }
+    }
+
+    fun isReadmePath(path: String): Boolean {
+        val name = path.substringAfterLast('/').lowercase()
+        return name == "readme" || name.startsWith("readme.")
+    }
+
+    private fun isModelMediaType(mediaType: String?): Boolean {
+        if (mediaType.isNullOrBlank()) return false
+        return mediaType in MODEL_MEDIA_TYPES
+    }
+
+    private fun hasModelFilepath(annotations: Map<String, String>?): Boolean {
+        val map = annotations ?: return false
+        return !map[CNAI_FILEPATH_ANNOTATION].isNullOrBlank() ||
+            !map[CNCF_FILEPATH_ANNOTATION].isNullOrBlank()
     }
 
     fun stringToManifestV2(content: String): ManifestSchema2 {
@@ -214,4 +251,12 @@ object OciUtils {
             Pair(tagList, left)
         }
     }
+
+    private val MODEL_MEDIA_TYPES = setOf(
+        CNCF_MODEL_MANIFEST_MEDIA_TYPE,
+        CNCF_AI_MODEL_MANIFEST_MEDIA_TYPE,
+        CNCF_MODEL_CONFIG_MEDIA_TYPE,
+        CNAI_MODEL_CONFIG_MEDIA_TYPE,
+        DOCKER_AI_MODEL_CONFIG_MEDIA_TYPE
+    )
 }

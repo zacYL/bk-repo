@@ -77,6 +77,24 @@ object DecompressUtil {
         return getArchiversContent(TarArchiveInputStream(inputStream))
     }
 
+    fun InputStream.firstTarFileText(gzip: Boolean = false): String? {
+        val tar = if (gzip) {
+            TarArchiveInputStream(GZIPInputStream(this))
+        } else {
+            TarArchiveInputStream(this)
+        }
+        tar.use { archive ->
+            var entry = archive.nextEntry
+            while (entry != null) {
+                if (!entry.isDirectory) {
+                    return parseStream(archive)
+                }
+                entry = archive.nextEntry
+            }
+        }
+        return null
+    }
+
     private fun getArchiversContent(archiveInputStream: ArchiveInputStream): String {
         var zipEntry: ArchiveEntry
         archiveInputStream.use { it ->

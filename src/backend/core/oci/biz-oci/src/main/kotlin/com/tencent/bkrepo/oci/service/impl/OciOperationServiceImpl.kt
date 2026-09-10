@@ -114,8 +114,10 @@ import com.tencent.bkrepo.oci.pojo.response.OciImage
 import com.tencent.bkrepo.oci.pojo.response.OciImageResult
 import com.tencent.bkrepo.oci.pojo.response.OciTag
 import com.tencent.bkrepo.oci.pojo.response.OciTagResult
+import com.tencent.bkrepo.oci.pojo.user.OciArtifactFile
 import com.tencent.bkrepo.oci.pojo.user.PackageVersionInfo
 import com.tencent.bkrepo.oci.service.OciOperationService
+import com.tencent.bkrepo.oci.util.DecompressUtil.firstTarFileText
 import com.tencent.bkrepo.oci.util.ObjectBuildUtils
 import com.tencent.bkrepo.oci.util.OciLocationUtils
 import com.tencent.bkrepo.oci.util.OciLocationUtils.buildBlobsFolderPath
@@ -324,8 +326,17 @@ class OciOperationServiceImpl(
             )
             val packageVersion = packageService.findVersionByName(projectId, repoName, packageKey, version)!!
             val pair = getManifestInfo(nodeDetail, repoDetail, name)
-            val basicInfo = ObjectBuildUtils.buildBasicInfo(nodeDetail, packageVersion, pair.first)
-            return PackageVersionInfo(basicInfo, packageVersion.packageMetadata, pair.second)
+            val modelDetail = loadModelDetail(nodeDetail, repoDetail, name)
+            val basicInfo = ObjectBuildUtils.buildBasicInfo(
+                nodeDetail, packageVersion, pair.first, modelDetail.readme
+            )
+            return PackageVersionInfo(
+                basic = basicInfo,
+                metadata = packageVersion.packageMetadata,
+                history = pair.second,
+                files = modelDetail.files,
+                modelConfig = modelDetail.modelConfig
+            )
         }
     }
 
@@ -365,6 +376,106 @@ class OciOperationServiceImpl(
             }
         }
         return Pair(platform, history)
+    }
+
+    private fun loadModelDetail(
+        nodeDetail: NodeDetail,
+        repoDetail: RepositoryDetail,
+        packageName: String
+    ): ModelDetailResult {
+        return try {
+            if (nodeDetail.name == OCI_MANIFEST_LIST) return ModelDetailResult()
+            val manifest = loadManifest(nodeDetail, repoDetail.storageCredentials) ?: return ModelDetailResult()
+            if (!OciUtils.isModelArtifact(manifest.artifactType, manifest.config.mediaType, manifest.layers)) {
+                return ModelDetailResult()
+            }
+            val files = manifest.layers.map { layer ->
+                val path = OciUtils.layerFilePath(layer.annotations)
+                    ?: layer.digest.substringAfter(':').take(12)
+                OciArtifactFile(
+                    path = path,
+                    digest = layer.digest,
+                    size = layer.size,
+                    mediaType = layer.mediaType
+                )
+            }
+            val modelConfig = loadModelConfig(nodeDetail, repoDetail, packageName, manifest)
+            val readme = loadModelReadme(nodeDetail, repoDetail, packageName, files)
+            ModelDetailResult(files, modelConfig, readme)
+        } catch (e: Exception) {
+            logger.warn("Failed to load model detail for ${nodeDetail.fullPath}", e)
+            ModelDetailResult()
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun loadModelConfig(
+        nodeDetail: NodeDetail,
+        repoDetail: RepositoryDetail,
+        packageName: String,
+        manifest: ManifestSchema2
+    ): Map<String, String> {
+        return try {
+            val configNode = getImageNodeDetail(
+                nodeDetail.projectId, nodeDetail.repoName, packageName, manifest.config.digest
+            ) ?: return emptyMap()
+            if (configNode.size > MODEL_DOC_MAX_BYTES) return emptyMap()
+            val input = storageManager.loadArtifactInputStream(configNode, repoDetail.storageCredentials)
+                ?: return emptyMap()
+            input.use { stream ->
+                val raw = JsonUtils.objectMapper.readValue(stream, Map::class.java) as Map<*, *>
+                raw.mapNotNull { (key, value) ->
+                    val name = key?.toString() ?: return@mapNotNull null
+                    when (value) {
+                        null, is Map<*, *>, is Collection<*> -> null
+                        else -> name to value.toString()
+                    }
+                }.toMap()
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to parse model config for ${nodeDetail.fullPath}", e)
+            emptyMap()
+        }
+    }
+
+    private fun loadModelReadme(
+        nodeDetail: NodeDetail,
+        repoDetail: RepositoryDetail,
+        packageName: String,
+        files: List<OciArtifactFile>
+    ): String? {
+        val readmeFile = files.firstOrNull {
+            OciUtils.isReadmePath(it.path) && it.size <= MODEL_DOC_MAX_BYTES
+        } ?: return null
+        return try {
+            val blobNode = getImageNodeDetail(
+                nodeDetail.projectId, nodeDetail.repoName, packageName, readmeFile.digest
+            ) ?: return null
+            val input = storageManager.loadArtifactInputStream(blobNode, repoDetail.storageCredentials)
+                ?: return null
+            readModelDoc(input, readmeFile.mediaType, readmeFile.path)
+        } catch (e: Exception) {
+            logger.warn("Failed to load model readme ${readmeFile.path}", e)
+            null
+        }
+    }
+
+    private fun readModelDoc(
+        input: java.io.InputStream,
+        mediaType: String,
+        path: String
+    ): String? {
+        val hint = "$mediaType $path".lowercase()
+        val gzip = "gzip" in hint ||
+            path.lowercase().endsWith(".gz") ||
+            path.lowercase().endsWith(".tgz")
+        val tar = gzip || "tar" in hint || path.lowercase().endsWith(".tar")
+        return input.use { stream ->
+            val text = if (tar) stream.firstTarFileText(gzip) else {
+                stream.readBytes().toString(Charsets.UTF_8)
+            }
+            text?.take(MODEL_DOC_MAX_BYTES)
+        }
     }
 
     /**
@@ -1381,6 +1492,7 @@ class OciOperationServiceImpl(
     companion object {
         val logger: Logger = LoggerFactory.getLogger(OciOperationServiceImpl::class.java)
         private const val REFERRERS_PAGE_SIZE = 1000
+        private const val MODEL_DOC_MAX_BYTES = 1 * 1024 * 1024
     }
 }
 
@@ -1389,4 +1501,10 @@ private data class ManifestHandleResult(
     val digestList: List<String>,
     val subjectDigest: String? = null,
     val artifactType: String? = null
+)
+
+private data class ModelDetailResult(
+    val files: List<OciArtifactFile> = emptyList(),
+    val modelConfig: Map<String, String> = emptyMap(),
+    val readme: String? = null
 )

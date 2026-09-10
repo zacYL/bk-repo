@@ -12,8 +12,8 @@ class PypiProperties {
      */
     var enableSimpleIndexCache: Boolean = false
     /**
-     * 单包 simple HTML 缓存 TTL。按缓存节点 lastModifiedDate 判断过期；
-     * 过期后按 miss 处理并允许重建。小于等于 0 表示不过期。
+     * 单包 simple HTML 缓存软过期时间。过期后继续返回旧缓存，并尝试刷新。
+     * 小于等于 0 表示不过期。
      */
     var simpleIndexCacheTtl: Duration = Duration.ofMinutes(1)
 }

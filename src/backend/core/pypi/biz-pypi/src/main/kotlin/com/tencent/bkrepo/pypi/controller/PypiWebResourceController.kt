@@ -42,12 +42,14 @@ import com.tencent.bkrepo.common.artifact.audit.REPO_EDIT_ACTION
 import com.tencent.bkrepo.common.artifact.audit.REPO_RESOURCE
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
+import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.service.PypiWebService
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -111,6 +113,12 @@ class PypiWebResourceController(
     ): Response<Void> {
         pypiWebService.delete(pypiArtifactInfo, packageKey, version, contentPath)
         return ResponseBuilder.success()
+    }
+
+    @Operation(summary = "刷新 PyPI Simple 单包索引")
+    @PostMapping("/simple/index/refresh/{projectId}/{repoName}/{name}")
+    fun refreshSimpleIndex(artifactInfo: PypiSimpleArtifactInfo): Response<Boolean> {
+        return ResponseBuilder.success(pypiWebService.refreshSimpleIndex(artifactInfo))
     }
 
     @Operation(summary = "pypi版本详情接口")

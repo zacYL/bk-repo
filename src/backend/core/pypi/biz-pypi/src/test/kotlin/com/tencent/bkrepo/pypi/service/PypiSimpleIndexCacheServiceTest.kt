@@ -57,18 +57,19 @@ class PypiSimpleIndexCacheServiceTest {
     private val nodeService: NodeService = mockk(relaxed = true)
     private val storageManager: StorageManager = mockk(relaxed = true)
     private val lockOperation: LockOperation = mockk(relaxed = true)
-    private val pypiProperties = PypiProperties().apply {
-        enableSimpleIndexCache = true
-        simpleIndexCacheTtl = Duration.ofMinutes(1)
-    }
+    private val pypiProperties = PypiProperties()
     private lateinit var service: PypiSimpleIndexCacheService
 
     @BeforeEach
     fun setUp() {
         clearMocks(nodeService, storageManager, lockOperation)
-        pypiProperties.enableSimpleIndexCache = true
         pypiProperties.simpleIndexCacheTtl = Duration.ofMinutes(1)
-        service = PypiSimpleIndexCacheService(nodeService, storageManager, lockOperation, pypiProperties)
+        service = PypiSimpleIndexCacheService(
+            nodeService,
+            storageManager,
+            lockOperation,
+            pypiProperties
+        )
     }
 
     @Test
@@ -98,29 +99,21 @@ class PypiSimpleIndexCacheServiceTest {
     }
 
     @Test
-    @DisplayName("缓存超过 TTL 时按 miss 处理")
-    fun loadReturnsNullWhenExpired() {
-        val fullPath = PypiSimpleIndexUtils.packageCacheFullPath("demo")
-        val node = nodeDetail(fullPath, lastModifiedDate = LocalDateTime.now().minusMinutes(2))
-        every { nodeService.getNodeDetail(any(), any()) } returns node
-
-        assertNull(service.load(PROJECT, REPO, "demo", null))
-        verify(exactly = 0) { storageManager.loadFullArtifactInputStream(any(), any()) }
-    }
-
-    @Test
-    @DisplayName("TTL 小于等于 0 时不过期")
-    fun loadIgnoresTtlWhenDisabled() {
-        pypiProperties.simpleIndexCacheTtl = Duration.ZERO
+    @DisplayName("缓存软过期且未获锁时返回旧 HTML")
+    fun loadReturnsCachedHtmlWhenRefreshLockNotAcquired() {
         val html = "<html>cached</html>"
         val fullPath = PypiSimpleIndexUtils.packageCacheFullPath("demo")
-        val node = nodeDetail(fullPath, lastModifiedDate = LocalDateTime.now().minusDays(30))
+        val node = nodeDetail(fullPath, lastModifiedDate = LocalDateTime.now().minusMinutes(2))
+        val lock = Any()
         every { nodeService.getNodeDetail(any(), any()) } returns node
         every {
             storageManager.loadFullArtifactInputStream(node, null)
         } returns ArtifactInputStream(html.byteInputStream(), Range.full(html.length.toLong()))
+        every { lockOperation.getLock(any()) } returns lock
+        every { lockOperation.acquireLock(any(), lock) } returns false
 
         assertEquals(html, service.load(PROJECT, REPO, "demo", null))
+        verify(exactly = 1) { lockOperation.acquireLock(any(), lock) }
     }
 
     @Test
@@ -222,28 +215,6 @@ class PypiSimpleIndexCacheServiceTest {
             )
             nodeService.deleteNode(match<NodeDeleteRequest> { it.fullPath == fullPath })
         }
-    }
-
-    @Test
-    @DisplayName("invalidate 后旧 HTML 仍可被 tryStore 写回，但过期后 load 按 miss")
-    fun staleStoreAfterInvalidateExpiresByTtl() {
-        val packageName = "demo"
-        val fullPath = PypiSimpleIndexUtils.packageCacheFullPath(packageName)
-        val lock = Any()
-        every { lockOperation.getLock(any()) } returns lock
-        every { lockOperation.acquireLock(any(), lock) } returns true
-        every { lockOperation.close(any(), lock) } returns Unit
-        every { storageManager.storeArtifactFile(any(), any(), any()) } returns nodeDetail(fullPath)
-        every { nodeService.deleteNode(any()) } returns mockk(relaxed = true)
-
-        service.invalidate(PROJECT, REPO, packageName)
-        assertTrue(service.tryStore(PROJECT, REPO, packageName, "<html>stale</html>", "user", null))
-
-        val expiredNode = nodeDetail(fullPath, lastModifiedDate = LocalDateTime.now().minusMinutes(2))
-        every { nodeService.getNodeDetail(any(), any()) } returns expiredNode
-
-        assertNull(service.load(PROJECT, REPO, packageName, null))
-        verify(exactly = 0) { storageManager.loadFullArtifactInputStream(any(), any()) }
     }
 
     @Test

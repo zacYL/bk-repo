@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.artifact.audit.ActionAuditContent
 import com.tencent.bkrepo.common.artifact.audit.NODE_DELETE_ACTION
 import com.tencent.bkrepo.common.artifact.audit.NODE_RESOURCE
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -161,7 +162,7 @@ class PypiLocalRepository(
             HttpContextHolder.getClientAddress()
         )
         store(nodeCreateRequest, artifactFile, context.storageCredentials)
-        invalidateSimpleIndexCache(context.projectId, context.repoName, name)
+        refreshSimpleIndexCache(context, name)
     }
 
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
@@ -280,6 +281,7 @@ class PypiLocalRepository(
                 packageKey,
                 HttpContextHolder.getClientAddress()
             )
+            invalidateSimpleIndexCache(context, name)
         } else {
             // 删除版本
             nodeService.deleteNode(
@@ -298,8 +300,8 @@ class PypiLocalRepository(
                 HttpContextHolder.getClientAddress(),
                 contentPath,
             )
+            refreshSimpleIndexCache(context, name)
         }
-        invalidateSimpleIndexCache(context.projectId, context.repoName, name)
     }
 
     /**
@@ -321,7 +323,10 @@ class PypiLocalRepository(
                 repoName = artifactInfo.repoName,
                 packageName = packageName,
                 storageCredentials = context.storageCredentials,
-            )?.let { return it }
+                userId = context.userId,
+            ) {
+                getSimpleHtml(artifactInfo)
+            }?.let { return it }
         }
         val html = getSimpleHtml(artifactInfo)
         if (packageName != null && html != null && pypiProperties.enableSimpleIndexCache) {
@@ -337,11 +342,53 @@ class PypiLocalRepository(
         return html
     }
 
-    private fun invalidateSimpleIndexCache(projectId: String, repoName: String, packageName: String) {
+    fun refreshSimpleIndex(context: ArtifactContext, artifactInfo: PypiSimpleArtifactInfo): Boolean {
+        val packageName = artifactInfo.packageName
+        if (!pypiProperties.enableSimpleIndexCache || packageName == null) {
+            return false
+        }
+        val html = getSimpleHtml(artifactInfo) ?: return false
+        return simpleIndexCacheService.tryStore(
+            projectId = artifactInfo.projectId,
+            repoName = artifactInfo.repoName,
+            packageName = packageName,
+            html = html,
+            userId = context.userId,
+            storageCredentials = context.storageCredentials,
+        )
+    }
+
+    /**
+     * 上传/删版本后覆盖写索引，避免删节点造成 miss 冷窗口。
+     * 重建失败（包已空、未抢到锁、异常）再删缓存。
+     */
+    private fun refreshSimpleIndexCache(context: ArtifactContext, packageName: String) {
         if (!pypiProperties.enableSimpleIndexCache) {
             return
         }
-        simpleIndexCacheService.invalidate(projectId, repoName, packageName)
+        val artifactInfo = PypiSimpleArtifactInfo(context.projectId, context.repoName, packageName)
+        val refreshed = try {
+            refreshSimpleIndex(context, artifactInfo)
+        } catch (e: PypiSimpleNotFoundException) {
+            false
+        } catch (e: Exception) {
+            logger.error(
+                "Failed to refresh pypi simple index cache" +
+                    "[${context.projectId}/${context.repoName}/$packageName]",
+                e
+            )
+            false
+        }
+        if (!refreshed) {
+            invalidateSimpleIndexCache(context, packageName)
+        }
+    }
+
+    private fun invalidateSimpleIndexCache(context: ArtifactContext, packageName: String) {
+        if (!pypiProperties.enableSimpleIndexCache) {
+            return
+        }
+        simpleIndexCacheService.invalidate(context.projectId, context.repoName, packageName)
     }
 
     // TODO 产品页面需要重新设计，支持同个版本包含多个制品

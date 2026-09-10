@@ -46,6 +46,8 @@ import com.tencent.bkrepo.common.metadata.util.version.SemVersion
 import com.tencent.bkrepo.common.metadata.util.version.SemVersionParser
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
+import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
+import com.tencent.bkrepo.pypi.artifact.repository.PypiLocalRepository
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -68,6 +70,13 @@ class PypiWebService(
     fun delete(pypiArtifactInfo: PypiArtifactInfo, packageKey: String, version: String?, contentPath: String?) {
         val context = ArtifactRemoveContext()
         repository.remove(context)
+    }
+
+    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    fun refreshSimpleIndex(artifactInfo: PypiSimpleArtifactInfo): Boolean {
+        val context = ArtifactQueryContext()
+        val localRepository = repository as? PypiLocalRepository ?: return false
+        return localRepository.refreshSimpleIndex(context, artifactInfo)
     }
 
     @Permission(type = ResourceType.REPO, action = PermissionAction.READ)

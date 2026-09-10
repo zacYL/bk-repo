@@ -37,6 +37,8 @@ import com.tencent.bkrepo.oci.constant.BLOB_PATH_REFRESHED_KEY
 import com.tencent.bkrepo.oci.constant.DIGEST_LIST
 import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
+import com.tencent.bkrepo.oci.constant.OCI_ARTIFACT_TYPE_METADATA
+import com.tencent.bkrepo.oci.constant.OCI_SUBJECT_METADATA
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.user.BasicInfo
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
@@ -98,7 +100,9 @@ object ObjectBuildUtils {
         mediaType: String,
         version: String?,
         digestList: List<String>? = null,
-        sourceType: ArtifactChannel? = null
+        sourceType: ArtifactChannel? = null,
+        subjectDigest: String? = null,
+        artifactType: String? = null
     ): MutableMap<String, Any> {
         return mutableMapOf<String, Any>(
             MEDIA_TYPE to mediaType,
@@ -107,6 +111,8 @@ object ObjectBuildUtils {
             version?.let { this.put(IMAGE_VERSION, version) }
             digestList?.let { this.put(DIGEST_LIST, digestList) }
             sourceType?.let { this.put(SOURCE_TYPE, sourceType) }
+            subjectDigest?.takeIf { it.isNotBlank() }?.let { this.put(OCI_SUBJECT_METADATA, it) }
+            artifactType?.takeIf { it.isNotBlank() }?.let { this.put(OCI_ARTIFACT_TYPE_METADATA, it) }
         }
     }
 

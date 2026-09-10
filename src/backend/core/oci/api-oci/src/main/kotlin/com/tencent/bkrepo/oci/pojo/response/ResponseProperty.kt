@@ -36,5 +36,6 @@ data class ResponseProperty(
     val uuid: String? = null,
     val range: Long? = null,
     val status: HttpStatus? = null,
-    val contentLength: Int? = null
+    val contentLength: Int? = null,
+    val ociSubject: String? = null
 )

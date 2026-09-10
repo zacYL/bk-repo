@@ -32,8 +32,10 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.common.storage.pojo.FileInfo
+import com.tencent.bkrepo.oci.model.ReferrersIndex
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
+import com.tencent.bkrepo.oci.pojo.artifact.OciReferrersArtifactInfo
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
 import com.tencent.bkrepo.oci.pojo.node.NodeProperty
 import com.tencent.bkrepo.oci.pojo.response.OciImageResult
@@ -79,7 +81,7 @@ interface OciOperationService {
         storageCredentials: StorageCredentials?,
         sourceType: ArtifactChannel? = null,
         userId: String = SecurityUtils.getUserId()
-    )
+    ): String?
 
     /**
      * 在先上传manifest.json，后上传blob的情况下，等所有blob上传成功后更新对应的package
@@ -184,4 +186,9 @@ interface OciOperationService {
         pName: String,
         userId: String = SecurityUtils.getUserId()
     )
+
+    fun listReferrers(
+        artifactInfo: OciReferrersArtifactInfo,
+        artifactType: String?
+    ): ReferrersIndex
 }

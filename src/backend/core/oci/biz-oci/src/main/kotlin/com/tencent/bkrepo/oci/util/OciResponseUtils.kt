@@ -43,6 +43,7 @@ import com.tencent.bkrepo.oci.constant.DOCKER_API_VERSION
 import com.tencent.bkrepo.oci.constant.DOCKER_CONTENT_DIGEST
 import com.tencent.bkrepo.oci.constant.DOCKER_HEADER_API_VERSION
 import com.tencent.bkrepo.oci.constant.DOCKER_UPLOAD_UUID
+import com.tencent.bkrepo.oci.constant.OCI_SUBJECT
 import com.tencent.bkrepo.oci.constant.HOST
 import com.tencent.bkrepo.oci.constant.HTTP_FORWARDED_PROTO
 import com.tencent.bkrepo.oci.constant.HTTP_PROTOCOL_HTTP
@@ -157,6 +158,9 @@ object OciResponseUtils {
             response.addHeader(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
             digest?.let {
                 response.addHeader(DOCKER_CONTENT_DIGEST, digest.toString())
+            }
+            ociSubject?.let {
+                response.addHeader(OCI_SUBJECT, it)
             }
             response.addHeader(HttpHeaders.LOCATION, location)
             uuid?.let {

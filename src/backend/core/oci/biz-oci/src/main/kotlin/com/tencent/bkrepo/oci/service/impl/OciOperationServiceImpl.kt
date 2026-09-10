@@ -73,13 +73,16 @@ import com.tencent.bkrepo.oci.constant.DOWNLOADS
 import com.tencent.bkrepo.oci.constant.LAST_MODIFIED_BY
 import com.tencent.bkrepo.oci.constant.LAST_MODIFIED_DATE
 import com.tencent.bkrepo.oci.constant.MANIFEST_DIGEST
+import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.MD5
 import com.tencent.bkrepo.oci.constant.NODE_FULL_PATH
+import com.tencent.bkrepo.oci.constant.OCI_ARTIFACT_TYPE_METADATA
 import com.tencent.bkrepo.oci.constant.OCI_IMAGE_MANIFEST_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OCI_MANIFEST_LIST
 import com.tencent.bkrepo.oci.constant.OCI_NODE_FULL_PATH
 import com.tencent.bkrepo.oci.constant.OCI_NODE_SIZE
 import com.tencent.bkrepo.oci.constant.OCI_PACKAGE_NAME
+import com.tencent.bkrepo.oci.constant.OCI_SUBJECT_METADATA
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_VERSION
 import com.tencent.bkrepo.oci.constant.OS
@@ -98,10 +101,13 @@ import com.tencent.bkrepo.oci.model.Descriptor
 import com.tencent.bkrepo.oci.model.History
 import com.tencent.bkrepo.oci.model.ManifestList
 import com.tencent.bkrepo.oci.model.ManifestSchema2
+import com.tencent.bkrepo.oci.model.ReferrerDescriptor
+import com.tencent.bkrepo.oci.model.ReferrersIndex
 import com.tencent.bkrepo.oci.model.TOciReplicationRecord
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
+import com.tencent.bkrepo.oci.pojo.artifact.OciReferrersArtifactInfo
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
 import com.tencent.bkrepo.oci.pojo.node.NodeProperty
 import com.tencent.bkrepo.oci.pojo.response.OciImage
@@ -487,38 +493,38 @@ class OciOperationServiceImpl(
         storageCredentials: StorageCredentials?,
         sourceType: ArtifactChannel?,
         userId: String
-    ) {
+    ): String? {
         logger.info(
             "Will start to update oci info for ${ociArtifactInfo.getArtifactFullPath()} " +
                 "in repo ${ociArtifactInfo.getRepoIdentify()}"
         )
-        
-        // 提前检查packageName，避免后续无效处理
+
         if (ociArtifactInfo.packageName.isEmpty()) {
             logger.warn("Package name is empty, skipping OCI info update")
-            return
+            return null
         }
-        
-        // 提取公共变量，避免重复计算
+
         val sha256 = nodeDetail.sha256 ?: throw IllegalStateException("Node sha256 cannot be null")
         val manifestDigest = OciDigest.fromSha256(sha256)
 
-        val (mediaType, digestList) = if (ociArtifactInfo.isFat) {
+        val result = if (ociArtifactInfo.isFat) {
             handleManifestList(nodeDetail, storageCredentials, ociArtifactInfo, manifestDigest, sourceType, userId)
         } else {
             handleManifest(nodeDetail, storageCredentials, ociArtifactInfo, sourceType, userId)
         }
-        
-        // 更新manifest节点元数据
+
         updateNodeMetaData(
             projectId = ociArtifactInfo.projectId,
             repoName = ociArtifactInfo.repoName,
             version = ociArtifactInfo.reference,
             fullPath = nodeDetail.fullPath,
-            mediaType = mediaType,
-            digestList = digestList,
-            sourceType = sourceType
+            mediaType = result.mediaType,
+            digestList = result.digestList,
+            sourceType = sourceType,
+            subjectDigest = result.subjectDigest,
+            artifactType = result.artifactType
         )
+        return result.subjectDigest
     }
     
     /**
@@ -531,24 +537,26 @@ class OciOperationServiceImpl(
         manifestDigest: OciDigest,
         sourceType: ArtifactChannel?,
         userId: String
-    ): Pair<String, List<String>> {
+    ): ManifestHandleResult {
         val manifestList = loadManifestList(nodeDetail, storageCredentials)
             ?: throw OciBadRequestException(OciMessageCode.OCI_MANIFEST_SCHEMA1_NOT_SUPPORT)
-        
+
         val mediaType = manifestList.mediaType
-        val metadata = buildManifestMetadata(ociArtifactInfo, nodeDetail.sha256!!, manifestDigest, mediaType)
-        
-        doPackageOperations(
-            manifestPath = nodeDetail.fullPath,
-            ociArtifactInfo = ociArtifactInfo,
-            manifestDigest = manifestDigest,
-            size = nodeDetail.size,
-            sourceType = sourceType,
-            metadata = metadata,
-            userId = userId
-        )
-        
-        return Pair(mediaType, emptyList())
+        val subjectDigest = manifestList.subject?.digest?.takeIf { it.isNotBlank() }
+        val artifactType = OciUtils.resolveArtifactType(manifestList.artifactType, null)
+        if (subjectDigest == null) {
+            val metadata = buildManifestMetadata(ociArtifactInfo, nodeDetail.sha256!!, manifestDigest, mediaType)
+            doPackageOperations(
+                manifestPath = nodeDetail.fullPath,
+                ociArtifactInfo = ociArtifactInfo,
+                manifestDigest = manifestDigest,
+                size = nodeDetail.size,
+                sourceType = sourceType,
+                metadata = metadata,
+                userId = userId
+            )
+        }
+        return ManifestHandleResult(mediaType, emptyList(), subjectDigest, artifactType)
     }
     
     /**
@@ -560,27 +568,29 @@ class OciOperationServiceImpl(
         ociArtifactInfo: OciManifestArtifactInfo,
         sourceType: ArtifactChannel?,
         userId: String
-    ): Pair<String, List<String>> {
+    ): ManifestHandleResult {
         // https://github.com/docker/docker-ce/blob/master/components/engine/distribution/push_v2.go
         // docker 客户端上传manifest时先按照schema2的格式上传，
         // 如失败则按照schema1格式上传，但是非docker客户端不兼容schema1版本manifest
         val manifest = loadManifest(nodeDetail, storageCredentials)
             ?: throw OciBadRequestException(OciMessageCode.OCI_MANIFEST_SCHEMA1_NOT_SUPPORT)
-        
-        // 确定mediaType
+
         val mediaType = determineMediaType(manifest)
         val digestList = OciUtils.manifestIteratorDigest(manifest)
-        
-        // 处理manifest中的blob数据
-        syncBlobInfo(
-            ociArtifactInfo = ociArtifactInfo,
-            manifest = manifest,
-            nodeDetail = nodeDetail,
-            sourceType = sourceType,
-            userId = userId
-        )
-        
-        return Pair(mediaType, digestList)
+        val subjectDigest = manifest.subject?.digest?.takeIf { it.isNotBlank() }
+        val artifactType = OciUtils.resolveArtifactType(manifest.artifactType, manifest.config.mediaType)
+        if (subjectDigest == null) {
+            syncBlobInfo(
+                ociArtifactInfo = ociArtifactInfo,
+                manifest = manifest,
+                nodeDetail = nodeDetail,
+                sourceType = sourceType,
+                userId = userId
+            )
+        } else {
+            syncReferrerBlobs(manifest, ociArtifactInfo, userId)
+        }
+        return ManifestHandleResult(mediaType, digestList, subjectDigest, artifactType)
     }
     
     /**
@@ -687,14 +697,17 @@ class OciOperationServiceImpl(
         fullPath: String,
         mediaType: String,
         digestList: List<String>? = null,
-        sourceType: ArtifactChannel? = null
+        sourceType: ArtifactChannel? = null,
+        subjectDigest: String? = null,
+        artifactType: String? = null
     ) {
-        // 将基础信息存储到metadata中
         val metadata = ObjectBuildUtils.buildMetadata(
             mediaType = mediaType,
             version = version,
             digestList = digestList,
-            sourceType = sourceType
+            sourceType = sourceType,
+            subjectDigest = subjectDigest,
+            artifactType = artifactType
         )
 
         updateNodeMetaData(
@@ -737,6 +750,9 @@ class OciOperationServiceImpl(
         manifest: ManifestSchema2,
         userId: String = SecurityUtils.getUserId()
     ): Boolean {
+        if (!manifest.subject?.digest.isNullOrBlank()) {
+            return true
+        }
         logger.info(
             "Will start to sync blobs and config info from manifest ${ociArtifactInfo.getArtifactFullPath()} " +
                 "to blobs in repo ${ociArtifactInfo.getRepoIdentify()}."
@@ -1248,6 +1264,66 @@ class OciOperationServiceImpl(
         return refreshStatus
     }
 
+    private fun syncReferrerBlobs(
+        manifest: ManifestSchema2,
+        ociArtifactInfo: OciManifestArtifactInfo,
+        userId: String
+    ) {
+        OciUtils.manifestIterator(manifest).forEach { descriptor ->
+            doSyncBlob(descriptor, ociArtifactInfo, userId)
+        }
+    }
+
+    override fun listReferrers(
+        artifactInfo: OciReferrersArtifactInfo,
+        artifactType: String?
+    ): ReferrersIndex {
+        if (!OciDigest.isValid(artifactInfo.digest)) {
+            throw OciBadRequestException(OciMessageCode.OCI_DIGEST_INVALID, artifactInfo.digest)
+        }
+        val subjectDigest = artifactInfo.digest
+        val manifests = mutableListOf<ReferrerDescriptor>()
+        var pageNumber = DEFAULT_PAGE_NUMBER
+        while (true) {
+            val queryModel = NodeQueryBuilder()
+                .select(SHA256, OCI_NODE_SIZE, "metadata")
+                .projectId(artifactInfo.projectId)
+                .repoName(artifactInfo.repoName)
+                .path(OciLocationUtils.buildManifestFolderPath(artifactInfo.packageName), OperationType.PREFIX)
+                .metadata(OCI_SUBJECT_METADATA, subjectDigest)
+                .excludeFolder()
+                .page(pageNumber, REFERRERS_PAGE_SIZE)
+                .apply {
+                    if (!artifactType.isNullOrBlank()) {
+                        this.metadata(OCI_ARTIFACT_TYPE_METADATA, artifactType)
+                    }
+                }
+            val records = nodeSearchService.searchWithoutCount(queryModel.build()).records
+            records.mapNotNull { toReferrerDescriptor(it) }.forEach { manifests.add(it) }
+            if (records.size < REFERRERS_PAGE_SIZE) {
+                break
+            }
+            pageNumber++
+        }
+        return ReferrersIndex(manifests = manifests)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun toReferrerDescriptor(record: Map<String, Any?>): ReferrerDescriptor? {
+        val sha256 = record[SHA256]?.toString() ?: return null
+        val size = record[OCI_NODE_SIZE]?.toString()?.toLongOrNull() ?: return null
+        val metadata = record["metadata"] as? Map<String, Any> ?: emptyMap()
+        val mediaType = metadata[MEDIA_TYPE]?.toString()
+            ?: metadata[OLD_DOCKER_MEDIA_TYPE]?.toString()
+            ?: OCI_IMAGE_MANIFEST_MEDIA_TYPE
+        val artifactType = metadata[OCI_ARTIFACT_TYPE_METADATA]?.toString()?.takeIf { it.isNotBlank() }
+        return ReferrerDescriptor(
+            mediaType = mediaType,
+            size = size,
+            digest = OciDigest.fromSha256(sha256).toString(),
+            artifactType = artifactType
+        )
+    }
 
     private fun buildImagePackagePullContext(
         projectId: String,
@@ -1304,5 +1380,13 @@ class OciOperationServiceImpl(
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(OciOperationServiceImpl::class.java)
+        private const val REFERRERS_PAGE_SIZE = 1000
     }
 }
+
+private data class ManifestHandleResult(
+    val mediaType: String,
+    val digestList: List<String>,
+    val subjectDigest: String? = null,
+    val artifactType: String? = null
+)

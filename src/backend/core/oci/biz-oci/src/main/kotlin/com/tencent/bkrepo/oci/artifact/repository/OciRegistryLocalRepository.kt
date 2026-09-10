@@ -387,7 +387,7 @@ class OciRegistryLocalRepository(
             storageCredentials = context.storageCredentials
         )
         // 上传manifest文件，同时需要判断manifest中的blob节点是否已经存在，同时创建package相关信息
-        ociOperationService.updateOciInfo(
+        val subjectDigest = ociOperationService.updateOciInfo(
             ociArtifactInfo = artifactInfo,
             digest = digest,
             storageCredentials = context.storageCredentials,
@@ -403,7 +403,8 @@ class OciRegistryLocalRepository(
             digest = digest,
             location = manifestLocation,
             status = HttpStatus.CREATED,
-            contentLength = 0
+            contentLength = 0,
+            ociSubject = subjectDigest
         )
     }
 

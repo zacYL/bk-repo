@@ -35,5 +35,7 @@ class ManifestSchema2(
     var mediaType: String? = null,
     var config: ConfigDescriptor,
     var layers: List<LayerDescriptor>,
-    var annotations: Map<String, String> = emptyMap()
+    var annotations: Map<String, String> = emptyMap(),
+    var subject: Descriptor? = null,
+    var artifactType: String? = null
 ) : SchemaVersion(schemaVersion)

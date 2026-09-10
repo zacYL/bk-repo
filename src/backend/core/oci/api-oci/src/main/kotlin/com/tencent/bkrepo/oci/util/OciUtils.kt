@@ -92,6 +92,11 @@ object OciUtils {
         return mediaType == IMAGE_CONFIG_MEDIA_TYPE || mediaType == DOCKER_IMAGE_CONFIG_MEDIA_TYPE
     }
 
+    fun resolveArtifactType(artifactType: String?, configMediaType: String?): String? {
+        if (!artifactType.isNullOrBlank()) return artifactType
+        return configMediaType?.takeIf { it.isNotBlank() }
+    }
+
     fun stringToManifestV2(content: String): ManifestSchema2 {
         try {
             return content.readJsonString()
